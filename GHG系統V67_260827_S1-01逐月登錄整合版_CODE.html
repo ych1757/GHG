@@ -3087,15 +3087,18 @@ function s101Render(){
   const rs=s1.recs;
   const needP=rs.some(r=>((r.extra||{})['期間原文']||'')&&!/^\s*\d{1,2}月\s*$/.test((r.extra||{})['期間原文']||''));
   const lcols=needP?6:5;
-  let gate='';
-  if(lk)gate='<div class="msg" style="background:#fff3cd;color:#856404;border:1px solid #ffe69c">🔒 '+s1.year+' 年度已鎖定：僅供查看（依前年度鐵則）</div>';
-  else if(READONLY)gate='<div class="msg" style="background:#fff3cd;color:#856404;border:1px solid #ffe69c">🔒 唯讀檢視：登入且具「廠區輸入」以上權限方可編輯</div>';
-  else if(curGhgUser&&!lgCanSite(s1.site))gate='<div class="msg err">🔒 您的廠區權限不含 '+s1.site+'</div>';
-  let h=gate+'<div class="row" style="margin-bottom:6px;align-items:center;gap:10px;display:flex;flex-wrap:wrap">'
-    +'廠區 <select id="s1_site">'+s1.sites.map(x=>{const st=(s1SiteInfo||{})[x]||{};
+  let chip='';
+  if(lk)chip='<span style="background:#fff3cd;color:#856404;border:1px solid #ffe69c;border-radius:999px;padding:3px 12px;font-size:12px;font-weight:700">🔒 '+s1.year+' 已鎖定·唯讀</span>';
+  else if(READONLY)chip='<span style="background:#fff3cd;color:#856404;border:1px solid #ffe69c;border-radius:999px;padding:3px 12px;font-size:12px;font-weight:700">🔒 唯讀檢視（需廠區輸入以上權限）</span>';
+  else if(curGhgUser&&!lgCanSite(s1.site))chip='<span style="background:#fce4e4;color:#a33;border:1px solid #f2c4c4;border-radius:999px;padding:3px 12px;font-size:12px;font-weight:700">🔒 廠區權限不含 '+s1.site+'</span>';
+  let h='<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:2px 0 8px">'
+    +'<span style="font-weight:700;color:var(--d)">廠區</span>'
+    +'<select id="s1_site" style="width:auto;max-width:250px;padding:5px 8px">'+s1.sites.map(x=>{const st=(s1SiteInfo||{})[x]||{};
       return '<option value="'+x+'"'+(x===s1.site?' selected':'')+'>'+x+'　'+(st.site_name||'')+'</option>';}).join('')+'</select>'
-    +' 年度 <select id="s1_year">'+s1.years.map(y=>'<option'+(y===s1.year?' selected':'')+'>'+y+'</option>').join('')+'</select>'
-    +' <span style="background:var(--t);color:var(--d);border-radius:999px;padding:2px 10px;font-size:11px;font-weight:700">區域 '+(ctry||'?')+' ← '+(M.site_name||s1.site)+'</span>'
+    +'<span style="font-weight:700;color:var(--d)">年度</span>'
+    +'<select id="s1_year" style="width:auto;padding:5px 8px">'+s1.years.map(y=>'<option'+(y===s1.year?' selected':'')+'>'+y+'</option>').join('')+'</select>'
+    +'<span style="background:var(--t);color:var(--d);border-radius:999px;padding:3px 12px;font-size:12px;font-weight:700">區域 '+(ctry||'?')+' ← '+(M.site_name||s1.site)+'</span>'
+    +chip
     +'<span style="margin-left:auto"><button class="'+(canEdit?'':'sec')+'" id="s1_save" '+(canEdit?'':'disabled')+' onclick="s101Ask()">💾 儲存</button></span></div>';
   h+='<div id="s101wrap"><div class="s101zone"><table><thead>'
     +'<tr class="band"><th class="L tl" colspan="'+lcols+'">'+(canEdit?'可輸入（白底）':'唯讀')+'</th>'
