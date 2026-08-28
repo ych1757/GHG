@@ -83,8 +83,8 @@ td.fachl{background:#fffbe6!important;box-shadow:inset 3px 0 0 #e6a700}   /* V38
 .fovcard:hover{background:#dff0e8;box-shadow:0 2px 8px rgba(0,0,0,.1)}
 .fovcard .fn{font-size:13px;font-weight:800;color:var(--d)}
 .fovcard .fm{font-size:11.5px;color:var(--g);margin-top:3px;line-height:1.5}
-@media (min-width:1680px){ body{zoom:1.15;min-height:calc(100vh/1.15)} }
-@media (min-width:2200px){ body{zoom:1.2;min-height:calc(100vh/1.2)} }
+@media (min-width:1680px){ body{zoom:1.15;min-height:calc(100vh/1.15)} .nav,.permwrap{max-height:calc(100vh/1.15 - 170px)} }   /* V67-4:zoom下100vh不縮,vh基準的max-height一律除zoom,否則左樹撐破一屏 */
+@media (min-width:2200px){ body{zoom:1.2;min-height:calc(100vh/1.2)} .nav,.permwrap{max-height:calc(100vh/1.2 - 170px)} }
 </style>
 </head>
 <body>
@@ -2990,6 +2990,8 @@ css.textContent=`
 #s101wrap tr.tot td{background:#f2f8f5;font-weight:800;color:var(--d);border-top:2px solid var(--p)}
 #s101wrap tr.tot td.ro{background:#e6ece9}
 #s101wrap .s101zone{background:#fff;border:1px solid #d7e5dd;border-radius:10px;overflow:auto;max-height:calc(100vh - 258px)}
+@media (min-width:1680px){ #s101wrap .s101zone{max-height:calc(100vh/1.15 - 258px)} }
+@media (min-width:2200px){ #s101wrap .s101zone{max-height:calc(100vh/1.2 - 258px)} }
 #s101wrap .s101legend{padding:7px 13px;font-size:11px;color:var(--g);border-top:1px solid #eef3f0;background:#fcfdfc}
 #s101wrap .dash{color:#c3cfc9}
 #s101dlg{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;z-index:99}
