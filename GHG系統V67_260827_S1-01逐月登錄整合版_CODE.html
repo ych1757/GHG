@@ -3007,6 +3007,7 @@ window.selectSrc=function(i){
   if(!window._s101Legacy&&SRC[i]&&SRC[i].c==='S1-01'){s101Enter(i);}
   else{_selectSrcOrig(i);}
 };
+window.s101Close=function(){var d=document.getElementById('s101dlg');if(d)d.style.display='none';};
 window.s101UseLegacy=function(){window._s101Legacy=true;window.selectSrc(curSrc);window._s101Legacy=false;};
 
 function s101Enter(i){
@@ -3177,6 +3178,8 @@ window.s101Ask=function(){
       +'<div class="foot"><button class="sec" onclick="document.getElementById(\'s101dlg\').style.display=\'none\'">取消</button>'
       +'<button onclick="s101Go()">確認寫入</button></div></div>';
     document.body.appendChild(dlg);}
+  dlg.querySelector('h3').textContent='儲存前確認（僅寫入下列變更）';
+  dlg.querySelector('.foot').innerHTML='<button class="sec" onclick="s101Close()">取消</button><button onclick="s101Go()">確認寫入</button>';
   const M=(s1SiteInfo||{})[s1.site]||{};
   const gs=s101Fac(M.country,s1.year);
   document.getElementById('s101list').innerHTML=s1Pending.map(r=>{
@@ -3190,10 +3193,15 @@ window.s101Ask=function(){
   dlg.style.display='flex';
 };
 window.s101Go=async function(){
-  document.getElementById('s101dlg').style.display='none';
+  const dlg=document.getElementById('s101dlg');
+  const list=document.getElementById('s101list');
+  const foot=dlg.querySelector('.foot');
+  dlg.querySelector('h3').textContent='寫入中…';
+  foot.style.display='none';
+  list.innerHTML='<div style="padding:16px 4px;font-size:14px;color:#14603F">⏳ 正在寫入資料庫，請稍候…</div>';
   const M=(s1SiteInfo||{})[s1.site]||{};
   const gs=s101Fac(M.country,s1.year),R=s101Rate(M.country,s1.year);
-  let ok=0,fail=0;
+  let ok=0,fail=0;const done=[];
   for(const r of s1Pending){
     try{
       const qv=+r.quantity||0;
@@ -3212,20 +3220,17 @@ window.s101Go=async function(){
         ef_value:multi?null:g0.ef,ef_unit:multi?null:g0.unit,gwp:multi?null:g0.gwp,
         input_method:'V67逐月登錄'};
       const {error}=await sb.from('ghg_activity_data').update(body).eq('record_id',r.record_id);
-      if(error)throw error;ok++;
-    }catch(err){fail++;console.error(err);}
+      if(error)throw error;ok++;done.push(r.data_month+'月（record_id '+r.record_id+'）✓');
+    }catch(err){fail++;done.push(r.data_month+'月 ✗ '+(err.message||err));console.error(err);}
   }
   await s101Load();
-  try{
-    const box=document.getElementById('src_form');
-    const msg=document.createElement('div');
-    msg.style.cssText='margin:0 0 8px;padding:9px 13px;border-radius:8px;font-size:13px;font-weight:700;'
-      +(fail?'background:#fbe9eb;color:#a33;border:1px solid #f2c4c4':'background:#e7f5ee;color:#14603F;border:1px solid #bcdccb');
-    msg.textContent=(fail?'⚠ ':'✅ ')+'儲存完成：更新 '+ok+' 筆'+(fail?('／失敗 '+fail+' 筆（見主控台）'):'')+'。已回讀資料庫最新值。';
-    box.insertBefore(msg,box.firstChild);
-    msg.scrollIntoView({block:'nearest'});
-    setTimeout(()=>{try{msg.remove();}catch(e){}},8000);
-  }catch(e){alert('儲存完成：更新 '+ok+' 筆'+(fail?('／失敗 '+fail+' 筆'):''));}
+  // ★結果直接顯示在同一個對話框（使用者視線焦點），按關閉才離開
+  dlg.querySelector('h3').textContent=fail?'⚠ 儲存結果（部分失敗）':'✅ 儲存完成';
+  list.innerHTML='<div style="font-size:15px;font-weight:800;padding:8px 2px;color:'+(fail?'#a33':'#14603F')+'">'
+    +(fail?('更新 '+ok+' 筆／失敗 '+fail+' 筆'):('已成功寫入 '+ok+' 筆，並回讀資料庫最新值'))+'</div>'
+    +done.map(x=>'<div class="item">'+x+'</div>').join('');
+  foot.style.display='flex';
+  foot.innerHTML='<button onclick="s101Close()">關閉</button>';
 };
 })();
 
