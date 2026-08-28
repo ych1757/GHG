@@ -1750,7 +1750,7 @@ const LGKEY='ghg_login_emp';
 const AUTH_URL='https://drfqoraijhzvvllncbei.supabase.co';   // = OMS 同一 Auth 專案(共用密碼,管理應用類);★遷移鉤子①
 const AUTH_KEY='sb_publishable_PG_IHNnOMAe3oTMV6yV25w_-U-FjDwq';
 const ADMIN_EMAIL='admin@id.syncmold.com.tw';   // V52fix:OMS drfqo 管理員合成email(非vwuse的yc.huang)
-function lgErr(m){const e=document.getElementById('lg_err'); if(e){e.textContent=m||''; e.style.display=m?'':'none';}}
+function lgErr(m){const e=document.getElementById('lg_err'); if(e){e.textContent=m||''; e.style.display=m?'block':'none';}}   // V68-1:.lgerr 樣式表預設 none,display '' 會落回 none→紅字永遠不顯(打錯密碼無提示);改 block
 function _lgPanel(id){['lg_normal','lg_admin','lg_guest','lg_chg'].forEach(x=>{const el=document.getElementById(x); if(el)el.style.display=(x===id)?'':'none';}); lgErr('');}
 function lgShowAdmin(){_lgPanel('lg_admin');const p=document.getElementById('lga_pwd');if(p)p.focus();}
 function lgShowGuest(){_lgPanel('lg_guest');const p=document.getElementById('lgg_email');if(p)p.focus();}
