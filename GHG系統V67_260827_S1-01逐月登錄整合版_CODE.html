@@ -2969,7 +2969,7 @@ let s1={site:'',year:2025,recs:[],orig:{}};
 const css=document.createElement('style');
 css.textContent=`
 #s101wrap table{width:100%;border-collapse:collapse;font-size:13px;margin-top:0}
-#s101wrap th,#s101wrap td{padding:4px 8px;border-bottom:1px solid #eef3f0;text-align:right;white-space:nowrap}
+#s101wrap th,#s101wrap td{padding:3px 7px;line-height:1.35;border-bottom:1px solid #eef3f0;text-align:right;white-space:nowrap}
 #s101wrap th{color:var(--d);font-weight:700;font-size:11.5px}
 #s101wrap th:first-child,#s101wrap td:first-child{text-align:left}
 #s101wrap .tl{text-align:left!important}
@@ -2980,7 +2980,7 @@ css.textContent=`
 #s101wrap .fg{font-size:12px;font-weight:800;color:var(--d)}
 #s101wrap .fv{font-size:13px;font-weight:700;margin-top:2px}
 #s101wrap .fu{font-size:10px;font-weight:400;color:#5c7568}#s101wrap .fu b{color:var(--p)}
-#s101wrap .fs{font-size:9.5px;font-weight:400;color:#93a89c;white-space:normal;max-width:150px;margin-left:auto}
+#s101wrap .fs{font-size:9.5px;font-weight:400;color:#93a89c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px;margin-left:auto}
 #s101wrap .fmini{font-size:10px;color:var(--g)}
 #s101wrap td.ro{background:#f2f6f4;color:#3f544a}
 #s101wrap td.sep,#s101wrap th.sep{border-left:2px solid var(--p);padding-left:9px}
@@ -2989,7 +2989,7 @@ css.textContent=`
 #s101wrap td.edit input:focus{outline:2px solid var(--p);outline-offset:-2px;background:#fffbe6}
 #s101wrap tr.tot td{background:#f2f8f5;font-weight:800;color:var(--d);border-top:2px solid var(--p)}
 #s101wrap tr.tot td.ro{background:#e6ece9}
-#s101wrap .s101zone{background:#fff;border:1px solid #d7e5dd;border-radius:10px;overflow:auto}
+#s101wrap .s101zone{background:#fff;border:1px solid #d7e5dd;border-radius:10px;overflow:auto;max-height:calc(100vh - 258px)}
 #s101wrap .s101legend{padding:7px 13px;font-size:11px;color:var(--g);border-top:1px solid #eef3f0;background:#fcfdfc}
 #s101wrap .dash{color:#c3cfc9}
 #s101dlg{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;z-index:99}
@@ -3003,6 +3003,7 @@ document.head.appendChild(css);
 const _selectSrcOrig=window.selectSrc;
 window._s101Legacy=false;                         // 逃生口：true=強制走舊表單
 window.selectSrc=function(i){
+  const t=document.getElementById('src_title'); if(t)t.style.display='';
   if(!window._s101Legacy&&SRC[i]&&SRC[i].c==='S1-01'){s101Enter(i);}
   else{_selectSrcOrig(i);}
 };
@@ -3013,9 +3014,8 @@ function s101Enter(i){
   document.querySelectorAll('.navi').forEach(n=>n.classList.toggle('on',n.dataset.i==i));
   const on=document.querySelector('.navi.on');
   if(on){let p=on.parentElement;while(p){if(p.id&&/^nsc/.test(p.id)&&p.style.display==='none'){p.style.display='block';const t=document.getElementById(p.id+'_t');if(t)t.textContent='▾'+t.textContent.slice(1);}p=p.parentElement;}}
-  document.getElementById('src_title').textContent='S1-01　天然氣（逐月新版 · V67 試點）';
-  document.getElementById('src_records').innerHTML='<div class="fmini" style="color:var(--g);font-size:11px">本類別逐筆明細已併入上方逐月表格；'
-    +'<a href="javascript:s101UseLegacy()" style="color:var(--p)">改用舊版表單</a>（無明細廠區新增請走舊版，匯入功能下一版）</div>';
+  const tt=document.getElementById('src_title'); if(tt)tt.style.display='none';   // 一屏化:標題併入控制列
+  document.getElementById('src_records').innerHTML='';
   s101Boot();
 }
 
@@ -3092,7 +3092,8 @@ function s101Render(){
   else if(READONLY)chip='<span style="background:#fff3cd;color:#856404;border:1px solid #ffe69c;border-radius:999px;padding:3px 12px;font-size:12px;font-weight:700">🔒 唯讀檢視（需廠區輸入以上權限）</span>';
   else if(curGhgUser&&!lgCanSite(s1.site))chip='<span style="background:#fce4e4;color:#a33;border:1px solid #f2c4c4;border-radius:999px;padding:3px 12px;font-size:12px;font-weight:700">🔒 廠區權限不含 '+s1.site+'</span>';
   let h='<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:2px 0 8px">'
-    +'<span style="font-weight:700;color:var(--d)">廠區</span>'
+    +'<b style="font-size:15px;color:var(--d)">S1-01 天然氣</b><span class="fmini">逐月新版·V67 試點</span>'
+    +'<span style="font-weight:700;color:var(--d);margin-left:6px">廠區</span>'
     +'<select id="s1_site" style="width:auto;max-width:250px;padding:5px 8px">'+s1.sites.map(x=>{const st=(s1SiteInfo||{})[x]||{};
       return '<option value="'+x+'"'+(x===s1.site?' selected':'')+'>'+x+'　'+(st.site_name||'')+'</option>';}).join('')+'</select>'
     +'<span style="font-weight:700;color:var(--d)">年度</span>'
@@ -3146,8 +3147,8 @@ function s101Render(){
     +'<td>'+(tc?nf(tc,2):'')+'</td><td class="ro">'+((tc&&R)?nf(tc/R.rate,2):'')+'</td>';
   S101_GAS.forEach((gn,k)=>{h+='<td class="ro'+(k===0?' sep':'')+'">'+(gm[gn]?nf(tg[gn],4):'<span class="dash">—</span>')+'</td>';});
   h+='<td class="ro" style="font-size:15px">'+nf(tt,4)+'</td></tr></tbody></table>'
-    +'<div class="s101legend">共 '+rs.length+' 筆明細（保留原始帳單筆數）　｜　換算式：使用量(m3)×係數×GWP÷1000＝碳排(tCO₂e)；美金＝原幣÷盤查年匯率（匯率庫）'
-    +'<br>＊灰底＝系統決定非輸入　｜　'+(gs.length<3?'本區採合成當量係數（GWP 已內含），CH4／N2O 顯示「—」':'本區採分氣體係數，三者分別計算後加總')
+    +'<div class="s101legend">共 '+rs.length+' 筆（保留原始帳單筆數）　｜　使用量(m3)×係數×GWP÷1000＝碳排(tCO₂e)；美金＝原幣÷盤查年匯率　｜　＊灰底＝系統決定非輸入　｜　'
+    +(gs.length<3?'合成當量係數（GWP 已內含），CH4/N2O 顯「—」':'分氣體係數，三者計算後加總')
     +'　｜　<a href="javascript:s101UseLegacy()" style="color:var(--p)">改用舊版表單</a></div></div></div>';
   box.innerHTML=h;
   const ss=document.getElementById('s1_site'),ys=document.getElementById('s1_year');
@@ -3215,11 +3216,16 @@ window.s101Go=async function(){
     }catch(err){fail++;console.error(err);}
   }
   await s101Load();
-  const box=document.getElementById('src_form');
-  const msg=document.createElement('div');
-  msg.className='msg '+(fail?'err':'ok');
-  msg.textContent='儲存完成：更新 '+ok+' 筆'+(fail?('／失敗 '+fail+' 筆（見主控台）'):'')+'。已回讀資料庫最新值。';
-  box.insertBefore(msg,box.firstChild);
+  try{
+    const box=document.getElementById('src_form');
+    const msg=document.createElement('div');
+    msg.style.cssText='margin:0 0 8px;padding:9px 13px;border-radius:8px;font-size:13px;font-weight:700;'
+      +(fail?'background:#fbe9eb;color:#a33;border:1px solid #f2c4c4':'background:#e7f5ee;color:#14603F;border:1px solid #bcdccb');
+    msg.textContent=(fail?'⚠ ':'✅ ')+'儲存完成：更新 '+ok+' 筆'+(fail?('／失敗 '+fail+' 筆（見主控台）'):'')+'。已回讀資料庫最新值。';
+    box.insertBefore(msg,box.firstChild);
+    msg.scrollIntoView({block:'nearest'});
+    setTimeout(()=>{try{msg.remove();}catch(e){}},8000);
+  }catch(e){alert('儲存完成：更新 '+ok+' 筆'+(fail?('／失敗 '+fail+' 筆'):''));}
 };
 })();
 
