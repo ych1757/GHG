@@ -2505,7 +2505,7 @@ async function fxMatrix(){   // V68-3:匯率表——列=廠區(01-20)、欄=年
     +years.map(y=>'<th style="min-width:96px;text-align:right">'+y+'<span style="display:inline-block;width:20px"></span></th>').join('')+'</tr></thead><tbody>';   // V68-9:表頭同樣保留20px尾槽→數字右緣=年度右緣,+n掛年度後方溝槽
   Object.keys(PLANT2OMS).sort((a,b)=>(+a)-(+b)).forEach(pc=>{
     const sid=PLANT2OMS[pc], st=SI[sid]||{}, cur=CURMAP[st.country]||null;
-    h+='<tr><td class="tl" style="text-align:left;white-space:nowrap;font-weight:600">'+facEsc(plantLabel(pc,st.site_name||sid))+'</td>'
+    h+='<tr><td class="tl" style="text-align:left;white-space:nowrap;font-weight:600">'+plantLabelHTML(pc,st.site_name||sid)+'</td>'
       +'<td>'+(cur||'<span style="color:#c3cfc9">—</span>')+'</td>';
     years.forEach(y=>{
       // V68-8:數字固定右緣對齊——值放定寬右對齊槽、徽章放固定 20px 槽（有無標記皆同寬,不推擠數字）
@@ -2828,7 +2828,7 @@ async function runQuery(){
   const trAttr=S?('style="cursor:pointer;background:#f2f9f5;font-weight:700" title="點列展開/收合 '+r._n+' 個月明細" onclick="tgM('+gid+',this)"')
     :(C?('class="mrow-'+gid+'" style="cursor:pointer;display:none;background:#fbfdfc" title="點此回資料登錄(月明細)" '+oc)
     :('style="cursor:pointer" title="點此回資料登錄看/編此源" '+oc));
-  return `<tr ${trAttr}><td style="white-space:nowrap">${plantLabel((( {SY:'01',SH:'02',VN:'03',JS:'04',SF:'05',FF:'06',CF:'07',KH:'08',GH:'09',FQ:'10',KS:'11',GT:'12',TC:'13',LH:'14',LS:'15',LT:'16',SG:'17',MY:'18',US:'19',TH:'20'})[r.site_id])||'',r.site_id)}</td><td style="width:1%;white-space:nowrap">${r.data_year||''}</td><td style="width:1%;white-space:nowrap">${S?'<span class="marw">▸</span> '+r._n+'個月':(r.data_month?((C?'└ ':'')+r.data_month+'月'):'年度')}</td><td style="white-space:nowrap;text-align:left">${codeCell(r)}${S?'':' 📝'}</td><td style="text-align:left" title="${(r.source_name||'').replace(/"/g,'&quot;')}">${(!S&&sbg)?(sbg+' '):''}${r.source_name||''}</td><td style="white-space:nowrap">${gasCell(r)}</td><td style="text-align:right;white-space:nowrap">${(r.quantity&&Number(r.quantity)>0)?q2(r.quantity):'<span style="color:#9aa" title="此源僅匯入碳排放量，未含活動量與係數（資料轉換待補完整）">—</span>'}</td><td>${(r.quantity&&Number(r.quantity)>0)?(r.quantity_unit||''):''}</td><td style="text-align:right${fmis?';background:#FFF3CD':''}"${fmis?' title="與係數庫不一致（此筆 ef_value 與係數庫 factor_value 相對差 >0.1%）"':''}>${S&&!r._efU?'<span style="color:var(--g)" title="各月係數不同,展開看逐月">逐月</span>':(facOf(r)==='—'&&!(r.quantity&&Number(r.quantity)>0)?'—':facOf(r))}</td><td style="text-align:left">${flink||''}</td><td style="text-align:right">${gwpCell(r)}</td><td style="text-align:right">${co2Cell(r)}</td></tr>`;};
+  return `<tr ${trAttr}><td style="white-space:nowrap">${plantLabelHTML((( {SY:'01',SH:'02',VN:'03',JS:'04',SF:'05',FF:'06',CF:'07',KH:'08',GH:'09',FQ:'10',KS:'11',GT:'12',TC:'13',LH:'14',LS:'15',LT:'16',SG:'17',MY:'18',US:'19',TH:'20'})[r.site_id])||'',r.site_id)}</td><td style="width:1%;white-space:nowrap">${r.data_year||''}</td><td style="width:1%;white-space:nowrap">${S?'<span class="marw">▸</span> '+r._n+'個月':(r.data_month?((C?'└ ':'')+r.data_month+'月'):'年度')}</td><td style="white-space:nowrap;text-align:left">${codeCell(r)}${S?'':' 📝'}</td><td style="text-align:left" title="${(r.source_name||'').replace(/"/g,'&quot;')}">${(!S&&sbg)?(sbg+' '):''}${r.source_name||''}</td><td style="white-space:nowrap">${gasCell(r)}</td><td style="text-align:right;white-space:nowrap">${(r.quantity&&Number(r.quantity)>0)?q2(r.quantity):'<span style="color:#9aa" title="此源僅匯入碳排放量，未含活動量與係數（資料轉換待補完整）">—</span>'}</td><td>${(r.quantity&&Number(r.quantity)>0)?(r.quantity_unit||''):''}</td><td style="text-align:right${fmis?';background:#FFF3CD':''}"${fmis?' title="與係數庫不一致（此筆 ef_value 與係數庫 factor_value 相對差 >0.1%）"':''}>${S&&!r._efU?'<span style="color:var(--g)" title="各月係數不同,展開看逐月">逐月</span>':(facOf(r)==='—'&&!(r.quantity&&Number(r.quantity)>0)?'—':facOf(r))}</td><td style="text-align:left">${flink||''}</td><td style="text-align:right">${gwpCell(r)}</td><td style="text-align:right">${co2Cell(r)}</td></tr>`;};
   const mkey=r=>r.site_id+'|'+r.data_year+'|'+(r.category_id||'')+'|'+(r.source_name||'');
   const mg={};
   rows.forEach(r=>{if(r.data_month!=null){(mg[mkey(r)]=mg[mkey(r)]||[]).push(r);}});
@@ -2917,7 +2917,7 @@ async function loadGroup(){
       const diff=R4(dv)-R4(ov), dcol=dcolOf(diff,ov), dbg=dbgOf(diff,ov), vi=vinc(ov,vv);   // R4:四捨五入至4位再比,消尾差
       td+=dv;to+=ov;tv+=(vv||0);rows++;
       const canDrill=!p.nd && dv>0.00005 && PLANT2OMS[p.c];   // V31:有明細且該廠有明細層→可下挖逐筆
-      fh+=`<tr data-gsite="${p.c}" data-gcat="${fcat}"${canDrill?` style="cursor:pointer" onclick="drillQuery('${p.c}','${fcat}',${yr})" title="點看該廠 ${fcat} 逐筆明細"`:''}><td style="text-align:left;font-weight:700">${plantLabel(p.c,p.name)}${canDrill?' 🔍':''}</td><td>${p.nd?'—':fmt2(dv)}</td><td title="各廠查證清冊">${vv!==undefined?fmt2(vv):'-'}</td><td style="${vi}" title="${vi?'官方申報(集團)與各廠查證不一致':'集團清冊'}">${ov?fmt2(ov):'-'}</td><td style="${dcol};${dbg}">${ov?((diff>0?'+':'')+fmt2(diff)):(dv>0.00005?'明細獨有':'-')}</td><td style="${dcol};${dbg};font-weight:700">${ov?((diff>0?'+':'')+(diff/ov*100).toFixed(1)+'%'):'-'}</td></tr>`;
+      fh+=`<tr data-gsite="${p.c}" data-gcat="${fcat}"${canDrill?` style="cursor:pointer" onclick="drillQuery('${p.c}','${fcat}',${yr})" title="點看該廠 ${fcat} 逐筆明細"`:''}><td style="text-align:left;font-weight:700">${plantLabelHTML(p.c,p.name)}${canDrill?' 🔍':''}</td><td>${p.nd?'—':fmt2(dv)}</td><td title="各廠查證清冊">${vv!==undefined?fmt2(vv):'-'}</td><td style="${vi}" title="${vi?'官方申報(集團)與各廠查證不一致':'集團清冊'}">${ov?fmt2(ov):'-'}</td><td style="${dcol};${dbg}">${ov?((diff>0?'+':'')+fmt2(diff)):(dv>0.00005?'明細獨有':'-')}</td><td style="${dcol};${dbg};font-weight:700">${ov?((diff>0?'+':'')+(diff/ov*100).toFixed(1)+'%'):'-'}</td></tr>`;
     });
     const tdiff=R4(td)-R4(to),tdc=dcolOf(tdiff,to);
     fh+=`<tr style="font-weight:700;background:var(--t);border-top:2px solid var(--m)"><td style="text-align:left">合計 (${rows}廠)</td><td>${fmt2(td)}</td><td>${tv?fmt2(tv):'-'}</td><td>${to?fmt2(to):'-'}</td><td style="${tdc}">${to?((tdiff>0?'+':'')+fmt2(tdiff)):'-'}</td><td style="${tdc}">${to?((tdiff>0?'+':'')+(tdiff/to*100).toFixed(1)+'%'):'-'}</td></tr>`;
@@ -2929,7 +2929,7 @@ async function loadGroup(){
   arr.forEach((p,gi)=>{const diff=R4(p.total)-R4(p.otot);const dcol=dcolOf(diff,p.otot),dbg=dbgOf(diff,p.otot);
     const c1=p.s1,c2=p.s2,c3=p.s3;   // V63-1:明細側欄位只顯示明細(無明細=—),官方值只在「官方申報」欄——同列不混來源
     const vincTot=vinc(p.otot,p.vtot);
-    h+=`<tr class="par" data-gsite="${p.c}" data-gcat="TOTAL" style="cursor:pointer;background:#cfe6d9;box-shadow:inset 3px 0 0 var(--d)" onclick="tgGrp(${gi})"><td style="text-align:left;font-weight:700"><span id="gga${gi}">▸</span> ${plantLabel(p.c,p.name)}${p.noData?' <span style="font-size:10px;color:var(--m);font-weight:400">(尚無資料)</span>':p.nd?' <span style="font-size:10px;color:var(--m);font-weight:400">(官方·無明細)</span>':''}</td><td>${p.nd?'—':fmt2(c1)}</td><td>${p.nd?'—':fmt2(c2)}</td><td>${p.nd?'—':fmt2(c3)}</td><td>${p.nd?'—':'<b>'+fmt2(p.total)+'</b>'}</td><td style="${vincTot}" title="各廠查證清冊">${p.vtot?fmt2(p.vtot):'-'}</td><td>${p.otot?fmt2(p.otot):'-'}</td><td style="${dcol};${dbg}">${p.nd?'—':(p.otot?(diff>0?'+':'')+fmt2(diff):'-')}</td><td style="${dcol};${dbg};font-weight:700">${p.nd?'—':(p.otot?((diff>0?'+':'')+(diff/p.otot*100).toFixed(1)+'%'):'-')}</td></tr>`;
+    h+=`<tr class="par" data-gsite="${p.c}" data-gcat="TOTAL" style="cursor:pointer;background:#cfe6d9;box-shadow:inset 3px 0 0 var(--d)" onclick="tgGrp(${gi})"><td style="text-align:left;font-weight:700"><span id="gga${gi}">▸</span> ${plantLabelHTML(p.c,p.name)}${p.noData?' <span style="font-size:10px;color:var(--m);font-weight:400">(尚無資料)</span>':p.nd?' <span style="font-size:10px;color:var(--m);font-weight:400">(官方·無明細)</span>':''}</td><td>${p.nd?'—':fmt2(c1)}</td><td>${p.nd?'—':fmt2(c2)}</td><td>${p.nd?'—':fmt2(c3)}</td><td>${p.nd?'—':'<b>'+fmt2(p.total)+'</b>'}</td><td style="${vincTot}" title="各廠查證清冊">${p.vtot?fmt2(p.vtot):'-'}</td><td>${p.otot?fmt2(p.otot):'-'}</td><td style="${dcol};${dbg}">${p.nd?'—':(p.otot?(diff>0?'+':'')+fmt2(diff):'-')}</td><td style="${dcol};${dbg};font-weight:700">${p.nd?'—':(p.otot?((diff>0?'+':'')+(diff/p.otot*100).toFixed(1)+'%'):'-')}</td></tr>`;
     // ★階層安全渲染:明確定義「父範疇→子項」,子項只緊接自己的父層、絕不浮到別的範疇(修正2.1曾出現在範疇一的架構錯誤)
     const renderCat=(cat)=>{const dv=p.d[cat]||0,ov=p.o[cat]||0,vv=(p.v||{})[cat]; const isSub=SUBONLY.has(cat);
       if(isSub){ if(dv<=0.00005)return ''; }        // 子項(1.x/2.x):有明細才顯示
@@ -2995,7 +2995,7 @@ async function loadCompare(){
   h+='<table><thead><tr><th>廠別 / 類別</th>'+YEARS.map(y=>`<th>${y==='2025'?y+'<br><span style="font-size:10px;font-weight:400">已查證·已申報</span>':y}</th>`).join('')+`<th>前一年比<br><span style="font-size:10px;font-weight:400">${yPrev}→${yLast}</span></th><th>基準年比<br><span style="font-size:10px;font-weight:400">${yBase}→${yLast}</span></th></tr></thead><tbody>`;
   const ORDER=['範疇一','範疇二','範疇三','C01','C02','C03','C04','C05','C06','C07','C08','C09','C10','C11','C12','C13','C14','C15'];
   arr.forEach((p,gi)=>{const c=ch2(y=>p.tot[y]||0);
-    h+=`<tr class="par" style="cursor:pointer;background:var(--t)" onclick="tgCmp(${gi})"><td style="text-align:left;font-weight:700"><span id="cga${gi}">▸</span> ${plantLabel(p.c,p.name)}${p.noData?' <span style="font-size:10px;color:var(--m);font-weight:400">(尚無資料)</span>':p.src==='僅明細'?' <span style="font-size:10px;color:var(--m);font-weight:400">(申報無此廠·僅明細)</span>':''}</td>${YEARS.map(y=>`<td>${p.noData?'—':'<b>'+fmt2(p.tot[y])+'</b>'}</td>`).join('')}<td style="${c.a.col};font-weight:700">${p.noData?'-':c.a.chs}</td><td style="${c.b.col};font-weight:700">${p.noData?'-':c.b.chs}</td></tr>`;
+    h+=`<tr class="par" style="cursor:pointer;background:var(--t)" onclick="tgCmp(${gi})"><td style="text-align:left;font-weight:700"><span id="cga${gi}">▸</span> ${plantLabelHTML(p.c,p.name)}${p.noData?' <span style="font-size:10px;color:var(--m);font-weight:400">(尚無資料)</span>':p.src==='僅明細'?' <span style="font-size:10px;color:var(--m);font-weight:400">(申報無此廠·僅明細)</span>':''}</td>${YEARS.map(y=>`<td>${p.noData?'—':'<b>'+fmt2(p.tot[y])+'</b>'}</td>`).join('')}<td style="${c.a.col};font-weight:700">${p.noData?'-':c.a.chs}</td><td style="${c.b.col};font-weight:700">${p.noData?'-':c.b.chs}</td></tr>`;
     ORDER.filter(k=>p.cats[k]).forEach((k,ci)=>{const cv=p.cats[k],cc=ch2(y=>cv[y]||0);
       const dd=(dtl[p.c]||{})[k]; const hasD=dd&&Object.keys(dd).length>0;
       h+=`<tr class="cmp-${gi}" style="display:none;background:#fafdfb${hasD?';cursor:pointer':''}" ${hasD?`onclick="tgDtl(${gi},${ci})"`:''}><td style="text-align:left;padding-left:28px;color:var(--m)">${hasD?`<span id="dga${gi}-${ci}">▸</span> `:'　'}${k}　${CATNAME[k]||''}</td>${YEARS.map(y=>`<td>${fmt2(cv[y]||0)}</td>`).join('')}<td style="${cc.a.col}">${cc.a.chs}</td><td style="${cc.b.col}">${cc.b.chs}</td></tr>`;
@@ -3024,6 +3024,15 @@ function plantLabel(code,fallback){
   if(!oms) return (code||'')+' '+(fallback||'');
   const nm=NAME_FIX[oms]||((SITES||[]).find(x=>x.site_id===oms)||{}).site_name||fallback||'';
   return (code||'')+' '+oms+' '+nm;
+}
+// V68-18:廠區標籤共用渲染器——廠號/英文代號各給固定寬度,中文名起點全列對齊(比例字型下 SY/TH/MY 寬度不同會參差)。
+// 各頁一律走這裡,不要各頁自己拼字串（[[centralize-shared-rule-not-per-page]]）。
+function plantLabelHTML(code,fallback){
+  const s=plantLabel(code,fallback), p=String(s).split(' ');
+  if(p.length<3) return facEsc(s);
+  const c0=p.shift(), c1=p.shift();
+  return '<span style="display:inline-block;width:20px">'+facEsc(c0)+'</span>'
+    +'<span style="display:inline-block;width:30px">'+facEsc(c1)+'</span>'+facEsc(p.join(' '));
 }
 function catToSrc(cc){
   let i=SRC.findIndex(s=>s.c===cc); if(i>=0)return i;
@@ -3118,7 +3127,7 @@ async function loadSum(){
     <div class="kpi"><div class="l">合計 公噸CO₂e${su_cat.value?'':'（含重複，僅參考）'}</div><div class="v">${fmt2(tot)}</div></div>`;
   data.sort((a,b)=>(Number(b.co2e_ton)||0)-(Number(a.co2e_ton)||0));
   let h='<table><thead><tr><th>廠別</th><th>年度</th><th>類別</th><th>公噸CO₂e</th></tr></thead><tbody>';
-  data.forEach(r=>h+=`<tr style="cursor:pointer" title="點擊看此廠/年/類別的明細" onclick="drillDown('${r.plant_code}','${r.category_code}',${r.data_year})"><td>${plantLabel(r.plant_code,r.plant_name)}</td><td>${r.data_year}</td><td>${r.category_code} 🔍</td><td>${fmt2(r.co2e_ton)}</td></tr>`);
+  data.forEach(r=>h+=`<tr style="cursor:pointer" title="點擊看此廠/年/類別的明細" onclick="drillDown('${r.plant_code}','${r.category_code}',${r.data_year})"><td>${plantLabelHTML(r.plant_code,r.plant_name)}</td><td>${r.data_year}</td><td>${r.category_code} 🔍</td><td>${fmt2(r.co2e_ton)}</td></tr>`);
   box.innerHTML=h+'</tbody></table>'; makeSortable(box); addFilterRow(box); makeColResizable(box);
 }
 
