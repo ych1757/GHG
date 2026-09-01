@@ -2443,14 +2443,13 @@ const fxTypeZh=t=>FXTYPEZH[t]||t||'當年標準值';
 const fxStrip=s=>String(s||'').replace(/格讀|反推/g,'').replace(/[·．,;；]?\s*x?\d+\s*筆/g,'')
   .replace(/[（(]批12[）)]/g,'').replace(/批12\s*/g,'').replace(/主流年版/g,'當年標準值').replace(/主流/g,'標準值')
   .replace(/[｜|]{2,}/g,'｜').replace(/；{2,}/g,'；').replace(/^[｜|;；·\s]+|[｜|;；·\s]+$/g,'');
-const fxTipLine=(v,mstd)=>{   // V68-13:mstd=標準值顯示字串(僅「位數/末位差」變體帶入,游標點明只是位數差)
-  const where={'C15前年版':'投資C15','表別版本C1':'C1 檔','表別版本C2':'C2 檔','營收月均C10':'C10'}[v.rate_type]||'';
-  const why={'C15前年版':'（慣例用前一年匯率）','營收月均C10':'（用營收月均）'}[v.rate_type]||'';
-  const ev=String(v.evidence||'');
-  const note=ev.charAt(0)==='★'?('｜'+fxStrip(ev)):'';   // 只留★開頭的重要業務註記,其餘證據細節不顯示
-  return (where?where+' ':'')+'用了不同匯率 '+facEsc(v.currency)+' '+(v.rate_src_disp||parseFloat((1/v.to_usd).toPrecision(6)))+why
-    +(mstd?'（與標準值 '+mstd+' 只差小數位數/末位）':'')
-    +'｜'+fxStrip(v.applicable_scope||'')+note;   // V68-11:帶幣別(跨幣別標記如 C15 台幣計價)
+// V68-15:游標一句話講完＝「誰 的 哪一類 用 什麼」(使用者回饋 2025 那句太複雜)。
+// 不再串接 evidence——★註記全是內部查證用語(逐列反推/對平),使用者看不懂;業務資訊已在廠區/類別/原因三段內。
+const fxTipLine=(v,mstd)=>{   // mstd=標準值(僅「僅位數差」變體帶入)
+  const s=String(v.applicable_scope||'').trim(), i=s.lastIndexOf(' ');
+  const who=fxStrip(i>0?s.slice(0,i):s), cat=i>0?s.slice(i+1):'';   // scope 格式=「廠區 類別」
+  const why=v.rate_type==='C15前年版'?'（前一年匯率）':(mstd?'（只是位數不同，值同標準 '+mstd+'）':'');
+  return who+(cat?' 的 '+cat:'')+' 用 '+facEsc(v.currency)+' '+(v.rate_src_disp||parseFloat((1/v.to_usd).toPrecision(6)))+why;
 };
 // V68-14:資料區優先（[[ui-data-area-first]]）——匯率表是獨立唯讀視圖,上方「係數表家族選擇」與「全庫搜尋」都用不到,進本表收起、離開還原
 function fxChrome(on){
@@ -2500,7 +2499,7 @@ async function fxMatrix(){   // V68-3:匯率表——列=廠區(01-20)、欄=年
   let h='<div style="display:flex;gap:8px;align-items:center;margin-top:4px;white-space:nowrap"><button class="sec" style="padding:3px 10px;font-size:12.5px;flex:0 0 auto" onclick="facBackTop()">⬅ 回總覽</button>'
     +'<button class="sec" style="padding:3px 10px;font-size:12.5px;flex:0 0 auto" onclick="fxOverview()">⇄ 列表（年×幣別×用途）</button>'
     +'<span class="ftitle" style="font-size:13px;margin:0;flex:0 0 auto">💱 匯率表（廠×年·唯讀）</span>'
-    +'<span style="font-size:11px;color:var(--g);white-space:normal">格＝1 USD 兌當地幣（<b>當年標準值</b>）；<sup style="color:#a9b8b0">+n</sup> 灰＝<b>實質用了不同匯率</b>；<sup style="color:#4a7ab5">+n</sup> 藍＝<b>投資C15 慣例</b>（前一年匯率）；<sup style="color:#c9821e">+n</sup> 橘＝<b>僅位數/末位差</b>（值同標準）；游標看是哪裡、用了什麼</span></div>';
+    +'<span style="font-size:11px;color:var(--g);white-space:normal">格＝1 USD 兌當地幣（<b>當年標準值</b>）；<sup style="color:#a9b8b0">+n</sup>灰＝<b>用了不同匯率</b>、<sup style="color:#4a7ab5">+n</sup>藍＝<b>C15 用前一年匯率</b>、<sup style="color:#c9821e">+n</sup>橘＝<b>只是位數不同</b>；游標看用在哪裡</span></div>';   // V68-15:圖例縮短
   h+='<table class="fxtight" style="font-size:12.5px;margin-top:4px;width:auto"><thead><tr><th class="tl" style="text-align:left">廠區</th><th>幣別</th>'   // V68-14:fxtight=列高壓縮,20 廠一屏放得下
     +years.map(y=>'<th style="min-width:96px;text-align:right">'+y+'<span style="display:inline-block;width:20px"></span></th>').join('')+'</tr></thead><tbody>';   // V68-9:表頭同樣保留20px尾槽→數字右緣=年度右緣,+n掛年度後方溝槽
   Object.keys(PLANT2OMS).sort((a,b)=>(+a)-(+b)).forEach(pc=>{
@@ -2529,7 +2528,7 @@ async function fxMatrix(){   // V68-3:匯率表——列=廠區(01-20)、欄=年
     h+='</tr>';
   });
   h+='</tbody></table>'
-    +'<div style="font-size:11px;color:var(--g);padding:4px 2px">USD＝1（固定）；SG 新加坡／MY 馬來西亞：庫內無該幣別紀錄（顯示「—」）；標準值全廠共用；+n＝該廠該年<b>真正用於計算</b>的非標準匯率（2022-24 已申報不可改，故留標）；游標可看幣別——如越南 2024 部分表單用人民幣 7.0916。</div>';
+    +'<div style="font-size:11px;color:var(--g);padding:4px 2px">USD＝1（固定）；SG 新加坡／MY 馬來西亞庫內無該幣別紀錄（顯示「—」）；標記＝該廠該年<b>真正用於計算</b>的非標準匯率，2022-24 已申報不可更改，僅供對照。</div>';   // V68-15:說明收斂成一句
   box.innerHTML=h;
   makeSortable(box);   // V68-4:欄頭點擊排序（廠區欄=廠號序、年度欄=數值序，再點切升降）
 }
