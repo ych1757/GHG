@@ -2446,8 +2446,9 @@ const fxStrip=s=>String(s||'').replace(/格讀|反推/g,'').replace(/[·．,;；
 // V68-15:游標一句話講完＝「誰 的 哪一類 用 什麼」(使用者回饋 2025 那句太複雜)。
 // 不再串接 evidence——★註記全是內部查證用語(逐列反推/對平),使用者看不懂;業務資訊已在廠區/類別/原因三段內。
 const fxTipLine=(v,mstd)=>{   // mstd=標準值(僅「僅位數差」變體帶入)
-  const s=String(v.applicable_scope||'').trim(), i=s.lastIndexOf(' ');
-  const who=fxStrip(i>0?s.slice(0,i):s), cat=i>0?s.slice(i+1):'';   // scope 格式=「廠區 類別」
+  const s=fxStrip(String(v.applicable_scope||'').trim()), i=s.lastIndexOf(' ');
+  const multi=s.indexOf('；')>=0;   // V68-16:多段(一列涵蓋數個「廠區+類別」組合,如 id32)→原文直接用,不拆
+  const who=multi?s:(i>0?s.slice(0,i):s), cat=multi?'':(i>0?s.slice(i+1):'');   // 單段 scope 格式=「廠區 類別」
   const why=v.rate_type==='C15前年版'?'（前一年匯率）':(mstd?'（只是位數不同，值同標準 '+mstd+'）':'');
   return who+(cat?' 的 '+cat:'')+' 用 '+facEsc(v.currency)+' '+(v.rate_src_disp||parseFloat((1/v.to_usd).toPrecision(6)))+why;
 };
