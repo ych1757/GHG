@@ -33,6 +33,7 @@ table{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:6px}   /* 
 th,td{padding:6px 8px;text-align:right;border-bottom:1px solid #eef3f0;white-space:nowrap}
 th:first-child,td:first-child{text-align:left}thead th{background:var(--t);color:var(--d);font-weight:700}
 tr[onclick] td{cursor:pointer}
+table.fxtight th,table.fxtight td{padding:2px 8px;line-height:1.25}   /* V68-14:匯率兩視圖列高壓縮=20 廠一屏放得下(資料區優先) */
 tr[onclick]:hover td{background:#dff0e8;color:var(--d)}
 tr[onclick] td:last-child{color:var(--p);font-weight:700}
 #src_records,#q_result,#g_result,#su_result,#f_result{max-height:64vh;overflow:auto;border:1px solid #e3ece7;border-radius:8px}
@@ -268,8 +269,8 @@ td.fachl{background:#fffbe6!important;box-shadow:inset 3px 0 0 #e6a700}   /* V38
   </div>
 
   <div id="fac" class="card hide">
-    <div class="ftitle">📐 係數庫（手動輸入計算用·標準變了改這裡，未來輸入即套新係數）　<span style="font-weight:400;color:var(--g);font-size:11px">唯讀；編輯/新增待登入權限。已灌入 25_/26_ 批次與係數表實體；後續表實體走 33 系列 SQL 匯入（前端通用讀取，灌入即出現）</span></div>
-    <div class="row"><!-- V35-2:家族層表視角——係數表下拉=家族(同名一項);選定後 年度/地區 下拉自動改為該家族實體維度,變更任一篩選即重查 -->
+    <div class="ftitle">📐 係數庫（手動輸入計算用·標準變了改這裡，未來輸入即套新係數）　<span style="font-weight:400;color:var(--g);font-size:11px">唯讀；編輯／新增待登入權限</span></div><!-- V68-14:內部字樣(批次號/SQL 系列)移除,一般使用者看不懂又佔一行(同 answer-simple-no-internals) -->
+    <div class="row" id="f_selrow"><!-- V35-2:家族層表視角——係數表下拉=家族(同名一項);選定後 年度/地區 下拉自動改為該家族實體維度,變更任一篩選即重查 -->
       <div class="fld" style="min-width:260px;max-width:400px"><label>係數表（家族·選定列出條目）</label><select id="f_table" onchange="fTblFamChg()"><option value="">🔍 全庫搜尋／總覽</option></select></div>
       <div class="fld" id="f_advcat" style="max-width:200px;display:none"><label>類別（進階篩選）</label><!-- V44-1:使用者7/14「已無存在需求」——家族即類別,永久隱藏(元素保留供查詢邏輯讀空值) --><select id="f_cat" onchange="loadFactors()"><option value="">全部</option></select></div>
       <div class="fld" id="f_advyear" style="max-width:130px"><label>年度（進階）</label><select id="f_year" onchange="loadFactors()"><option value="">全部</option></select></div>
@@ -2031,7 +2032,7 @@ function fsDimSync(fid){   // 雙向同步:直接選條目/反向定位命中→
 
 // ---------- V36 需求②→V38 改版:係數庫表視角「📋 列表(條目·預設) / 🎛 維度對照 / 📜 逐組成列」 ----------
 let FAC_VIEW='list', _facLast=null, _fdmList=[];   // V38-1:FAC_VIEW 'list'=條目列表(一條目一列只顯Total,預設)/'dim'=維度對照(組成攤欄);「逐組成列」視圖已移除(組成資訊維度對照全有;搜尋/單條鎖定長表不受影響);_facLast=最近一次表視角查詢結果(切換檢視不重查);_fdmList=矩陣格→條目集(點格用索引傳遞)
-function facBackTop(){const ft=document.getElementById('f_table'); if(ft){ft.value=''; fTblFamChg();}}   // V39-2:一鍵回第一層
+function facBackTop(){if(window.fxChrome)fxChrome(false); const ft=document.getElementById('f_table'); if(ft){ft.value=''; fTblFamChg();}}   // V39-2:一鍵回第一層(V68-14:還原被匯率表收起的控制列)
 function facViewSet(v){FAC_VIEW=v; facRender();}
 function facRender(){   // 表視角渲染入口:V38 預設條目列表;維度對照(有維度定義家族才出鈕)可切換;單條鎖定(↗未掛表)沿用長表不出鈕;搜尋/跨表結果不經此(facSearch 直呼長表)
   const L=_facLast; if(!L){loadFactors();return;}
@@ -2269,6 +2270,7 @@ function fTblFamChg(skipLoad){
   if(skipLoad!==true)loadFactors();
 }
 async function loadFactors(){
+  if(window.fxChrome)fxChrome(false);   // V68-14:離開匯率兩視圖→還原被收起的控制列(放這裡=所有回一般視圖的路徑都涵蓋)
   const box=document.getElementById('f_result'), card=document.getElementById('f_tblcard');
   if(!sb){box.innerHTML='<div class="msg err">尚未連線</div>';return;}
   const ftEl=document.getElementById('f_table'); const fam=ftEl?ftEl.value:'';
@@ -2423,11 +2425,12 @@ async function fxOverview(){   // V41:匯率庫總覽(唯讀;年×幣別×用途
   const box=document.getElementById('f_result'); if(!box)return;
   const rows=[];
   Object.keys(FXR).sort().forEach(y=>{const yo=FXR[y]; Object.keys(yo).sort().forEach(c=>{(yo[c].list||[yo[c]]).forEach(r=>rows.push(r));});});
-  let h='<div style="display:flex;gap:8px;align-items:center;margin-top:8px"><button class="sec" style="padding:5px 12px;font-size:12.5px" onclick="facBackTop()">⬅ 回總覽</button>'
-    +'<button class="sec" style="padding:5px 12px;font-size:12.5px" onclick="fxMatrix()">⇄ 匯率表（廠×年）</button>'
-    +'<span class="ftitle" style="font-size:13px;margin:0">💱 年度匯率庫（'+rows.length+' 筆·唯讀）</span>'
-    +'<span style="font-size:11px;color:var(--g)">歷史值=忠實可還原(登錄頁同年多值可切用途)；「集團統一版」待ESG定案後於此新增即全面生效</span></div>';
-  h+='<table style="font-size:12px;margin-top:6px"><thead><tr><th>年</th><th>幣別</th><th style="text-align:left">用途類別</th><th>1 USD＝</th><th>對USD</th><th style="text-align:left">適用範圍</th><th style="text-align:left">來源/證據</th></tr></thead><tbody>';
+  fxChrome(true);   // V68-14:同匯率表——本視圖用不到上方兩排控制
+  let h='<div style="display:flex;gap:8px;align-items:center;margin-top:4px;white-space:nowrap"><button class="sec" style="padding:3px 10px;font-size:12.5px;flex:0 0 auto" onclick="facBackTop()">⬅ 回總覽</button>'
+    +'<button class="sec" style="padding:3px 10px;font-size:12.5px;flex:0 0 auto" onclick="fxMatrix()">⇄ 匯率表（廠×年）</button>'
+    +'<span class="ftitle" style="font-size:13px;margin:0;flex:0 0 auto">💱 年度匯率庫（'+rows.length+' 筆·唯讀）</span>'
+    +'<span style="font-size:11px;color:var(--g);white-space:normal">歷史值＝忠實可還原（登錄頁同年多值可切用途）；「集團統一版」待 ESG 定案後於此新增即全面生效</span></div>';
+  h+='<table class="fxtight" style="font-size:12px;margin-top:4px"><thead><tr><th>年</th><th>幣別</th><th style="text-align:left">用途類別</th><th>1 USD＝</th><th>對USD</th><th style="text-align:left">適用範圍</th><th style="text-align:left">來源/證據</th></tr></thead><tbody>';
   rows.forEach(r=>{const main=(r.rate_type==='主流年版'||r.rate_type==='集團統一版'||r.rate_type==='定義值');
     h+='<tr'+(main?' style="background:#eef6f1;font-weight:600"':'')+'><td>'+r.rate_year+'</td><td>'+facEsc(r.currency)+'</td><td style="text-align:left">'+facEsc(fxTypeZh(r.rate_type))+'</td><td style="white-space:nowrap">'+(r.rate_src_disp||parseFloat((1/r.to_usd).toPrecision(6)))+' '+facEsc(r.currency)+'</td><td>'+r.to_usd+'</td><td style="text-align:left;font-size:11px;max-width:230px;white-space:normal">'+facEsc(fxStrip(r.applicable_scope||''))+'</td><td style="text-align:left;font-size:11px;max-width:260px;white-space:normal">'+facEsc(fxStrip(r.evidence||r.source||''))+'</td></tr>';});   // V68-7:三欄白話化(內部取證用語不顯示)
   box.innerHTML=h+'</tbody></table>';
@@ -2449,6 +2452,12 @@ const fxTipLine=(v,mstd)=>{   // V68-13:mstd=標準值顯示字串(僅「位數/
     +(mstd?'（與標準值 '+mstd+' 只差小數位數/末位）':'')
     +'｜'+fxStrip(v.applicable_scope||'')+note;   // V68-11:帶幣別(跨幣別標記如 C15 台幣計價)
 };
+// V68-14:資料區優先（[[ui-data-area-first]]）——匯率表是獨立唯讀視圖,上方「係數表家族選擇」與「全庫搜尋」都用不到,進本表收起、離開還原
+function fxChrome(on){
+  const sel=document.getElementById('f_selrow'), card=document.getElementById('f_tblcard');
+  if(sel)sel.style.display=on?'none':'';
+  if(card)card.style.display=on?'none':'';
+}
 async function fxMatrix(){   // V68-3:匯率表——列=廠區(01-20)、欄=年度（使用者 260827 指示）；唯讀,ghg_fx_rates 即時
   FXR=null; await ensureFX();
   const box=document.getElementById('f_result'); if(!box)return;
@@ -2486,11 +2495,13 @@ async function fxMatrix(){   // V68-3:匯率表——列=廠區(01-20)、欄=年
     if(vd<md&&(Math.abs(Math.floor(mn*f+1e-9)/f-vn)<1e-9||Math.abs(Math.round(mn*f)/f-vn)<1e-9))return true;
     return vd===md&&Math.abs(Math.round((vn-mn)*f))===1;
   };
-  let h='<div style="display:flex;gap:8px;align-items:center;margin-top:8px"><button class="sec" style="padding:5px 12px;font-size:12.5px" onclick="facBackTop()">⬅ 回總覽</button>'
-    +'<button class="sec" style="padding:5px 12px;font-size:12.5px" onclick="fxOverview()">⇄ 列表（年×幣別×用途）</button>'
-    +'<span class="ftitle" style="font-size:13px;margin:0">💱 匯率表（廠×年·唯讀）</span>'
-    +'<span style="font-size:11px;color:var(--g)">格＝1 USD 兌當地幣（<b>當年標準值</b>）；<sup style="color:#a9b8b0">+n</sup> 灰＝<b>實質用了不同匯率</b>；<sup style="color:#4a7ab5">+n</sup> 藍＝<b>投資C15 慣例</b>（用前一年匯率）；<sup style="color:#c9821e">+n</sup> 橘＝<b>僅小數位數/末位差</b>（值同標準）；游標看是哪裡、用了什麼；資料＝ghg_fx_rates 即時</span></div>';
-  h+='<table style="font-size:12.5px;margin-top:6px;width:auto"><thead><tr><th class="tl" style="text-align:left">廠區</th><th>幣別</th>'
+  fxChrome(true);   // V68-14:資料區優先——匯率表用不到上方「係數表家族」與「全庫搜尋」兩排,先收起
+  // V68-14:控制列壓一行(nowrap 不讓鈕折成兩行)、圖例縮短(去內部字樣「ghg_fx_rates 即時」)
+  let h='<div style="display:flex;gap:8px;align-items:center;margin-top:4px;white-space:nowrap"><button class="sec" style="padding:3px 10px;font-size:12.5px;flex:0 0 auto" onclick="facBackTop()">⬅ 回總覽</button>'
+    +'<button class="sec" style="padding:3px 10px;font-size:12.5px;flex:0 0 auto" onclick="fxOverview()">⇄ 列表（年×幣別×用途）</button>'
+    +'<span class="ftitle" style="font-size:13px;margin:0;flex:0 0 auto">💱 匯率表（廠×年·唯讀）</span>'
+    +'<span style="font-size:11px;color:var(--g);white-space:normal">格＝1 USD 兌當地幣（<b>當年標準值</b>）；<sup style="color:#a9b8b0">+n</sup> 灰＝<b>實質用了不同匯率</b>；<sup style="color:#4a7ab5">+n</sup> 藍＝<b>投資C15 慣例</b>（前一年匯率）；<sup style="color:#c9821e">+n</sup> 橘＝<b>僅位數/末位差</b>（值同標準）；游標看是哪裡、用了什麼</span></div>';
+  h+='<table class="fxtight" style="font-size:12.5px;margin-top:4px;width:auto"><thead><tr><th class="tl" style="text-align:left">廠區</th><th>幣別</th>'   // V68-14:fxtight=列高壓縮,20 廠一屏放得下
     +years.map(y=>'<th style="min-width:96px;text-align:right">'+y+'<span style="display:inline-block;width:20px"></span></th>').join('')+'</tr></thead><tbody>';   // V68-9:表頭同樣保留20px尾槽→數字右緣=年度右緣,+n掛年度後方溝槽
   Object.keys(PLANT2OMS).sort((a,b)=>(+a)-(+b)).forEach(pc=>{
     const sid=PLANT2OMS[pc], st=SI[sid]||{}, cur=CURMAP[st.country]||null;
@@ -2518,7 +2529,7 @@ async function fxMatrix(){   // V68-3:匯率表——列=廠區(01-20)、欄=年
     h+='</tr>';
   });
   h+='</tbody></table>'
-    +'<div style="font-size:11px;color:var(--g);padding:6px 2px">USD＝1（固定）；SG 新加坡／MY 馬來西亞：庫內無該幣別紀錄（顯示「—」）；標準值全廠共用；+n＝該廠該年<b>真正用於計算</b>的非標準匯率（2022-24 已申報不可改，故留標）；游標可看幣別——如越南 2024 部分表單用人民幣 7.0916。</div>';
+    +'<div style="font-size:11px;color:var(--g);padding:4px 2px">USD＝1（固定）；SG 新加坡／MY 馬來西亞：庫內無該幣別紀錄（顯示「—」）；標準值全廠共用；+n＝該廠該年<b>真正用於計算</b>的非標準匯率（2022-24 已申報不可改，故留標）；游標可看幣別——如越南 2024 部分表單用人民幣 7.0916。</div>';
   box.innerHTML=h;
   makeSortable(box);   // V68-4:欄頭點擊排序（廠區欄=廠號序、年度欄=數值序，再點切升降）
 }
