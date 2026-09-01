@@ -2445,12 +2445,12 @@ const fxStrip=s=>String(s||'').replace(/格讀|反推/g,'').replace(/[·．,;；
   .replace(/[｜|]{2,}/g,'｜').replace(/；{2,}/g,'；').replace(/^[｜|;；·\s]+|[｜|;；·\s]+$/g,'');
 // V68-15:游標一句話講完＝「誰 的 哪一類 用 什麼」(使用者回饋 2025 那句太複雜)。
 // 不再串接 evidence——★註記全是內部查證用語(逐列反推/對平),使用者看不懂;業務資訊已在廠區/類別/原因三段內。
+// V68-17:句型統一,零例外——一律「{適用範圍} 用 {幣別} {值}（{原因}）」。
+// 適用範圍本身就是「廠區 類別」(多組以「；」並列),不再拆欄組字,故單段/多段長相一致。
 const fxTipLine=(v,mstd)=>{   // mstd=標準值(僅「僅位數差」變體帶入)
-  const s=fxStrip(String(v.applicable_scope||'').trim()), i=s.lastIndexOf(' ');
-  const multi=s.indexOf('；')>=0;   // V68-16:多段(一列涵蓋數個「廠區+類別」組合,如 id32)→原文直接用,不拆
-  const who=multi?s:(i>0?s.slice(0,i):s), cat=multi?'':(i>0?s.slice(i+1):'');   // 單段 scope 格式=「廠區 類別」
   const why=v.rate_type==='C15前年版'?'（前一年匯率）':(mstd?'（只是位數不同，值同標準 '+mstd+'）':'');
-  return who+(cat?' 的 '+cat:'')+' 用 '+facEsc(v.currency)+' '+(v.rate_src_disp||parseFloat((1/v.to_usd).toPrecision(6)))+why;
+  return fxStrip(String(v.applicable_scope||'').trim())+' 用 '+facEsc(v.currency)+' '
+    +(v.rate_src_disp||parseFloat((1/v.to_usd).toPrecision(6)))+why;
 };
 // V68-14:資料區優先（[[ui-data-area-first]]）——匯率表是獨立唯讀視圖,上方「係數表家族選擇」與「全庫搜尋」都用不到,進本表收起、離開還原
 function fxChrome(on){
