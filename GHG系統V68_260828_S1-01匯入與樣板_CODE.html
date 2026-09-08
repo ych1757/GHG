@@ -2464,7 +2464,7 @@ async function fxMatrix(){   // V68-3:匯率表——列=廠區(01-20)、欄=年
   box.innerHTML='載入中…';
   let SI={};
   try{const {data}=await sb.from('ghg_sites').select('site_id,site_name,country'); (data||[]).forEach(x=>SI[x.site_id]=x);}catch(e){}
-  const CURMAP={TW:'TWD',CN:'CNY',TH:'THB',VN:'VND',US:'USD'};
+  const CURMAP={TW:'TWD',CN:'CNY',TH:'THB',VN:'VND',US:'USD',SG:'SGD',MY:'MYR'};   // V68-19:補 SG/MY 幣別（ESG 260904 定調過去年度沿用兩段轉換結果,匯率庫補 SGD/MYR 後本表即有值）
   const all=[];
   Object.keys(FXR||{}).forEach(y=>Object.keys(FXR[y]).forEach(c=>(FXR[y][c].list||[FXR[y][c]]).forEach(r=>all.push(r))));
   const years=[...new Set(all.map(r=>String(r.rate_year)))].sort();
