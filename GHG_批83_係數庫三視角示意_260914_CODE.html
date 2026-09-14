@@ -29,7 +29,7 @@ td.open,th.open{color:#8a9a92;font-style:italic}
 .foot{color:#8a9a92;font-size:10px;margin-top:16px}
 </style></head><body><div class="wrap">
 <h1>係數庫三視角示意 <small>以天然氣 A01-01 為例｜批83 2026/09/14｜信錦集團 DTO｜資料＝系統現值，供 ESG 收意見，未上線</small></h1>
-<div class="key"><b class="t">★重點</b><ul><li>係數的身分＝<b>排放源 × 區域 × 年度</b>三個維度，氣體是格內的列。代號寫成 <span class="code">A01-01·TW·2025</span>（排放源新碼·區域·效期起年）；舊的內部流水號不再顯示，只留在資料庫追溯。</li><li>同一份係數資料，三種切法給三種人：<b>維護</b>（ESG 年度開帳）、<b>追溯</b>（查核從碳排回看係數）、<b>總覽</b>（主管看全集團一年用了哪些係數）。</li><li>三個視角都看得到同一個代號；查詢頁的明細清單也會加一欄「係數代號」，每筆直接顯示。</li><li>範疇三的品項維度不在這頁；跟排放源編碼一樣，一個家族一個家族定。</li></ul></div>
+<div class="key"><b class="t">★重點</b><ul><li>係數的身分＝<b>排放源 × 區域 × 年度</b>三個維度，氣體是格內的列。代號寫成 <span class="code">A01-01·TW·2025</span>（排放源新碼·區域·效期起年）；舊的內部流水號不再顯示，只留在資料庫追溯。</li><li>同一份係數資料，三種切法給三種人：<b>維護</b>（ESG 年度開帳）、<b>追溯</b>（查核從碳排回看係數）、<b>總覽</b>（主管看全集團一年用了哪些係數）。</li><li>三個視角都看得到同一個代號；查詢頁的明細清單也會加一欄「係數代號」，每筆直接顯示。</li><li>總覽一次看一年（預設現行年度，對應年度報告），列依「範疇 › 類別 › 排放源 › 區域」排，可再用區域篩選；沒被用到的係數不列。</li><li>範疇三的品項維度不在這頁；跟排放源編碼一樣，一個家族一個家族定。</li></ul></div>
 <h2>視角一｜維護：排放源矩陣（區域 × 年度 × 氣體）<span style="font-weight:400;color:#6b7f76;font-size:12px;margin-left:10px">範疇一 › 1.1 固定式燃燒源之直接排放 › <span class="code">A01-01</span> 天然氣 <span class="grey">現行 S1-01</span></span></h2><p class="sub">給 ESG 年度開帳用。一個排放源攤開看，哪年變了（🟡）、哪年沿用、最右欄是下一年開帳預覽（沿用前一年、待確認）。格＝係數（固定 10 位）× GWP。</p>
 <table><thead><tr><th class="l">區域 ／ 項目</th><th>2022</th><th>2023</th><th>2024</th><th>2025</th><th class="open">2026 開帳預覽</th></tr></thead><tbody>
 <tr class="rg"><td class="l" colspan="6">範疇一 › 1.1 固定式燃燒源之直接排放 › <span class="code">A01-01</span> 天然氣 <span class="grey">現行 S1-01</span></td></tr>
@@ -99,6 +99,6 @@ td.open,th.open{color:#8a9a92;font-style:italic}
 <tr><td class="l">A01-01 天然氣</td><td class="l">CN 中國</td><td>2025</td><td class="l"><span class="code">A01-01·CN·2025</span></td><td class="l">FQ、LS、TC</td><td>36</td><td>766,044.53</td><td>1654.6562</td><td title="CO2 2.1600000000×1">2.1600000000</td><td class="l">中國產品全生命週期-天然氣</td><td class="l">已確認</td></tr>
 <tr class="rg"><td class="l">A01-01 天然氣</td><td class="l">CN 中國</td><td>四年</td><td class="l">小計</td><td></td><td>182</td><td>3,776,580.76</td><td>8157.4144</td><td></td><td></td><td></td></tr>
 </tbody></table>
-<div class="q"><b>請 ESG 回饋</b><ol><li>係數的維度就這三個（排放源／區域／年度）加氣體列，夠嗎？區域用國別（TW／CN／VN／TH…）夠不夠，還是有同國不同廠要用不同係數的情況？</li><li>總覽視角：以「年度」為主（一年全集團）還是以「區域」為主？沒被用到的係數要不要灰字列出？</li></ol></div>
+<div class="q"><b>請 ESG 回饋</b><ol><li>係數的維度就這三個（排放源／區域／年度）加氣體列，夠嗎？區域用國別（TW／CN／VN／TH…）夠不夠，還是有同國不同廠要用不同係數的情況？</li></ol></div>
 <div class="foot">資料來源：系統資料庫 2026/09/14 現值（天然氣 S1-01→A01-01：係數 5 條、明細 230 筆、廠區 GT／FQ／LS／TC）。示意頁，非正式版本；正式畫面在 GHG 系統係數庫。</div>
 </div></body></html>
