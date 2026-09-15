@@ -38,12 +38,12 @@ h2{font-size:14px;color:var(--d);margin:18px 0 6px}
 @media(max-width:900px){.two{grid-template-columns:1fr}.fac{grid-template-columns:repeat(2,1fr)}}
 </style></head><body>
 <h1>批94 範疇一燃料類（形狀 A）輸入畫面示意 — 「設備 × 填報方式」</h1>
-<div class="sub">回應 9/15 四點：①每氣體係數 × GWP 之外要有<b>合成當量</b> ②天然氣、柴油、LPG…<b>同一種版面</b> ③不按月填的設備，<b>小計／合計也要有數字</b> ④以後同類別多台設備<b>怎麼輸入</b>。只是示意，不連資料庫。</div>
+<div class="sub">回應 9/15 四點：①每氣體係數 × GWP 之外要有<b>合成當量</b> ②天然氣、柴油、LPG…<b>同一種版面</b> ③不按月填的設備，<b>小計／合計也要有數字</b> ④以後同類別多台設備<b>怎麼輸入</b> ⑤（第二輪）有的廠<b>按操作記錄換算</b>用量、有的廠<b>管理部統一採購</b>、設備只是備註。只是示意，不連資料庫。</div>
 
 <div class="card">
   <div class="bar"><b>A01-02 柴油（固定）</b><span style="color:var(--g)">逐年登錄</span>
     廠區 <select><option>03 VN Syncmold Vietnam</option></select> 年度 <select><option>2025</option></select>
-    <span class="chip">A01-02·VN·2025</span>
+    <span class="chip">A01-02·VN·2025</span> <span style="font-size:12px">登錄粒度 <span class="mode"><span class="on">依設備分列</span><span>全廠合計（設備備註）</span></span></span>
     <span style="margin-left:auto;display:flex;gap:8px"><button>＋ 新增設備</button><button>⬇ 樣板</button><button>⬆ 匯入</button><button class="pri">💾 儲存</button></span></div>
 
   <div class="fac">
@@ -85,13 +85,26 @@ h2{font-size:14px;color:var(--d);margin:18px 0 6px}
   <!-- 設備 3：推估 -->
   <div class="eq">
     <div class="eqh"><b>發電機（第 2 台）</b> <span>型號 <input value="" placeholder="請填" style="width:90px"></span> <span>負責部門 <input value="" style="width:90px"></span> <span>資料來源 <input value="發電機推估表" style="width:130px"></span> <span>單位 <select><option>公升</option></select></span>
-      <span>填報方式 <span class="mode"><span>逐月</span><span>年量</span><span class="on">推估</span></span></span></div>
-    <table><thead><tr><th class="l">推估參數</th><th>功率 kVA</th><th>右表油耗 gal/hr</th><th>每次運轉 hr</th><th>次數／年</th><th>年耗油 L＊</th><th>排放當量 t＊</th></tr></thead>
+      <span>填報方式 <span class="mode"><span>逐月</span><span>年量</span><span class="on">換算</span></span></span></div>
+    <table><thead><tr><th class="l">換算（操作記錄）</th><th>記錄項目</th><th>記錄值</th><th>換算率</th><th>換算率單位</th><th>使用量 L＊</th><th>排放當量 t＊</th></tr></thead>
     <tbody>
-      <tr><td class="l">2025 全年</td><td class="in">—</td><td class="in">25.1</td><td class="in">16.35</td><td class="in">1</td><td class="ro">1,553.3072</td><td class="ro">17.8163</td></tr>
+      <tr><td class="l">2025 全年</td><td class="in">運轉時數 hr</td><td class="in">16.35</td><td class="in">95.0</td><td class="in">L/hr（25.1 gal/hr）</td><td class="ro">1,553.3072</td><td class="ro">17.8163</td></tr>
       <tr class="tot"><td class="l">小計</td><td></td><td></td><td></td><td></td><td class="ro">1,553.3072</td><td class="ro">17.8163</td></tr>
     </tbody></table>
-    <div class="note">「推估」＝照 ESG 收集表 S1固定2 的算法：油耗（gal/hr，依 kVA 查表）× 每次運轉小時 × 次數 × 3.785；參數存 extra，年量系統算。</div>
+    <div class="note">「換算」＝按操作記錄換算用量：記錄值 × 換算率 ＝ 使用量（發電機＝運轉時數 × L/hr；也可以是產量 × L/件、里程 × L/km）。記錄項目與換算率由填的人給，系統只算乘法並留痕；ESG 收集表 S1固定2 的 gal/hr 表就是一種換算率。</div>
+  </div>
+
+  <!-- 設備 4：全廠合計（採購制） -->
+  <div class="eq" style="border-color:#c9d9cf;background:#fbfdfc">
+    <div class="eqh"><b>全廠採購（管理部）</b> <span style="color:var(--w);font-size:11px">← 登錄粒度切到「全廠合計」時長這樣：整廠一塊，設備只是備註</span> <span>設備備註 <input value="發電機 ×2、消防泵" style="width:170px"></span> <span>資料來源 <input value="採購發票／領用單" style="width:130px"></span> <span>單位 <select><option>公升</option></select></span>
+      <span>填報方式 <span class="mode"><span class="on">逐月</span><span>年量</span><span>換算</span></span></span></div>
+    <table><thead><tr><th class="l" style="width:60px">月</th><th>採購量（公升）</th><th>費用(未稅) 越南盾</th><th>費用(美金)＊</th><th>CO2 碳排</th><th>CH4 碳排</th><th>N2O 碳排</th><th>排放當量 t＊</th></tr></thead>
+    <tbody>
+      <tr><td class="l">1月</td><td class="in">200</td><td class="in">5,000,000</td><td class="ro">199.04</td><td class="ro">0.4959</td><td class="ro">0.0017</td><td class="ro">1.7963</td><td class="ro">2.2940</td></tr>
+      <tr><td class="l">…</td><td class="in"></td><td class="in"></td><td class="ro"></td><td class="ro"></td><td class="ro"></td><td class="ro"></td><td class="ro"></td></tr>
+      <tr class="tot"><td class="l">小計</td><td>1,648.0117</td><td></td><td class="ro"></td><td class="ro">4.0864</td><td class="ro">0.0142</td><td class="ro">14.8020</td><td class="ro">18.9026</td></tr>
+    </tbody></table>
+    <div class="note">存法一樣（每月一列），equipment_name 填「全廠採購（管理部）」，設備備註存 extra；之後要改成依設備分列，再新增設備塊、把量搬過去即可，不用改結構。</div>
   </div>
 
   <div class="grand">合計（03 VN · 2025 · A01-02）：1,648.0117 公升　｜　排放當量 18.9026 tCO₂e　｜　3 台設備（逐月 1、年量 1、推估 1）</div>
@@ -106,7 +119,7 @@ h2{font-size:14px;color:var(--d);margin:18px 0 6px}
   </div>
   <div class="card">
     <b>③ 不按月填的設備也要有總數</b><br>每台設備自己選「逐月／年量／推估」；三種都在該塊「小計」出數，最下面「合計」把所有設備加起來。歷史年筆不再放在上方「年度總量」區，而是變成「年量」塊。<br><br>
-    <b>④ 同類別多台設備怎麼輸入</b><br>＋新增設備 → 填名稱／型號／部門／單位／填報方式 → 出一塊；設備清單留成主檔，隔年開帳自動帶出同一批設備讓人填。樣板／匯入也照設備列（逐月 12 行、年量 1 行）。
+    <b>⑤ 廠區作法不同</b><br>每廠每類別選「登錄粒度」：依設備分列（有領用單／操作記錄的廠）或全廠合計（管理部統一採購，設備只備註）。同一張畫面，只差塊怎麼開；兩種都能逐月／年量／換算。<br><br><b>④ 同類別多台設備怎麼輸入</b><br>＋新增設備 → 填名稱／型號／部門／單位／填報方式 → 出一塊；設備清單留成主檔，隔年開帳自動帶出同一批設備讓人填。樣板／匯入也照設備列（逐月 12 行、年量 1 行）。
   </div>
 </div>
 
