@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>批94 範疇一燃料輸入畫面示意</title>
+<style>
+:root{--p:#1B8A60;--d:#14603F;--t:#e3f2e9;--g:#6b7f76;--w:#b8860b;--bg:#f4f7f5}
+body{margin:0;background:var(--bg);font:13px/1.5 "Microsoft JhengHei","Noto Sans TC",system-ui,sans-serif;color:#223;padding:18px 24px 60px}
+h1{font-size:18px;color:var(--d);margin:0 0 4px}
+.sub{color:var(--g);font-size:12px;margin-bottom:14px}
+.card{background:#fff;border:1px solid #d7e5dd;border-radius:10px;padding:12px 14px;margin-bottom:14px}
+.bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+.bar b{color:var(--d);font-size:15px}
+.chip{background:var(--t);color:var(--d);border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700}
+select,input{font:inherit;padding:4px 6px;border:1px solid #cfd8d3;border-radius:6px}
+button{font:inherit;padding:5px 12px;border-radius:8px;border:1px solid var(--p);background:#fff;color:var(--d);cursor:pointer}
+button.pri{background:var(--p);color:#fff}
+.fac{background:#eef4f0;border:1px solid #d7e5dd;border-radius:8px;padding:8px 12px;display:grid;grid-template-columns:repeat(6,1fr);gap:6px 14px;font-size:12px}
+.fac .k{color:var(--g);font-size:11px}.fac .v{font-weight:700;color:var(--d)}.fac .eq{background:#fff8e1;border-radius:6px;padding:4px 8px}
+table{border-collapse:collapse;width:100%;font-size:12.5px}
+th,td{border-bottom:1px solid #eef3f0;padding:4px 8px;text-align:right;white-space:nowrap}
+th{color:var(--d);background:#fafcfb;font-weight:700}
+th.l,td.l{text-align:left}
+td.ro{background:#f2f6f4;color:#3f544a}
+td.in{background:#fff;border:1px solid #d7e5dd}
+tr.tot td{background:#f2f8f5;font-weight:800;color:var(--d);border-top:2px solid var(--p)}
+.eq{border:1px solid #d7e5dd;border-radius:8px;margin-top:10px;overflow:hidden}
+.eqh{background:#eef4f0;padding:6px 10px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;font-size:12px}
+.eqh b{font-size:13px;color:var(--d)}
+.mode{display:inline-flex;border:1px solid var(--p);border-radius:999px;overflow:hidden}
+.mode span{padding:2px 10px;font-size:11px;color:var(--d)}.mode span.on{background:var(--p);color:#fff}
+.note{font-size:11px;color:var(--g);padding:6px 10px;border-top:1px dashed #e5ede9}
+.grand{padding:8px 12px;font-weight:800;color:var(--d);border-top:2px solid var(--p);font-size:13px;background:#f7fbf9}
+.legend{font-size:11px;color:var(--g);margin-top:6px}
+.q{background:#fff8e1;border-left:4px solid var(--w);padding:8px 12px;border-radius:6px;margin:10px 0;font-size:12.5px}
+.ok{color:var(--p);font-weight:700}
+.diff{color:#a33;font-weight:700}
+h2{font-size:14px;color:var(--d);margin:18px 0 6px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:900px){.two{grid-template-columns:1fr}.fac{grid-template-columns:repeat(2,1fr)}}
+</style></head><body>
+<h1>批94 範疇一燃料類（形狀 A）輸入畫面示意 — 「設備 × 填報方式」</h1>
+<div class="sub">回應 9/15 四點：①每氣體係數 × GWP 之外要有<b>合成當量</b> ②天然氣、柴油、LPG…<b>同一種版面</b> ③不按月填的設備，<b>小計／合計也要有數字</b> ④以後同類別多台設備<b>怎麼輸入</b>。只是示意，不連資料庫。</div>
+
+<div class="card">
+  <div class="bar"><b>A01-02 柴油（固定）</b><span style="color:var(--g)">逐年登錄</span>
+    廠區 <select><option>03 VN Syncmold Vietnam</option></select> 年度 <select><option>2025</option></select>
+    <span class="chip">A01-02·VN·2025</span>
+    <span style="margin-left:auto;display:flex;gap:8px"><button>＋ 新增設備</button><button>⬇ 樣板</button><button>⬆ 匯入</button><button class="pri">💾 儲存</button></span></div>
+
+  <div class="fac">
+    <div><div class="k">CO2</div><div class="v">2.4796000000</div><div class="k">KgCO2/L × GWP 1</div></div>
+    <div><div class="k">CH4</div><div class="v">0.0002900000</div><div class="k">KgCO2/L × GWP 29.8</div></div>
+    <div><div class="k">N2O</div><div class="v">0.0329000000</div><div class="k">KgCO2/L × GWP 273</div></div>
+    <div class="eq"><div class="k">合成當量 ★新增</div><div class="v">11.4699420000</div><div class="k">kgCO2e/L（三氣體加總）</div></div>
+    <div><div class="k">匯率</div><div class="v">25,121.0000</div><div class="k">2025 越南盾／USD（主流年版）</div></div>
+    <div><div class="k">來源</div><div class="v" style="font-weight:400">UK Conversion Factors-2024</div><div class="k">係數庫即時，改係數不改這裡</div></div>
+  </div>
+  <div class="legend">這一列所有燃料類別（天然氣、柴油固定／移動、LPG、汽油）都長一樣；天然氣現在的版面也改成這個。</div>
+
+  <!-- 設備 1：逐月 -->
+  <div class="eq">
+    <div class="eqh"><b>消防泵</b> <span>型號 <input value="—" style="width:80px"></span> <span>負責部門 <input value="管理部" style="width:90px"></span> <span>資料來源 <input value="領用單統計表" style="width:130px"></span> <span>單位 <select><option>公升</option><option>公噸</option></select></span>
+      <span>填報方式 <span class="mode"><span class="on">逐月</span><span>年量</span><span>推估</span></span></span></div>
+    <table><thead><tr><th class="l" style="width:60px">月</th><th>使用量（公升）</th><th>費用(未稅) 越南盾</th><th>費用(美金)＊</th><th>CO2 碳排</th><th>CH4 碳排</th><th>N2O 碳排</th><th>排放當量 t＊</th></tr></thead>
+    <tbody>
+      <tr><td class="l">1月</td><td class="in">0</td><td class="in"></td><td class="ro">—</td><td class="ro">0.0000</td><td class="ro">0.0000</td><td class="ro">0.0000</td><td class="ro">0.0000</td></tr>
+      <tr><td class="l">…</td><td class="in"></td><td class="in"></td><td class="ro"></td><td class="ro"></td><td class="ro"></td><td class="ro"></td><td class="ro"></td></tr>
+      <tr><td class="l">4月</td><td class="in">5.0000</td><td class="in"></td><td class="ro">—</td><td class="ro">0.0124</td><td class="ro">0.0000</td><td class="ro">0.0449</td><td class="ro">0.0573</td></tr>
+      <tr><td class="l">12月</td><td class="in">0</td><td class="in"></td><td class="ro">—</td><td class="ro">0.0000</td><td class="ro">0.0000</td><td class="ro">0.0000</td><td class="ro">0.0000</td></tr>
+      <tr class="tot"><td class="l">小計</td><td>5.0000</td><td></td><td class="ro"></td><td class="ro">0.0124</td><td class="ro">0.0000</td><td class="ro">0.0449</td><td class="ro">0.0573</td></tr>
+    </tbody></table>
+  </div>
+
+  <!-- 設備 2：年量 -->
+  <div class="eq">
+    <div class="eqh"><b>發電機 NTA855G7</b> <span>型號 <input value="NTA855G7" style="width:90px"></span> <span>負責部門 <input value="" style="width:90px"></span> <span>資料來源 <input value="發電機推估表" style="width:130px"></span> <span>單位 <select><option>公升</option></select></span>
+      <span>填報方式 <span class="mode"><span>逐月</span><span class="on">年量</span><span>推估</span></span></span></div>
+    <table><thead><tr><th class="l" style="width:60px">期間</th><th>使用量（公升）</th><th>費用(未稅) 越南盾</th><th>費用(美金)＊</th><th>CO2 碳排</th><th>CH4 碳排</th><th>N2O 碳排</th><th>排放當量 t＊</th></tr></thead>
+    <tbody>
+      <tr><td class="l">2025 全年</td><td class="in">89.7045</td><td class="in"></td><td class="ro">—</td><td class="ro">0.2224</td><td class="ro">0.0008</td><td class="ro">0.8057</td><td class="ro">1.0289</td></tr>
+      <tr class="tot"><td class="l">小計</td><td>89.7045</td><td></td><td class="ro"></td><td class="ro">0.2224</td><td class="ro">0.0008</td><td class="ro">0.8057</td><td class="ro">1.0289</td></tr>
+    </tbody></table>
+    <div class="note">「年量」＝只填一格全年數，不拆月；存成一列（月份空白）。歷史匯入的年筆就直接以這種塊顯示，不再另起「年度總量」區。之後想改逐月，按「逐月」切換，年量自動填到 12 月或平均分攤（二選一，待定）。</div>
+  </div>
+
+  <!-- 設備 3：推估 -->
+  <div class="eq">
+    <div class="eqh"><b>發電機（第 2 台）</b> <span>型號 <input value="" placeholder="請填" style="width:90px"></span> <span>負責部門 <input value="" style="width:90px"></span> <span>資料來源 <input value="發電機推估表" style="width:130px"></span> <span>單位 <select><option>公升</option></select></span>
+      <span>填報方式 <span class="mode"><span>逐月</span><span>年量</span><span class="on">推估</span></span></span></div>
+    <table><thead><tr><th class="l">推估參數</th><th>功率 kVA</th><th>右表油耗 gal/hr</th><th>每次運轉 hr</th><th>次數／年</th><th>年耗油 L＊</th><th>排放當量 t＊</th></tr></thead>
+    <tbody>
+      <tr><td class="l">2025 全年</td><td class="in">—</td><td class="in">25.1</td><td class="in">16.35</td><td class="in">1</td><td class="ro">1,553.3072</td><td class="ro">17.8163</td></tr>
+      <tr class="tot"><td class="l">小計</td><td></td><td></td><td></td><td></td><td class="ro">1,553.3072</td><td class="ro">17.8163</td></tr>
+    </tbody></table>
+    <div class="note">「推估」＝照 ESG 收集表 S1固定2 的算法：油耗（gal/hr，依 kVA 查表）× 每次運轉小時 × 次數 × 3.785；參數存 extra，年量系統算。</div>
+  </div>
+
+  <div class="grand">合計（03 VN · 2025 · A01-02）：1,648.0117 公升　｜　排放當量 18.9026 tCO₂e　｜　3 台設備（逐月 1、年量 1、推估 1）</div>
+  <div class="legend">＊灰底＝系統算；黃底＝未存變更；每塊「小計」不管哪種填法都有數；設備清單＝該廠該類別的設備主檔（＋新增／停用，隔年帶入）。</div>
+</div>
+
+<h2>四點怎麼落地</h2>
+<div class="two">
+  <div class="card">
+    <b>① 合成當量</b><br>係數列多一格「合成當量 kgCO2e/單位」＝Σ 係數×GWP，和係數庫矩陣的「合成當量」同一個數；單一氣體類別（中國柴油 3.15 tCO2e/t）也顯示。<br><br>
+    <b>② 不同類別同一版面</b><br>天然氣改用這個通用模組（設定驅動：單位、幣別、係數自動）；天然氣特有的「帳單期間」變成逐月表的選填欄。以後 LPG、移動柴油、汽油都是同一張畫面。
+  </div>
+  <div class="card">
+    <b>③ 不按月填的設備也要有總數</b><br>每台設備自己選「逐月／年量／推估」；三種都在該塊「小計」出數，最下面「合計」把所有設備加起來。歷史年筆不再放在上方「年度總量」區，而是變成「年量」塊。<br><br>
+    <b>④ 同類別多台設備怎麼輸入</b><br>＋新增設備 → 填名稱／型號／部門／單位／填報方式 → 出一塊；設備清單留成主檔，隔年開帳自動帶出同一批設備讓人填。樣板／匯入也照設備列（逐月 12 行、年量 1 行）。
+  </div>
+</div>
+
+<div class="q"><b>要請你定的兩件事</b>：(a) 年量塊切到逐月時，數字放 12 月還是平均攤 12 個月？（建議：放 12 月，備註「年量轉入」）　(b) 推估表要不要做成畫面（等於把 ESG 的 S1固定2 搬進系統），還是先只做「逐月／年量」兩種、推估以年量手填？（建議：先兩種，推估第二階段）</div>
+<div class="legend">GHG 系統｜DTO｜2026-09-15｜示意頁，不存資料</div>
+</body></html>
