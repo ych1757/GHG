@@ -4066,6 +4066,7 @@ window.s101Go=async function(){
    V72-2：有月份資料的設備塊預設展開；年量／換算塊預設收合
    V72-3：年量／換算列標籤只顯「全年」（年度已在上方，使用者 9/15）
    V72-4：CO2／CH4／N2O 三欄固定列出，該區未採用顯「—」（與天然氣頁一致）
+   V72-5：月份標籤固定寬右對齊（1月～12月對齊，「新」標記排成一直線）
    - 一頁＝一廠區 × 一年度 × 一類別；該廠此類別有幾台設備（或「全廠採購」）就幾塊，每塊自己選填報方式，下面的輸入表隨方式換：
        逐月＝12 列；年量＝1 列「全年」（使用者 9/15：只有年度使用量就不需要分月記錄，不拆月不平均攤）；換算＝記錄值 × 換算率 1 列
    - 係數列統一：各氣體係數×GWP ＋ 合成當量 ＋ 匯率 ＋ 來源；每塊「小計」不管哪種方式都有數，最下「合計」
@@ -4228,7 +4229,7 @@ function fuelRender(){
           h+='<tr><td colspan="'+NC+'" style="white-space:normal;padding:4px 10px 4px 38px;text-align:left;font-size:12px;background:#fff">換算：'+fld('記錄項目',tin('ci',e['換算記錄項目']||'',110,'運轉時數 hr'))+' '+fld('記錄值',tin('cv',e['換算記錄值']==null?'':e['換算記錄值'],80,''))+' × '+fld('換算率',tin('cr',e['換算率']==null?'':e['換算率'],80,''))+' '+fld('單位',tin('cu',e['換算率單位']||'',90,'L/hr'))+' ＝ 使用量 <b>'+nf(qv,4)+' '+esc(unit)+'</b></td></tr>';
           h+='<tr><td class="tl" style="padding-left:38px">'+'全年'+(r._new?' <span style="color:#b8860b;font-size:10px">新</span>':'')+'</td><td class="ro">'+nf(qv,4)+'</td>'+ip(r,'c',cv===''?'':nf(cv,2),chg)+'<td class="ro">'+((cv!==''&&R)?nf(cv/R.rate,2):'<span class="dash">—</span>')+'</td>'+gc.cells+'<td class="ro"><b>'+(gs.length&&!gc.bad?nf(gc.rt,4):'—')+'</b></td></tr>';
         }else{
-          h+='<tr><td class="tl" style="padding-left:38px">'+(b.mode==='m'?r.data_month+'月':'全年')+(r._new?' <span style="color:#b8860b;font-size:10px">新</span>':'')+'</td>'+ip(r,'q',qv?nf(qv,4):'',chg)+ip(r,'c',cv===''?'':nf(cv,2),chg)
+          h+='<tr><td class="tl" style="padding-left:38px"><span style="display:inline-block;min-width:34px;text-align:right">'+(b.mode==='m'?r.data_month+'月':'全年')+'</span>'+(r._new?' <span style="color:#b8860b;font-size:10px">新</span>':'')+'</td>'+ip(r,'q',qv?nf(qv,4):'',chg)+ip(r,'c',cv===''?'':nf(cv,2),chg)
             +'<td class="ro">'+((cv!==''&&R)?nf(cv/R.rate,2):'<span class="dash">—</span>')+'</td>'+gc.cells+'<td class="ro"><b>'+(gs.length&&!gc.bad?nf(gc.rt,4):'—')+'</b></td></tr>';
         }
       });
