@@ -94,9 +94,15 @@ h2{font-size:14px;color:var(--d);margin:18px 0 6px}
     <div class="note">「換算」＝按操作記錄換算用量：記錄值 × 換算率 ＝ 使用量（發電機＝運轉時數 × L/hr；也可以是產量 × L/件、里程 × L/km）。記錄項目與換算率由填的人給，系統只算乘法並留痕；ESG 收集表 S1固定2 的 gal/hr 表就是一種換算率。</div>
   </div>
 
+  <div class="grand">合計（03 VN · 2025 · A01-02）：1,648.0117 公升　｜　排放當量 18.9026 tCO₂e　｜　3 台設備（逐月 1、年量 1、換算 1）</div>
+  <div class="legend">＊灰底＝系統算；黃底＝未存變更；每塊「小計」不管哪種填法都有數；設備清單＝該廠該類別的設備主檔（＋新增／停用，隔年帶入）。</div>
+</div>
+
+<div class="card" style="border-color:#e0c97a">
+  <div class="bar"><b>同一頁，登錄粒度切到「全廠合計（設備備註）」時的樣子</b><span style="color:var(--w);font-size:12px">上面三塊設備會收起來，整廠只剩這一塊；兩種粒度不會同時出現，這裡分開畫只是給你對照。</span></div>
   <!-- 設備 4：全廠合計（採購制） -->
   <div class="eq" style="border-color:#c9d9cf;background:#fbfdfc">
-    <div class="eqh"><b>全廠採購（管理部）</b> <span style="color:var(--w);font-size:11px">← 登錄粒度切到「全廠合計」時長這樣：整廠一塊，設備只是備註</span> <span>設備備註 <input value="發電機 ×2、消防泵" style="width:170px"></span> <span>資料來源 <input value="採購發票／領用單" style="width:130px"></span> <span>單位 <select><option>公升</option></select></span>
+    <div class="eqh"><b>全廠採購（管理部）</b> <span>設備備註 <input value="發電機 ×2、消防泵" style="width:170px"></span> <span>資料來源 <input value="採購發票／領用單" style="width:130px"></span> <span>單位 <select><option>公升</option></select></span>
       <span>填報方式 <span class="mode"><span class="on">逐月</span><span>年量</span><span>換算</span></span></span></div>
     <table><thead><tr><th class="l" style="width:60px">月</th><th>採購量（公升）</th><th>費用(未稅) 越南盾</th><th>費用(美金)＊</th><th>CO2 碳排</th><th>CH4 碳排</th><th>N2O 碳排</th><th>排放當量 t＊</th></tr></thead>
     <tbody>
@@ -107,10 +113,7 @@ h2{font-size:14px;color:var(--d);margin:18px 0 6px}
     <div class="note">存法一樣（每月一列），equipment_name 填「全廠採購（管理部）」，設備備註存 extra；之後要改成依設備分列，再新增設備塊、把量搬過去即可，不用改結構。</div>
   </div>
 
-  <div class="grand">合計（03 VN · 2025 · A01-02）：1,648.0117 公升　｜　排放當量 18.9026 tCO₂e　｜　3 台設備（逐月 1、年量 1、推估 1）</div>
-  <div class="legend">＊灰底＝系統算；黃底＝未存變更；每塊「小計」不管哪種填法都有數；設備清單＝該廠該類別的設備主檔（＋新增／停用，隔年帶入）。</div>
 </div>
-
 <h2>四點怎麼落地</h2>
 <div class="two">
   <div class="card">
