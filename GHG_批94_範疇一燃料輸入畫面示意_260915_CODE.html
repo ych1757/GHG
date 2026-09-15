@@ -59,7 +59,7 @@ h2{font-size:14px;color:var(--d);margin:18px 0 6px}
   <!-- 設備 1：逐月 -->
   <div class="eq">
     <div class="eqh"><b>消防泵</b> <span>型號 <input value="—" style="width:80px"></span> <span>負責部門 <input value="管理部" style="width:90px"></span> <span>資料來源 <input value="領用單統計表" style="width:130px"></span> <span>單位 <select><option>公升</option><option>公噸</option></select></span>
-      <span>填報方式 <span class="mode"><span class="on">逐月</span><span>年量</span><span>推估</span></span></span></div>
+      <span>填報方式 <span class="mode"><span class="on">逐月</span><span>年量</span><span>換算</span></span></span></div>
     <table><thead><tr><th class="l" style="width:60px">月</th><th>使用量（公升）</th><th>費用(未稅) 越南盾</th><th>費用(美金)＊</th><th>CO2 碳排</th><th>CH4 碳排</th><th>N2O 碳排</th><th>排放當量 t＊</th></tr></thead>
     <tbody>
       <tr><td class="l">1月</td><td class="in">0</td><td class="in"></td><td class="ro">—</td><td class="ro">0.0000</td><td class="ro">0.0000</td><td class="ro">0.0000</td><td class="ro">0.0000</td></tr>
@@ -73,7 +73,7 @@ h2{font-size:14px;color:var(--d);margin:18px 0 6px}
   <!-- 設備 2：年量 -->
   <div class="eq">
     <div class="eqh"><b>發電機 NTA855G7</b> <span>型號 <input value="NTA855G7" style="width:90px"></span> <span>負責部門 <input value="" style="width:90px"></span> <span>資料來源 <input value="發電機推估表" style="width:130px"></span> <span>單位 <select><option>公升</option></select></span>
-      <span>填報方式 <span class="mode"><span>逐月</span><span class="on">年量</span><span>推估</span></span></span></div>
+      <span>填報方式 <span class="mode"><span>逐月</span><span class="on">年量</span><span>換算</span></span></span></div>
     <table><thead><tr><th class="l" style="width:60px">期間</th><th>使用量（公升）</th><th>費用(未稅) 越南盾</th><th>費用(美金)＊</th><th>CO2 碳排</th><th>CH4 碳排</th><th>N2O 碳排</th><th>排放當量 t＊</th></tr></thead>
     <tbody>
       <tr><td class="l">2025 全年</td><td class="in">89.7045</td><td class="in"></td><td class="ro">—</td><td class="ro">0.2224</td><td class="ro">0.0008</td><td class="ro">0.8057</td><td class="ro">1.0289</td></tr>
@@ -118,11 +118,11 @@ h2{font-size:14px;color:var(--d);margin:18px 0 6px}
     <b>② 不同類別同一版面</b><br>天然氣改用這個通用模組（設定驅動：單位、幣別、係數自動）；天然氣特有的「帳單期間」變成逐月表的選填欄。以後 LPG、移動柴油、汽油都是同一張畫面。
   </div>
   <div class="card">
-    <b>③ 不按月填的設備也要有總數</b><br>每台設備自己選「逐月／年量／推估」；三種都在該塊「小計」出數，最下面「合計」把所有設備加起來。歷史年筆不再放在上方「年度總量」區，而是變成「年量」塊。<br><br>
+    <b>③ 不按月填的設備也要有總數</b><br>每台設備自己選「逐月／年量／換算」；三種都在該塊「小計」出數，最下面「合計」把所有設備加起來。歷史年筆不再放在上方「年度總量」區，而是變成「年量」塊。<br><br>
     <b>⑤ 廠區作法不同</b><br>每廠每類別選「登錄粒度」：依設備分列（有領用單／操作記錄的廠）或全廠合計（管理部統一採購，設備只備註）。同一張畫面，只差塊怎麼開；兩種都能逐月／年量／換算。<br><br><b>④ 同類別多台設備怎麼輸入</b><br>＋新增設備 → 填名稱／型號／部門／單位／填報方式 → 出一塊；設備清單留成主檔，隔年開帳自動帶出同一批設備讓人填。樣板／匯入也照設備列（逐月 12 行、年量 1 行）。
   </div>
 </div>
 
-<div class="q"><b>要請你定的兩件事</b>：(a) 年量塊切到逐月時，數字放 12 月還是平均攤 12 個月？（建議：放 12 月，備註「年量轉入」）　(b) 推估表要不要做成畫面（等於把 ESG 的 S1固定2 搬進系統），還是先只做「逐月／年量」兩種、推估以年量手填？（建議：先兩種，推估第二階段）</div>
+<div class="q"><b>要請你定的兩件事</b>：(a) 年量塊切到逐月時，數字放 12 月還是平均攤 12 個月？（建議：放 12 月，備註「年量轉入」）　(b) 「換算」（操作記錄 × 換算率）要不要做成畫面，還是先只做「逐月／年量」兩種、換算結果以年量手填？（建議：先兩種，換算第二階段）</div>
 <div class="legend">GHG 系統｜DTO｜2026-09-15｜示意頁，不存資料</div>
 </body></html>
