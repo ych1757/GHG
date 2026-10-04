@@ -10850,8 +10850,79 @@ const GHG_GUIDE={
           ['標「待 ESG」的格','跟 ESG 還沒回覆的問題有關，系統先用多數廠的做法算，之後 ESG 決定了會統一更新。'],
           ['灰底欄位不用填','洩漏率＊、GWP＊、碳排＊都是系統算的。']],
   err:['冷媒寫法不統一（R410a、R-410A、410A）→ 用下拉選，不要自己打。','把一整類設備的總充填量當單台填，又填了台數 → 重複放大。','乾燥機、除濕機歸錯類 → 照系統建議，ESG 回覆後會統一調整。','忘了按「💾 儲存」就離開頁面。']}
+ ,'C01-M':{t:'C01-01 直接物料（重量法）',
+  prep:['C1 採購物料檔的「80% 分類表」（一種材質一年採購多少公噸）'],
+  start:['<b>匯入</b>：按「⬆ 匯入」，選 C1 採購物料檔，系統讀 80% 分類表；先預覽、選版本，<b>按「💾 儲存」才寫入</b>。','<b>逐筆</b>：按「＋ 新增物料」，一種材質（＋料況）一列。'],
+  fields:[['物料類別、品名／英文材質、中文材質','照分類表填；材質決定用哪個係數。'],['料況','原生料或再生料（係數不同）。'],['採購重量','這一年的採購重量，單位<b>公噸</b>。'],
+          ['係數（係數庫）','下拉選；系統會先依本廠過去用過的、或材質名稱帶一個，不對可以改選。'],['灰底欄位不用填','kgCO₂e/kg＊、碳排＊都是系統算的。']],
+  err:['重量填成公斤（這一頁是公噸）。','同一種材質拆成好幾列又重複。','係數沒確認就存，材質其實對錯了。']}
+ ,'SVC':{t:'金額法（C01-02 非直接物料與服務、C02 資本商品、C10 售出產品加工）',
+  prep:['ESG 收集表對應那一頁（C1 採購商品-服務／C2 資本商品／C10 委外加工），或費用明細（項目、金額）'],
+  start:['<b>匯入</b>：按「⬆ 匯入」，選 ESG 收集表那一頁；先預覽，<b>按「💾 儲存」才寫入</b>。','<b>逐筆</b>：按「＋ 新增項目」，一個項目一列。'],
+  fields:[['項目','照收集表寫法填（例：保全費、廢棄物處理費、設備名稱）。'],['支付金額','填<b>未稅</b>、當地幣別；系統用匯率表換美金。'],
+          ['係數（係數庫）','下拉選這個項目屬於哪一類（例：清潔、保全、運輸服務）。ESG 不計的項目選「不計入」。'],['灰底欄位不用填','美金＊、kgCO₂e/美金＊、碳排＊都是系統算的。']],
+  err:['金額填成含稅。','同一筆費用在 C01-02 和 C08（租賃）各填一次。','影印機等設備租賃要填在 C01-02，不是 C08。']}
+ ,'TRANS':{t:'運輸（C04 上游運輸、C09 下游運輸）',
+  prep:['ESG 收集表 C4／C9 那一頁，或運輸明細：品名、重量、起訖地、各段運輸方式與公里數'],
+  start:['<b>匯入</b>：按「⬆ 匯入」，選 ESG 收集表 C4 或 C9；先預覽，<b>按「💾 儲存」才寫入</b>。','<b>逐筆</b>：按「＋ 新增路線」，一條路線一列；常用路線可以從「🛣 本廠用過的路線」直接帶入各段公里數和車種。'],
+  fields:[['供應商／產品、路線','起點 → 終點。'],['總重量','這條路線一年運了多少，單位<b>公噸</b>。'],
+          ['陸運-1、空運、海運、陸運-2','每一段填公里數，陸運選車種、空運海運選國別（決定係數）；沒有的段空白。'],
+          ['同一批貨分兩段付運費','例如 FOB：陸運-1 本廠付（C4-2）、海運以後客戶付（C9），就分兩列。'],['灰底欄位不用填','延噸公里、碳排都是系統算的。']],
+  err:['重量填成公斤。','各段公里數重複算（陸運-1 已含整段，又在陸運-2 填一次）。','客戶付的運費段填進 C04。']}
+ ,'C05':{t:'C05 營運廢棄物',
+  prep:['廢棄物清運紀錄或遞送聯單：日期、名稱、重量、處理地點、處理方式'],
+  start:['<b>逐筆</b>：按「＋ 新增清運」，一筆清運一列（這一頁目前沒有匯入）。'],
+  fields:[['廢棄物名稱、種類、處理方式','種類 × 處理方式決定處理係數（例：一般垃圾焚化、回收）。'],['重量','單位<b>公噸</b>。'],
+          ['處理地點、運輸工具／距離','算運輸排放用；距離是從廠到處理地點的公里數。'],['灰底欄位不用填','延噸公里＊、運輸排放＊、處理係數＊、處理排放＊、總排放＊都是系統算的。']],
+  err:['重量填成公斤。','這一頁填的是重量；廢棄物處理費（金額）照收集表填在 C01-02，兩邊不要搞混。','回收物選成焚化。']}
+ ,'C06':{t:'C06 商務旅行',
+  prep:['出差紀錄：日期、人員、起訖地、交通方式；搭飛機的航段、搭高鐵的起訖站'],
+  start:['<b>逐筆</b>：按「＋ 新增一趟」，選交通模式（航空、高鐵(台灣)、鐵路、捷運、陸運、客船…），一趟一列（這一頁目前沒有匯入）。'],
+  fields:[['出差日期、出差人員、起點 → 終點','照出差紀錄。'],['陸運、鐵路、捷運','填延人公里（距離 × 人數），系統乘係數；陸運的碳排記在車種彙總列。'],
+          ['航空','用國際民航組織（ICAO）碳排計算器查這一趟的碳排，直接填。'],['台灣高鐵','填起點、終點，碳排照高鐵站間碳足跡表（之後選站會自動帶）。'],['客船','照請款單填碳排。']],
+  err:['來回只填一趟。','航空填了距離，沒有查 ICAO 碳排。','兩個人同行只填一列、延人公里沒乘人數。']}
+ ,'LEASE':{t:'租賃（C08 上游租賃、C13 下游租賃）',
+  prep:['租約或租金明細：資產名稱／地址、類型、租期、月租金、幣別','ESG 收集表 C8／C13 租賃表（有的話直接匯入）'],
+  start:['<b>匯入</b>：按「📥 匯入收集表」，先預覽、確認才寫入。','<b>逐筆</b>：按「＋ 新增一筆」，一筆租約一列。'],
+  fields:[['承租資產 名稱／地址、資產類型','C08 只收<b>辦公室、廠房、倉庫、宿舍、車輛、停車位</b>；影印機等設備租賃填在 C01-02。'],['承租期間、月數、月租金','照租約；全年金額＝月租金 × 今年的月數（原幣、未稅）。'],
+          ['幣別','系統用匯率表換美金。'],['灰底欄位不用填','美金＊、係數、碳排都是系統算的（上方「彙總」依代號加總）。']],
+  err:['影印機、設備租賃填進 C08。','金額填成含稅。','租期跨年卻把整份租約的金額都算進今年。']}
+ ,'C15':{t:'C15 投資',
+  prep:['投資明細：投資標的、持有公司、種類、帳面金額、幣別、股數','被投資公司有公布範疇一、二排放的話：對方的排放量和持股比率'],
+  start:['<b>匯入</b>：按「📥 匯入收集表」（C15 投資 Table1），先預覽、確認才寫入。','<b>逐筆</b>：按「＋ 新增一筆」。'],
+  fields:[['帳面金額、幣別','原幣；系統用<b>前一年底</b>的匯率換美金（C15 規定）。'],['對方範疇一、範疇二、持股比率','對方有公布排放時填，系統用持股比例法算。'],['灰底欄位不用填','美金＊、合計＊、碳排都是系統算的。']],
+  err:['自己先用今年匯率換成美金再填（系統已經用前一年底匯率換）。','同一家同時用對方排放和帳面金額兩種算法，重複算。']}
+ ,'S1-11':{t:'A04-02 滅火器充填',
+  prep:['滅火器清冊：名稱規格、數量、單隻填充量；今年有充填或更換藥劑的日期與公斤數'],
+  start:['<b>匯入</b>：按「📥 匯入收集表」，選 S1+S2+C3 活動數據蒐集表（讀總表的滅火器列＋滅火器明細），先預覽、確認才寫入。','<b>逐筆</b>：按「＋ 新增一種」，選類型（二氧化碳／乾粉／泡沫／水基型），一種規格一列。'],
+  fields:[['數量、單隻填充量','照清冊。'],['當年是否充填','是／否，或填日期與支數。'],['充填量','今年<b>實際充填或更換</b>的公斤數；碳排只算這一欄。'],
+          ['係數','二氧化碳滅火器 1（充多少就排多少），乾粉、泡沫、水基型 0。']],
+  err:['把全部滅火器的總重量填在充填量（只填今年有充填的）。','FM200、海龍等含氟滅火器不在這四類，請跟 ESG 確認。']}
+ ,'S1-12':{t:'A04-03 化糞池（水肥）',
+  prep:['全廠每月總工時（人時）','有付汙水處理費的話：汙水處理費帳單'],
+  start:['<b>匯入</b>：按「⬆ 匯入」，選 ESG 收集表（S1 逸散-化糞池）或系統樣板；先預覽，<b>按「💾 儲存」才寫入</b>。','<b>逐筆</b>：按「＋ 新增設備」，設備名稱空白就是「全廠（化糞池）」。'],
+  fields:[['總工時數','人時（人數 × 工作時數）。'],['填報方式','逐月或年量。'],
+          ['有支付汙水處理費（化糞池不計）','2026 年起有這個勾選：有付汙水處理費＝汙水已進公共下水道處理，勾了碳排記 0（兩邊都算會重複）。'],['灰底欄位不用填','排放當量＊、費用（美金）＊是系統算的。']],
+  err:['工時填成人數。','有付汙水處理費卻沒勾。']}
+ ,'PROC':{t:'製程與噴劑（乙炔、SF6、噴式潤滑劑）',
+  prep:['購買或領用紀錄'],
+  start:['<b>匯入</b>：按「⬆ 匯入」，選 ESG 收集表（S1 製程或 S1 逸散噴式潤滑劑那一頁）或系統樣板；先預覽，<b>按「💾 儲存」才寫入</b>。','<b>逐筆</b>：按「＋ 新增設備」（或全廠採購），預設年量一格。'],
+  fields:[['使用量','單位 {unit}。'],['填報方式','年量、逐月或換算（記錄值 × 換算率）。'],['灰底欄位不用填','碳排＊是系統算的。']],
+  err:['單位沒換算（例如瓶數直接當公斤）。']}
+ ,'AUTO03':{t:'C03 燃料與能源活動',
+  prep:['不用準備：系統拿範疇二用電量、範疇一燃料量自動算'],
+  start:['先把 B01-01 外購電力和範疇一燃料頁填好、儲存。','回到這一頁按「🔁 重算並寫入」。'],
+  fields:[['這一頁','全部系統算，不用輸入。'],['什麼時候要重算','電力或燃料改過之後。']],
+  err:['電力、燃料改了沒回來重算。']}
+ ,'C12':{t:'C12 產品終端處置',
+  prep:['今年出貨總重量（公噸）','C01-01 直接物料要先填好（系統用材質重量算金屬／塑膠／紙類／其他的占比）'],
+  start:['填出貨總重量，或按「📥 從 C12 收集表帶入」。','按「🔁 重算並寫入」。'],
+  fields:[['出貨總重量','單位公噸；系統按 C01 材質占比分到四大類，再乘係數。'],['其他','全部系統算。']],
+  err:['C01-01 還沒填就重算，占比是空的。','C01 或出貨重量改了沒重算。']}
 };
-function ghgGuideKey(c){ return GHG_GUIDE[c]?c:(['S1-01','S1-02','S1-03','S1-05','S1-06'].indexOf(c)>=0?'FUEL':null); }
+const GHG_GUIDE_MAP={'S1-01':'FUEL','S1-02':'FUEL','S1-03':'FUEL','S1-05':'FUEL','S1-06':'FUEL','C01-S':'SVC','C02':'SVC','C10':'SVC','C04':'TRANS','C09':'TRANS',
+  'C08':'LEASE','C13':'LEASE','S1-08':'PROC','S1-09':'PROC','S1-13':'PROC','C03-E':'AUTO03','C03-F':'AUTO03'};
+function ghgGuideKey(c){ return GHG_GUIDE[c]?c:(GHG_GUIDE_MAP[c]||null); }
 function ghgGuideHtml(c){ const k=ghgGuideKey(c); if(!k)return ''; const G=GHG_GUIDE[k]; const src=SRC.find(z=>z.c===c)||{};
   const u=s=>String(s).replace(/\{unit\}/g,src.unit||'');
   const sec=(t,body)=>'<div style="margin:8px 0 4px;font-weight:700;color:var(--d)">'+t+'</div>'+body;
@@ -10862,19 +10933,35 @@ function ghgGuideHtml(c){ const k=ghgGuideKey(c); if(!k)return ''; const G=GHG_G
     +sec('常見錯誤',ul(G.err))+'</div>'; }
 window.ghgGuideOpen=function(c){ const k=ghgGuideKey(c); if(!k)return;
   let d=document.getElementById('s101dlg'); if(!d){ d=document.createElement('div'); d.id='s101dlg'; d.innerHTML='<div class="card"><h3></h3><div id="s101list"></div><div class="foot"></div></div>'; document.body.appendChild(d); }
-  const nm=(typeof ncText==='function'&&k==='FUEL')?ncText(c):GHG_GUIDE[k].t;
+  const nm=(typeof ncText==='function'&&['FUEL','PROC','SVC','TRANS','LEASE','AUTO03'].indexOf(k)>=0)?ncText(c):GHG_GUIDE[k].t;
   d.querySelector('h3').textContent='📖 '+nm+' 怎麼填'; d.querySelector('#s101list').innerHTML=ghgGuideHtml(c); d.querySelector('.foot').innerHTML='<button onclick="fuelClose()">關閉</button>'; d.style.display='flex'; };
 /* 表頭加「📖 怎麼填」：所有登錄頁共用 ehead，在這裡統一加，不用一頁一頁改 */
 (function(){ const _eh=window.ehead; if(!_eh)return;
   window.ehead=function(o){ let h=_eh(o); try{
       const c=window._gCat||null;
-      if(c&&ghgGuideKey(c)&&!/填報進度/.test(String(o.title||'')))
+      if(/填報進度/.test(String(o.title||'')))
+        h=h.replace('<span class="eh-x">','<span class="eh-x"><a href="javascript:void(0)" onclick="ghgQuickOpen()" title="第一次在系統填報：登入、看要填哪些、匯入或逐筆、儲存、檢查" style="background:#e8f1fb;color:#1f4e79;border:1px solid #bcd4ee;border-radius:999px;padding:3px 12px;font-size:12px;font-weight:700;text-decoration:none;white-space:nowrap;margin-right:4px">📘 第一次使用請看</a>');
+      else if(c&&ghgGuideKey(c))
         h=h.replace('<span class="eh-x">','<span class="eh-x"><a href="javascript:void(0)" onclick="ghgGuideOpen(&#39;'+c+'&#39;)" title="這一頁要準備什麼、每一欄怎麼填、常見錯誤" style="background:#e8f1fb;color:#1f4e79;border:1px solid #bcd4ee;border-radius:999px;padding:3px 12px;font-size:12px;font-weight:700;text-decoration:none;white-space:nowrap;margin-right:4px">📖 怎麼填</a>');
     }catch(e){} return h; }; })();
 /* 目前在哪一類：在換頁入口統一記（有些新頁不更新 curSrc，例如 C07）；填報進度頁清掉 */
 (function(){ const _ss=window.selectSrc; window.selectSrc=function(i){ window._gCat=(SRC[i]&&SRC[i].c)||null; return _ss.apply(this,arguments); };
   const _fe=window.fpEnter; if(_fe)window.fpEnter=function(){ window._gCat=null; return _fe.apply(this,arguments); }; })();
-window.ghgGuideAll=()=>GHG_GUIDE;
+/* ══ 快速入門（第一次使用請看）：填報進度頁表頭按鈕；之後另產一頁網頁給 ESG 轉發，內容同這一份 ══ */
+const GHG_QS=[
+ ['1. 登入','用<b>工號或 Email ＋ 密碼</b>登入。要填員工通勤的工號、姓名、住址，一定要用密碼登入（從 SyncHub 大廳免密碼進來的話存不進去）。'],
+ ['2. 先看要填哪些','到「📝 資料登錄」，點左邊最上面的「📊 填報進度」，選年度。點自己的廠，看得到這個廠要填哪幾類、哪些還沒填（「應填」照去年有資料的類別）。'],
+ ['3. 一類一類填','點「去登錄」直接到那一類，廠區和年度會自動選好。每一頁都有「📖 怎麼填」：要準備什麼、每一欄怎麼填、常見錯誤。'],
+ ['4. 匯入或逐筆','有 ESG 收集表的頁面可以「匯入」，系統會先預覽；也可以逐筆新增。<b>一定要按「💾 儲存」才會寫入</b>（黃底＝還沒存）。'],
+ ['5. 白底填、灰底不用填','白底是要填的；灰底、欄名有＊的是系統算的（碳排、美金、係數）。係數和匯率系統依年度自動帶。'],
+ ['6. 填完回頭檢查','回「📊 填報進度」看有沒有「還沒填」，以及「差一半以上」（碳排跟去年差很多，請確認有沒有漏填或單位填錯）。'],
+ ['7. 想先練習','可以用「2099 試打」年度先試，試打的資料不會算進正式數字。'],
+ ['8. 有問題','先看那一頁的「📖 怎麼填」；還是不清楚就找 ESG 小組。']];
+function ghgQsHtml(){ return '<div style="font-size:13px;max-width:720px;text-align:left">'+GHG_QS.map(x=>'<div style="margin:6px 0"><div style="font-weight:700;color:var(--d)">'+x[0]+'</div><div style="line-height:1.6">'+x[1]+'</div></div>').join('')
+  +'<div style="margin-top:8px;font-size:11.5px;color:#7a8f84">目前有「📖 怎麼填」的頁：'+[...new Set(Object.values(GHG_GUIDE).map(g=>g.t))].join('、')+'</div></div>'; }
+window.ghgQuickOpen=function(){ let d=document.getElementById('s101dlg'); if(!d){ d=document.createElement('div'); d.id='s101dlg'; d.innerHTML='<div class="card"><h3></h3><div id="s101list"></div><div class="foot"></div></div>'; document.body.appendChild(d); }
+  d.querySelector('h3').textContent='📘 第一次使用請看（GHG 填報快速入門）'; d.querySelector('#s101list').innerHTML=ghgQsHtml(); d.querySelector('.foot').innerHTML='<button onclick="fuelClose()">關閉</button>'; d.style.display='flex'; };
+window.ghgGuideAll=()=>GHG_GUIDE; window.ghgQsAll=()=>GHG_QS;
 
 </script>
 </body>
