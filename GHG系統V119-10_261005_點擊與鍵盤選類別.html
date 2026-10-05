@@ -6658,9 +6658,9 @@ function svcRender(){
       const fo={rid:el.dataset.rid,f:el.dataset.f,back:!!e.shiftKey,t:Date.now()}; SFOC=fo;
       if(isCat&&(e.key==='Enter'||el.dataset.kb==='1')){   /* 類別：鍵盤挑好的，按 Enter／Tab 才定下來並換到下一格 */
         e.preventDefault();
-        if(el.dataset.kb==='1'){ delete el.dataset.kb; svcRender(); } else { SFOC=null; svcGo(el,fo.back); }
+        if(el.dataset.kb==='1'){ delete el.dataset.kb; svcRender(); } else { SFOC=null; svcNextCell(el,fo.back); }
         return; }
-      if(e.key==='Enter')setTimeout(()=>{ if(SFOC!==fo)return; SFOC=null; if(el.isConnected&&document.activeElement===el)svcGo(el,fo.back); },60);   /* 這一格沒改、沒有重畫 → Enter 一樣換到下一格 */
+      if(e.key==='Enter')setTimeout(()=>{ if(SFOC!==fo)return; SFOC=null; if(el.isConnected&&document.activeElement===el)svcNextCell(el,fo.back); },60);   /* 這一格沒改、沒有重畫 → Enter 一樣換到下一格 */
     };
     if(isCat){ el.onkeypress=()=>svcKb(el); el.onblur=()=>{ if(el.dataset.kb==='1'){ delete el.dataset.kb; if(el.isConnected)svcRender(); } }; }   /* 鍵盤挑到一半就離開這格 → 這時才重畫 */
     el.onchange=e=>{ const id=+e.target.dataset.rid,f=e.target.dataset.f; const r=SREC.find(x=>x.record_id===id); if(!r)return; const v=e.target.value; r.extra=Object.assign({},r.extra||{});
@@ -6675,7 +6675,7 @@ function svcRender(){
 }
 function sfocLive(){ if(SFOC&&SFOC.t&&Date.now()-SFOC.t>400)SFOC=null; return SFOC; }   /* V119-10：按了 Tab／Enter 卻沒有重畫來接手的，不留到之後某一次重畫才亂跳 */
 function svcKb(el){ SKB=el; setTimeout(()=>{ if(SKB===el)SKB=null; },0); }   /* V119-10：這一下按鍵是在類別下拉上移動／打編號（緊接著的變更＝還在挑，不是選好了） */
-function svcGo(el,back){ const L=[...document.querySelectorAll('#s101wrap input[data-rid],#s101wrap select[data-rid]')]; const nx=L[L.indexOf(el)+(back?-1:1)]; if(nx){ nx.focus(); if(nx.select&&nx.tagName==='INPUT')nx.select(); } }   /* V119-10：游標換到下一格（Shift＝上一格） */
+function svcNextCell(el,back){ const L=[...document.querySelectorAll('#s101wrap input[data-rid],#s101wrap select[data-rid]')]; const nx=L[L.indexOf(el)+(back?-1:1)]; if(nx){ nx.focus(); if(nx.select&&nx.tagName==='INPUT')nx.select(); } }   /* V119-10：游標換到下一格（Shift＝上一格） */
 function svcLive(r,sel){   /* V119-10：鍵盤在類別下拉上挑的時候不重畫整張表，只更新這一列的係數、碳排和合計 */
   const tr=sel.closest('tr'); if(!tr)return; const c=svcCalc(r);
   sel.style.color=sel.value?'':'#a33';
