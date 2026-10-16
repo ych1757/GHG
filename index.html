@@ -287,7 +287,7 @@ td.fachl{background:#fffbe6!important;box-shadow:inset 3px 0 0 #e6a700}   /* V38
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-8</b> · 2026/10/16</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-9</b> · 2026/10/16</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -3800,6 +3800,73 @@ function facRefrigModel(rows){   // 純計算：明細列 → {years, G[冷媒][
   const leaks=Object.keys(L).sort((a,b)=>(a==='—'?1e9:Number(a))-(b==='—'?1e9:Number(b)));
   return {years,G,GS,L,DUP,ALIAS,SRCS,refs,leaks,n:rows.length,nExtra,nNoEf};
 }
+/* ══ V129-9：冷媒（A04-01）係數庫頁＝三張表（使用者 261016）。代號＝A04-01＋字母（設備類別，決定逸散率）＋兩碼（冷媒，決定 GWP），比照 C05；
+      區域 ALL、每年一筆（批230）。合成當量＝逸散率 × GWP（kgCO2e／kg 充填量）；碳排＝充填量 × 台數 × 合成當量 ÷ 1000。 ══ */
+const FAC_RF_CAT=[['A','住宅及商業建築空調',5.5,'1～10%'],['B','家用冷凍冷藏（冰箱、飲水機）',0.3,'0.1～0.5%'],['C','車輛空調',15,'10～20%'],['D','工業冷凍冷藏',16,'7～25%'],
+  ['E','冰水機',8.5,'2～15%'],['F','獨立商用冷凍冷藏',8,'1～15%'],['G','中大型冷凍冷藏',22.5,'10～35%'],['H','運輸用冷凍冷藏',32.5,'15～50%']];   /* IPCC 2006 第 3 冊表 7.9 的 8 類；採用值＝區間中值（ESG 261006） */
+async function facRefrigLoad3(code){
+  await ensureFacSites();
+  const a=await sbAll(()=>sb.from('ghg_activity_data').select('record_id,site_id,data_year,source_name,equipment_name,attr1,quantity,ef_value,gwp,co2e_draft,extra').eq('category_id',code).neq('data_year',TRIAL_Y).order('record_id')); if(a.error)throw a.error;
+  const f=await sbAll(()=>sb.from('ghg_emission_factors').select('factor_id,factor_year,esg_code,country').like('factor_id','A04-01-%').order('factor_id')); if(f.error)throw f.error;
+  const g=await sbAll(()=>sb.from('ghg_emission_factor_gases').select('id,factor_id,gas_code,factor_value,gwp').like('factor_id','A04-01-%').order('id')); if(g.error)throw g.error;
+  const q=await sb.from('ghg_gases').select('gas_code,gas_name,default_gwp_ar6'); if(q.error)throw q.error;
+  return {rows:a.data||[],facs:f.data||[],gas:g.data||[],gases:q.data||[]};
+}
+function facRefrigRender3(code,D){
+  const r=ncRow(code); const title=r?ncLabel(code,null):facEsc(code);
+  const nf=(v,d)=>(v==null||!isFinite(v))?'—':Number(v).toLocaleString('en-US',{maximumFractionDigits:d==null?4:d});
+  const catOf=n=>FAC_RF_CAT.find(c=>c[1]===n)||null, gasOf=n=>RF_GAS.find(x=>x[0]===n)||null, g2=x=>String(x[1]).slice(-2);
+  const nOf=x=>{ const n=Number((x.extra||{})['台數']); return isFinite(n)&&n>0?n:1; };
+  const GW={}; D.gases.forEach(x=>{ GW[x.gas_code]=x.default_gwp_ar6; });
+  // 係數庫條目：代號 → 年 → {逸散率, GWP, 合成當量}
+  const FX={}; D.facs.forEach(x=>{ const cd=x.esg_code||String(x.factor_id).replace(/-ALL-\d+$/,''); const gl=D.gas.filter(z=>z.factor_id===x.factor_id);
+    (FX[cd]=FX[cd]||{})[Number(x.factor_year)]={fid:x.factor_id,rate:gl.length?Number(gl[0].factor_value):null,gwp:gl.length?Number(gl[0].gwp):null,eq:gl.reduce((s,z)=>s+Number(z.factor_value)*Number(z.gwp),0),gas:gl.length?gl[0].gas_code:''}; });
+  // 明細彙整
+  const CN={}, GN={}, MX={}; let noKey=0, bad=[];
+  D.rows.forEach(x=>{ const c=catOf(x.attr1), g=gasOf(x.source_name), y=Number(x.data_year), n=nOf(x); if(!c||!g){ noKey++; return; }
+    const k='A04-01-'+c[0]+g2(g);
+    (CN[c[0]]=CN[c[0]]||{})[y]=(CN[c[0]][y]||0)+n; (GN[g[0]]=GN[g[0]]||{})[y]=(GN[g[0]][y]||0)+n;
+    const m=((MX[k]=MX[k]||{})[y]=MX[k][y]||{n:0,co:0,eq:{}}); m.n+=n; m.co+=Number(x.co2e_draft)||0; const en=String(x.equipment_name||'').trim()||'（未填）'; m.eq[en]=(m.eq[en]||0)+n;
+    const fx=(FX[k]||{})[y]; if(fx&&(Math.abs(Number(x.ef_value)-fx.rate)>1e-9||Number(x.gwp)!==fx.gwp))bad.push(k+' '+y+'（'+x.site_id+' '+(x.equipment_name||'')+'）'); });
+  const ys=[...new Set(D.facs.map(x=>Number(x.factor_year)).concat(D.rows.map(x=>Number(x.data_year))))].filter(isFinite).sort((a,b)=>a-b);
+  const codes=[...new Set(Object.keys(FX).concat(Object.keys(MX)))].sort();
+  const th='text-align:right', yh=ys.map(y=>`<th style="${th}">${y}</th>`).join('');
+  let h=`<div class="ftitle" style="margin-bottom:2px">${title}<span class="fmini" style="margin-left:8px">設備類別 × 冷媒·唯讀</span></div>`;
+  h+=`<div style="font-size:12px;color:var(--g);margin-bottom:8px">碳排 ＝ 充填量（公斤）× 台數 × <b>合成當量</b> ÷ 1000；合成當量 ＝ <b>逸散率</b>（看設備類別）× <b>GWP</b>（看冷媒）。代號 A04-01-<b>A</b><b>02</b>：字母＝設備類別、兩碼＝冷媒。</div>`;
+  // ① 設備類別
+  h+=`<div style="font-weight:800;margin:6px 0 2px">① 設備類別（決定逸散率）<span style="font-size:11px;font-weight:400;color:var(--g)">IPCC 2006 第 3 冊表 7.9 的 8 類；採用區間中值（ESG 261006 確認）；右邊＝各年台數</span></div>`;
+  h+=`<table class="fsm fsfit" style="width:100%;table-layout:fixed;font-size:12.5px"><colgroup><col style="width:110px"><col><col style="width:80px"><col style="width:100px">${ys.map(()=>'<col style="width:70px">').join('')}</colgroup><thead><tr><th style="text-align:left">代號</th><th style="text-align:left">設備類別</th><th style="${th}">逸散率</th><th style="${th}">IPCC 範圍</th>${yh}</tr></thead><tbody>`;
+  FAC_RF_CAT.forEach(c=>{ h+=`<tr><td style="text-align:left">A04-01-${c[0]}</td><td style="text-align:left">${facEsc(c[1])}</td><td style="${th}"><b>${nf(c[2])}%</b></td><td style="${th};color:var(--g)">${c[3]}</td>`+ys.map(y=>{ const v=(CN[c[0]]||{})[y]; return `<td style="${th}${v?'':';color:#bbb'}">${v?nf(v,0):'—'}</td>`; }).join('')+'</tr>'; });
+  h+='</tbody></table>';
+  // ② 冷媒
+  h+=`<div style="font-weight:800;margin:12px 0 2px">② 冷媒（決定 GWP）<span style="font-size:11px;font-weight:400;color:var(--g)">GWP＝IPCC AR6（存在氣體清單）；R-22、R-12 依 ESG 261006 回覆記 0；右邊＝各年台數</span></div>`;
+  h+=`<table class="fsm fsfit" style="width:100%;table-layout:fixed;font-size:12.5px"><colgroup><col style="width:110px"><col><col style="width:80px"><col style="width:100px">${ys.map(()=>'<col style="width:70px">').join('')}</colgroup><thead><tr><th style="text-align:left">冷媒碼</th><th style="text-align:left">冷媒</th><th style="${th}">GWP</th><th></th>${yh}</tr></thead><tbody>`;
+  RF_GAS.forEach(g=>{ const gw=GW[g[0]]!=null?GW[g[0]]:g[2]; h+=`<tr><td style="text-align:left">${g2(g)}</td><td style="text-align:left">${facEsc(g[0])}</td><td style="${th}"><b>${nf(gw)}</b></td><td></td>`+ys.map(y=>{ const v=(GN[g[0]]||{})[y]; return `<td style="${th}${v?'':';color:#bbb'}">${v?nf(v,0):'—'}</td>`; }).join('')+'</tr>'; });
+  h+='</tbody></table>';
+  // ③ 設備類別 × 冷媒＝係數庫條目
+  h+=`<div style="font-weight:800;margin:12px 0 2px">③ 設備類別 × 冷媒（係數庫條目，系統算碳排用的）<span style="font-size:11px;font-weight:400;color:var(--g)">只列有設備在用的組合；每格＝台數／碳排 t；點一列看是哪些設備</span></div>`;
+  h+=`<table class="fsm fsfit" style="width:100%;table-layout:fixed;font-size:12.5px"><colgroup><col style="width:110px"><col><col style="width:120px"><col style="width:84px">${ys.map(()=>'<col style="width:104px">').join('')}</colgroup><thead><tr><th style="text-align:left">代號</th><th style="text-align:left">設備類別 × 冷媒</th><th style="${th}">逸散率 × GWP</th><th style="${th}">合成當量</th>${yh}</tr></thead><tbody>`;
+  let miss=[], eqDiff=[]; const TOT={};
+  codes.forEach(k=>{ const c=FAC_RF_CAT.find(z=>z[0]===k.charAt(7)), g=RF_GAS.find(z=>g2(z)===k.slice(8,10)); const fy=FX[k]||{};
+    const last=ys.slice().reverse().map(y=>fy[y]).find(Boolean); const eqs=[...new Set(Object.values(fy).map(z=>z.eq.toFixed(6)))]; if(eqs.length>1)eqDiff.push(k);
+    const nm=(c?c[1]:'?')+' × '+(g?g[0]:'?');
+    h+=`<tr style="cursor:pointer" title="點一下看設備" onclick="const n=this.nextElementSibling;n.style.display=n.style.display==='none'?'':'none'"><td style="text-align:left"><b>${k}</b></td><td style="text-align:left">${facEsc(nm)}</td><td style="${th};color:var(--g)">${last?nf(last.rate*100)+'% × '+nf(last.gwp):'—'}</td><td style="${th}"><b>${last?nf(last.eq):'—'}</b></td>`;
+    ys.forEach(y=>{ const m=(MX[k]||{})[y], f=fy[y]; if(m){ (TOT[y]=TOT[y]||{n:0,co:0}); TOT[y].n+=m.n; TOT[y].co+=m.co; }
+      if(m&&!f){ miss.push(k+' '+y); h+=`<td style="${th};background:#fde2e2;color:#a33" title="有設備在用，但係數庫沒有這一格（新組合，待 ESG 確認）">${nf(m.n,0)} 台／⚠ 無係數</td>`; return; }
+      h+=`<td style="${th}${m?'':';color:#bbb'}">${m?nf(m.n,0)+' 台／'+nf(m.co,4):'—'}</td>`; });
+    h+='</tr>';
+    const eqh=ys.map(y=>{ const m=(MX[k]||{})[y]; if(!m)return ''; const es=Object.keys(m.eq).sort((a,b)=>m.eq[b]-m.eq[a]); return `<div style="margin:2px 0"><b>${y}</b>：${es.slice(0,20).map(e=>facEsc(e)+'<span style="color:var(--g)">×'+nf(m.eq[e],0)+'</span>').join('、 ')}${es.length>20?' <span style="color:#9aa">…另 '+(es.length-20)+' 種</span>':''}</div>`; }).join('');
+    h+=`<tr style="display:none"><td></td><td colspan="${3+ys.length}" style="text-align:left;white-space:normal;font-size:12px;background:#f7faf8">${eqh||'<span style="color:#9aa">這幾年沒有設備在用</span>'}</td></tr>`; });
+  h+=`<tr style="background:#eef6f1"><td></td><td style="text-align:left"><b>合計</b> <span class="fmini">${codes.length} 格</span></td><td></td><td></td>`+ys.map(y=>`<td style="${th}"><b>${TOT[y]?nf(TOT[y].n,0)+' 台／'+nf(TOT[y].co,4):'—'}</b></td>`).join('')+'</tr>';
+  h+='</tbody></table>';
+  // 核對（給系統管理看）
+  const ck=[]; if(miss.length)ck.push('有設備在用、係數庫沒有這一格：'+miss.join('、')); if(bad.length)ck.push('明細的逸散率／GWP 跟係數庫條目不同 '+bad.length+' 筆，例：'+bad.slice(0,5).join('；'));
+  if(eqDiff.length)ck.push('同一代號各年合成當量不同：'+eqDiff.join('、')); if(noKey)ck.push(noKey+' 筆明細沒有設備類別或認不出冷媒（沒算進上面三張表）');
+  FAC_RF_CAT.forEach(c=>{ Object.keys(FX).filter(k=>k.charAt(7)===c[0]).forEach(k=>Object.entries(FX[k]).forEach(([y,f])=>{ if(f.rate!=null&&Math.abs(f.rate*100-c[2])>1e-9)ck.push(k+' '+y+' 條目逸散率 '+nf(f.rate*100)+'% 跟設備類別表 '+c[2]+'% 不同'); })); });
+  Object.keys(FX).forEach(k=>Object.entries(FX[k]).forEach(([y,f])=>{ if(f.gas&&GW[f.gas]!=null&&Number(GW[f.gas])!==f.gwp)ck.push(k+' '+y+' 條目 GWP '+f.gwp+' 跟氣體清單 '+GW[f.gas]+' 不同'); }));
+  h+=`<details style="margin-top:10px;font-size:12px"><summary style="cursor:pointer;color:var(--g)">核對（給系統管理看）：${ck.length?'<span style="color:#c0392b;font-weight:700">'+ck.length+' 項要看</span>':'全部一致'}</summary><div style="padding:6px 4px;line-height:1.7">${ck.length?ck.map(x=>'・'+facEsc(x)).join('<br>'):'明細 '+D.rows.length+' 筆的逸散率與 GWP 都跟係數庫條目一致；係數庫 '+D.facs.length+' 條、每格每年一條；逸散率跟設備類別表、GWP 跟氣體清單一致。'}</div></details>`;
+  return h;
+}
 function facRefrigRender(code,m){
   const r=ncRow(code); const title=r?ncLabel(code,null):facEsc(code);
   const ys=m.years; const O2P=Object.fromEntries(Object.entries(PLANT2OMS).map(([k,v])=>[v,k]));
@@ -3921,10 +3988,9 @@ async function facItemShow(code,pane){
   if(FSM_ITEM[code]&&FSM_ITEM[code].kind==='c03'){ try{ if(!ITEM_ROWS.C03ALL){ pane.innerHTML='<div class="msg" style="background:var(--t)">彙整明細中…</div>'; await ensureFacSites(); const r=await sbAll(()=>sb.from('ghg_activity_data').select('record_id,site_id,data_year,category_id,source_name,attr2,factor_id,ef_value,extra').in('category_id',['C03-E','C03-F']).neq('data_year',TRIAL_Y).order('record_id')); if(r.error)throw r.error; ITEM_ROWS.C03ALL=r.data||[]; if(FAC_CUR!==code)return; } if(!window.C03GAPS&&typeof window.c03GapScan==='function'){ pane.innerHTML='<div class="msg" style="background:var(--t)">檢查各廠缺係數…</div>'; try{ await window.c03GapScan(); delete ITEM_ROWS.C03GAPERR; }catch(ge){ ITEM_ROWS.C03GAPERR=String((ge&&ge.message)||ge); console.error('C03 缺係數檢查',ge); } if(FAC_CUR!==code)return; } pane.innerHTML=facC03Render(code); facC03TraceHL(code,pane); }catch(e){ pane.innerHTML='<div class="msg err">C03 係數表產生失敗：'+facEsc(e.message||e)+'</div>'; } return; }   /* V88 */
   pane.innerHTML='<div class="msg" style="background:var(--t)">彙整明細中…</div>';
   try{
-    if(!ITEM_ROWS[code]){ const r=await sbAll(()=>sb.from('ghg_activity_data').select('record_id,site_id,data_year,source_name,equipment_name,ef_value,gwp,ef_source,extra').eq('category_id',code).neq('data_year',TRIAL_Y).order('record_id')); if(r.error)throw r.error; ITEM_ROWS[code]=r.data||[]; }   // 分頁一律帶 order（9/16 踩坑）
+    if(!ITEM_ROWS[code]||!ITEM_ROWS[code].v3){ ITEM_ROWS[code]=await facRefrigLoad3(code); ITEM_ROWS[code].v3=1; }   /* V129-9：讀係數庫條目（批230）＋氣體清單＋明細 */
     if(FAC_CUR!==code)return;   // 載入期間使用者已點別的排放源
-    if(!ITEM_ROWS[code].length){ pane.innerHTML='<div class="msg" style="background:#fff8e1;font-size:12.5px">明細尚無此排放源的資料，品項表無從彙整。</div>'; return; }
-    pane.innerHTML=facRefrigRender(code,facRefrigModel(ITEM_ROWS[code]));
+    pane.innerHTML=facRefrigRender3(code,ITEM_ROWS[code]);
   }catch(e){ pane.innerHTML='<div class="msg err">品項矩陣產生失敗：'+facEsc(e.message||e)+'</div>'; }
 }
 
@@ -11571,7 +11637,7 @@ function rfScanList(wb){
     let stop=null; rows.forEach(r=>{ if(stop==null&&r>hdr&&Object.keys(R[r]).map(Number).filter(c=>c<=3).some(c=>/合計|合计|小計|小计|總計|总计/.test(rlT(R[r][c]))))stop=r; });   /* 讀到合計列就停（下面常接 ESG 小計表） */
     let gAsKg=false; if(!isKg){ const vs=rows.filter(r=>r>hdr&&(stop==null||r<stop)).map(r=>rlN(R[r][cm['初裝']])).filter(v=>v!=null&&v>0); if(vs.length&&Math.max(...vs)<50){ isKg=true; gAsKg=true; } }   /* 表頭寫 g、數字卻都很小＝其實填公斤 */
     const items=[]; rows.forEach(r=>{ if(r<=hdr||(stop!=null&&r>=stop))return; const v=R[r], g=k=>cm[k]!=null?v[cm[k]]:null; const gas=rlT(g('冷媒')); let kg=rlN(g('初裝')); if(kg!=null&&!isKg)kg=kg/1000;
-      if(!gas||kg==null||!/R-?\d|HFC|HC-|HFO/i.test(gas))return;   /* 小計列、空白列、說明列不收 */
+      if(!gas||kg==null||!(/R-?\d|HFC|HC-|HFO/i.test(gas)||rfNorm(gas).gas))return;   /* 小計列、空白列、說明列不收；V129-9：「410A」這種沒有 R 的寫法也收（批227 漏收昆山鴻嘉駿 16 台就是這條） */
       let n=rlN(g('台數')); if(n==null)n=1;
       items.push({sheet:sn,r:r,hidden:!!H[r],type:rlT(g('類型')),eq:rlT(g('設備')),model:rlT(g('型號')),nm:gas,each:kg,n:n,asset:rlT(g('資產')),src:rlT(g('來源')),refill:rlT(g('充裝')),refillKg:rlN(g('再充量')),dept:rlT(g('部門')),loc:rlT(g('地點')),proof:rlT(g('佐證'))}); });
     if(items.length)best={sheet:sn,items:items,gAsKg:gAsKg,flt:flt&&Object.keys(H0).length>0}; });   /* 照分頁順序，第一個有資料的 */
