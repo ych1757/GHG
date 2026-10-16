@@ -287,7 +287,7 @@ td.fachl{background:#fffbe6!important;box-shadow:inset 3px 0 0 #e6a700}   /* V38
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V128-1</b> · 2026/10/15</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129</b> · 2026/10/15</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -1706,7 +1706,9 @@ const ROLECAP={input:{e:1,f:0,p:0},esg:{e:1,f:1,p:0},view:{e:0,f:0,p:0},admin:{e
 const permScopeLabel=(r,p)=>{const s=(r&&r.scope)||null; if(!s||!s.length)return p&&p.factory_code?p.factory_code:'—'; return (s.length===1&&s[0]==='*')?'全部廠區':s.join(', ');};
 // ===== V55 帳號管理(照MHR名單管理模式):走 drfqo Edge Function ghg-admin-users(service_role在EF,前端只帶JWT) =====
 const GHG_EF_URL='https://drfqoraijhzvvllncbei.supabase.co/functions/v1/ghg-admin-users';
-const GHG_DEFAULT_PWD='oms12345';   // 與OMS一致:密碼共用(drfqo Auth),預設密碼必須統一
+const GHG_DEFAULT_PWD_H='b91882a46357a3dc318a706d0d0579c8a2b203680d17d3422acbf10aa627bf09';   // V129：初始密碼不放在網頁（DTO 另行告知）；這裡只放 SHA-256 核對碼（小寫後算），用來檢查管理員輸入的初始密碼有沒有打錯、首次改密碼不能沿用
+async function ghgPwdHash(p){ const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(String(p||'').toLowerCase())); return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join(''); }
+async function ghgAskDefaultPwd(msg){ const p=prompt(msg+'\n\n請輸入集團統一的初始密碼（由 DTO 告知，網頁上不顯示）：'); if(p==null)return null; const v=String(p).trim(); if(!v)return null; if(await ghgPwdHash(v)!==GHG_DEFAULT_PWD_H){ alert('初始密碼不對，沒有送出。請向 DTO 確認後再試。'); return null; } return v; }
 async function ghgAdmin(action,payload){
   const tok=sessionStorage.getItem('ghg_jwt'); if(!tok) return {ok:false,error:'需以密碼登入(管理員)後才能操作帳號'};
   try{
@@ -1729,8 +1731,8 @@ function permAcctCell(p){   /* V124：帳號只從 SyncHub（OMS）授權頁開�
   return '<span style="color:#b7791f;font-size:11.5px" title="這個人還沒有 SyncHub 帳號，不能登入 GHG。帳號只從 SyncHub「系統資料授權」頁開通（把人加入名單就會自動開帳號）。">尚未開通（到 SyncHub 授權頁）</span>';
 }
 async function permResetPwd(email,name){
-  if(!confirm('確定重設外部查核帳號「'+name+'（'+email+'）」的密碼為 '+GHG_DEFAULT_PWD+' ？\n\n他下次登入時需重新設定新密碼。'))return;   /* V124：這顆只剩外部查核自建名單在用（內部同仁到 SyncHub 授權頁重設） */
-  const r=await ghgAdmin('resetPassword',{email,password:GHG_DEFAULT_PWD});
+  const pw=await ghgAskDefaultPwd('確定把外部查核帳號「'+name+'（'+email+'）」的密碼重設為初始密碼？\n他下次登入時需重新設定新密碼。'); if(!pw)return;   /* V124：這顆只剩外部查核自建名單在用（內部同仁到 SyncHub 授權頁重設） */
+  const r=await ghgAdmin('resetPassword',{email,password:pw});
   if(!r.ok){alert('重設失敗：'+(r.error||''));return;}
   alert(r.message||'已重設'); permLoadAcctStatus();
 }
@@ -1769,7 +1771,7 @@ function extPanelHtml(){
       +'<div style="margin-top:6px;font-size:12px"><b style="color:#553c9a">可看廠區：</b>'+chips+'</div>'
       +'<div style="margin-top:8px"><button style="padding:6px 14px;font-size:12px" onclick="extSave()">'+(isNew?'建立帳號並加入名單':'儲存')+'</button> '
       +'<button class="sec" style="padding:6px 12px;font-size:12px" onclick="window._extEdit=null;window._extScopeTmp=null;permRender()">取消</button>'
-      +(isNew?'<span style="font-size:11.5px;color:var(--g);margin-left:10px">系統自動判斷：Email 已有帳號＝只加入名單（密碼沿用）／全新＝建帳號（預設 '+GHG_DEFAULT_PWD+'，首次登入須改）</span>':'')+'</div></div>';
+      +(isNew?'<span style="font-size:11.5px;color:var(--g);margin-left:10px">系統自動判斷：Email 已有帳號＝只加入名單（密碼沿用）／全新＝建帳號（初始密碼由 DTO 告知，建立時會請您輸入；首次登入須改）</span>':'')+'</div></div>';
   }
   if(E.length){
     s+='<table style="font-size:12.5px;width:auto;margin-top:8px"><thead><tr><th style="text-align:left;padding:5px 10px">姓名</th><th style="text-align:left;padding:5px 10px">單位</th><th style="text-align:left;padding:5px 10px">Email 帳號</th><th style="text-align:left;padding:5px 10px">可看廠區</th><th style="text-align:left;padding:5px 10px">到期</th><th style="text-align:left;padding:5px 10px">狀態</th><th style="text-align:left;padding:5px 10px">來源</th><th></th></tr></thead><tbody>';
@@ -1809,7 +1811,8 @@ async function extSave(){
   if(!email||!/@/.test(email)){alert('請填正確 Email');return;}
   if(!name){alert('請填姓名');return;}
   if(isNew && (window._lgAll||[]).some(p=>String(p.email||'').toLowerCase()===email)){alert('此 Email 是集團內部人員（OMS 名單），請改由 OMS「系統資料授權」勾選 GHG，不需自建');return;}
-  const r=isNew?await ghgAdmin('createExt',{email,name,org,scope,expires_at:exp,note,password:GHG_DEFAULT_PWD})
+  let pw=null; if(isNew){ pw=await ghgAskDefaultPwd('建立外部查核帳號「'+name+'（'+email+'）」？'); if(!pw)return; }
+  const r=isNew?await ghgAdmin('createExt',{email,name,org,scope,expires_at:exp,note,password:pw})
                :await ghgAdmin('updateExt',{email,name,org,scope,expires_at:exp,note});
   if(!r.ok){alert((isNew?'建立失敗：':'儲存失敗：')+(r.error||''));return;}
   alert(r.message||'完成'); window._extEdit=null; window._extScopeTmp=null; window._extNewScope=null; window._extUsers=null; await loadExtUsers(); permRender();
@@ -2321,7 +2324,7 @@ async function lgChangePwd(){
   const p1=(document.getElementById('cg_p1')||{}).value||'', p2=(document.getElementById('cg_p2')||{}).value||'';
   if(!lgPwdValid(p1)){lgErr('密碼至少 8 碼，且需含英文與數字');return;}
   if(p1!==p2){lgErr('兩次輸入的密碼不一致');return;}
-  if(p1.toLowerCase()==='oms12345'){lgErr('不能使用預設密碼，請另設');return;}
+  if(await ghgPwdHash(p1)===GHG_DEFAULT_PWD_H){lgErr('不能使用預設密碼，請另設');return;}
   const tok=sessionStorage.getItem('ghg_jwt'); if(!tok){lgErr('登入逾時，請重新登入');_lgPanel('lg_normal');return;}
   lgErr('');
   try{
@@ -2716,12 +2719,12 @@ TPLS['C06']={code:'C06',name:'商務旅行',how:[
   '4. 填好回系統「資料登錄 › C06 商務旅行」，選好跟樣板一樣的廠區與年度，按「📥 匯入收集表」選這個檔。會先預覽，按確認才寫入。',
   '5. 匯入會取代這個廠這一年原本用匯入或登錄頁輸入的商務旅行資料，所以請把整年的資料放在同一個檔。'],
  sheets:[
-  {name:'航空',cols:[['序號','O','流水號','1'],['廠區','O','廠房或辦公室名稱','臺北信錦'],['出差人員','S','','王小明'],['出差日期','S','西元年/月/日','2026/03/15'],['車票/憑單號佐證編號','O','','A-001'],['起點','S','出發城市','台北'],['起點機場','R','機場代碼或名稱','TPE'],['終點','S','抵達城市','上海'],['終點機場','R','機場代碼或名稱','PVG'],['商務艙/經濟艙','R','','經濟艙'],['延人公里(單程)','S','ICAO 查到的飛行公里數 × 人數（只記錄，不拿來算碳排）','686'],['CO2(KG)','R','ICAO 查到這一趟的 CO2 公斤數','106'],['ICAO截圖編號','O','','2-1'],['備註','O','','']]},
-  {name:'高鐵(台灣)',cols:[['序號','O','流水號','1'],['廠區','O','','臺北信錦'],['出差人員','S','','王小明'],['出差日期','S','西元年/月/日','2026/03/15'],['車票/憑單號佐證編號','O','','B-001'],['起點','R','起站','台北'],['終點','R','迄站','台中'],['單趟:1來回:2','R','單趟填 1、來回填 2','2'],['碳足跡(KG)','R','台灣高鐵公布的單趟站間碳足跡公斤數','5.44'],['備註','O','','']]},
-  {name:'鐵路(台灣)',cols:[['序號','O','流水號','1'],['廠區','O','','臺北信錦'],['出差人員','S','','王小明'],['出差日期','S','西元年/月/日','2026/03/15'],['起點站','R','','台北'],['終點站','R','','新竹'],['車票/憑單佐證編號','O','','C-001'],['車輛類型','S','自強號、區間車…','自強號'],['延人公里(pkm)','R','這一趟的公里數 × 人數','78.1'],['備註','O','','']]},
-  {name:'捷運',cols:[['序號','O','流水號','1'],['廠區','O','','臺北信錦'],['車票佐證編號','O','','D-001'],['出差人員','S','','王小明'],['出差日期','S','西元年/月/日','2026/03/15'],['起點站','R','','景安'],['終點站','R','','台北車站'],['延人公里(pkm)','R','這一趟的公里數 × 人數','9.2'],['備註','O','','']]},
+  {name:'航空',cols:[['序號','O','流水號','1'],['廠區','O','廠房或辦公室名稱','台北總公司'],['出差人員','S','','王小明'],['出差日期','S','西元年/月/日','2026/03/15'],['車票/憑單號佐證編號','O','','A-001'],['起點','S','出發城市','台北'],['起點機場','R','機場代碼或名稱','TPE'],['終點','S','抵達城市','上海'],['終點機場','R','機場代碼或名稱','PVG'],['商務艙/經濟艙','R','','經濟艙'],['延人公里(單程)','S','ICAO 查到的飛行公里數 × 人數（只記錄，不拿來算碳排）','686'],['CO2(KG)','R','ICAO 查到這一趟的 CO2 公斤數','106'],['ICAO截圖編號','O','','2-1'],['備註','O','','']]},
+  {name:'高鐵(台灣)',cols:[['序號','O','流水號','1'],['廠區','O','','台北總公司'],['出差人員','S','','王小明'],['出差日期','S','西元年/月/日','2026/03/15'],['車票/憑單號佐證編號','O','','B-001'],['起點','R','起站','台北'],['終點','R','迄站','台中'],['單趟:1來回:2','R','單趟填 1、來回填 2','2'],['碳足跡(KG)','R','台灣高鐵公布的單趟站間碳足跡公斤數','5.44'],['備註','O','','']]},
+  {name:'鐵路(台灣)',cols:[['序號','O','流水號','1'],['廠區','O','','台北總公司'],['出差人員','S','','王小明'],['出差日期','S','西元年/月/日','2026/03/15'],['起點站','R','','台北'],['終點站','R','','新竹'],['車票/憑單佐證編號','O','','C-001'],['車輛類型','S','自強號、區間車…','自強號'],['延人公里(pkm)','R','這一趟的公里數 × 人數','78.1'],['備註','O','','']]},
+  {name:'捷運',cols:[['序號','O','流水號','1'],['廠區','O','','台北總公司'],['車票佐證編號','O','','D-001'],['出差人員','S','','王小明'],['出差日期','S','西元年/月/日','2026/03/15'],['起點站','R','','景安'],['終點站','R','','台北車站'],['延人公里(pkm)','R','這一趟的公里數 × 人數','9.2'],['備註','O','','']]},
   {name:'高鐵鐵路地下鐵(中國及其他國家)',cols:[['序號','O','流水號','1'],['廠區','O','','蘇州富鴻齊'],['出差人員','S','','王小明'],['出差日期','S','西元年/月/日','2026/03/15'],['起點','R','','蘇州'],['終點','R','','上海'],['車票/憑單佐證編號','O','','E-001'],['車輛類型','S','高鐵、動車、地鐵…','高鐵'],['延人公里(pkm)','R','這一趟的公里數 × 人數','84'],['備註','O','','']]},
-  {name:'陸運',cols:[['序號','O','流水號','1'],['廠區','O','','臺北信錦'],['憑單佐證編號','O','','F-001'],['出差人員','S','','王小明'],['出差日期','S','西元年/月/日','2026/03/15'],['起點','S','','公司'],['起點地址','O','','新北市中和區建康路168號'],['終點','S','','客戶'],['終點地址','O','','桃園市龜山區'],['車輛來源','R','計程車／自用小客車／機車／公車 擇一','計程車'],['延人公里(pkm)','R','這一趟的公里數 × 人數','12.5'],['Googlemap截圖','O','截圖編號','1-17'],['備註','O','','']]}]};
+  {name:'陸運',cols:[['序號','O','流水號','1'],['廠區','O','','台北總公司'],['憑單佐證編號','O','','F-001'],['出差人員','S','','王小明'],['出差日期','S','西元年/月/日','2026/03/15'],['起點','S','','公司'],['起點地址','O','','新北市中和區建康路168號'],['終點','S','','客戶'],['終點地址','O','','桃園市龜山區'],['車輛來源','R','計程車／自用小客車／機車／公車 擇一','計程車'],['延人公里(pkm)','R','這一趟的公里數 × 人數','12.5'],['Googlemap截圖','O','截圖編號','1-17'],['備註','O','','']]}]};
 
 /* ── C07 員工通勤：一人一列；延人公里用公式自動算 ── */
 TPLS['C07']={code:'C07',name:'員工通勤',how:[
@@ -2733,7 +2736,7 @@ TPLS['C07']={code:'C07',name:'員工通勤',how:[
   '6. 匯入會取代這個廠這一年原本用匯入或登錄頁輸入的員工通勤資料，所以請把全廠的人放在同一個檔。'],
  lists:[['交通工具的寫法（請照抄）',['自有汽車（汽油）','自有汽車（柴油）','自有汽車（油電）','自有汽車（插電油電）','自有汽車（純電）','機車（汽油）','機車（電動）','電動腳踏車','公車／公交車（柴油）','公車／公交車（電動）','捷運／地鐵','高鐵','計程車（汽油）','計程車（電動）','步行','腳踏車／自行車']]],
  sheets:[{name:'C7員工通勤',rows:1500,need:[['距離KM(單程)','距離KM(來回)'],['延人公里(pkm)']],hint:'「延人公里」是公式自動算的：請用 Excel 開啟並存檔一次，或直接填數字。',
-  cols:[['編號','O','流水號','1'],['廠區或辦公室名稱','O','','臺北信錦'],['工號或編號','R','一人一個；不要填姓名','A001'],['居住地址(只填到行政區)','O','只填到鄉鎮市區','新北市中和區'],['交通工具','R','下拉選單選一種（清單在樣板說明頁最下面）','機車（汽油）',null,{l:0}],
+  cols:[['編號','O','流水號','1'],['廠區或辦公室名稱','O','','台北總公司'],['工號或編號','R','一人一個；不要填姓名','A001'],['居住地址(只填到行政區)','O','只填到鄉鎮市區','新北市中和區'],['交通工具','R','下拉選單選一種（清單在樣板說明頁最下面）','機車（汽油）',null,{l:0}],
    ['距離KM(單程)','E','住家到公司的單程公里數','9.8'],['距離KM(來回)','E','來回公里數；有填就以這一欄為準','19.6'],['當年度工作天數','R','這位同仁這一年的上班天數','248'],
    ['延人公里(pkm)','A','公式自動算，也可以直接打數字','4860.8',r=>'IF(OR(H'+r+'="",AND(F'+r+'="",G'+r+'="")),"",IF(G'+r+'<>"",G'+r+',F'+r+'*2)*H'+r+')']]}]};
 
@@ -2787,7 +2790,7 @@ TPLS['C05']={code:'C05',name:'營運廢棄物',lists:tplC05Lists,how:[
   '5. 填好回系統「資料登錄 › C05 營運廢棄物」，選好跟樣板一樣的廠區與年度，按「📥 匯入收集表」選這個檔。會先預覽，按確認才寫入。',
   '6. 匯入會取代這個廠這一年原本用匯入或登錄頁輸入的廢棄物資料，所以請把整年的資料放在同一個檔。'],
  sheets:[{name:'C5 營運廢棄物',rows:500,cond:[['運輸距離(KM)','運輸工具']],
-  cols:[['序號','O','流水號','1'],['公司','S','清運或處理廠商的名稱','○○環保'],['廠房或辦公室名稱','O','','臺北信錦'],['清運日期','O','西元年/月/日；整個月合成一列就填那個月的任一天','2026/03/15'],['廢棄物代號','O','環保署廢棄物代碼，有才填','D-1801'],
+  cols:[['序號','O','流水號','1'],['公司','S','清運或處理廠商的名稱','○○環保'],['廠房或辦公室名稱','O','','台北總公司'],['清運日期','O','西元年/月/日；整個月合成一列就填那個月的任一天','2026/03/15'],['廢棄物代號','O','環保署廢棄物代碼，有才填','D-1801'],
    ['廢棄物種類','R','下拉選單選一種','生活廢棄物',null,{l:0}],['廢棄物(資源品)名稱','O','','一般生活垃圾'],['廢棄物(資源品)重量(公噸)','R','公噸（公斤 ÷ 1000）','1.25'],['支出費用','O','清運處理費，當地幣','3500'],
    ['處理方式','R','下拉選單選一種','焚化',null,{l:1}],['佐證資料編碼','O','清運單或收據的編號','W-001'],['處理地點','S','處理廠的名稱或地點','新店焚化廠'],
    ['運輸距離(KM)','S','要算運輸排放才填：廠區到處理地點的公里數','18.5'],['延噸公里(T.KM)','A','公式自動算（重量 × 運輸距離），也可以直接打數字','23.125',r=>'IF(OR(H'+r+'="",M'+r+'=""),"",H'+r+'*M'+r+')'],
@@ -2876,7 +2879,7 @@ TPLS['C01-M']={code:'C01-01',name:'直接物料（重量法）',how:[
    項目類別系統照「資產」名稱判斷（C08：名稱有大巴／巴士／交通車＝承租大巴、有租賃車／公務車＝車輛租賃、其他＝不動產；C13 一律不動產出租）。
    係數、碳排那幾欄樣板不放。C15 投資沒有樣板：它的匯入綁 ESG Table1 的欄位位置，空白還會沿用上一列，不適合拿來當空白樣板。 ── */
 const tplRlSheet=per=>({name:'C8-C13共用表單',rows:300,need:[['年租金(未稅)(當地幣)','年租金(未稅)(美元)']],hint:'「年租金(當地幣)」是公式自動算的（月租金 × 月份）：請用 Excel 開啟並存檔一次，或直接填數字。',
-  cols:[['廠區','O','廠房或辦公室名稱','臺北信錦'],['資產','R','租的是什麼（例：宿舍、辦公室、廠房、倉庫、停車位、交通車、公務車）','員工宿舍'],[per+'日期區間','S','合約期間','2026.01.01-2026.12.31'],[per+'月份','S','這一年'+per+'了幾個月','12'],
+  cols:[['廠區','O','廠房或辦公室名稱','台北總公司'],['資產','R','租的是什麼（例：宿舍、辦公室、廠房、倉庫、停車位、交通車、公務車）','員工宿舍'],[per+'日期區間','S','合約期間','2026.01.01-2026.12.31'],[per+'月份','S','這一年'+per+'了幾個月','12'],
    ['月租金(未稅)(當地幣)','S','每個月的租金（未稅）','25000'],['年租金(未稅)(當地幣)','E','公式自動算（月租金 × 月份）；也可以直接打全年租金','300000',r=>'IF(OR(D'+r+'="",E'+r+'=""),"",D'+r+'*E'+r+')'],
    ['年租金(未稅)(美元)','E','直接用美金付的才填','9600'],['備註','O','','']]});
 const tplRlHow=(page,per,kinds)=>[
@@ -3420,7 +3423,7 @@ function facPickSrc(code){
 // V75：區域碼分層。電力係數在中國要細到省（各省發電結構不同），其餘排放源維持國別。
 //      碼用 ISO 3166-2:CN，畫面顯示中文省名——使用者看不到 CN-JS，不會跟廠區碼 JS（中山富鴻齊）混淆。
 const FSM_RG={TW:'TW 台灣',CN:'CN 中國',VN:'VN 越南',TH:'TH 泰國',US:'US 美國',SG:'SG 新加坡',MY:'MY 馬來西亞',ALL:'ALL 全區域通用',
-  'CN-GD':'廣東','CN-JS':'江蘇','CN-FJ':'福建','CN-CQ':'重慶','TH-LT':'泰國（陸合泰國）'};   /* V120-1：批216 陸合泰國子區域 */
+  'CN-GD':'廣東','CN-JS':'江蘇','CN-FJ':'福建','CN-CQ':'重慶','TH-LT':'泰國（陸合）'};   /* V120-1：批216 陸合(泰國)子區域 */
 function rgOf(x){ const c=x&&x.country; return (c&&c!=='-')?c:'ALL'; }   // 條目的區域碼
 function rgChain(st){   // 廠區 → 區域三層：電網區域 → 國別 → ALL（沒填電網區域就只有兩層，行為同 V74）
   const out=[]; if(st){ const g=st.grid_region, c=st.country;
@@ -4797,9 +4800,9 @@ function tgDtl(gi,ci){ if(window.event)window.event.stopPropagation(); document.
 // === 下鑽：彙總點一下 -> 資料登錄看明細 ===
 const PLANT2OMS={'01':'SY','02':'SH','03':'VN','04':'JS','05':'SF','06':'FF','07':'CF','08':'KH','09':'GH','10':'FQ','11':'KS','12':'GT','13':'TC','14':'LH','15':'LS','16':'LT','17':'SG','18':'MY','19':'US','20':'TH'};   // V33:加海外據點17-19
 const OVERSEA2P={SG:'17',MY:'18',US:'19',TH:'20'};   // V33:view plant_code(site字母碼)→官方數字碼(view不動,程式端映射) V63:+TH(信錦泰國20,2025起)
-// 註：16協和泰國=OMS『LT 陸合泰國』；20信錦泰國=OMS『TH Syncmold Thailand』(ESG資料夾自命名,以OMS為準)
+// 註：16協和泰國=OMS『LT 陸合(泰國)』；20信錦泰國=OMS『TH Syncmold Thailand』(ESG資料夾自命名,以OMS為準)
 // 彙總層 plant_code → 顯示「OMS代碼 OMS名稱」(無對映則退回原代碼+名稱,如SG/MY/US)
-const NAME_FIX={'LT':'協合泰國'}; // LT實際名稱為協合泰國(泰國陸和商標已被註冊),覆蓋OMS的陸合泰國
+const NAME_FIX={}; // V129：原本 LT 硬寫「協合泰國」；261015 使用者定 LT＝陸合(泰國)，跟 OMS 一樣讀廠區表（批225）
 function plantLabel(code,fallback){
   const oms=PLANT2OMS[code];
   if(!oms) return (code||'')+' '+(fallback||'');
@@ -6565,13 +6568,13 @@ function matImpMatch(row){ const lib=matLib(); const r={source_name:row.nm,attr2
   if(!fid&&s){ const L=matLibOf(s.fid); if(L&&(row.ef==null||row.ef<=0||Math.abs(L.val-row.ef)<=Math.abs(row.ef)*1e-6+1e-9)){fid=s.fid; why=s.why;} else if(L){ why='⚠ 過去記錄 '+nf(L.val,10)+' 與檔案係數 '+nf(row.ef,10)+' 不同，保留檔案值（未連結）'; } }
   return {fid:fid,why:why};
 }
-const IMP_SITE_ALIAS={SF:['蘇州富鴻齊','苏州富鸿齐'],JS:['中山富鴻齊','中山富鸿齐'],FF:['福州富鴻齊','福州富鸿齐'],CF:['重慶富鴻齊','重庆富鸿齐'],KH:['冠皇'],GH:['冠華','冠华'],FQ:['富群'],KS:['鴻嘉駿','鸿嘉骏'],GT:['敬得觀音','觀音敬得','观音敬得'],TC:['苏州敬得','蘇州敬得','敬得蘇州','敬得太倉','太仓敬得'],LH:['陸合台中','台中陸合'],LS:['蘇州陸和','苏州陆和','陸和','陆和'],LT:['泰國協和','協和泰國','協和'],SH:['信鋐','桃園信錦'],VN:['越南'],TH:['信錦泰國','SYNCTH'],SY:['中和信錦','信錦中和'],SG:['新加坡'],MY:['馬來西亞','马来西亚'],US:['美國','美国']};   /* V90：檔名像別廠 → 警告；直接物料／服務類匯入共用這一份 */
+const IMP_SITE_ALIAS={SF:['蘇州富鴻齊','苏州富鸿齐'],JS:['中山富鴻齊','中山富鸿齐'],FF:['福州富鴻齊','福州富鸿齐'],CF:['重慶富鴻齊','重庆富鸿齐'],KH:['冠皇'],GH:['冠華','冠华'],FQ:['富群'],KS:['鴻嘉駿','鸿嘉骏'],GT:['敬得觀音','觀音敬得','观音敬得','敬得(觀音)','敬得（觀音）'],TC:['苏州敬得','蘇州敬得','敬得蘇州','敬得太倉','太仓敬得','敬得(太倉)','敬得（太倉）'],LH:['陸合台中','台中陸合','陸合(台中)','陸合（台中）'],LS:['蘇州陸和','苏州陆和','陸和','陆和','陸合(蘇州)','陸合（蘇州）','陸合蘇州'],LT:['泰國協和','協和泰國','協和','陸合(泰國)','陸合（泰國）','陸合泰國'],SH:['信鋐','桃園信錦'],VN:['越南'],TH:['信錦泰國','SYNCTH'],SY:['中和信錦','信錦中和','臺北信錦','台北信錦','台北總公司'],SG:['新加坡'],MY:['馬來西亞','马来西亚'],US:['美國','美国']};   /* V90：檔名像別廠 → 警告；直接物料／服務類匯入共用這一份 */
 function matImpPreview(res,fname){
   const blocks=res.blocks; const cur=matRows().filter(r=>!MRET[r.record_id]); const curT=cur.reduce((a,r)=>a+(matCo2e(r)||0),0), curQ=cur.reduce((a,r)=>a+(+r.quantity||0),0);
   /* 預設區塊：碳排合計＝目前登錄值的那塊優先（ESG 各廠採用版本不同）；否則有碳排、分頁名像 80%／匯總／梳理 的；再否則第一個有重量的 */
   const score=b=>((cur.length&&Math.abs(b.sumT-curT)<=Math.max(0.5,curT*0.001))?8:0)+(b.sumT>0?2:0)+(/80|匯總|彙總|汇总|量化|梳理/i.test(b.sheet)?1:0);
   let sel=0; blocks.forEach((b,i)=>{ if(score(b)>score(blocks[sel]))sel=i; }); if(!blocks[sel].sumQ&&blocks.some(b=>b.sumQ>0))sel=blocks.findIndex(b=>b.sumQ>0);
-  const SITE_ALIAS=IMP_SITE_ALIAS;   /* V85-6：檔名像別廠的檔 → 警告（使用者 9/17 把蘇州富鴻齊的檔開在敬得太倉頁） */
+  const SITE_ALIAS=IMP_SITE_ALIAS;   /* V85-6：檔名像別廠的檔 → 警告（使用者 9/17 把蘇州富鴻齊的檔開在敬得(太倉)頁） */
   const hits=Object.keys(SITE_ALIAS).filter(s=>SITE_ALIAS[s].some(a=>String(fname||'').indexOf(a)>=0)); const wrong=hits.length&&hits.indexOf(F.site)<0;
   let h=(wrong?'<div style="margin:0 0 8px;padding:8px 12px;border:2px solid #c0392b;background:#fdecea;color:#7a1f14;border-radius:8px;font-size:13px;font-weight:700">⚠ 檔名看起來是 '+esc(hits.map(s=>{const st=(FAC_SITES||[]).find(z=>z.site_id===s)||{}; return (F.pno?F.pno(s):'')+' '+s+' '+(st.site_name||'');}).join('／'))+' 的檔案，目前畫面是 '+esc((F.pno?F.pno(F.site):'')+' '+F.site+' '+(((FAC_SITES||[]).find(z=>z.site_id===F.site)||{}).site_name||''))+'。除非你確定檔案內容是本廠的，請按「取消」重選。</div>':'')
     +'<div style="font-size:12.5px;color:#3f544a;padding:2px 0 6px">檔案：<b>'+esc(fname)+'</b>　｜　找到 '+blocks.length+' 個分類表區塊，請選要帶入的一個（ESG 各廠採用的版本不同：全原生料／含再生料；100% 清單分頁也會列出，通常不是要帶的）</div>'
@@ -6663,7 +6666,7 @@ function c03Pick(kd,st,y){ y=facY(y);   /* V99：試打年度用最後申報年�
   const same=list.filter(f=>(f.esg_code||'')===(list[0].esg_code||''));   /* V88-6：多條只在同一個代號裡比（不同品項不算多條） */
   const vals=new Set(same.map(f=>c03Val(f).v.toFixed(8)));
   return {f:list[0],rg:p.rg,list:same,multi:vals.size>1}; }
-function c03Code(kd,st,pk){ const c=st&&st.country&&st.country!=='-'?st.country:'ALL'; const base=(pk&&pk.f&&C03CODE[pk.f.esg_code])?pk.f.esg_code:(kd.code||kd.cat);   /* V88：代號用種類碼（系統碼優先，不用 ESG 的 C03-xx） */ return base+'·'+(pk?rgOf(pk.f):c)+'·'+facY(F.year); }   /* V88-15：沒係數時寫廠區所在的區域（原本寫 ALL，敬得觀音其實是 TW） */
+function c03Code(kd,st,pk){ const c=st&&st.country&&st.country!=='-'?st.country:'ALL'; const base=(pk&&pk.f&&C03CODE[pk.f.esg_code])?pk.f.esg_code:(kd.code||kd.cat);   /* V88：代號用種類碼（系統碼優先，不用 ESG 的 C03-xx） */ return base+'·'+(pk?rgOf(pk.f):c)+'·'+facY(F.year); }   /* V88-15：沒係數時寫廠區所在的區域（原本寫 ALL，敬得(觀音)其實是 TW） */
 const c3pvk=r=>String(((r&&r.extra)||{})['光伏種類']||'');   /* V88-6 */
 function c03PvSplit(kd,src){ if(!kd.pv)return [kd];   /* V88-6：光伏各塊依「光伏種類」——全廠一種（或都沒填）就一列；不同種類才分列 */
   const ts=[...new Set((src||[]).filter(r=>kd.cats.indexOf(r.category_id)>=0&&c3pv(r)).map(c3pvk))];
@@ -6722,7 +6725,7 @@ function c03Why(){   /* V88-10：逐種類比對 ①系統自己算 與 ②清�
     if(Math.abs(qk*c.ef-tM)<=tol){ out.push(head+(part?part+'；係數一樣（'+g6(c.ef)+'）':'係數一樣（'+g6(c.ef)+'），'+qPart)); return; }
     const efM=tM/qk; const rg=rgOf(c.pk.f);
     const hit=(FACALL||[]).filter(f=>/^C03/.test(String(f.category_id||''))&&rgOf(f)===rg&&c03Kind(f)===k&&Math.abs(c03Val(f).v-efM)<=Math.abs(efM)*0.002).sort((a,b)=>(efT(b)||9999)-(efT(a)||9999))[0];
-    if(hit&&(+c03Val(hit).v).toFixed(6)===(+c.ef).toFixed(6)){ out.push(head+(part?part+'；係數一樣（'+g6(c.ef)+'）':'係數一樣（'+g6(c.ef)+'），'+qPart)); return; }   /* V88-15：找到的「另一條」跟系統用的同值（敬得觀音 2023）＝係數一樣 */
+    if(hit&&(+c03Val(hit).v).toFixed(6)===(+c.ef).toFixed(6)){ out.push(head+(part?part+'；係數一樣（'+g6(c.ef)+'）':'係數一樣（'+g6(c.ef)+'），'+qPart)); return; }   /* V88-15：找到的「另一條」跟系統用的同值（敬得(觀音) 2023）＝係數一樣 */
     const tail=part?'；另外'+part:(qDiff?'；用量也不同：'+qTxt:'');
     if(hit&&!inEff(hit,Y)){ const a=efF(hit), b=efT(hit); out.push(head+'清冊用了 '+(a!=null?a:'')+((b!=null&&b!==a)?'–'+b:'')+' 年的係數 '+g6(c03Val(hit).v)+src(hit)+'，'+Y+' 年應為 '+g6(c.ef)+src(c.pk.f)+tail); return; }
     if(hit){ out.push(head+'清冊用另一條係數 '+g6(c03Val(hit).v)+src(hit)+'，系統用 '+g6(c.ef)+src(c.pk.f)+tail); return; }
@@ -9232,7 +9235,7 @@ function cmSumRows(blocks,order,byRow){
   });
   return out;
 }
-function cmHsr(o){ return /高鐵/.test(o.bk||'')&&o.efX===1; }   /* V106：收集表把高鐵站間碳足跡（每趟公斤數）填在距離欄、係數 1（臺北信錦 2025；ESG 260930 說明一直以來用各站間碳排） */
+function cmHsr(o){ return /高鐵/.test(o.bk||'')&&o.efX===1; }   /* V106：收集表把高鐵站間碳足跡（每趟公斤數）填在距離欄、係數 1（台北總公司 2025；ESG 260930 說明一直以來用各站間碳排） */
 /* ── 已申報年度面板：① 系統算（係數庫）／② 申報／差異原因 ── */
 function cmdeclPanel(S){
   if(!cmdecl())return '';
@@ -10219,7 +10222,7 @@ function rlScanLease(ws){
   Object.keys(R[hr]).map(Number).sort((a,b)=>a-b).forEach(c=>{ const h=rlT(R[hr][c]);
     if(/租金\s*\(年\)|年租金/.test(h)&&!/(美元|USD|usd)/.test(h))yearcols.push(c);
     for(const [k,re] of RL_LCOLS){ if(cm[k]!=null)continue; if(re.test(h)){ if(k==='年租金'&&/(美元|USD|usd)/.test(h))continue; cm[k]=c; break; } } });
-  if(cm['USD']==null&&yearcols.length>1)cm['USD']=yearcols[yearcols.length-1];   /* 陸合泰國 2024：兩欄都叫「租金 (年)」，後一欄是美元 */
+  if(cm['USD']==null&&yearcols.length>1)cm['USD']=yearcols[yearcols.length-1];   /* 陸合(泰國) 2024：兩欄都叫「租金 (年)」，後一欄是美元 */
   const cohdr=cm['碳排']!=null?rlT(R[hr][cm['碳排']]):'';
   const out=[], notes=[];
   rows.forEach(r=>{ if(r<=hr)return; const v=R[r]; const g=k=>cm[k]!=null?v[cm[k]]:null;
@@ -10227,7 +10230,7 @@ function rlScanLease(ws){
     const co=rlN(g('碳排')), loc=rlN(g('年租金')), mon=rlN(g('月租金')), ef=rlN(g('係數')); let usd=rlN(g('USD')); if(usd===0)usd=null;
     if(/^註/.test(site+asset))return;   /* 表尾註記 */
     if(!asset&&!site&&(rlT(g('Commodity'))||rlT(g('Industry')))&&(usd||loc||mon))site='（未填）';   /* 東莞冠皇 2022：廠區／資產都空白、有金額 */
-    if(!asset&&usd==null&&loc==null&&mon==null){ if(/[一-鿿]/.test(allt)&&!RL_SKIPROW.test(allt))notes.push(allt.slice(0,80)); return; }   /* 沒有資產名稱也沒有金額＝說明列（福清冠華 2025 C13：說明寫在廠區欄「但富群已經有填C8，因此冠華不計」） */
+    if(!asset&&usd==null&&loc==null&&mon==null){ if(/[一-鿿]/.test(allt)&&!RL_SKIPROW.test(allt))notes.push(allt.slice(0,80)); return; }   /* 沒有資產名稱也沒有金額＝說明列（福建冠華 2025 C13：說明寫在廠區欄「但富群已經有填C8，因此冠華不計」） */
     if(!asset&&!site){ if(/[一-鿿]/.test(allt)&&!RL_SKIPROW.test(allt))notes.push(allt.slice(0,80)); return; }
     if(/以上可不用/.test(asset+site))return;
     if([co,usd,loc,mon].every(x=>x==null))return;
@@ -10298,7 +10301,7 @@ function rlImportBuild(){
   const note='匯入收集表 '+I.fname+'・'+P.sheet+'（'+new Date().toISOString().slice(0,10)+(curGhgUser?'・'+curGhgUser.emp_id:'')+'）';
   const base={site_id:W8.site,data_year:y,data_month:null,category_id:W8.cat,equipment_name:null,data_source_note:C.defSrc,status:'工作底稿',input_method:RL_IMPORT,gas_type:'CO2e',gwp:1};
   const clean=o=>{ Object.keys(o).forEach(k=>{ if(o[k]==null||o[k]==='')delete o[k]; }); return o; };
-  const exclNote=(W8.cat==='C13')?(P.notes||[]).filter(n=>/不計|不计/.test(n)).join('；'):'';   /* C13 說明列寫「不計」（福清冠華 2025：富群已填 C8）＝整份不計 */
+  const exclNote=(W8.cat==='C13')?(P.notes||[]).filter(n=>/不計|不计/.test(n)).join('；'):'';   /* C13 說明列寫「不計」（福建冠華 2025：富群已填 C8）＝整份不計 */
   const cvt=(amt,cur)=>{ const R=rlRate(cur,y); return {R:R,usd:(amt!=null&&R)?amt/R.rate:null}; };
   P.rows.forEach(x=>{
     if(C.inv&&x.e01){
@@ -11294,7 +11297,7 @@ window.fpGo=async function(c){ const i=SRC.findIndex(z=>z.c===c); if(i<0)return;
    ・一列＝一款設備：設備名稱、設備類型（ESG 8 類）、冷媒（13 種：ESG 7＋系統暫碼 6）、單台充填量、台數；再充裝量／租賃／備註先收不算
    ・碳排＝單台充填量 × 台數 × 逸散率（依設備類型）× GWP（依冷媒）÷ 1000＝照現行各廠做法（設備總充填量 × 逸散率）
    ・兩張對照表先放程式裡（RF_TYPES／RF_GAS；逸散率＝IPCC 2006 表 7.9 中值、GWP＝各廠多數用法≈AR6）；ESG 回 7 題後改表即可
-   ・ESG 261006 已回覆 7 題：①R22／R12 GWP 記 0 ②乾燥機 16%、冷卻機（冰水機）與熱泵熱水器 8.5%、除濕機與空氣清淨機 0.3% ③6 種暫碼轉正式代號 ④維持總充填量 × 逸散率 ⑤福清冠華空氣乾燥機＝R22 ⑥租賃公務車冷媒要算 ⑦出處＝逸散率「IPCC 2006」、GWP「AR6」
+   ・ESG 261006 已回覆 7 題：①R22／R12 GWP 記 0 ②乾燥機 16%、冷卻機（冰水機）與熱泵熱水器 8.5%、除濕機與空氣清淨機 0.3% ③6 種暫碼轉正式代號 ④維持總充填量 × 逸散率 ⑤福建冠華空氣乾燥機＝R22 ⑥租賃公務車冷媒要算 ⑦出處＝逸散率「IPCC 2006」、GWP「AR6」
    ・已申報年度（2022–2025）：照資料庫原資料唯讀列出，不重算
    ・匯入收集表：讀總表的冷媒列（一列＝該類設備的總充填量，台數記 1），冷媒寫法正規化、設備類型照名稱建議；收集表的逸散率／GWP／排放量只比對
    ══════════════════════════════════════════════════════════════════════════ */
@@ -11337,7 +11340,7 @@ function rfrow(r){ const e=rfe(r); const t=rfType(e['設備類型']), g=rfGas(e[
   const each=rfn(e['單台充填量(kg)']), n=rfn(e['台數']); const kg=(each!=null&&n!=null)?+(each*n).toFixed(6):null;
   const rate=t?t[1]:null, gwp=g?g[2]:null;
   const co=(kg!=null&&rate!=null&&gwp!=null)?+(kg*rate/100*gwp/1000).toFixed(10):null;
-  const P=[]; if(g&&g[4])P.push(['待 ESG①','R22（HCFC）、R12（CFC）的 GWP 要算 0 還是 AR6 值，等 ESG 決定；先照多數廠：R22 算 0、R12 用 11200（臺北信錦 2022–23 用法）','gwp']);
+  const P=[]; if(g&&g[4])P.push(['待 ESG①','R22（HCFC）、R12（CFC）的 GWP 要算 0 還是 AR6 值，等 ESG 決定；先照多數廠：R22 算 0、R12 用 11200（台北總公司 2022–23 用法）','gwp']);
   const tr=rfTypeOf(r.equipment_name); if(tr.q&&t&&t[0]===tr.type)P.push(['待 ESG②','這類設備歸哪一類等 ESG；先照多數廠歸「'+tr.type+'」。'+tr.tip,'type']);
   if(e['租賃'])P.push(['待 ESG⑥','租賃的設備（公務車等）冷媒算不算等 ESG；有廠註明租賃不計、也有廠照算；先照算','misc']);
   return {t:t,g:g,each:each,n:n,kg:kg,rate:rate,gwp:gwp,co:co,P:P}; }
