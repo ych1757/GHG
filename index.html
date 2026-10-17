@@ -288,7 +288,7 @@ td.fachl{background:#fffbe6!important;box-shadow:inset 3px 0 0 #e6a700}   /* V38
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-29</b> · 2026/10/17</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-30</b> · 2026/10/18</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -12459,10 +12459,22 @@ window.xpGo=async function(){
         const st=(FAC_SITES||[]).find(x=>x.site_id===r.site_id)||{}; const m=trnXp.match(mode,veh,{ttw:t,wtt:w,ct:trnXp.rgOf(st.country)});
         const c=(m&&m.it&&m.it.f)?String(m.it.f.esg_code||'').trim():''; return c?c.replace(/^C04-/,String(r.category_id)+'-'):''; };   /* V122：運輸列沒連條目的，照段／車種／TTW／WTT 反查共用表填新編碼（從運輸模組入口 trnXp 叫） */
     const xpFm={}; FF.forEach(f=>xpFm[f.factor_id]=f);
-    const xpCr=await sbAll(()=>sb.from('ghg_emission_factors').select('factor_id,esg_code').not('esg_code','is',null).order('factor_id')); if(xpCr.error)throw xpCr.error;
+    const xpCr=await sbAll(()=>sb.from('ghg_emission_factors').select('factor_id,category_id,esg_code').not('esg_code','is',null).order('factor_id')); if(xpCr.error)throw xpCr.error;
     const xpCodes=new Set((xpCr.data||[]).map(f=>String(f.esg_code||'').trim()).filter(Boolean)); if(!xpCodes.size)throw new Error('係數庫的新編碼清單讀不到');
-    const xpNewCode=r=>{ const f=r.factor_id?xpFm[r.factor_id]:null; const c=f?String(f.esg_code||'').trim():''; if(c)return c; const k=String((r.extra||{})['係數代號']||'').split('·')[0].trim(); if(k&&xpCodes.has(k))return k; return xpTrn(r); };
-    let nCode=0;
+    const xpBase=r=>{ const f=r.factor_id?xpFm[r.factor_id]:null; const c=f?String(f.esg_code||'').trim():''; if(c)return c; const k=String((r.extra||{})['係數代號']||'').split('·')[0].trim(); if(k&&xpCodes.has(k))return k; return xpTrn(r); };
+    /* V129-30：補判三條（只補標籤，碳排不動）：①這一類係數庫只有一個新編碼 ②C06／C07 逐人逐趟列借同廠同年同車種彙總列 ③同廠同年同名稱的列借用；對到兩個以上碼就不補 */
+    const xpCatC={}; (xpCr.data||[]).forEach(f=>{ const c=String(f.esg_code||'').trim(); if(c)(xpCatC[f.category_id]||(xpCatC[f.category_id]=new Set())).add(c); });
+    const xpVeh=r=>{ const e=r.extra||{}; if(r.category_id==='C06')return String(e['車輛(收集表)']||'').trim(); if(r.category_id==='C07')return String(r.equipment_name||'').trim(); return ''; };
+    const xpNm=r=>String(r.equipment_name||'').trim()+'|'+String(r.source_name||'').trim();
+    const xpVK={}, xpNK={}, xpAdd=(T,k,c)=>(T[k]||(T[k]=new Set())).add(c);
+    rows.forEach(r=>{ const c=xpBase(r); if(!c)return; const p=r.site_id+'|'+r.data_year+'|'+r.category_id+'|'; const v=xpVeh(r); if(v)xpAdd(xpVK,p+v,c); xpAdd(xpNK,p+xpNm(r),c); });
+    const xpOne=S=>(S&&S.size===1)?[...S][0]:'';
+    const xpNewCode=r=>{ const c=xpBase(r); if(c)return {c:c}; const p=r.site_id+'|'+r.data_year+'|'+r.category_id+'|';
+      let k=xpOne(xpCatC[r.category_id]); if(k)return {c:k,fill:1};
+      const v=xpVeh(r); if(v){ k=xpOne(xpVK[p+v]); if(k)return {c:k,fill:2}; }
+      k=xpOne(xpNK[p+xpNm(r)]); if(k)return {c:k,fill:3};
+      return {c:''}; };
+    let nCode=0, nFill=0;
     /* ── 逐筆明細 ── */
     rows.sort((a,b)=>(fpPno(a.site_id)+a.site_id).localeCompare(fpPno(b.site_id)+b.site_id)||String(a.category_id).localeCompare(String(b.category_id))||(+a.data_month||0)-(+b.data_month||0)||a.record_id-b.record_id);
     const HD=['廠區','範疇','類別','項目／設備','月份','活動量','單位','係數','GWP','係數單位','碳排 t（市場基礎）','碳排 t（位置基礎）','碳排怎麼來','新編碼','係數代號','係數出處','來源','換算說明','明細編號'];   /* V119-13：加「新編碼」欄（係數代號前面） */
@@ -12476,7 +12488,7 @@ window.xpGo=async function(){
       else if(!co)how='碳排 0';
       const src=e['收集表']?(e['收集表']+(e['收集表分頁']?'・'+e['收集表分頁']:'')+(e['收集表列']!=null?' 第 '+e['收集表列']+' 列':'')):String(r.input_method||'');
       const item=[r.equipment_name,r.source_name&&r.source_name!==r.equipment_name?r.source_name:'',r.attr2&&r.attr2!==r.equipment_name&&r.attr2!==r.source_name?r.attr2:''].filter(Boolean).join('／');
-      const nc=xpNewCode(r); if(nc)nCode++;   /* V119-13 */
+      const ncx=xpNewCode(r), nc=ncx.c; if(nc)nCode++; if(ncx.fill)nFill++;   /* V119-13；V129-30 補判計數 */
       D.push([fpSiteName(r.site_id),xpScope(r.category_id),xpCat(r.category_id),item,r.data_month||'全年',q,r.quantity_unit||'',ef,ef!=null?gw:null,r.ef_unit||'',coCell,lo,how,nc,r.factor_id||e['係數代號']||'',r.ef_source||e['係數出處']||'',src,String(e['換算']||e['換匯']||'').slice(0,300),r.record_id]); });
     const N=D.length;
     /* ── 排放源彙總（廠 × 類別 × 單位；全部公式） ── */
@@ -12490,11 +12502,11 @@ window.xpGo=async function(){
     /* ── ★重點 ── */
     const tot={}; rows.forEach(r=>{ const sc=xpScope(r.category_id); tot[sc]=(tot[sc]||0)+(+r.co2e_draft||0); });
     const K=[['GHG 盤查清冊'],[],['年度',y+(trialY(y)?'（試打，不算正式數字）':'')],['廠區',s1?fpSiteName(s1):'全部（'+sites.length+' 廠）'],['產出時間',new Date().toLocaleString('zh-TW')],
-      ['系統版本',(document.body.innerText.match(/GHG系統V[\d-]+/)||[''])[0]],['明細筆數',rows.length],['其中碳排是公式的',nf],['其中有新編碼的',nCode],[],['範疇','碳排 t（市場基礎）']];
+      ['系統版本',(document.body.innerText.match(/GHG系統V[\d-]+/)||[''])[0]],['明細筆數',rows.length],['其中碳排是公式的',nf],['其中有新編碼的',nCode],['　其中補判的',nFill],[],['範疇','碳排 t（市場基礎）']];
     ['範疇一','範疇二','範疇三'].forEach(sc=>K.push([sc,{t:'n',f:'SUMIFS(排放源彙總!$G$2:$G$'+M+',排放源彙總!$B$2:$B$'+M+',"'+sc+'")',v:+(tot[sc]||0).toFixed(10)}]));
     const kr=K.length; K.push(['合計',{t:'n',f:'SUM(B'+(kr-2)+':B'+kr+')',v:+((tot['範疇一']||0)+(tot['範疇二']||0)+(tot['範疇三']||0)).toFixed(10)}]);
     K.push([],['說明'],['・排放源彙總、本頁合計都是公式，加總「逐筆明細」。'],['・逐筆明細「碳排怎麼來」寫「公式」的列，碳排＝活動量 × 係數 × GWP ÷ 1000，可以直接驗算；其他列（航空 ICAO、高鐵站間、多氣體、單位換算過的）照系統存的數字，換算過程在「換算說明」。'],
-      ['・範疇二外購電力：市場基礎與位置基礎分兩欄（太陽能／綠電市場基礎 0）。'],['・係數代號可以在「係數表」找到數值與出處；金額法的美金依「匯率表」換算。'],['・「新編碼」＝我們給 ESG 的那套編碼（例：資本商品 C02-01～C02-43、採購服務 C01-02-01～45、天然氣 A01-01），以係數庫為準：有連到係數庫的列寫該係數的新編碼；空白＝這筆沒有連到有新編碼的係數（例如用收集表自帶的係數，或該類別還沒有逐項的新編碼）。']);
+      ['・範疇二外購電力：市場基礎與位置基礎分兩欄（太陽能／綠電市場基礎 0）。'],['・係數代號可以在「係數表」找到數值與出處；金額法的美金依「匯率表」換算。'],['・「新編碼」＝我們給 ESG 的那套編碼（例：資本商品 C02-01～C02-43、採購服務 C01-02-01～45、天然氣 A01-01），以係數庫為準：有連到係數庫的列寫該係數的新編碼；空白＝這筆沒有連到有新編碼的係數（例如用收集表自帶的係數，或該類別還沒有逐項的新編碼）。'],['・沒連係數的列「補判」新編碼（只補標籤，碳排不變）：①這一類在係數庫只有一個新編碼就用它（例：化糞池 A04-03）；②員工通勤、商務旅行的逐人逐趟列，用同廠同年同車種彙總列的新編碼（碳排記在彙總列）；③同廠同年有名稱完全一樣、已有新編碼的列就借用。對到兩個以上新編碼的不補，留空白。']);
     /* ── 係數表 ── */
     const fm={}; FF.forEach(f=>fm[f.factor_id]=f);
     const C=[['係數代號','新編碼','年度','區域','氣體','數值','單位','GWP','名稱／說明','出處']];   /* V119-13：加「新編碼」欄 */
@@ -12509,7 +12521,7 @@ window.xpGo=async function(){
     add('★重點',K,[22,40]); add('排放源彙總',S,[22,8,42,12,8,16,16,16]); add('逐筆明細',D,[22,8,36,30,6,14,10,14,6,14,14,14,30,14,22,30,40,50,10]); add('係數表',C,[24,14,6,6,14,16,16,6,40,40]); add('匯率表',X,[14,8,18,16,40]);
     const fn='GHG盤查清冊_'+y+'_'+(s1||'全部廠區')+'_'+new Date().toISOString().slice(2,10).replace(/-/g,'')+'.xlsx';
     const styled=xpSave(wb,fn,PS.plan);   /* V119-6：盤查總表補底色框線 */
-    msg(''); const l=document.getElementById('s101list'); if(l)l.insertAdjacentHTML('beforeend','<div class="msg ok" style="margin-top:8px">已下載 '+xpEsc(fn)+'：盤查總表 '+PS.length+' 頁'+(styled?'':'（底色框線這次沒套上，數字和公式不受影響）')+'、'+rows.length+' 筆明細（其中 '+nf+' 筆碳排是公式、'+nCode+' 筆有新編碼）、'+(M-1)+' 列彙總、'+(C.length-1)+' 個係數值、'+(X.length-1)+' 筆匯率。</div>');
+    msg(''); const l=document.getElementById('s101list'); if(l)l.insertAdjacentHTML('beforeend','<div class="msg ok" style="margin-top:8px">已下載 '+xpEsc(fn)+'：盤查總表 '+PS.length+' 頁'+(styled?'':'（底色框線這次沒套上，數字和公式不受影響）')+'、'+rows.length+' 筆明細（其中 '+nf+' 筆碳排是公式、'+nCode+' 筆有新編碼，其中補判 '+nFill+' 筆）、'+(M-1)+' 列彙總、'+(C.length-1)+' 個係數值、'+(X.length-1)+' 筆匯率。</div>');
     window._xpLast={wb:wb,rows:rows.length,nf:nf,tot:tot,fn:fn,proto:PS,styled:styled};
   }catch(e){ msg('匯出失敗：'+(e.message||e)+'（沒有產生檔案，請重試）'); }
 };
