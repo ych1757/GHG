@@ -288,7 +288,7 @@ td.fachl{background:#fffbe6!important;box-shadow:inset 3px 0 0 #e6a700}   /* V38
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-16</b> · 2026/10/17</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-18</b> · 2026/10/17</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -3512,7 +3512,7 @@ function facSrcRender(m,o){
   const f10=v=>(v==null||!isFinite(v))?'—':Number(v).toFixed(10);
   const openSt=y=>y===m.openY?';color:#9aa;font-style:italic':'';
   let h=`<div class="ftitle" style="margin-bottom:2px">${title}${o.sub?'':'<span class="fmini" style="margin-left:8px">係數矩陣（區域 × 年度 × 氣體）·唯讀</span>'}</div>`;
-  if(!o.sub)h+=`<div style="font-size:11px;color:var(--g);margin-bottom:6px">每個地區先只顯示<b>合成當量</b>；點地區那一列（▸）展開明細（係數代號、適用廠區、GWP 版本、各氣體係數、來源），表頭可以「全部展開」。<br>明細的格＝係數（固定 10 位）×GWP；🟡＝與前一年不同；<span style="color:#b8860b">⚠ 未維護</span>＝<b>還開著的年度</b>沒有自己的條目（係數每年由 ESG 維護、不沿用）；已結案年度不標——那是系統上線前由 ESG 各廠 Excel 完成並定案的；<span style="color:#c0392b;font-weight:700">⚠ 待查</span>＝<b>燃燒類</b>這一格的非 CO2 氣體佔比超過 10%（燃料燃燒的 CO2 應佔絕大多數），疑似係數本身已是 CO2e 卻又乘了一次 GWP，請對照原始係數表確認——<b>系統只標記、沒有改動任何數字</b>；最右欄「${m.openY}」＝尚未開帳，顯示沿用 ${last} 的值僅供預覽（待確認）</div>`;
+  if(!o.sub)h+=`<div style="font-size:11px;color:var(--g);margin-bottom:6px">每個地區先只顯示<b>合成當量</b>；點地區那一列（▸）展開明細（係數代號、適用廠區、GWP 版本、各氣體係數、來源），表頭可以「全部展開」。<br>明細的格＝係數（固定 10 位）×GWP；🟡＝與前一年不同；<span style="color:#b8860b">⚠ 未維護</span>＝<b>還開著的年度</b>沒有自己的條目（係數每年由 ESG 維護、不沿用）；已結案年度不標——那是系統上線前由 ESG 各廠 Excel 完成並定案的；<span style="color:#c0392b;font-weight:700">⚠ 待查</span>＝<b>燃燒類</b>這一格的非 CO2 氣體佔比超過 10%（燃料燃燒的 CO2 應佔絕大多數），疑似係數本身已是 CO2e 卻又乘了一次 GWP，請對照原始係數表確認——<b>系統只標記、沒有改動任何數字</b>${m.openY?`；最右欄「${m.openY}」＝尚未開帳，顯示沿用 ${last} 的值僅供預覽（待確認）`:''}</div>`;
   h+=`<table class="fsm fsfit" style="width:100%;min-width:${150+ys.length*104}px;table-layout:fixed;font-size:12.5px"><colgroup><col style="width:150px">${ys.map(()=>'<col>').join('')}</colgroup><thead><tr><th style="text-align:left">區域 ／ 項目<a href="javascript:void(0)" class="fsmall" onclick="fsmAll(event)" title="展開或收起畫面上每個地區的明細" style="font-weight:400;font-size:11px;margin-left:8px;color:inherit;text-decoration:underline">${FSM_ALL?'全部收合':'全部展開'}</a></th>`   /* V88-4：表寬跟著畫面，年度欄平分（原本每欄至少 150 撐出左右捲） */
     +ys.map(y=>`<th style="text-align:right${openSt(y)}">${y}${y===m.openY?'<br><span style="font-size:10px;font-weight:400">開帳預覽·沿用·待確認</span>':''}${(typeof frevHdr==='function')?frevHdr(m,y):''}</th>`).join('')+`</tr></thead><tbody>`;
   m.blocks.forEach(b=>{
@@ -3586,7 +3586,13 @@ function fyFit(w){ const p=w&&w.closest('.pane'); if(!p||!w.offsetParent)return;
   const blank=(pr.bottom-cb)/sc-pb-4; if(blank<8)return;
   const sb=w.offsetHeight-w.clientHeight;   // 左右捲軸＋框線的高度（max-height 算的是整個框）
   w.style.maxHeight=Math.floor(Math.min(w.scrollHeight+sb+2,w.offsetHeight+blank))+'px'; }
-function fyObs(el){ if(!el||el._fyo)return; let tm=null; const run=()=>{ clearTimeout(tm); tm=setTimeout(()=>{ try{ fyApply(el); el.querySelectorAll('.fyw').forEach(fyFit); }catch(e){ console.error('fyApply',e); } },60); };
+/* V129-17：係數庫說明段落預設折起來（使用者 261017）——行內樣式小字＋var(--g) 顏色、字數 > 60、裡面沒有表格的段落，包成 <details>（標題「ⓘ 說明（點開）」） */
+function fyHelp(el){ el.querySelectorAll('div[style*="color:var(--g)"]').forEach(d=>{ if(d.dataset.fyh||d.closest('details.fyh')||d.closest('table')||d.querySelector('table,button,select,input'))return;
+    const st=d.getAttribute('style')||''; if(!/font-size:\s*1[12](\.5)?px/.test(st))return; if((d.textContent||'').trim().length<=60)return;
+    d.dataset.fyh='1'; const det=document.createElement('details'); det.className='fyh'; det.style.cssText='margin:0 0 6px';
+    const sm=document.createElement('summary'); sm.textContent='ⓘ 說明（點開）'; sm.style.cssText='cursor:pointer;font-size:12px;color:var(--g);list-style-position:inside';
+    d.parentNode.insertBefore(det,d); det.appendChild(sm); det.appendChild(d); }); }
+function fyObs(el){ if(!el||el._fyo)return; let tm=null; const run=()=>{ clearTimeout(tm); tm=setTimeout(()=>{ try{ fyHelp(el); fyApply(el); el.querySelectorAll('.fyw').forEach(fyFit); }catch(e){ console.error('fyApply',e); } },60); };
   el.addEventListener('toggle',run,true);   // V129-14：展開／收合「核對」後重量
   el._fyo=new MutationObserver(run); el._fyo.observe(el,{childList:true,subtree:true}); run();
   window.addEventListener('resize',()=>{ clearTimeout(el._fyr); el._fyr=setTimeout(()=>{ el.querySelectorAll('table[data-fy]').forEach(t=>{ try{ fyPos(t); }catch(e){} }); el.querySelectorAll('.fyw').forEach(w=>{ try{ fyFit(w); }catch(e){} }); },150); }); }
@@ -7846,6 +7852,7 @@ async function trnLoad(){
   TREC=(r.data||[]).filter(x=>x.category_id===F.cat||(F.cat==='C09'&&(x.extra||{})['登錄頁']==='C09')).filter(x=>!((+x.quantity||0)===0&&/留痕/.test(x.input_method||'')));   /* C09 頁多撈 C04 裡「在 C09 頁登錄的 C4-2」；歸零留痕的舊列不顯示 */
   TRT=trnFromRows(TREC).sort((a,b)=>(a.ro-b.ro)||((a.seq||0)-(b.seq||0)));
   TORIG={}; TRET={}; TRT.forEach(rt=>{ if(!rt.old)TORIG[rt.rid]=trnPick(rt); });
+  F.trNote=await entryNote(F.pno(F.site),F.year,F.cat); if(tok!==TLTOK)return;   /* V129-18：與明細檔的差異原因（鍵＝類別@登錄） */
   trnRender();
 }
 function trnVehOpts(sel,mode,rt){   /* V122：陸運＝三組（中國貨車／全球／台灣）；空運海運＝全球／台灣兩個選項；台灣廠預設台灣、其他廠預設全球 */
@@ -8023,6 +8030,7 @@ function trnRender(){
     btns:tplBtn(F.cat,F.site,F.year)+(decl?'':'<button class="sec" '+(canEdit?'':'disabled')+' onclick="trnAdd()" title="新增一條'+esc(C.thing)+'路線；儲存時才寫入">＋ 新增路線</button>'
       +'<button class="sec" '+(canEdit?'':'disabled')+' onclick="trnImpPick()" title="匯入 ESG 收集表「'+esc(C.form)+'」（先預覽，按儲存才寫入）">⬆ 匯入</button>'
       +'<button class="'+(canEdit?'':'sec')+'" '+(canEdit?'':'disabled')+' onclick="trnAsk()">💾 儲存</button>')});
+  h+=entryNoteHTML(F.trNote);   /* V129-18 */
   h+='<div id="s101wrap" data-k="'+esc(F.cat+'|'+F.site+'|'+Y)+'"><div class="s101zone" style="overflow-x:hidden">';
   if(TFAC)h+=trnFacPanel();
   if(TRTE)h+=trnRoutePanel();
