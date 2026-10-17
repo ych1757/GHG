@@ -83,7 +83,7 @@ thead tr.fltrow th{position:sticky;top:34px;z-index:6;background:#eef6f1!importa
 .nav{flex:0 0 288px;border-right:1px solid #e8eee9;padding:6px;overflow-y:auto;max-height:calc(100vh / var(--z,1) - 170px)}   /* V65-8:加寬+行距壓縮,選項一頁納入 */
 .navg{font-size:11px;color:var(--g);font-weight:700;margin:10px 6px 3px}
 .navi{padding:3px 8px;border-radius:7px;cursor:pointer;font-size:13px;color:var(--ink);line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.navi:hover{background:var(--tint,#EAF4EE)}
+.navi:hover{background:var(--tint,#EAF4EE)}.navi.nsib{cursor:default;color:#8a9a91}.navi.nsib .ncode{color:#a9b8b0}.navi.nsib:hover{background:none}
 .navi.on,.navi.on:hover{background:var(--p);color:#fff;font-weight:700}
 .navi.on .ncode{color:#d9efe3}   /* V88-4：選中列代號改淺色（深綠底配灰綠字看不清） */   /* V74-6:選中項 hover 時要守住深綠底,否則被後面的 .t2:hover 洗成淺底+白字=看不見 */
 .t1{font-size:13.5px;font-weight:800;color:var(--d);padding:3px 6px 1px;line-height:1.3;cursor:pointer;margin-top:2px;border-top:1px solid #e3ece7;white-space:nowrap}
@@ -288,7 +288,7 @@ td.fachl{background:#fffbe6!important;box-shadow:inset 3px 0 0 #e6a700}   /* V38
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-23</b> · 2026/10/17</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-24</b> · 2026/10/17</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -632,7 +632,7 @@ function buildNav(){
         h+=`<div class="navi t2" data-i="${lf.i}" onclick="selectSrc(${lf.i})" title="${srcNa(lf.c)?srcNa(lf.c).naWhy:(r0?'現行碼 '+lf.c:'ESG 新編碼未列此源')}"><span style="visibility:hidden">▸ </span>${mid}${srcNaTag(lf.c)}</div>`; return;}
       h+=`<div class="t2" id="${mid_id}_t" onclick="tg('${mid_id}')">${op?'▾':'▸'} ${mid}</div><div id="${mid_id}" style="display:${op?'block':'none'}">`;
       grp.forEach(lf=>h+=`<div class="navi t3" data-i="${lf.i}" onclick="selectSrc(${lf.i})" title="${ncRow(lf.c)?'現行碼 '+lf.c:'ESG 新編碼未列此源（批73 Q8 待確認移除）'}">${ncRow(lf.c)?`<span class="ncode">${ncRow(lf.c).code}</span>${ncRow(lf.c).name}`:`<span class="ncode" style="color:#c3cfc9">${lf.c}</span><span style="color:#9aa">${lf.name}</span>`}</div>`);   // V69-2:葉節點顯新碼；ESG 未列者灰字   // V65-9:代號等寬定位,中文對齊
-      sib.forEach(x=>{ h+=`<div class="navi t3" data-i="${grp[0].i}" onclick="selectSrc(${grp[0].i})" title="${(x.note||'')}；併在 ${r0.code} 頁，用「電力來源」選 太陽能／綠電"><span class="ncode">${x.code}</span>${x.name}<span class="fmini" style="margin-left:4px;color:#7a8f84">併於 ${r0.code}</span></div>`; });
+      sib.forEach(x=>{ h+=`<div class="navi t3 nsib" title="${(x.note||'')}；不用另外點：在 ${r0.code} 頁新增電號時「電力來源」選 太陽能（或綠電）"><span class="ncode">${x.code}</span>${x.name}<span class="fmini" style="margin-left:4px">→ ${r0.code} 選太陽能</span></div>`; });   /* V129-24：只是說明，不能點、不跟 ${r0.code} 一起反綠 */
       h+='</div>';});
     h+='</div>';});
   document.getElementById('srcnav').innerHTML=h;
@@ -5628,7 +5628,7 @@ const FUEL_CFG={   // V74：一類別一條設定；sheet＝ESG 收集表分頁�
   'S1-02':{fuelKey:'柴油',units:['公升','公噸'],defUnit:{},def:'公升',src:'柴油',attr1:'固定燃燒',attr2:'柴油',sheet:'固定',fuelKeys:['柴油','diesel','desel'],eqHint:'發電機、消防泵…；管理部統一採購就填「全廠採購（管理部）」，設備寫在備註'},
   'S1-09':{units:['公斤'],defUnit:{},def:'公斤',src:'SF6',attr1:'製程',attr2:'SF6',sheet:'製程',fuelKeys:['sf6','六氟化硫'],gases:['SF6'],conv:{a:'數量(瓶/罐)',b:'單重(Kg)'},eqHint:'鎂合金熔爐（保護氣體）、鋼瓶…'},   // V77：製程氣體 SF6（A03-02）；gases＝只列這些氣體欄；conv＝逐月列多「數量 × 單重」兩欄
   'S1-08':{units:['公斤'],defUnit:{},def:'公斤',src:'乙炔',attr1:'製程',attr2:'乙炔',sheet:'製程',fuelKeys:['乙炔','c2h2','acetylene'],gases:['CO2'],conv:{a:'數量(瓶/罐)',b:'單重(Kg)'},eqHint:'切割槍、焊接、鋼瓶…'},   // V77：乙炔（A03-01）
-  'S2-01':{units:['kWh'],defUnit:{},def:'kWh',src:'電力',attr1:'電力',attr2:'市電',sheet:'外購電力',sheetPfx:'S2',fuelKeys:[],gases:['CO2'],period:true,periodLabel:'計費期間',qLabel:'總用電量 kWh',blankName:'全廠（電表）',eqHint:'電號／電表（例 3206900065473）；另一個電號就再加一塊',conv:{a:'廠區用電量',b:'宿舍用電量',op:'+'},srcOpts:['市電','太陽能','綠電'],dual:true,mtype:'度數',elec:true},   // V80：外購電力（B01-01）
+  'S2-01':{units:['kWh'],defUnit:{},def:'kWh',src:'電力',attr1:'電力',attr2:'市電',sheet:'外購電力',sheetPfx:'S2',fuelKeys:[],gases:['CO2'],period:true,periodLabel:'計費期間',qLabel:'用電量 kWh',blankName:'全廠（電表）',eqHint:'電號／電表（例 3206900065473）；另一個電號就再加一塊',split:['廠區用電量','宿舍用電量'],srcOpts:['市電','太陽能','綠電'],dual:true,mtype:'度數',elec:true},   // V80：外購電力（B01-01）
   'S1-12':{units:['人時'],defUnit:{},def:'人時',src:'水肥',attr1:'逸散',attr2:'水肥',sheet:'逸散-化糞池',sheetRe:/化糞池|化粪池/,fuelKeys:[],gases:['CH4'],qLabel:'總工時數 h（人時）',info:{key:'月平均人數',label:'月平均人數'},blankName:'全廠（化糞池）',eqHint:'化糞池（全廠一座就空白）',mtype:'人時',septic:true},   // V81：化糞池（A04-03）；info＝資訊欄（存 extra，不算碳排）
   'S1-13':{units:['公斤'],defUnit:{},def:'公斤',src:'噴式潤滑劑',attr1:'逸散',attr2:'噴式潤滑劑',sheet:'逸散噴式潤滑劑',sheetRe:/噴式|潤滑劑|推進劑/,fuelKeys:['噴式','潤滑','wd','推進'],gases:['CO2'],conv:{a:'使用數量(瓶)',b:'單重(KG)'},qLabel:'使用量 公斤',blankName:'全廠（噴劑）',eqHint:'WD-40 等噴式防銹潤滑劑（品名）',mtype:'使用量'}   // V82：噴式潤滑劑／推進劑（A04-04）；瓶數×單重＝公斤；conv op '+'＝兩欄相加為使用量；srcOpts＝塊級電力來源（attr2）；dual＝雙軌（位置基礎欄）
   ,'C01-W':{units:['m3'],defUnit:{},def:'m3',src:'自來水',attr1:'自來水',attr2:'自來水',sheet:'自來水',sheetPfx:'C1上',sheetRe:/自來水|自来水/,fuelKeys:[],gases:['CO2'],period:true,periodLabel:'計費期間',qLabel:'帳單度數 m³',blankName:'全廠（水表）',eqHint:'水號（例 2G534496056）；沒有水號就填地點（例 龜山廠房）',mtype:'用水度數',water:true}   /* V91：上游自來水（C01-03）；water＝水號 × 帳單、跨年帳單按天數比例（見 wTable／wQ） */
@@ -5650,6 +5650,9 @@ const MODE_NAME={m:'逐月',y:'年量',c:'換算'};
 let F={cat:null,site:'',year:2025,recs:[],orig:{},sites:[],years:[],fx:null,newId:-1,retire:{},haveSites:null,pno:null,open:{}};
 const nf=(v,d)=>v==null||v===''||isNaN(Number(v))?'':Number(v).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:(d<4?4:d)});
 const normU=u=>(cfg()&&cfg().water&&/^(m3|m³|度)/i.test(String(u||'').trim()))?'m³':/^kwh$/i.test(String(u||''))?'kWh':(/每人|人時|人工時/.test(String(u||''))?'人時':u);   /* V81：每人-每小時／每人、每小時 → 人時 */   /* V80：kwh／kWh 一律顯示 kWh（DB 兩種寫法並存） */
+const ELSRC=['市電','太陽能','綠電']; const elecSrcNorm=t=>{ t=String(t==null?'':t).trim(); if(!t)return null; if(/太陽|太阳|光伏/.test(t))return '太陽能'; if(/綠電|绿电/.test(t))return '綠電'; if(/市電|市电/.test(t))return '市電'; return null; };   /* V129-24 */
+const elecBase=n=>String(n==null?'':n).replace(/(\s*·\s*(市電|市电|太陽能|太阳能|綠電|绿电))+\s*$/,'').trim();   /* V129-24：「123456 ·市電 ·市電」→「123456」 */
+const elecSrcOf=n=>{ const m=String(n==null?'':n).match(/·\s*(市電|市电|太陽能|太阳能|綠電|绿电)\s*$/); return m?elecSrcNorm(m[1]):null; };
 function bkeyOf(r){ const C=cfg(); const s=(C&&C.srcOpts)?(r.attr2||C.attr2||''):''; return (r.equipment_name||'（未填設備）')+(s?' ·'+s:''); }   /* V83-4：市電也顯示（使用者 9/17「希望能看出市電項目」） */   /* V80：塊鍵；非市電的塊帶「 ·電力來源」後綴 */
 const esc=v=>String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
 const num=v=>{const x=parseFloat(String(v==null?'':v).replace(/,/g,'')); return isFinite(x)?x:0;};
@@ -5813,7 +5816,7 @@ function fuelRender0(){
   else if(READONLY)chip='<span style="background:#fff3cd;color:#856404;border:1px solid #ffe69c;border-radius:999px;padding:3px 12px;font-size:12px;font-weight:700">🔒 唯讀檢視</span>';
   else if(curGhgUser&&!lgCanSite(F.site))chip='<span style="background:#fce4e4;color:#a33;border:1px solid #f2c4c4;border-radius:999px;padding:3px 12px;font-size:12px;font-weight:700">🔒 廠區權限不含 '+F.site+'</span>';
   else if(trialY(F.year))chip=trialChip(); chip+=((typeof facPendChip==='function')?facPendChip(F.year):'');   /* V99 */  if(C.septic)chip+=sewChip(canEdit);   /* V111 */
-  let h=ehead({title:esc(ncText(F.cat)),legend:'mix',
+  let h=ehead({title:esc(C.elec?String(ncText(F.cat)).replace(/（市電）$/,'（市電／太陽能）'):ncText(F.cat)),legend:'mix',   /* V129-24 */
     siteSel:'<select id="fu_site" class="ehsite">'
       +F.sites.map(x=>{const s2=(FAC_SITES||[]).find(z=>z.site_id===x)||{}; return '<option value="'+x+'"'+(x===F.site?' selected':'')+'>'+F.pno(x)+' '+x+' '+esc(s2.site_name||'')+(F.haveSites&&F.haveSites.has(x)?'':'（尚無資料）')+'</option>';}).join('')+'</select>',
     yearSel:'<select id="fu_year" class="ehyear">'+yearOpts(F.years,F.year)+'</select>',
@@ -5862,13 +5865,13 @@ function fuelRender0(){
       const modeBtn=(canEdit?['m','y','c'].map(k=>'<button class="sec" style="padding:1px 9px;font-size:11px;border-radius:999px'+(b.mode===k?';background:var(--p);color:#fff;border-color:var(--p)':'')+'" onclick="event.stopPropagation();fuelMode('+gi+',&#39;'+k+'&#39;)">'+MODE_NAME[k]+'</button>').join(''):('<b>'+MODE_NAME[b.mode]+'</b>'))+(canEdit&&entryCanDel(F.site,F.year)?' <a href="javascript:void(0)" onclick="event.stopPropagation();fuelDropBlk('+gi+')" title="這一年還沒正式：刪掉這個設備（電號）這一年的全部資料；按「💾 儲存」才真的刪" style="color:#a33;text-decoration:none;font-size:11px;white-space:nowrap">🗑 刪除這個設備</a>':'');   /* V129-22 */
       const fld=(lab,html)=>'<span style="white-space:nowrap"><span class="fmini">'+lab+'</span> '+html+'</span>';
       h+='<tr class="fblk"><td colspan="'+NC+'" style="white-space:normal;background:#eef4f0;padding:6px 10px 6px 8px;text-align:left;border-top:1px solid #d7e5dd"><div style="display:flex;gap:8px 16px;flex-wrap:wrap;align-items:center;font-size:12px">'+'<span onclick="fuelTg('+gi+')" title="點一下收合" style="cursor:pointer;font-weight:700;color:var(--d);display:inline-block;width:14px;margin-right:-8px">▾</span>'
+        +(C.srcOpts?fld('電力來源',canEdit?('<select data-eqg="'+gi+'" data-f="es" style="width:auto;padding:2px 6px;font:inherit" title="市電＝用電量×電網係數；太陽能／綠電＝市場基礎 0，位置基礎另列（雙軌揭露）">'+C.srcOpts.map(o=>'<option'+(o===bsrc?' selected':'')+'>'+o+'</option>').join('')+'</select>'):('<b>'+esc(bsrc)+'</b>'))+(e0['供電單位']?' <span class="fmini">'+esc(e0['供電單位'])+'</span>':''):'')   /* V80；V129-24 移到最前面 */
         +fld(eqLbl(b),canEdit?'<input class="tl" data-eqg="'+gi+'" data-f="eq" value="'+esc(b.name.split(' ·')[0]==='（未填設備）'?'':b.name.split(' ·')[0])+'" placeholder="'+esc(C.blankName?(C.blankName+'（系統預設，填了以填的為準）'):C.eqHint)+'" style="width:200px;padding:3px 6px;font:inherit">':'<b>'+bLabel(b.name)+'</b>')
         +fld('備註',canEdit?'<input data-eqg="'+gi+'" data-f="n" value="'+esc(e0['設備備註']||'')+'" placeholder="型號／全廠採購時列設備" style="width:150px;padding:3px 6px;font:inherit">':esc(e0['設備備註']||''))
         +fld('負責部門',canEdit?'<input data-eqg="'+gi+'" data-f="d" value="'+esc(e0['負責部門']||'')+'" style="width:90px;padding:3px 6px;font:inherit">':esc(e0['負責部門']||''))
         +fld('資料來源',canEdit?'<input data-eqg="'+gi+'" data-f="s" value="'+esc(r0.data_source_note||'')+'" placeholder="例：加油發票／領用單／自行評估" style="width:170px;padding:3px 6px;font:inherit">':esc(r0.data_source_note||''))
         +fld('單位',canEdit?('<select data-eqg="'+gi+'" data-f="u" style="width:auto;padding:2px 6px;font:inherit">'+C.units.map(u=>'<option'+(u===unit?' selected':'')+'>'+u+'</option>').join('')+'</select>'):esc(unit))
         +((needDens&&unit==='公升')?fld('公升→公噸',(canEdit?('<select data-eqg="'+gi+'" data-f="uc" style="width:auto;padding:2px 6px;font:inherit" title="密度來自係數庫「換算參照 UC 石油產品容積與重量單位換算表」；預設＝ESG 採用值">'+ucRows(C.fuelKey).map(x=>'<option value="'+esc(x.conv_id)+'"'+((ucOf(r0)||{}).conv_id===x.conv_id?' selected':'')+'>'+esc(ucLabel(x))+'</option>').join('')+'</select>'):('<b>'+esc(ucLabel(ucOf(r0)))+'</b>'))+' <span class="fmini">'+(dens?('密度 '+(+dens.toFixed(6))+' t/L'):'<span style="color:#c0392b">換算表無此燃料，算不出公噸</span>')+'</span>'):'')   // V78：換算產品（密度）
-        +(C.srcOpts?fld('電力來源',canEdit?('<select data-eqg="'+gi+'" data-f="es" style="width:auto;padding:2px 6px;font:inherit" title="市電＝用電量×電網係數；太陽能／綠電＝市場基礎 0，位置基礎另列（雙軌揭露）">'+C.srcOpts.map(o=>'<option'+(o===bsrc?' selected':'')+'>'+o+'</option>').join('')+'</select>'):('<b>'+esc(bsrc)+'</b>'))+(e0['供電單位']?' <span class="fmini">'+esc(e0['供電單位'])+'</span>':''):'')   /* V80 */
         +((C.elec&&bsrc!=='市電')?fld('光伏種類',canEdit?('<select data-eqg="'+gi+'" data-f="pvk" style="width:auto;padding:2px 6px;font:inherit" title="算範疇三 C03 光伏上游用：有板子種類資料（例 單晶硅）就選對應的；不確定選通用">'+[''].concat(Object.keys(C03PVK)).map(o=>'<option value="'+esc(o)+'"'+(o===(e0['光伏種類']||'')?' selected':'')+'>'+esc(o||'（未填）')+'</option>').join('')+'</select>'+c03PvSpan(e0)):('<b>'+esc(e0['光伏種類']||'未填')+'</b>'+c03PvSpan(e0))):'')   /* V88-6：光伏種類（跟電號一樣一塊一個） */
         +fld('填報方式','<span style="display:inline-flex;gap:2px">'+modeBtn+'</span>')
         +(isNew?' <span style="color:#b8860b;font-size:10px">新</span>':'')+((!isNew&&tq===0)?'<span class="fmini" style="background:#ececec;color:#666;padding:0 6px;border-radius:8px" title="清冊列了這台設備但當年用量 0，照源檔揭露">零活動</span>':'')
@@ -5903,7 +5906,7 @@ function fuelRender0(){
   if(ss)ss.onchange=()=>{F.site=ss.value;F.orig={};F.open={};fuelLoad();};
   if(ys)ys.onchange=()=>{F.year=+ys.value;F.orig={};F.open={};fuelLoad();};
   box.querySelectorAll('#s101wrap input[data-rid]').forEach(el=>{el.onclick=e=>e.stopPropagation(); el.onchange=e=>{const id=+e.target.dataset.rid,f=e.target.dataset.f; const r=F.recs.find(x=>x.record_id===id); if(!r)return; const v=e.target.value.trim(); r.extra=r.extra||{};
-    if(f==='q'){ r.quantity=v===''?0:num(v); r._qset=v!==''; }   /* V99-5：記住有沒有填（打 0 顯示 0.0000，清空才回提示字） */
+    if(f==='q'){ r.quantity=v===''?0:num(v); r._qset=v!==''; if(C.split){ delete r.extra[C.split[0]]; delete r.extra[C.split[1]]; } }   /* V129-24：電力手動改用電量 → 收集表帶來的廠區／宿舍分項作廢 */   /* V99-5：記住有沒有填（打 0 顯示 0.0000，清空才回提示字） */
     if(C.info&&f==='i1'){ if(v==='')delete r.extra[C.info.key]; else r.extra[C.info.key]=num(v); }   /* V81：資訊欄 */
     if(needDens&&f==='L'){ const L=v===''?0:num(v); r.extra['公升']=L; r.quantity_unit='公升'; r.quantity=L; }   // V78-5：公升輸入格：這列改以公升為準（原存公噸的列也一樣），公噸與碳排由系統算
     if(C.conv&&f==='ca'){ if(v==='')delete r.extra[C.conv.a]; else r.extra[C.conv.a]=num(v); }   // V77：數量(瓶/罐) × 單重(Kg) ＝ 使用量（兩格都有才算）
@@ -5999,12 +6002,15 @@ window.fuelTpl=function(){ if((cfg()||{}).water)return wTpl();   /* V91 */
   const aoa=[['範疇一填報樣板（GHG 系統產生）'+F.cat,null,null,null,null,null,null,null,null],
     ['廠區:'+F.site+'（'+(st.site_name||'')+'）','年度:'+F.year,'排放源:'+ncText(F.cat),'幣別:'+(R?R.cur:'—'),'月份填 1~12＝逐月；填「全年」＝年量一列。設備名稱要與畫面一致，新設備直接寫新名稱'+(P?'；帳單非整月時填起訖（例 1/26-2/23），同一個月可多列':'')],
     P?['設備名稱','燃料','月份','帳單期間','使用量','單位','費用(未稅·原幣)','負責部門','資料來源','設備備註']:['設備名稱','燃料','月份','使用量','單位','費用(未稅·原幣)','負責部門','資料來源','設備備註']];
+  const EL=!!C.elec;   /* V129-24：電力樣板＝電號｜電力來源｜月份｜帳單期間｜用電量｜單位｜費用｜負責部門｜資料來源｜備註 */
+  if(EL){ aoa[2]=['電號','電力來源','月份','帳單期間','用電量','單位','費用(未稅·原幣)','負責部門','資料來源','備註']; aoa[1][4]='月份填 1~12＝逐月；填「全年」＝年量一列。電號要與畫面一致（太陽能／綠電填名稱），新電號直接寫；電力來源填 市電／太陽能／綠電（空白＝市電）；廠區、宿舍不用分開；帳單非整月時填起訖（例 1/26-2/23），同一個月可多列'; }
   const SP=!!C.septic;   /* V129-2：化糞池樣板＝設備名稱｜月份｜總工時數（人時）｜月平均人數｜單位｜負責部門｜資料來源｜設備備註（不放燃料、費用） */
   if(SP){ aoa[2]=['設備名稱','月份','總工時數（人時）','月平均人數','單位','負責部門','資料來源','設備備註']; }
   const BL=blocks();
-  const row=(name,m,p,q,u,c,d,src,n,i1)=>SP?[name,m,q,(i1==null?'':i1),u,d,src,n]:(P?[name,C.src,m,p,q,u,c,d,src,n]:[name,C.src,m,q,u,c,d,src,n]);
-  if(BL.length)BL.forEach(b=>{const rows=b.mode==='m'?b.mon:b.ann; rows.forEach(r=>{const e=r.extra||{};aoa.push(row(b.name==='（未填設備）'?'':b.name,r.data_month==null?'全年':r.data_month,r.data_month==null?'':(e['期間原文']||''),+r.quantity||0,r.quantity_unit||'',e['原幣金額']==null?'':+e['原幣金額'],e['負責部門']||'',r.data_source_note||'',e['設備備註']||'',(SP&&C.info&&e[C.info.key]!=null&&e[C.info.key]!=='')?+e[C.info.key]:null));});});
-  else for(let m=1;m<=12;m++)aoa.push(row('',m,'','',C.defUnit[region()]||C.def,'','','','',null));
+  const row=(name,m,p,q,u,c,d,src,n,i1,es)=>SP?[name,m,q,(i1==null?'':i1),u,d,src,n]:(EL?[name,es||C.attr2,m,p,q,u,c,d,src,n]:(P?[name,C.src,m,p,q,u,c,d,src,n]:[name,C.src,m,q,u,c,d,src,n]));
+  const nmOut=b=>{ if(!EL)return b.name==='（未填設備）'?'':b.name; const x=elecBase(b.name.split(' ·')[0]); return x==='（未填設備）'?'':x; };   /* V129-24：電力寫電號本身，不帶「 ·市電」 */
+  if(BL.length)BL.forEach(b=>{const rows=b.mode==='m'?b.mon:b.ann; rows.forEach(r=>{const e=r.extra||{};aoa.push(row(nmOut(b),r.data_month==null?'全年':r.data_month,r.data_month==null?'':(e['期間原文']||''),+r.quantity||0,r.quantity_unit||'',e['原幣金額']==null?'':+e['原幣金額'],e['負責部門']||'',r.data_source_note||'',e['設備備註']||'',(SP&&C.info&&e[C.info.key]!=null&&e[C.info.key]!=='')?+e[C.info.key]:null,EL?(r.attr2||b.r0.attr2||C.attr2):null));});});
+  else for(let m=1;m<=12;m++)aoa.push(row('',m,'','',C.defUnit[region()]||C.def,'','','','',null,EL?C.attr2:null));
   const ws=XLSX.utils.aoa_to_sheet(aoa); ws['!cols']=SP?[{wch:18},{wch:6},{wch:16},{wch:12},{wch:8},{wch:12},{wch:20},{wch:18}]:P?[{wch:18},{wch:8},{wch:6},{wch:16},{wch:14},{wch:8},{wch:16},{wch:12},{wch:20},{wch:18}]:[{wch:18},{wch:8},{wch:6},{wch:14},{wch:8},{wch:16},{wch:12},{wch:20},{wch:18}];
   const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,F.cat+'填報'); XLSX.writeFile(wb,ncText(F.cat).split(' ')[0]+'樣板_'+F.site+'_'+F.year+'.xlsx');
 };
@@ -6023,13 +6029,15 @@ function fuelImpDetect(wb){
   throw new Error('無法辨識：找不到「範疇一填報樣板」或「'+(C.sheetPfx||'S1')+C.sheet+'」分頁的'+C.src+'區塊（分頁：'+wb.SheetNames.join('、')+'）');
 }
 function readTemplate(aa,aw){
-  let hr=-1; for(let r=0;r<Math.min(8,aa.length);r++){const c=(aw[r]||[]).map(x=>String(x||'').replace(/\s/g,'')); if(c.some(x=>x==='月份')&&c.some(x=>x.indexOf('使用量')>=0||x.indexOf('總工時')>=0)){hr=r;break;}   /* V129-2：化糞池樣板「總工時數（人時）」 */}
+  let hr=-1; for(let r=0;r<Math.min(8,aa.length);r++){const c=(aw[r]||[]).map(x=>String(x||'').replace(/\s/g,'')); if(c.some(x=>x==='月份')&&c.some(x=>x.indexOf('使用量')>=0||x.indexOf('用電量')>=0||x.indexOf('總工時')>=0)){hr=r;break;}   /* V129-24：電力樣板「用電量」 */   /* V129-2：化糞池樣板「總工時數（人時）」 */}
   if(hr<0)return null; const H=(aw[hr]||[]).map(x=>String(x||'').replace(/\s/g,''));
-  const ci=k=>H.findIndex(x=>x.indexOf(k)>=0); const cE=ci('設備名稱')>=0?ci('設備名稱'):ci('水號'),cM=ci('月份'),cQ=ci('使用量')>=0?ci('使用量'):ci('總工時'),cI=ci('平均人數'),cU=ci('單位'),cC=ci('費用'),cD=ci('負責'),cS=ci('資料來源'),cN=ci('設備備註'),cP=ci('帳單期間')>=0?ci('帳單期間'):ci('計費期間'),cK=ci('盤查區間'),cL=ci('地點');   // V73：cP；V91：自來水 水號／計費期間／盤查區間／地點
+  const ci=k=>H.findIndex(x=>x.indexOf(k)>=0); const cE=ci('設備名稱')>=0?ci('設備名稱'):(ci('水號')>=0?ci('水號'):ci('電號')),cES=ci('電力來源'),cM=ci('月份'),cQ=ci('使用量')>=0?ci('使用量'):(ci('用電量')>=0?ci('用電量'):ci('總工時')),cI=ci('平均人數'),cU=ci('單位'),cC=ci('費用'),cD=ci('負責'),cS=ci('資料來源'),cN=ci('設備備註')>=0?ci('設備備註'):ci('備註'),cP=ci('帳單期間')>=0?ci('帳單期間'):ci('計費期間'),cK=ci('盤查區間'),cL=ci('地點');   // V73：cP；V91：自來水 水號／計費期間／盤查區間／地點
   let site=null,year=null; for(let r=0;r<hr;r++)(aw[r]||[]).forEach(x=>{const s=String(x||''); let m=s.match(/廠區[:：]\s*([A-Za-z]{2,3})/); if(m)site=m[1]; m=s.match(/年度[:：]\s*(20\d\d)/); if(m)year=+m[1];});
   const out=[];
   for(let r=hr+1;r<aa.length;r++){const row=aa[r]||[],roww=aw[r]||[]; let mo=row[cM]; const ms=String(mo==null?'':mo).trim(); if(/全年|年量|年度/.test(ms))mo=0; else if(typeof mo==='string')mo=parseInt(mo); const q=row[cQ]; if(mo==null||isNaN(mo)||mo<0||mo>12)continue; if(q!=null&&typeof q!=='number')continue;
-    out.push({eq:String(roww[cE]||'').trim(),m:mo,q:q==null?0:q,u:cU>=0?String(roww[cU]||'').trim():'',c:cC>=0?(typeof row[cC]==='number'?row[cC]:null):null,d:cD>=0?String(roww[cD]||'').trim():'',s:cS>=0?String(roww[cS]||'').trim():'',n:cN>=0?String(roww[cN]||'').trim():'',p:cP>=0?String(roww[cP]||'').trim():'',pk:cK>=0?String(roww[cK]||'').trim():'',loc:cL>=0?String(roww[cL]||'').trim():'',note:cN>=0?String(roww[cN]||'').trim():'',i1:(cI>=0&&typeof row[cI]==='number')?row[cI]:null,fmt:'S'});}
+    const _it={eq:String(roww[cE]||'').trim(),m:mo,q:q==null?0:q,u:cU>=0?String(roww[cU]||'').trim():'',c:cC>=0?(typeof row[cC]==='number'?row[cC]:null):null,d:cD>=0?String(roww[cD]||'').trim():'',s:cS>=0?String(roww[cS]||'').trim():'',n:cN>=0?String(roww[cN]||'').trim():'',p:cP>=0?String(roww[cP]||'').trim():'',pk:cK>=0?String(roww[cK]||'').trim():'',loc:cL>=0?String(roww[cL]||'').trim():'',note:cN>=0?String(roww[cN]||'').trim():'',i1:(cI>=0&&typeof row[cI]==='number')?row[cI]:null,fmt:'S'};
+    if(cfg()&&cfg().elec){ const es=elecSrcNorm(cES>=0?roww[cES]:'')||elecSrcOf(_it.eq); _it.eq=elecBase(_it.eq); if(es)_it.es=es; }   /* V129-24：電號去掉「 ·市電」後綴；電力來源欄優先 */
+    out.push(_it);}
   return out.length?{items:out,site:site,year:year}:null;
 }
 function xlDate(v){ if(v==null||v==='')return null; if(typeof v==='number'){ const d=new Date(Math.round((v-25569)*86400000)); return {y:d.getUTCFullYear(),m:d.getUTCMonth()+1,d:d.getUTCDate()}; } const s=String(v).trim(); let m=s.match(/(\d{4})[\/.\-](\d{1,2})[\/.\-](\d{1,2})/); if(m)return {y:+m[1],m:+m[2],d:+m[3]}; m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/); if(m)return {y:(+m[3]<100?2000+ +m[3]:+m[3]),m:+m[1],d:+m[2]}; return null; }   /* V80：Excel 序號或文字日期 → {y,m,d} */
@@ -6362,6 +6370,7 @@ window.fuelImpApply=function(){ if((cfg()||{}).water)return wImpApply();   /* V9
   let n=0; const skipped=new Set();   // V73：筆數不符略過的月份
   Object.keys(byEq).forEach(k=>{const its=byEq[k]; const u=(its.find(x=>x.u)||{}).u||C.defUnit[region()]||C.def; if(C.units.indexOf(u)<0)return; const isY=its.every(x=>x.m===0); const want=isY?'y':'m';
     const base=k.split(' ·')[0], es0=(its.find(x=>x.es)||{}).es||null; const mkNew=m=>{const r=newRow(base==='（未填設備）'?null:base,m,u,null); if(es0){r.attr2=es0; r.extra['電力來源']=es0;} return r;};   /* V80：塊鍵可含電力來源後綴 */
+    if(C.elec&&!blocks().some(b=>b.name===k)){ const hit=blocks().find(b=>elecBase(b.name.split(' ·')[0])===base&&(b.r0.attr2||C.attr2)===(es0||C.attr2)); if(hit)k=hit.name; }   /* V129-24：舊樣板／畫面名稱多帶「 ·市電」也對得回同一個電號 */
     let bi=blocks().findIndex(b=>b.name===k);
     if(bi<0&&C.srcOpts){ const ci=blocks().findIndex(b=>b.mode!=='m'&&(b.r0.attr2||C.attr2)===(es0||C.attr2)&&!b.rows.some(r=>r._new)); if(ci>=0){ blocks()[ci].rows.forEach(r=>{ if(base!=='（未填設備）')r.equipment_name=base; }); bi=blocks().findIndex(b=>b.name===k); } }   /* V80：清冊補收的年筆（設備名「電力」）→ 改名成電號，下一行改逐月（年筆歸零留痕；與批114 同意思） */
     if(bi>=0&&blocks()[bi].mode!==want){ const b=blocks()[bi]; if(b.mode==='m'){b.mon.forEach(r=>r.quantity=0);} window.fuelMode(bi,want); }
@@ -6372,7 +6381,7 @@ window.fuelImpApply=function(){ if((cfg()||{}).water)return wImpApply();   /* V9
       if(want==='m'){ const bm=b.mon.filter(x=>x.data_month===it.m).length, fc=its.filter(x=>x.m===it.m).length; if(bm!==fc){skipped.add(it.m);return;}   // V73：一個月多筆帳單＝分月依序配對；畫面與檔案筆數不符整月略過（保留原始帳單筆數）
         r=b.mon.find(x=>x.data_month===it.m&&!used.has(x)); if(!r)return; used.add(r); }
       else r=b.ann[0];
-      if(!r)return; r.quantity=+it.q||0; r.quantity_unit=u; r.extra=r.extra||{}; if(it.c!=null)r.extra['原幣金額']=it.c; if(it.d)r.extra['負責部門']=it.d; if(it.s)r.data_source_note=it.s; if(it.n)r.extra['設備備註']=it.n; if(C.period&&it.p)r.extra['期間原文']=it.p; if(it.es){ r.attr2=it.es; r.extra['電力來源']=it.es; } if(it.sup)r.extra['供電單位']=it.sup; /* V80 */ if(it.sub)r.extra['分表']=it.sub; /* V83 */ if(C.info&&it.i1!=null)r.extra[C.info.key]=it.i1; /* V81 */ if(C.conv){ if(it.a!=null)r.extra[C.conv.a]=it.a; else delete r.extra[C.conv.a]; if(it.b!=null)r.extra[C.conv.b]=it.b; else delete r.extra[C.conv.b]; } n++;});   // V77：帶入瓶數／單重
+      if(!r)return; r.quantity=+it.q||0; r.quantity_unit=u; r.extra=r.extra||{}; if(it.c!=null)r.extra['原幣金額']=it.c; if(it.d)r.extra['負責部門']=it.d; if(it.s)r.data_source_note=it.s; if(it.n)r.extra['設備備註']=it.n; if(C.period&&it.p)r.extra['期間原文']=it.p; if(it.es){ r.attr2=it.es; r.extra['電力來源']=it.es; } if(it.sup)r.extra['供電單位']=it.sup; /* V80 */ if(it.sub)r.extra['分表']=it.sub; /* V83 */ if(C.info&&it.i1!=null)r.extra[C.info.key]=it.i1; /* V81 */ if(C.conv){ if(it.a!=null)r.extra[C.conv.a]=it.a; else delete r.extra[C.conv.a]; if(it.b!=null)r.extra[C.conv.b]=it.b; else delete r.extra[C.conv.b]; } if(!C.conv&&C.split){ if(it.a!=null)r.extra[C.split[0]]=it.a; else delete r.extra[C.split[0]]; if(it.b!=null)r.extra[C.split[1]]=it.b; else delete r.extra[C.split[1]]; } n++;});   /* V129-24 */   // V77：帶入瓶數／單重
   });
   IMP=null; fuelRender();
   dlg('✅ 已帶入 '+n+' 列（表格黃底標示）','<div style="font-size:13px;padding:6px 2px;color:#14603F">尚未寫入資料庫，請檢查後按 <b>💾 儲存</b>。</div>'+(skipped.size?'<div style="font-size:12px;color:#b8860b;padding:2px">★略過 '+[...skipped].sort((a,b)=>a-b).join('、')+' 月：畫面與檔案的帳單筆數不符（保留原始帳單筆數，請人工核對；筆數增刪請洽系統管理）</div>':''),'<button onclick="fuelClose()">關閉</button>');
@@ -11853,14 +11862,15 @@ window.rfState=()=>W10;
 const GHG_GUIDE={
  'S2-01':{t:'B01-01 外購電力',
   prep:['每一期的電費單（每個電號各一張）','有太陽能（光伏）或綠電的話：發電量或購電量紀錄'],
-  start:['<b>匯入</b>：按「⬆ 匯入」，選 ESG 收集表（S2 外購電力那一頁），或先按「⬇ 下載樣板」填好再匯入。匯入後會先預覽，<b>按「💾 儲存」才會寫入</b>。',
+  start:['<b>匯入</b>：按「⬆ 匯入」，選 ESG 收集表（S2 外購電力那一頁），或先按「⬇ 下載樣板」填好再匯入（樣板一列一個電號一個月：電號、電力來源、用電量）。匯入後會先預覽，<b>按「💾 儲存」才會寫入</b>。',
          '<b>逐筆</b>：按「＋ 新增電號／光伏」，選電力來源（市電／太陽能／綠電），再填電號或名稱。一個電號一塊。'],
-  fields:[['廠區用電量、宿舍用電量','照帳單上的度數（kWh）。只有總數的話，把這兩格清掉，直接填「總用電量」。'],
+  fields:[['電力來源','每個電號最前面：市電、太陽能（自發自用光伏）、綠電。左邊的 B01-02 自發自用太陽光電就是在這裡選「太陽能」。'],
+          ['用電量','照帳單上這個電號的度數（kWh）。廠區、宿舍不用分開；要說明的寫在備註。'],
           ['計費期間（選填）','帳單上的起訖日。系統會先推一個月份（旁邊標「推」），請照帳單月份確認，不對可以改。'],
           ['費用（選填）','填<b>未稅</b>金額、當地幣別，系統會換成美金。'],
           ['填報方式','逐月（一張帳單一列），或年量（只有全年合計時用）。'],
           ['太陽能／綠電','另外開一塊，選光伏種類（有板子資料就選單晶硅，不確定選通用）。'],
-          ['灰底欄位不用填','總用電量＊、費用（美金）＊、排放當量＊都是系統算的。']],
+          ['灰底欄位不用填','費用（美金）＊、排放當量＊都是系統算的。']],
   err:['自發自用的太陽能填在市電裡 → 要選「太陽能」，另外開一塊。','匯入之後又手動新增同一張帳單 → 重複了。','費用填成含稅金額。','忘了按「💾 儲存」就離開頁面。']},
  'FUEL':{t:'燃料（天然氣、柴油、液化石油氣、汽油）',
   prep:['加油單、購油發票、瓦斯／天然氣帳單，或油料領用紀錄','這一頁的單位：<b>{unit}</b>（帳單單位不同時，先換算成這個單位）'],
