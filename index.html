@@ -288,7 +288,7 @@ td.fachl{background:#fffbe6!important;box-shadow:inset 3px 0 0 #e6a700}   /* V38
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-20</b> · 2026/10/17</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-21</b> · 2026/10/17</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -2860,7 +2860,7 @@ TPLS['S1-11']={code:'A04-02',name:'滅火器充填',how:[
    再生料：「採購總重量」含再生料，「再生料採重量」填其中再生料的部分，系統拆成原生料、再生料兩列（跟原本的匯入一樣）。 ── */
 function tplMatLib(cat,year){ const y=facY(+year), all=(FACALL||[]).filter(f=>f.category_id===cat); let list=all.filter(f=>inEff(f,y)); if(!list.length)list=all; const m={};
   list.forEach(f=>{ const esg=String(f.esg_code||'').trim(); if(!esg)return; const g=((FGAS&&FGAS[f.factor_id])||[])[0]||{}; const name=svcNote(f,'中文')||svcNote(f,'Commodity')||f.factor_id, k=esg+'|'+name; (m[k]=m[k]||[]).push({esg:esg,name:name,cond:svcNote(f,'料況'),val:+g.factor_value||0}); });
-  return Object.keys(m).sort().map(k=>({esg:m[k][0].esg,name:m[k][0].name,rows:m[k]})); }   /* 一個代號底下可能有兩筆不同名稱、不同係數的條目（例 C01-01-M08）→ 用「代號＋名稱」當一種 */
+  return Object.keys(m).sort().map(k=>({esg:m[k][0].esg,name:m[k][0].name,rows:m[k]})); }   /* 一個代號底下可能有兩筆不同名稱、不同係數的條目（批249 起原生料、再生料各自一號）→ 用「代號＋名稱」當一種 */
 TPLS['C01-M']={code:'C01-01',name:'直接物料（重量法）',how:[
   '1. 照原本「C1 採購物料 80% 分類表」的做法：一種材質填一列，重量是這一種材質全年採購的公噸數。第 1 列寫「必填」的一定要填。第 1、2 列與分頁名稱請不要改。',
   '2. 重量請填公噸（公斤 ÷ 1000）。有用再生料的：「採購總重量」填含再生料的總重量，「再生料採重量」填其中再生料的部分，系統會拆成原生料、再生料兩列分別算。',
@@ -2872,7 +2872,7 @@ TPLS['C01-M']={code:'C01-01',name:'直接物料（重量法）',how:[
      ['各代號的係數值（kgCO2e/kg；同一個代號有分料況的會分開列）',L.map(x=>x.esg+' '+x.name+'：'+x.rows.map(r=>(r.cond?r.cond+' ':'')+r.val).join('／'))]]; },
  sheets:[{name:'C1物料80%分類表',cols:[['序號','O','流水號','1'],['物料類別','S','製程或大類（例：沖壓件、塑膠件、包材）','沖壓件'],['英文材質','O','','SPCC'],['中文材質','R','材質名稱（照貴廠原本的寫法）；沒有名稱的列不會匯入','冷軋鋼板'],
    ['採購總重量ton','R','這一種材質全年採購的公噸數（含再生料）','125.6'],['再生料採重量ton','O','其中再生料的公噸數；沒有就留空白',''],
-   ['係數代號','S','下拉選單；沒選＝系統照材質名稱與本廠過去的紀錄帶','C01-01-M03 金屬-鐵和鋼',null,{l:0,stop:1}],
+   ['係數代號','S','下拉選單；沒選＝系統照材質名稱與本廠過去的紀錄帶','C01-01-M05 金屬-不鏽鋼冷軋鋼捲',null,{l:0,stop:1}],
    ['再生料係數代號','O','有填再生料重量才需要：再生料那一部分用的係數；沒選＝跟前一欄同一個','',null,{l:0,stop:1}],['備註','O','','']]}]};
 
 /* ── 租賃兩類共用一套：C08 上游租賃（承租）／C13 下游租賃（出租）。一個租賃項目一列（表頭照各廠「C8-C13共用表單」）
@@ -3603,7 +3603,7 @@ const C03CODE={'C03-01-01':'電力上游','C03-01-02':'輸配電損失','C03-01-
 function facLive(list,y){ const eff=(list||[]).filter(f=>inEff(f,y)); return eff.filter(f=>{ if(efT(f)!=null)return true; const s=efF(f)||0; return !eff.some(g=>g!==f&&(efF(g)||0)>s); }); }   /* V88-1：年度 y 有效的條目；沒寫迄年的舊條目，同一組有較晚開始的就視為被取代 */
 function c03RowCode(src,a2){ const t=String(src||'')+'|'+String(a2||''); if(/光伏|太陽能|太阳能/.test(t))return 'C03-01-03'; if(/天然氣|天然气/.test(t))return 'C03-02-01'; if(/柴油/.test(t))return 'C03-02-02'; if(/汽油|車用汽車|车用汽车/.test(t))return 'C03-02-03'; if(/液化石油|LPG/i.test(t))return 'C03-02-04'; if(/T&D|輸配|输配/.test(t)&&!/上游/.test(t))return 'C03-01-02'; if(/電力|电力/.test(t))return 'C03-01-01'; return null; }   /* V88：明細列名稱 → 種類碼 */
 /* ══ V94：C12 產品終端處置——四大材質（係數庫 C12-01～04 本來就是這四類，系統碼沿用）。登錄頁／查詢頁／係數庫共用這幾支，分類規則只寫一次 ══ */
-const C12_KINDS=[{k:'M',code:'C12-01',name:'金屬',en:'Metal'},{k:'P',code:'C12-02',name:'塑膠',en:'Plastic'},{k:'R',code:'C12-03',name:'紙類',en:'Paper'},{k:'O',code:'C12-04',name:'其他',en:'Other'}];
+const C12_KINDS=[{k:'M',code:'C12-01',name:'金屬',en:'Metal'},{k:'P',code:'C12-02',name:'塑膠',en:'Plastic'},{k:'R',code:'C12-03',name:'紙類',en:'Paper'},{k:'O',code:'C12-99',name:'其他',en:'Other'}];
 function c12ClsOf(t){   /* 材質文字 → 四大類 M／P／R／O；認不出回 null（C01 材質、清冊寫法都走這一支） */
   t=String(t==null?'':t).trim(); if(!t||/^C12$/i.test(t))return null;
   if(/^(other|others|其他)$/i.test(t))return 'O';
