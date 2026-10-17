@@ -288,7 +288,7 @@ td.fachl{background:#fffbe6!important;box-shadow:inset 3px 0 0 #e6a700}   /* V38
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-26</b> · 2026/10/17</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-27</b> · 2026/10/17</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -12986,17 +12986,17 @@ window.xpProtoSheets=function(o){
 </script>
 <style id="v12926css">
 /* ══ V129-26：資料登錄頁版面——表頭兩行、按鈕小而一致、係數說明一條、表格框吃滿剩下的畫面 ══ */
-#src_form .ehead{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin:0 0 10px;padding:0 0 10px;border-bottom:1px solid #e3ece7}
+#src_form .ehead{display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px;margin:0 0 6px;padding:0 0 6px;border-bottom:1px solid #e3ece7}
 #src_form .ehead::after{content:'';order:2;flex-basis:100%;height:0}
-#src_form .ehead>.eh-t{order:0;flex:0 1 auto;max-width:60%;font-size:18px;font-weight:700;letter-spacing:.4px;color:#14603F;line-height:32px}
+#src_form .ehead>.eh-t{order:0;flex:0 1 auto;max-width:60%;font-size:17px;font-weight:700;letter-spacing:.4px;color:#14603F;line-height:28px}
 #src_form .ehead>.eh-btn{order:1;margin-left:0;display:inline-flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
 #src_form .ehead>.fpair{order:3}
 #src_form .ehead>.eh-x{order:4;flex:0 1 auto;gap:8px;font-size:12px}
 #src_form .ehead>.ehleg{order:1;margin-left:auto}
 #src_form .ehead .ehlab{font-size:12.5px;font-weight:600;color:#4a5f55;margin-right:4px}
-#src_form .ehead select.ehsite,#src_form .ehead select.ehyear,#src_form .ehead input.ehyear{height:30px;padding:2px 8px;font-size:13px;border:1px solid #cfdcd5;border-radius:7px;background:#fff}
+#src_form .ehead select.ehsite,#src_form .ehead select.ehyear,#src_form .ehead input.ehyear{height:28px;padding:1px 8px;font-size:13px;border:1px solid #cfdcd5;border-radius:7px;background:#fff}
 #src_form .ehead select.ehsite{width:220px;max-width:220px}
-#src_form .ehead .eh-btn button,#src_form .ehead .eh-btn .sec{height:32px;padding:0 12px;font-size:13px;font-weight:600;border-radius:8px;line-height:30px;white-space:nowrap;box-shadow:none}
+#src_form .ehead .eh-btn button,#src_form .ehead .eh-btn .sec{height:30px;padding:0 12px;font-size:13px;font-weight:600;border-radius:8px;line-height:28px;white-space:nowrap;box-shadow:none}
 #src_form .ehead .eh-btn button:not(.sec){background:#1B8A60;border:1px solid #1B8A60;color:#fff}
 #src_form .ehead .eh-btn button.sec{background:#fff;border:1px solid #cfdcd5;color:#2f4a3e}
 #src_form .ehead .eh-btn button.sec:hover{border-color:#1B8A60;color:#14603F}
@@ -13009,11 +13009,25 @@ window.xpProtoSheets=function(o){
 #s101wrap .fstrip .fmini{font-size:11px;color:#6b7f75}
 #s101wrap .fstrip>.fsrc0{flex:1 1 160px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;text-align:right;cursor:help}
 #s101wrap .s101zone{border-color:#e3ece7}
+#input .pane:has(>#src_form){padding-top:8px}
+#src_form .ehead .eh-x>a,#src_form .ehead .eh-x>span{padding-top:1px!important;padding-bottom:1px!important}
+.fxclip{position:relative;max-height:30px!important;overflow:hidden!important;padding-right:70px!important;white-space:nowrap;text-overflow:ellipsis}
+.fxclip.fxopen{max-height:none!important;white-space:normal}
+.fxclip>.fxmore{position:absolute;right:8px;top:5px;font-size:11.5px;font-weight:600;color:#1B8A60;text-decoration:none;border:1px solid #cfdcd5;border-radius:999px;padding:0 9px;line-height:18px;background:#fff;white-space:nowrap;z-index:2}
+.fxclip>.fxmore:hover{border-color:#1B8A60}
 #s101wrap tr.fblk .fxm{display:none!important}
 #s101wrap tr.fblk .fxo .fxm{display:inline!important}
 #s101wrap tr.fblk .fxt{margin-left:auto;font-size:11.5px;font-weight:600;color:#1B8A60;text-decoration:none;border:1px solid #cfdcd5;border-radius:999px;padding:1px 10px;background:#fff;white-space:nowrap}
 #s101wrap tr.fblk .fxt:hover{border-color:#1B8A60}
 #s101wrap tr.fblk .fxo{background:#fbfdfc;border-radius:8px}
+#s101wrap tr.fblk.fxrow{display:none}
+#s101wrap tr.fblk.fxrow.fxshow{display:table-row}
+#s101wrap tr.fblk.fxrow.fxshow .fxm{display:inline!important}
+#s101wrap tr.fblk.fxrow.fxshow>td{background:#fbfdfc!important;border-top:1px dashed #cfdcd5}
+#s101wrap th.fxth{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#s101wrap th.fxth .fxcar{display:inline-block;width:14px;cursor:pointer;color:#6b7f75;font-weight:400}
+#s101wrap th.fxth .fxnm{font-weight:700;color:#14603F;margin-right:10px}
+#s101wrap th.fxth .fxt{margin-left:0;vertical-align:1px}
 </style>
 <script>
 /* ══ V129-26：表格框高度吃滿畫面剩下的空間（原本固定 100vh − 258px）——只調資料登錄頁最後一個表格框；最少 320px ══ */
@@ -13023,18 +13037,42 @@ window.xpProtoSheets=function(o){
   function tidy(b){ b.querySelectorAll('.ehead').forEach(eh=>{ const t=eh.querySelector('.eh-t'); eh.querySelectorAll('.eh-x>span.fmini:not([data-mv])').forEach(sp=>{ const tx=sp.innerText.replace(/\s+/g,' ').trim(); sp.dataset.mv='1'; sp.style.display='none'; if(t&&tx)t.title=(t.title||t.textContent)+'　'+tx; }); }); }   /* 表頭第二行的灰字（填法＋現行碼）收進標題的游標提示 */
   const FXO={};   /* 每塊設定列展開狀態（重畫後保留）：鍵＝類別｜廠｜年｜第幾塊 */
   function fxKey(i){ const b=box(); const sv=b.querySelector('select.ehsite'), yv=b.querySelector('select.ehyear'); return [window._gCat||'',sv?sv.value:'',yv?yv.value:'',i].join('|'); }
-  function fold(b){ [...b.querySelectorAll('tr.fblk>td>div')].forEach((d,i)=>{ if(d.dataset.fx)return; d.dataset.fx='1';
-      const keep=/^(電號|名稱|設備名稱|水號|電力來源)$/; let n=0;
-      [...d.children].forEach(c=>{ const lb=c.querySelector(':scope>.fmini'); const t=lb?lb.textContent.trim():''; if(!lb||keep.test(t))return; c.classList.add('fxm'); n++; });
-      if(!n)return; const k=fxKey(i); const a=document.createElement('a'); a.href='javascript:void(0)'; a.className='fxt'; a.title='這個設備的備註、負責部門、資料來源、單位、填報方式…（點一下展開／收起）';
+  function fxVal(c,lb){ const inp=c.querySelector('input,select'); if(inp)return inp.tagName==='SELECT'?((inp.options[inp.selectedIndex]||{}).text||inp.value):inp.value; const bb=c.querySelector(':scope>b'); if(bb)return bb.textContent.trim(); return [...c.childNodes].filter(x=>x!==lb).map(x=>x.textContent).join('').trim(); }
+  function fold(b){ [...b.querySelectorAll('tr.fblk')].forEach((tr,i)=>{ const d=tr.querySelector(':scope>td>div'); if(!d||d.dataset.fx)return; d.dataset.fx='1';
+      const keep=/^(電號|名稱|設備名稱|水號|電力來源)$/; const val={}; let n=0;
+      [...d.children].forEach(c=>{ const lb=c.querySelector(':scope>.fmini'); const t=lb?lb.textContent.trim():''; if(!lb)return; if(keep.test(t))val[t]=fxVal(c,lb); else { c.classList.add('fxm'); n++; } });
+      const k=fxKey(i); const a=document.createElement('a'); a.href='javascript:void(0)'; a.className='fxt'; a.title='這個設備的電號／名稱、電力來源、備註、負責部門、資料來源、單位、填報方式…（點一下展開／收起）';
+      const hd=tr.nextElementSibling, th=(hd&&hd.classList.contains('fhd'))?hd.querySelector('th'):null;
+      if(th){   /* V129-27：設備名稱併進這一塊表頭第一格，設定列整條收起 */
+        const src=val['電力來源']||''; const idk=Object.keys(val).find(x=>x!=='電力來源')||''; let idv=(val[idk]||'').trim();
+        let lab; if(src){ if(!idv)idv='（未填'+(idk||'電號')+'）'; lab=idv.indexOf(src)===0?idv:(src+' · '+(idk==='電號'?'電號 ':'')+idv); } else lab=idv||'（未填設備）';
+        const tg=d.querySelector('span[onclick^="fuelTg"]'); th.textContent=''; th.classList.add('fxth'); th.title=lab;
+        const car=document.createElement('span'); car.className='fxcar'; car.textContent='▾'; car.title='點一下收合這一塊'; if(tg){ const oc=tg.getAttribute('onclick'); car.onclick=e=>{ e.stopPropagation(); (new Function(oc))(); }; }
+        const nm=document.createElement('span'); nm.className='fxnm'; nm.textContent=lab;
+        th.appendChild(car); th.appendChild(nm); th.appendChild(a); tr.classList.add('fxrow');
+        const set=on=>{ tr.classList.toggle('fxshow',on); a.textContent=on?'⚙ 收起':'⚙ 設定'; }; set(!!FXO[k]);
+        a.onclick=e=>{ e.preventDefault(); e.stopPropagation(); FXO[k]=!tr.classList.contains('fxshow'); set(FXO[k]); req(); };
+        return; }
+      if(!n)return;
       const set=on=>{ d.classList.toggle('fxo',on); a.textContent=on?'⚙ 收起':'⚙ 設定'; }; set(!!FXO[k]);
       a.onclick=e=>{ e.preventDefault(); e.stopPropagation(); FXO[k]=!d.classList.contains('fxo'); set(FXO[k]); req(); };
-      d.appendChild(a); }); }   /* V129-26：設備設定列平常收起，只留電號／名稱、電力來源；點「⚙ 設定」才展開 */
-  function fit(){ raf=0; const b=box(); if(!b||!b.offsetParent)return; tidy(b); fold(b); const zs=[...b.querySelectorAll('#s101wrap .s101zone')].filter(z=>z.offsetParent); if(!zs.length)return;
+      d.appendChild(a); }); }   /* V129-26／27：設備設定列平常收起；有表頭的併進表頭第一格 */
+  function clip(el,k){ if(el.dataset.cl)return; el.dataset.cl='1'; el.classList.add('fxclip'); const a=document.createElement('a'); a.href='javascript:void(0)'; a.className='fxmore'; a.title='點一下看完整內容／收起';
+    const set=on=>{ el.classList.toggle('fxopen',on); a.textContent=on?'收起':'展開'; }; set(!!FXO[k]);
+    a.onclick=e=>{ e.preventDefault(); e.stopPropagation(); FXO[k]=!el.classList.contains('fxopen'); set(FXO[k]); req(); }; el.appendChild(a); }
+  const isData=el=>el.tagName==='TABLE'||el.tagName==='STYLE'||el.tagName==='SCRIPT'||el.classList.contains('s101zone')||el.id==='s101wrap'||!!el.querySelector('table,input,select,textarea,.s101zone');
+  function squeeze(b){ const eh=b.querySelector('.ehead'); const t=eh&&eh.querySelector('.eh-t'); let n=0; const wrapOn=!!b.querySelector('#s101wrap');   /* 舊版表單頁只收灰字、不收框 */
+    const cand=[]; [...b.children].forEach(c=>{ if(c!==eh)cand.push(c); });
+    const w=b.querySelector('#s101wrap'); if(w){ for(const c of w.children){ if(c.classList.contains('s101zone'))break; cand.push(c); } }
+    const z=b.querySelector('#s101wrap .s101zone'); if(z){ for(const c of z.children){ if(c.tagName==='TABLE')break; cand.push(c); } }
+    cand.forEach(c=>{ if(!c.offsetParent||c.dataset.cl||isData(c))return;
+      if(c.classList.contains('ehdesc')&&c.getBoundingClientRect().height<26&&t){ const tips=[...c.querySelectorAll('[title]')].map(x=>x.title).join(' '); t.title=(t.title||t.textContent)+'　'+c.innerText.replace(/\s+/g,' ').trim()+(tips?'（'+tips+'）':''); c.dataset.cl='1'; c.style.display='none'; return; }   /* 頁首一行灰字說明 → 標題提示 */
+      if(wrapOn&&c.getBoundingClientRect().height>34)clip(c,fxKey('c'+(n++))); }); }
+  function fit(){ raf=0; const b=box(); if(!b||!b.offsetParent)return; tidy(b); fold(b); squeeze(b); const zs=[...b.querySelectorAll('#s101wrap .s101zone')].filter(z=>z.offsetParent); if(!zs.length)return;
     const z=zs[zs.length-1]; const zm=parseFloat(getComputedStyle(document.body).zoom)||1;
     const top=z.getBoundingClientRect().top+window.scrollY; const avail=(window.innerHeight-top-14)/zm;
     const h=Math.max(320,Math.floor(avail)); if(z.style.maxHeight!==h+'px')z.style.maxHeight=h+'px'; }
-  function req(){ if(!raf)raf=requestAnimationFrame(fit); }
+  function req(){ if(!raf)raf=document.hidden?setTimeout(fit,0):requestAnimationFrame(fit); }   /* V129-27：分頁在背景時畫面排程會暫停，改用 setTimeout */
   let mo=null; function hook(){ const b=box(); if(!b||mo)return; mo=new MutationObserver(req); mo.observe(b,{childList:true,subtree:true}); req(); }
   hook(); window.addEventListener('load',hook); window.addEventListener('resize',req);
   window._v12926fit=fit;
