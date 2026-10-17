@@ -288,7 +288,7 @@ td.fachl{background:#fffbe6!important;box-shadow:inset 3px 0 0 #e6a700}   /* V38
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-19</b> · 2026/10/17</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-20</b> · 2026/10/17</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -6472,6 +6472,7 @@ async function matLoad(){
   try{ const {data:h}=await sb.from('ghg_activity_data').select('source_name,attr1,attr2,extra,factor_id,data_year').eq('category_id',F.cat).eq('site_id',F.site).neq('data_year',TRIAL_Y).order('data_year',{ascending:false}).limit(2000);   /* V85-4：不再只抓有係數的，候選要全部 */
     (h||[]).forEach(r=>{ const FL=mfld(r); if(mvoid(r))return; if(FL.cls)MHIST.cls.add(FL.cls); if(FL.nm)MHIST.nm.add(FL.nm); if(FL.mat)MHIST.mat.add(FL.mat); if(r.data_year===F.year||!r.factor_id)return; /* 本年自己的列不算歷史（係數記憶） */ const kn=mnorm(FL.nm), km=mnorm(FL.mat); if(kn&&!MHIST.byName[kn])MHIST.byName[kn]={fid:r.factor_id,y:r.data_year}; if(km&&!MHIST.byMat[km])MHIST.byMat[km]={fid:r.factor_id,y:r.data_year}; });
   }catch(e){}
+  F.mtNote=await entryNote(F.pno(F.site),F.year,F.cat);   /* V129-20：與明細檔的差異原因（鍵＝類別@登錄） */
   matRender();
 }
 function mpick(r){const e=r.extra||{}; return {nm:r.source_name||'',a1:r.attr1||'',m2:r.attr2||'',cd:e['料況']||'',sp:e['供應商']||'',q:r.quantity==null?'':String(r.quantity),fid:r.factor_id||'',ef:r._ef==null?'':String(r._ef)};}
@@ -6555,6 +6556,7 @@ function matRender(){
     btns:tplBtn(F.cat,F.site,F.year)+'<button class="sec" '+(canEdit?'':'disabled')+' onclick="matAdd()" title="新增一列物料；儲存時才寫入">＋ 新增物料</button>'
       +'<button class="sec" '+(canEdit?'':'disabled')+' onclick="matImpPick()" title="匯入各廠 C1 採購物料檔的 80% 分類表（先預覽、選版本，按儲存才寫入）">⬆ 匯入</button>'
       +'<button class="'+(canEdit?'':'sec')+'" '+(canEdit?'':'disabled')+' onclick="matAsk()">💾 儲存</button>'});
+  h+=entryNoteHTML(F.mtNote);   /* V129-20 */
   h+='<div id="s101wrap"><div class="s101zone" style="overflow-x:hidden">';
   h+='<div style="padding:8px 12px;font-size:12px;color:var(--d);background:#eef4f0;border-bottom:1px solid #d7e5dd;display:flex;gap:14px 18px;flex-wrap:wrap;align-items:flex-end">'
     +'<div><div class="fmini">係數</div>由各列「係數」欄從係數庫挑選；'+(lk?'鎖定年度各列依記錄係數計算':'系統依本廠過去記錄／材質別名先帶，未帶到的請自行選')+'</div>'
