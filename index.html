@@ -288,7 +288,7 @@ td.fachl{background:#fffbe6!important;box-shadow:inset 3px 0 0 #e6a700}   /* V38
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-27</b> · 2026/10/17</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-28</b> · 2026/10/17</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -7464,7 +7464,7 @@ function svcRender(){
         const zeroTxt='<span style="color:#7a8f84">不計入（係數 0）</span>';
         const noneTxt=m.unit?'<span style="color:#a33" title="這一列的單位不是金額，不是金額法的資料">⚠ 單位 '+esc(r.quantity_unit||'')+'，不是金額</span>':(m.noamt?'<span style="color:#a33" title="清冊這一列只有碳排，沒有記金額">⚠ 沒有金額</span>':'<span style="color:#a33" title="清冊這一列的係數值在係數庫找不到對應的服務">⚠ 係數庫找不到'+(m.ef!=null?'（清冊 '+g6(m.ef)+'）':'')+'</span>');
         const efR0=(()=>{ const E=svcEfOf(r,svcHint(r)); return (E&&E.v!=null)?E.v:0; })(); const miss0=!!(r.extra||{})['清冊沒有這一列']; const who0=miss0?'收集表':'清冊';   /* V99-8：清冊沒有這一列的係數是收集表填的 */ const verTxt=(m.fy!=null&&m.fy!==Y)?'<div class="fmini" style="color:#b8860b" title="'+who0+'用的是 '+m.fy+' 年版（'+g6(efR0)+'）'+(miss0?'；這一項清冊沒有算':'')+'；① 系統算用 '+Y+' 年版">'+who0+'用 '+m.fy+' 年版 '+g6(efR0)+'</div>':'';
-        fcell='<td class="tl" style="white-space:normal;line-height:1.3">'+(code==='0'?zeroTxt:(code?('<b style="font-weight:600">'+esc(fz||code)+'</b>'+(fen?'<span class="fmini" style="color:#7a8f84">｜'+esc(fen)+'</span>':'')+'<div class="fmini">'+link+'</div>'+verTxt):(m.none?noneTxt:'<span style="color:#a33">未選係數</span>')))+'</td>';
+        fcell='<td class="tl" style="white-space:normal;line-height:1.3">'+(code==='0'?zeroTxt:(code?('<div class="svc1" title="'+esc(fz||code)+(fen?'｜'+esc(fen):'')+'"><b style="font-weight:600">'+esc(fz||code)+'</b></div>'+'<div class="fmini">'+link+'</div>'+verTxt):(m.none?noneTxt:'<span style="color:#a33">未選係數</span>')))+'</td>';
       }
       const amtCell=(canEdit&&!ret)?'<td class="edit'+(chg('amt')?' chgd':'')+'"><input data-rid="'+r.record_id+'" data-f="amt" value="'+(c.a.v==null?'':esc(+c.a.v))+'" placeholder="'+esc(curZh)+'金額" style="width:100%;min-width:0;box-sizing:border-box"></td>'
         :'<td title="'+esc(c.a.v==null?'沒有記當地幣金額（舊資料只有美金）':(c.a.cur+' '+c.a.v))+'">'+(c.a.v==null?'<span class="dash">—</span>':nf(c.a.v,Math.abs(c.a.v)>=1e7?0:2)+(c.a.cur!==cur?' <span class="fmini">'+esc(c.a.cur)+'</span>':''))+'</td>';
@@ -13009,6 +13009,18 @@ window.xpProtoSheets=function(o){
 #s101wrap .fstrip .fmini{font-size:11px;color:#6b7f75}
 #s101wrap .fstrip>.fsrc0{flex:1 1 160px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;text-align:right;cursor:help}
 #s101wrap .s101zone{border-color:#e3ece7}
+#s101wrap td .svc1{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:help}
+.fxhid:not(.fxshow){display:none!important}
+#src_form .ehead .fxpill{font-size:12px;font-weight:600;padding:2px 10px;border-radius:999px;border:1px solid #cfdcd5;background:#fff;color:#2f4a3e;text-decoration:none;white-space:nowrap;line-height:20px}
+#src_form .ehead .fxpill:hover,#src_form .ehead .fxpill.on{border-color:#1B8A60;background:#eef4f0}
+#src_form .ehead .fxpill.fxwarn{border-color:#f0d9a0;background:#fffbeb;color:#7a4b00}
+#src_form .ehead>.eh-rate{order:4;margin-left:auto;font-size:12.5px;color:#14603F;background:#f6f9f7;border:1px solid #e3ece7;border-radius:999px;padding:2px 12px;white-space:nowrap;cursor:help;line-height:20px}
+#src_form .ehead>.eh-rate .fmini{color:#6b7f75;margin-right:2px}
+#src_form .ehead>.fxfocus{order:0;height:28px;padding:0 10px;font-size:12.5px;font-weight:600;border-radius:8px;border:1px solid #cfdcd5;background:#fff;color:#2f4a3e;white-space:nowrap}
+#src_form .ehead>.fxfocus:hover{border-color:#1B8A60;color:#14603F}
+body.ghgfocus .wrap>header,body.ghgfocus .wrap>.tabs,body.ghgfocus .wrap>.foot,body.ghgfocus #input #srcnav,body.ghgfocus #input .mobnote{display:none!important}
+body.ghgfocus #input .entry>.pane{padding-left:14px;padding-right:14px}
+body.ghgfocus #src_form .ehead>.fxfocus{background:#1B8A60;border-color:#1B8A60;color:#fff}
 #input .pane:has(>#src_form){padding-top:8px}
 #src_form .ehead .eh-x>a,#src_form .ehead .eh-x>span{padding-top:1px!important;padding-bottom:1px!important}
 .fxclip{position:relative;max-height:30px!important;overflow:hidden!important;padding-right:70px!important;white-space:nowrap;text-overflow:ellipsis}
@@ -13061,13 +13073,25 @@ window.xpProtoSheets=function(o){
     const set=on=>{ el.classList.toggle('fxopen',on); a.textContent=on?'收起':'展開'; }; set(!!FXO[k]);
     a.onclick=e=>{ e.preventDefault(); e.stopPropagation(); FXO[k]=!el.classList.contains('fxopen'); set(FXO[k]); req(); }; el.appendChild(a); }
   const isData=el=>el.tagName==='TABLE'||el.tagName==='STYLE'||el.tagName==='SCRIPT'||el.classList.contains('s101zone')||el.id==='s101wrap'||!!el.querySelector('table,input,select,textarea,.s101zone');
-  function squeeze(b){ const eh=b.querySelector('.ehead'); const t=eh&&eh.querySelector('.eh-t'); let n=0; const wrapOn=!!b.querySelector('#s101wrap');   /* 舊版表單頁只收灰字、不收框 */
+  function squeeze(b){ const eh=b.querySelector('.ehead'); const t=eh&&eh.querySelector('.eh-t'); let n=0; const wrapOn=!!b.querySelector('#s101wrap'); const grp=[];   /* 舊版表單頁只收灰字、不收框 */
     const cand=[]; [...b.children].forEach(c=>{ if(c!==eh)cand.push(c); });
     const w=b.querySelector('#s101wrap'); if(w){ for(const c of w.children){ if(c.classList.contains('s101zone'))break; cand.push(c); } }
     const z=b.querySelector('#s101wrap .s101zone'); if(z){ for(const c of z.children){ if(c.tagName==='TABLE')break; cand.push(c); } }
     cand.forEach(c=>{ if(!c.offsetParent||c.dataset.cl||isData(c))return;
       if(c.classList.contains('ehdesc')&&c.getBoundingClientRect().height<26&&t){ const tips=[...c.querySelectorAll('[title]')].map(x=>x.title).join(' '); t.title=(t.title||t.textContent)+'　'+c.innerText.replace(/\s+/g,' ').trim()+(tips?'（'+tips+'）':''); c.dataset.cl='1'; c.style.display='none'; return; }   /* 頁首一行灰字說明 → 標題提示 */
-      if(wrapOn&&c.getBoundingClientRect().height>34)clip(c,fxKey('c'+(n++))); }); }
+      if(wrapOn&&!c.querySelector('button')){ c.dataset.cl='1'; grp.push(c); } });
+    pills(b,eh,grp); rateChip(b,eh); focusBtn(eh); }
+  function grpOf(c){ const t=c.textContent||''; if(/差異/.test(t))return ['diff','⚠ 差異說明','這一頁和清冊／明細檔不一樣的地方與原因（點一下展開／收起）']; if(/已申報|只看不改/.test(t))return ['decl','📘 已申報說明','已申報年度怎麼看：系統算與清冊並排（點一下展開／收起）']; return ['calc','ⓘ 算法說明','係數、匯率、怎麼算（點一下展開／收起）']; }
+  function pills(b,eh,grp){ if(!eh)return; const x=eh.querySelector('.eh-x'); if(!x)return; const G={};
+    grp.forEach(c=>{ const g=grpOf(c); (G[g[0]]=G[g[0]]||{lab:g[1],tip:g[2],els:[]}).els.push(c); c.classList.add('fxhid'); });
+    Object.keys(G).forEach(k=>{ const g=G[k], key=fxKey('p-'+k); let a=x.querySelector('a.fxpill[data-g="'+k+'"]');
+      if(!a){ a=document.createElement('a'); a.href='javascript:void(0)'; a.className='fxpill'+(k==='diff'?' fxwarn':''); a.dataset.g=k; a.title=g.tip; x.appendChild(a); }
+      const set=on=>{ g.els.forEach(e=>e.classList.toggle('fxshow',on)); a.classList.toggle('on',on); a.textContent=g.lab+(on?' ▴':' ▾'); }; set(!!FXO[key]);
+      a.onclick=e=>{ e.preventDefault(); e.stopPropagation(); FXO[key]=!a.classList.contains('on'); set(FXO[key]); req(); }; }); }
+  function rateChip(b,eh){ if(!eh||eh.querySelector('.eh-rate'))return; const lab=[...b.querySelectorAll('.fmini,div,span,b')].find(e=>e.children.length===0&&e.textContent.trim()==='匯率'); let src=lab&&lab.parentElement?lab.parentElement.textContent:null; if(!src){ const d=[...b.querySelectorAll('.ehdesc')].map(e=>e.textContent).find(t=>/匯率/.test(t)); if(d)src=d.slice(d.indexOf('匯率')).split('ⓘ')[0]; } if(!src)return;   /* C08／C13／C15 的匯率寫在頁首灰字裡 */
+    let v=src.replace(/^\s*匯率/,'').replace(/\s+/g,' ').trim(); if(!v)return; const full=v; v=v.replace(/[（(][^）)]*[）)]/g,'').replace(/\s*／\s*/g,'／').trim();
+    { const m=v.match(/^(\d{4})\s*(\S+?)\s*([\d.,]+)\s*／\s*USD$/); if(m)v='1 美金＝'+m[3]+' '+m[2]; }   /* 燃料頁「2025 人民幣 6.9762／USD」統一成「1 美金＝6.9762 人民幣」 */
+    const c=document.createElement('span'); c.className='eh-rate'; c.title='匯率：'+full+'（費用換美金用）'; c.innerHTML='<span class="fmini">匯率</span> '+v.replace(/&/g,'&amp;').replace(/</g,'&lt;'); eh.appendChild(c); }   /* ②匯率固定放表頭第二行最右邊 */
   function fit(){ raf=0; const b=box(); if(!b||!b.offsetParent)return; tidy(b); fold(b); squeeze(b); const zs=[...b.querySelectorAll('#s101wrap .s101zone')].filter(z=>z.offsetParent); if(!zs.length)return;
     const z=zs[zs.length-1]; const zm=parseFloat(getComputedStyle(document.body).zoom)||1;
     const top=z.getBoundingClientRect().top+window.scrollY; const avail=(window.innerHeight-top-14)/zm;
@@ -13076,6 +13100,12 @@ window.xpProtoSheets=function(o){
   let mo=null; function hook(){ const b=box(); if(!b||mo)return; mo=new MutationObserver(req); mo.observe(b,{childList:true,subtree:true}); req(); }
   hook(); window.addEventListener('load',hook); window.addEventListener('resize',req);
   window._v12926fit=fit;
+  window.ghgFocus=function(on){ document.body.classList.toggle('ghgfocus',!!on); const bt=document.querySelector('#src_form .fxfocus'); if(bt)bt.textContent=on?'☰ 選單':'⛶ 全畫面'; req(); };
+  function focusBtn(eh){ if(!eh||eh.querySelector('.fxfocus'))return; const bt=document.createElement('button'); bt.type='button'; bt.className='sec fxfocus';
+    const on=document.body.classList.contains('ghgfocus'); bt.textContent=on?'☰ 選單':'⛶ 全畫面'; bt.title='全畫面：收起上方標題、分頁和左邊選單，只看這一類；按「☰ 選單」或 Esc 回原畫面';
+    bt.onclick=e=>{ e.preventDefault(); e.stopPropagation(); ghgFocus(!document.body.classList.contains('ghgfocus')); }; eh.insertBefore(bt,eh.firstChild); }
+  document.addEventListener('keydown',e=>{ if(e.key!=='Escape'||!document.body.classList.contains('ghgfocus'))return; const dl=document.getElementById('s101dlg'); if(dl&&dl.offsetParent)return; ghgFocus(false); });
+  const _ssF=window.selectSrc; if(typeof _ssF==='function')window.selectSrc=function(){ const r=_ssF.apply(this,arguments); try{ const inp=document.getElementById('input'); if(inp&&!inp.classList.contains('hide'))ghgFocus(true); }catch(e){} return r; };   /* 選了類別就全畫面 */
 })();
 </script>
 </body>
