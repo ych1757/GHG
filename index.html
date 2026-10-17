@@ -288,7 +288,7 @@ td.fachl{background:#fffbe6!important;box-shadow:inset 3px 0 0 #e6a700}   /* V38
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-24</b> · 2026/10/17</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-26</b> · 2026/10/17</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -5830,12 +5830,12 @@ function fuelRender0(){
   if(F.note)h+='<div style="margin:8px 0 0;padding:6px 10px;border:1px solid #f0d9a0;background:#fffbeb;border-radius:8px;font-size:12.5px;line-height:1.55;color:#5c4400"><b>▍與 ESG 收集表／清冊的差異（原因）</b><br>'+esc(F.note).replace(/\n/g,'<br>')+'</div>';   /* V129-15 */
   h+='<div id="s101wrap"><div class="s101zone" style="overflow-x:hidden">';
   // 係數列（統一：各氣體 ＋ 合成當量 ＋ 匯率 ＋ 來源）
-  h+='<div style="padding:8px 12px;font-size:12px;color:var(--d);background:#eef4f0;border-bottom:1px solid #d7e5dd;display:flex;gap:14px 18px;flex-wrap:wrap;align-items:flex-end">'
+  h+='<div class="fstrip">'   /* V129-26：係數說明壓成一條 */
     +'<div><div class="fmini">係數（'+esc(FSM_RG[rg]||rg)+' '+facY(F.year)+(trialY(F.year)?'·試打沿用':'')+'）'+(needRec?' <span style="color:#7a8f84" title="鎖定年度照原資料：每一列用收割／儲存時記錄的係數算碳排，與查詢頁存的數字一致；這裡列的是係數庫現值僅供對照">·鎖定年度各列依記錄係數計算</span>':'')+((facYOpen(F.year)&&gs.some(g=>g.from&&g.from<F.year))?' <span style="color:#b8860b;font-weight:700" title="ESG 尚未維護 '+F.year+' 年條目：目前用的是 '+Math.min.apply(null,gs.filter(g=>g.from&&g.from<F.year).map(g=>g.from))+' 年起的條目（係數每年由 ESG 維護、不沿用；點上方代號可到係數庫矩陣看）">⚠ '+F.year+' 年係數未維護</span>':'')+'</div>'+(gs.length?GASES.map(gas=>{const g=gmap[gas]; return g?('<span style="display:inline-block;margin-right:14px"><b>'+gas+'</b> '+nf(g.ef,10)+' <span class="fmini">'+esc(g.unit)+' × GWP '+g.gwp+'</span></span>'):('<span style="display:inline-block;margin-right:14px;color:#9aa"><b>'+gas+'</b> — <span class="fmini">該區未採用</span></span>');}).join(''):'<span style="color:#c0392b;font-weight:700">係數庫沒有 '+esc(code())+' 的條目，活動量可存、碳排不算</span>')+'</div>'
     +(gs.length?'<div style="background:#e6ece9;color:#3f544a;border-radius:6px;padding:3px 10px" title="系統算：各氣體係數 × GWP 加總"><div class="fmini">合成當量＊</div><b>'+nf(comp,10)+'</b> <span class="fmini">'+compUnit(gs)+'（'+gs.map(g=>g.gas).join('＋')+'）</span></div>':'')
     +(needDens?'<div style="background:#eef4f0;border-radius:6px;padding:3px 10px"><div class="fmini">公升→公噸（採購單位公升、係數每公噸）</div><b>'+esc(ucLabel(ucDefault(C.fuelKey)))+'</b> <span class="fmini">預設·UC 換算表；各設備可在設定列改產品；公噸＝公升÷1000×(公噸÷公秉) 由系統算</span></div>':'')   // V78
     +(C.septic?'':'<div><div class="fmini">匯率</div>'+(R?(facY(F.year)+' '+R.cur+' '+nf(R.rate,4)+' ／ USD'):'<span style="color:#b8860b">匯率庫無本年本幣別</span>')+'</div>')
-    +(gs.length?'<div class="fmini" style="margin-left:auto">來源：'+esc([...new Set(gs.map(g=>g.src))].join('＋'))+'</div>':'')+'</div>'
+    +(gs.length?'<div class="fmini fsrc0" title="係數來源：'+esc([...new Set(gs.map(g=>g.src))].join('＋'))+'">來源：'+esc([...new Set(gs.map(g=>g.src))].join('＋'))+'</div>':'')+'</div>'
     +(RD?'<div style="margin:8px 12px 4px;padding:8px 12px;border:2px solid #e0a800;background:#fff3cd;color:#7a4b00;border-radius:8px;font-size:13px;line-height:1.5"><b>⚠ 本廠 '+F.year+' 原登錄係數與係數庫現值不同</b>（'+RD.n+' 列）：原登錄 <b>'+RD.sig+'</b> → 碳排 <b>'+nf(RD.rec,4)+' t</b>（＝查詢頁存值）；係數庫現值 → <b>'+nf(RD.live,4)+' t</b>（本頁）；差 <b>'+nf(RD.live-RD.rec,4)+' t</b>（'+(RD.rec?(((RD.live-RD.rec)/RD.rec*100).toFixed(1)+'%'):'—')+'）。係數庫補上本廠 '+F.year+' 條目、或 ESG 統一係數後兩邊就一致；本頁只顯示，不改存值。</div>':'');   /* V83-3 */
   if(C.water){ h+=wTable(BL,gs,gmap,R,canEdit,lk); } else {   /* V91：自來水用自己的表格（水號 × 帳單） */
   if(!BL.length)h+='<div class="msg" style="margin:10px 12px">此廠此年尚無資料。'+(canEdit?'按「＋ 新增設備」開始登錄，或「⬆ 匯入」ESG 收集表。':'')+'</div>';
@@ -5890,7 +5890,7 @@ function fuelRender0(){
           h+='<tr><td class="tl" style="padding-left:38px"><span style="display:inline-block;min-width:34px;text-align:right">'+(b.mode==='m'?r.data_month+'月':'全年')+'</span>'+(r._new?' <span style="color:#b8860b;font-size:10px">新</span>':'')+(e['_月份推定']?' <span style="color:#b8860b;font-size:10px" title="月份為系統依帳單期間推定（按天數多數歸月），可修改">推</span>':'')+(e['清冊沒有這一列']?' <span style="color:#b8860b;font-size:10px" title="'+esc(e['清冊沒有這一列'])+'">清冊沒有</span>':'')
             +(C.period&&canEdit&&b.mode==='m'?' <a href="javascript:void(0)" onclick="event.stopPropagation();fuelAddBill('+gi+','+r.data_month+')" title="這個月再加一筆帳單（同月多筆分筆輸入，保留原始帳單筆數）" style="color:var(--p);text-decoration:none;font-weight:700;font-size:12px">＋</a>':'')
             +(C.period&&canEdit&&b.mode==='m'&&r._new&&b.mon.filter(x=>x.data_month===r.data_month).length>1?' <a href="javascript:void(0)" onclick="event.stopPropagation();fuelDropNew('+r.record_id+')" title="移除這筆尚未儲存的新列（已儲存的列不刪，改歸零留痕）" style="color:#a33;text-decoration:none;font-size:11px">✕</a>':'')   // V73-1：分筆輸入
-            +'</td>'+(C.conv?(ip(r,'ca',e[C.conv.a]==null?'':(cvOp==='+'?nf(e[C.conv.a],2):e[C.conv.a]),chg)+ip(r,'cb',e[C.conv.b]==null?'':(cvOp==='+'?nf(e[C.conv.b],2):e[C.conv.b]),chg)):'')+((C.conv&&cvHas(e))?'<td class="ro" title="＝'+esc(C.conv.a)+' '+cvOp+' '+esc(C.conv.b)+'（系統算；要直接填'+esc(C.qLabel||'使用量')+'請先清掉這兩格）">'+nf(qv,4)+'</td>':(needDens?ip(r,'L',L==null?'':nf(L,2),chg):ip(r,'q',r._qset===false?'':((qv||r._qset||(!r._new&&r.quantity!=null))?nf(qv,4):''),chg)))+(C.info?ip(r,'i1',e[C.info.key]==null?'':e[C.info.key],chg):'')+(C.period?(b.mode==='m'?ipt(r,'p',e['期間原文']||'',chg):'<td></td>'):'')+(FEE?ip(r,'c',cv===''?'':nf(cv,2),chg):'')
+            +'</td>'+(C.conv?(ip(r,'ca',e[C.conv.a]==null?'':(cvOp==='+'?nf(e[C.conv.a],2):e[C.conv.a]),chg)+ip(r,'cb',e[C.conv.b]==null?'':(cvOp==='+'?nf(e[C.conv.b],2):e[C.conv.b]),chg)):'')+((C.conv&&cvHas(e))?'<td class="ro" title="＝'+esc(C.conv.a)+' '+cvOp+' '+esc(C.conv.b)+'（系統算；要直接填'+esc(C.qLabel||'使用量')+'請先清掉這兩格）">'+nf(qv,4)+'</td>':(needDens?ip(r,'L',L==null?'':nf(L,2),chg):(C.elec?elecQnote(ip(r,'q',r._qset===false?'':((qv||r._qset||(!r._new&&r.quantity!=null)||e['帳單度數']!=null)?nf(e['帳單度數']!=null&&e['帳單度數']!==''?num(e['帳單度數']):qv,4):''),chg),e,qv):ip(r,'q',r._qset===false?'':((qv||r._qset||(!r._new&&r.quantity!=null))?nf(qv,4):''),chg))))+(C.info?ip(r,'i1',e[C.info.key]==null?'':e[C.info.key],chg):'')+(C.period?(b.mode==='m'?ipt(r,'p',e['期間原文']||'',chg):'<td></td>'):'')+(FEE?ip(r,'c',cv===''?'':nf(cv,2),chg):'')
             +(needDens?'<td class="ro" title="'+(ru==='公升'?('公升 × 密度 '+(dens?(+dens.toFixed(6)):'—')+' t/L（系統算）'):'這列資料庫存的是公噸；在公升格填入後即改以公升為準')+'">'+(ton!=null?nf(ton,4):'<span style="color:#c0392b">無密度</span>')+'</td>':'')+(FEE?'<td class="ro">'+((cv!==''&&R)?nf(cv/R.rate,2):'<span class="dash">—</span>')+'</td>':'')+gc.cells+'<td class="ro'+SEPE+'"><b>'+(gs.length&&!gc.bad?nf(gc.rt,4):((gc.bad&&!GC.length)?'<span style="color:#c0392b" title="活動量單位與係數單位不相容">單位不符</span>':'—'))+'</b>'+((r.extra||{})['清冊沒有這一列']?'<div class="fmini" style="color:#b8860b;font-weight:400" title="'+esc((r.extra||{})['清冊沒有這一列'])+'">清冊 0</div>':'')+'</td>'+(showLoc?'<td class="ro">'+(gs.length&&!gc.bad?nf(gc.loc,4):'—')+'</td>':'')+'</tr>';
         }
       });
@@ -5899,20 +5899,20 @@ function fuelRender0(){
     h+='<tr class="tot"><td class="tl">合計　<span class="fmini" style="font-weight:400">'+BL.length+' 塊（逐月 '+nm.m+'、年量 '+nm.y+'、換算 '+nm.c+'）</span></td>'+(C.conv?'<td>'+(GB?nf(GB,2):'')+'</td><td>'+((cvOp==='+'&&GB2)?nf(GB2,2):'')+'</td>':'')+'<td>'+(needDens?(nf(GL,2)+' 公升'):Object.keys(GQ).map(u=>nf(GQ[u],4)+' '+u).join('＋'))+'</td>'+(C.info?'<td class="ro" id="fu_tot_info" title="'+esc('各月「'+(C.info.label||C.info.key)+'」的平均（有填的 '+GINF.n+' 筆）；加總 '+nf(+GINF.s.toFixed(1),0))+'">'+(GINF.n?(nf(+(GINF.s/GINF.n).toFixed(1),1)+' <span class="fmini" style="font-weight:400">平均</span>　<span class="fmini" style="font-weight:400">加總 '+nf(+GINF.s.toFixed(1),0)+'</span>'):'')+'</td>':'')+(C.period?'<td></td>':'')+(FEE?'<td id="fu_tot_fee">'+(GFEE?nf(GFEE,2):'')+'</td>':'')+(needDens?'<td class="ro">'+nf(GTON,4)+'</td>':'')+(FEE?'<td class="ro" id="fu_tot_usd">'+((GFEE&&R)?nf(GFEE/R.rate,2):'')+'</td>':'')+GC.map((gas,k)=>'<td class="ro'+(k===0?' sep':'')+'"'+(gmap[gas]?'':' style="color:#bbb"')+'>'+(gmap[gas]?nf(GG[gas],4):'—')+'</td>').join('')+'<td class="ro'+SEPE+'">'+nf(GT,4)+'</td>'+(showLoc?'<td class="ro">'+nf(GLOC,4)+'</td>':'')+'</tr></tbody></table>';
   }
   if(MISSN)h+='<div class="msg" style="background:#fffbe6;border:1px solid #f0d9a0;color:#7a5a00;margin:6px 0">⚠ 有 '+MISSN+' 列「清冊沒有這一列」：系統算 '+nf(MISST,4)+' t，清冊記 0（查詢頁、全集團用清冊的數字）。游標移到月份旁「清冊沒有」看原因。</div>';   /* V99-8 */
-  h+='<div class="s101legend">點設備列展開／收合月份；使用量×係數×GWP＝碳排（tCO₂e；kg 係數÷1000）'+(C.period?'　｜　＋＝同月再加一筆帳單（分筆輸入）　｜　推＝月份是系統依帳單期間推定的（跨月時按天數多數歸月），可自行改':'')+(C.blankName?'　｜　灰字 '+esc(C.blankName)+'＝設備名稱空白時的系統預設（不寫庫，填了以填的為準）':'')+(FEE?'；美金＝原幣÷盤查年匯率':'')+'　｜　＊灰底＝系統算　｜　黃底＝未存變更　｜　零活動＝這台設備當年有列但用量 0（清冊照實揭露，與「沒有這筆」不同）　｜　年量＝只填全年一格，不拆月　｜　換算＝記錄值×換算率'+(showLoc?'　｜　位置基礎＝用電量×電網係數；太陽能／綠電塊市場基礎 0（雙軌揭露，位置基礎存 co2e_location）':'')+'　｜　係數代號 '+esc(code())+'</div></div></div>';
+  h+='<div class="s101legend">'+(C.elec&&elecCutOn()?'<b>跨年帳單</b>（例 12/2-1/2）：用電量填整張帳單度數，系統照天數只算落在本年的部分（格子下方標「計入本年」）；去年 12 月跨到今年的帳單填在 1 月（按「＋」同月多一筆），今年 12 月跨到明年的填在 12 月　｜　':'')+'點設備列展開／收合月份；使用量×係數×GWP＝碳排（tCO₂e；kg 係數÷1000）'+(C.period?'　｜　＋＝同月再加一筆帳單（分筆輸入）　｜　推＝月份是系統依帳單期間推定的（跨月時按天數多數歸月），可自行改':'')+(C.blankName?'　｜　灰字 '+esc(C.blankName)+'＝設備名稱空白時的系統預設（不寫庫，填了以填的為準）':'')+(FEE?'；美金＝原幣÷盤查年匯率':'')+'　｜　＊灰底＝系統算　｜　黃底＝未存變更　｜　零活動＝這台設備當年有列但用量 0（清冊照實揭露，與「沒有這筆」不同）　｜　年量＝只填全年一格，不拆月　｜　換算＝記錄值×換算率'+(showLoc?'　｜　位置基礎＝用電量×電網係數；太陽能／綠電塊市場基礎 0（雙軌揭露，位置基礎存 co2e_location）':'')+'　｜　係數代號 '+esc(code())+'</div></div></div>';
   }
   box.innerHTML=h; if(typeof c03PvHintFill==='function')c03PvHintFill();   /* V89-2：光伏種類旁的 C03 係數 */
   const ss=document.getElementById('fu_site'),ys=document.getElementById('fu_year');
   if(ss)ss.onchange=()=>{F.site=ss.value;F.orig={};F.open={};fuelLoad();};
   if(ys)ys.onchange=()=>{F.year=+ys.value;F.orig={};F.open={};fuelLoad();};
   box.querySelectorAll('#s101wrap input[data-rid]').forEach(el=>{el.onclick=e=>e.stopPropagation(); el.onchange=e=>{const id=+e.target.dataset.rid,f=e.target.dataset.f; const r=F.recs.find(x=>x.record_id===id); if(!r)return; const v=e.target.value.trim(); r.extra=r.extra||{};
-    if(f==='q'){ r.quantity=v===''?0:num(v); r._qset=v!==''; if(C.split){ delete r.extra[C.split[0]]; delete r.extra[C.split[1]]; } }   /* V129-24：電力手動改用電量 → 收集表帶來的廠區／宿舍分項作廢 */   /* V99-5：記住有沒有填（打 0 顯示 0.0000，清空才回提示字） */
+    if(f==='q'){ r.quantity=v===''?0:num(v); r._qset=v!==''; if(C.split){ delete r.extra[C.split[0]]; delete r.extra[C.split[1]]; } if(C.elec)elecCut(r,r.quantity); }   /* V129-25：填的是帳單度數，跨年照天數截 */   /* V129-24：電力手動改用電量 → 收集表帶來的廠區／宿舍分項作廢 */   /* V99-5：記住有沒有填（打 0 顯示 0.0000，清空才回提示字） */
     if(C.info&&f==='i1'){ if(v==='')delete r.extra[C.info.key]; else r.extra[C.info.key]=num(v); }   /* V81：資訊欄 */
     if(needDens&&f==='L'){ const L=v===''?0:num(v); r.extra['公升']=L; r.quantity_unit='公升'; r.quantity=L; }   // V78-5：公升輸入格：這列改以公升為準（原存公噸的列也一樣），公噸與碳排由系統算
     if(C.conv&&f==='ca'){ if(v==='')delete r.extra[C.conv.a]; else r.extra[C.conv.a]=num(v); }   // V77：數量(瓶/罐) × 單重(Kg) ＝ 使用量（兩格都有才算）
     if(C.conv&&f==='cb'){ if(v==='')delete r.extra[C.conv.b]; else r.extra[C.conv.b]=num(v); }
     if(C.conv&&(f==='ca'||f==='cb')&&cvHas(r.extra))r.quantity=+cvCalc(r.extra).toFixed(6);   /* V80：相加或相乘依設定 */
-    if(f==='p'){ if(v)r.extra['期間原文']=v; else delete r.extra['期間原文']; }   // V73：帳單期間
+    if(f==='p'){ if(v)r.extra['期間原文']=v; else delete r.extra['期間原文']; if(C.elec)elecCut(r); }   /* V129-25 */   // V73：帳單期間
     if(f==='wb'){ if(v==='')delete r.extra['帳單度數']; else r.extra['帳單度數']=num(v); }   /* V91：自來水帳單度數／盤查區間 → 盤查年度數由系統算 */
     if(f==='pk'){ if(v)r.extra['盤查區間']=v; else delete r.extra['盤查區間']; }
     if(C.water&&(f==='wb'||f==='p'||f==='pk')){ r.quantity=+wCalc(r).q.toFixed(6); r.quantity_unit='m3'; }
@@ -6003,13 +6003,13 @@ window.fuelTpl=function(){ if((cfg()||{}).water)return wTpl();   /* V91 */
     ['廠區:'+F.site+'（'+(st.site_name||'')+'）','年度:'+F.year,'排放源:'+ncText(F.cat),'幣別:'+(R?R.cur:'—'),'月份填 1~12＝逐月；填「全年」＝年量一列。設備名稱要與畫面一致，新設備直接寫新名稱'+(P?'；帳單非整月時填起訖（例 1/26-2/23），同一個月可多列':'')],
     P?['設備名稱','燃料','月份','帳單期間','使用量','單位','費用(未稅·原幣)','負責部門','資料來源','設備備註']:['設備名稱','燃料','月份','使用量','單位','費用(未稅·原幣)','負責部門','資料來源','設備備註']];
   const EL=!!C.elec;   /* V129-24：電力樣板＝電號｜電力來源｜月份｜帳單期間｜用電量｜單位｜費用｜負責部門｜資料來源｜備註 */
-  if(EL){ aoa[2]=['電號','電力來源','月份','帳單期間','用電量','單位','費用(未稅·原幣)','負責部門','資料來源','備註']; aoa[1][4]='月份填 1~12＝逐月；填「全年」＝年量一列。電號要與畫面一致（太陽能／綠電填名稱），新電號直接寫；電力來源填 市電／太陽能／綠電（空白＝市電）；廠區、宿舍不用分開；帳單非整月時填起訖（例 1/26-2/23），同一個月可多列'; }
+  if(EL){ aoa[2]=['電號','電力來源','月份','帳單期間','用電量','單位','費用(未稅·原幣)','負責部門','資料來源','備註']; aoa[1][4]='月份填 1~12＝逐月；填「全年」＝年量一列。電號要與畫面一致（太陽能／綠電填名稱），新電號直接寫；電力來源填 市電／太陽能／綠電（空白＝市電）；廠區、宿舍不用分開；用電量填整張帳單度數，帳單期間填起訖（例 1/26-2/23），同一個月可多列；跨年帳單（例 12/2-1/2）系統照天數只算本年：去年 12 月跨到今年的填 1 月、今年 12 月跨到明年的填 12 月'; }
   const SP=!!C.septic;   /* V129-2：化糞池樣板＝設備名稱｜月份｜總工時數（人時）｜月平均人數｜單位｜負責部門｜資料來源｜設備備註（不放燃料、費用） */
   if(SP){ aoa[2]=['設備名稱','月份','總工時數（人時）','月平均人數','單位','負責部門','資料來源','設備備註']; }
   const BL=blocks();
   const row=(name,m,p,q,u,c,d,src,n,i1,es)=>SP?[name,m,q,(i1==null?'':i1),u,d,src,n]:(EL?[name,es||C.attr2,m,p,q,u,c,d,src,n]:(P?[name,C.src,m,p,q,u,c,d,src,n]:[name,C.src,m,q,u,c,d,src,n]));
   const nmOut=b=>{ if(!EL)return b.name==='（未填設備）'?'':b.name; const x=elecBase(b.name.split(' ·')[0]); return x==='（未填設備）'?'':x; };   /* V129-24：電力寫電號本身，不帶「 ·市電」 */
-  if(BL.length)BL.forEach(b=>{const rows=b.mode==='m'?b.mon:b.ann; rows.forEach(r=>{const e=r.extra||{};aoa.push(row(nmOut(b),r.data_month==null?'全年':r.data_month,r.data_month==null?'':(e['期間原文']||''),+r.quantity||0,r.quantity_unit||'',e['原幣金額']==null?'':+e['原幣金額'],e['負責部門']||'',r.data_source_note||'',e['設備備註']||'',(SP&&C.info&&e[C.info.key]!=null&&e[C.info.key]!=='')?+e[C.info.key]:null,EL?(r.attr2||b.r0.attr2||C.attr2):null));});});
+  if(BL.length)BL.forEach(b=>{const rows=b.mode==='m'?b.mon:b.ann; rows.forEach(r=>{const e=r.extra||{};aoa.push(row(nmOut(b),r.data_month==null?'全年':r.data_month,r.data_month==null?'':(e['期間原文']||''),(EL&&e['帳單度數']!=null&&e['帳單度數']!=='')?num(e['帳單度數']):(+r.quantity||0),r.quantity_unit||'',e['原幣金額']==null?'':+e['原幣金額'],e['負責部門']||'',r.data_source_note||'',e['設備備註']||'',(SP&&C.info&&e[C.info.key]!=null&&e[C.info.key]!=='')?+e[C.info.key]:null,EL?(r.attr2||b.r0.attr2||C.attr2):null));});});
   else for(let m=1;m<=12;m++)aoa.push(row('',m,'','',C.defUnit[region()]||C.def,'','','','',null,EL?C.attr2:null));
   const ws=XLSX.utils.aoa_to_sheet(aoa); ws['!cols']=SP?[{wch:18},{wch:6},{wch:16},{wch:12},{wch:8},{wch:12},{wch:20},{wch:18}]:P?[{wch:18},{wch:8},{wch:6},{wch:16},{wch:14},{wch:8},{wch:16},{wch:12},{wch:20},{wch:18}]:[{wch:18},{wch:8},{wch:6},{wch:14},{wch:8},{wch:16},{wch:12},{wch:20},{wch:18}];
   const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,F.cat+'填報'); XLSX.writeFile(wb,ncText(F.cat).split(' ')[0]+'樣板_'+F.site+'_'+F.year+'.xlsx');
@@ -6127,6 +6127,16 @@ function wQ(bill,pt,kt,Y,mo){   // 一張帳單 → {q,bd,kd,P,K,auto,part}；�
   if(!K){ const y0={y:Y,m:1,d:1}, y1={y:Y,m:12,d:31}; K={a:wCmp(P.a,y0)<0?y0:P.a, b:wCmp(P.b,y1)>0?y1:P.b}; }
   const kd=Math.max(0,wDn(K.b)-wDn(K.a)+1);
   return {q:bill*kd/bd,bd:bd,kd:kd,P:P,K:K,auto:auto,part:kd!==bd}; }
+/* V129-25：電力跨年帳單截年（ESG 第 9 點，比照自來水 wQ）——只在還沒定案的年度算；一列＝一張帳單 */
+function elecCutOn(){ const C=cfg(); return !!(C&&C.elec&&!wDecl(F.year)&&!(typeof yearLocked==='function'&&yearLocked(F.year))); }
+function elecCut(r,bill){ if(!elecCutOn()||!r||r.data_month==null)return; r.extra=r.extra||{}; const e=r.extra;
+  if(bill==null)bill=(e['帳單度數']!=null&&e['帳單度數']!=='')?num(e['帳單度數']):(+r.quantity||0);
+  const w=e['期間原文']?wQ(bill,e['期間原文'],null,F.year,r.data_month):null;
+  if(w&&w.part&&!w.bad){ e['帳單度數']=bill; e['計入本年']=w.kd+'/'+w.bd+' 天'; r.quantity=+w.q.toFixed(6); }
+  else { delete e['帳單度數']; delete e['計入本年']; r.quantity=bill; } }
+function elecQnote(html,e,qv){ if(!e||e['帳單度數']==null||e['帳單度數']==='')return html; const i=html.lastIndexOf('</td>'); if(i<0)return html;
+  const d=String(e['計入本年']||''); const z=+qv===0;
+  return html.slice(0,i)+'<div class="fmini" style="color:'+(z?'#c0392b':'#b8860b')+';text-align:right;white-space:nowrap" title="這張帳單跨年：只算落在本年的天數（'+esc(d)+'）；計入本年＝帳單度數 × 本年天數 ÷ 計費天數">'+(z?'整張不在本年，計 0':'計入本年 '+nf(qv,2)+'（'+esc(d)+'）')+'</div>'+html.slice(i); }
 function wCalc(r){ const e=(r&&r.extra)||{}; const bill=(e['帳單度數']!=null&&e['帳單度數']!=='')?num(e['帳單度數']):null;
   if(bill==null)return {q:+(r&&r.quantity)||0,bill:null};   // 沒有帳單度數（清冊年筆等舊列）：照存的
   const w=wQ(bill,e['期間原文'],e['盤查區間'],F.year,r.data_month); w.bill=bill; return w; }
@@ -6375,13 +6385,14 @@ window.fuelImpApply=function(){ if((cfg()||{}).water)return wImpApply();   /* V9
     if(bi<0&&C.srcOpts){ const ci=blocks().findIndex(b=>b.mode!=='m'&&(b.r0.attr2||C.attr2)===(es0||C.attr2)&&!b.rows.some(r=>r._new)); if(ci>=0){ blocks()[ci].rows.forEach(r=>{ if(base!=='（未填設備）')r.equipment_name=base; }); bi=blocks().findIndex(b=>b.name===k); } }   /* V80：清冊補收的年筆（設備名「電力」）→ 改名成電號，下一行改逐月（年筆歸零留痕；與批114 同意思） */
     if(bi>=0&&blocks()[bi].mode!==want){ const b=blocks()[bi]; if(b.mode==='m'){b.mon.forEach(r=>r.quantity=0);} window.fuelMode(bi,want); }
     if(bi<0){ if(want==='m'){for(let m=1;m<=12;m++)F.recs.push(mkNew(m));} else {const r=mkNew(null); r.extra['填報方式']='年量'; F.recs.push(r);} }   /* V80 */
-    const b=blocks().find(x=>x.name===k); if(!b)return;
+    let b=blocks().find(x=>x.name===k); if(!b)return;
+    if(want==='m'){ let add=0; [...new Set(its.map(x=>x.m))].forEach(m=>{ const bm=b.mon.filter(x=>x.data_month===m).length, fc=its.filter(x=>x.m===m).length; for(let j=bm;j<fc;j++){ F.recs.push(mkNew(m)); add++; } }); if(add)b=blocks().find(x=>x.name===k); }   /* V129-25 */
     const used=new Set();
     its.forEach(it=>{let r=null;
       if(want==='m'){ const bm=b.mon.filter(x=>x.data_month===it.m).length, fc=its.filter(x=>x.m===it.m).length; if(bm!==fc){skipped.add(it.m);return;}   // V73：一個月多筆帳單＝分月依序配對；畫面與檔案筆數不符整月略過（保留原始帳單筆數）
         r=b.mon.find(x=>x.data_month===it.m&&!used.has(x)); if(!r)return; used.add(r); }
       else r=b.ann[0];
-      if(!r)return; r.quantity=+it.q||0; r.quantity_unit=u; r.extra=r.extra||{}; if(it.c!=null)r.extra['原幣金額']=it.c; if(it.d)r.extra['負責部門']=it.d; if(it.s)r.data_source_note=it.s; if(it.n)r.extra['設備備註']=it.n; if(C.period&&it.p)r.extra['期間原文']=it.p; if(it.es){ r.attr2=it.es; r.extra['電力來源']=it.es; } if(it.sup)r.extra['供電單位']=it.sup; /* V80 */ if(it.sub)r.extra['分表']=it.sub; /* V83 */ if(C.info&&it.i1!=null)r.extra[C.info.key]=it.i1; /* V81 */ if(C.conv){ if(it.a!=null)r.extra[C.conv.a]=it.a; else delete r.extra[C.conv.a]; if(it.b!=null)r.extra[C.conv.b]=it.b; else delete r.extra[C.conv.b]; } if(!C.conv&&C.split){ if(it.a!=null)r.extra[C.split[0]]=it.a; else delete r.extra[C.split[0]]; if(it.b!=null)r.extra[C.split[1]]=it.b; else delete r.extra[C.split[1]]; } n++;});   /* V129-24 */   // V77：帶入瓶數／單重
+      if(!r)return; r.quantity=+it.q||0; r.quantity_unit=u; r.extra=r.extra||{}; if(it.c!=null)r.extra['原幣金額']=it.c; if(it.d)r.extra['負責部門']=it.d; if(it.s)r.data_source_note=it.s; if(it.n)r.extra['設備備註']=it.n; if(C.period&&it.p)r.extra['期間原文']=it.p; if(it.es){ r.attr2=it.es; r.extra['電力來源']=it.es; } if(it.sup)r.extra['供電單位']=it.sup; /* V80 */ if(it.sub)r.extra['分表']=it.sub; /* V83 */ if(C.info&&it.i1!=null)r.extra[C.info.key]=it.i1; /* V81 */ if(C.conv){ if(it.a!=null)r.extra[C.conv.a]=it.a; else delete r.extra[C.conv.a]; if(it.b!=null)r.extra[C.conv.b]=it.b; else delete r.extra[C.conv.b]; } if(!C.conv&&C.split){ if(it.a!=null)r.extra[C.split[0]]=it.a; else delete r.extra[C.split[0]]; if(it.b!=null)r.extra[C.split[1]]=it.b; else delete r.extra[C.split[1]]; } if(C.elec){ delete r.extra['帳單度數']; delete r.extra['計入本年']; elecCut(r,+it.q||0); } n++;});   /* V129-25 */   /* V129-24 */   // V77：帶入瓶數／單重
   });
   IMP=null; fuelRender();
   dlg('✅ 已帶入 '+n+' 列（表格黃底標示）','<div style="font-size:13px;padding:6px 2px;color:#14603F">尚未寫入資料庫，請檢查後按 <b>💾 儲存</b>。</div>'+(skipped.size?'<div style="font-size:12px;color:#b8860b;padding:2px">★略過 '+[...skipped].sort((a,b)=>a-b).join('、')+' 月：畫面與檔案的帳單筆數不符（保留原始帳單筆數，請人工核對；筆數增刪請洽系統管理）</div>':''),'<button onclick="fuelClose()">關閉</button>');
@@ -6571,7 +6582,7 @@ function matRender(){
       +'<button class="'+(canEdit?'':'sec')+'" '+(canEdit?'':'disabled')+' onclick="matAsk()">💾 儲存</button>'});
   h+=entryNoteHTML(F.mtNote);   /* V129-20 */
   h+='<div id="s101wrap"><div class="s101zone" style="overflow-x:hidden">';
-  h+='<div style="padding:8px 12px;font-size:12px;color:var(--d);background:#eef4f0;border-bottom:1px solid #d7e5dd;display:flex;gap:14px 18px;flex-wrap:wrap;align-items:flex-end">'
+  h+='<div class="fstrip">'   /* V129-26：係數說明壓成一條 */
     +'<div><div class="fmini">係數</div>由各列「係數」欄從係數庫挑選；'+(lk?'鎖定年度各列依記錄係數計算':'系統依本廠過去記錄／材質別名先帶，未帶到的請自行選')+'</div>'
     +'<div><div class="fmini">碳排</div>採購重量 t × 係數 kgCO₂e/kg ＝ tCO₂e（系統即時算，不存數字）</div>'
     +'<div class="fmini" style="margin-left:auto">係數庫 C01-M 本年有效條目 '+lib.length+' 條</div></div>';
@@ -11865,7 +11876,8 @@ const GHG_GUIDE={
   start:['<b>匯入</b>：按「⬆ 匯入」，選 ESG 收集表（S2 外購電力那一頁），或先按「⬇ 下載樣板」填好再匯入（樣板一列一個電號一個月：電號、電力來源、用電量）。匯入後會先預覽，<b>按「💾 儲存」才會寫入</b>。',
          '<b>逐筆</b>：按「＋ 新增電號／光伏」，選電力來源（市電／太陽能／綠電），再填電號或名稱。一個電號一塊。'],
   fields:[['電力來源','每個電號最前面：市電、太陽能（自發自用光伏）、綠電。左邊的 B01-02 自發自用太陽光電就是在這裡選「太陽能」。'],
-          ['用電量','照帳單上這個電號的度數（kWh）。廠區、宿舍不用分開；要說明的寫在備註。'],
+          ['用電量','照帳單上這個電號的度數（kWh，整張帳單）。廠區、宿舍不用分開；要說明的寫在備註。'],
+          ['跨年帳單','帳單跨兩個年度（例 2025/12/2～2026/1/2）時，系統照天數只算落在本年的部分，格子下方標「計入本年」。去年 12 月跨到今年的那張填在 1 月（按「＋」同月多一筆），今年 12 月跨到明年的那張填在 12 月。'],
           ['計費期間（選填）','帳單上的起訖日。系統會先推一個月份（旁邊標「推」），請照帳單月份確認，不對可以改。'],
           ['費用（選填）','填<b>未稅</b>金額、當地幣別，系統會換成美金。'],
           ['填報方式','逐月（一張帳單一列），或年量（只有全年合計時用）。'],
@@ -12970,6 +12982,62 @@ window.xpProtoSheets=function(o){
   function hook(){ const b=box(); if(!b||mo)return; mo=new MutationObserver(function(){ restore(); }); mo.observe(b,{childList:true,subtree:true}); }
   hook(); window.addEventListener('load',hook);
   window._v12923keep={key:()=>key,pos:()=>pos};   /* 本機測試看得到記了什麼 */
+})();
+</script>
+<style id="v12926css">
+/* ══ V129-26：資料登錄頁版面——表頭兩行、按鈕小而一致、係數說明一條、表格框吃滿剩下的畫面 ══ */
+#src_form .ehead{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin:0 0 10px;padding:0 0 10px;border-bottom:1px solid #e3ece7}
+#src_form .ehead::after{content:'';order:2;flex-basis:100%;height:0}
+#src_form .ehead>.eh-t{order:0;flex:0 1 auto;max-width:60%;font-size:18px;font-weight:700;letter-spacing:.4px;color:#14603F;line-height:32px}
+#src_form .ehead>.eh-btn{order:1;margin-left:0;display:inline-flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+#src_form .ehead>.fpair{order:3}
+#src_form .ehead>.eh-x{order:4;flex:0 1 auto;gap:8px;font-size:12px}
+#src_form .ehead>.ehleg{order:1;margin-left:auto}
+#src_form .ehead .ehlab{font-size:12.5px;font-weight:600;color:#4a5f55;margin-right:4px}
+#src_form .ehead select.ehsite,#src_form .ehead select.ehyear,#src_form .ehead input.ehyear{height:30px;padding:2px 8px;font-size:13px;border:1px solid #cfdcd5;border-radius:7px;background:#fff}
+#src_form .ehead select.ehsite{width:220px;max-width:220px}
+#src_form .ehead .eh-btn button,#src_form .ehead .eh-btn .sec{height:32px;padding:0 12px;font-size:13px;font-weight:600;border-radius:8px;line-height:30px;white-space:nowrap;box-shadow:none}
+#src_form .ehead .eh-btn button:not(.sec){background:#1B8A60;border:1px solid #1B8A60;color:#fff}
+#src_form .ehead .eh-btn button.sec{background:#fff;border:1px solid #cfdcd5;color:#2f4a3e}
+#src_form .ehead .eh-btn button.sec:hover{border-color:#1B8A60;color:#14603F}
+#src_form .ehead .eh-btn button:disabled{opacity:.45}
+#src_form .ehead .eh-x>*{font-size:12px}
+#src_form .ehead .ehleg{font-size:11px;font-weight:600;padding:2px 10px;background:#f6f9f7;color:#6b7f75;border-color:#e3ece7}
+#s101wrap .fstrip{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 20px;padding:6px 12px;font-size:12px;line-height:1.5;color:#2f4a3e;background:#f6f9f7;border-bottom:1px solid #e3ece7}
+#s101wrap .fstrip>div{display:inline-flex;flex-wrap:wrap;align-items:baseline;gap:0 6px;flex:0 1 auto;background:none!important;padding:0!important;border-radius:0}
+#s101wrap .fstrip>div>div{display:inline}
+#s101wrap .fstrip .fmini{font-size:11px;color:#6b7f75}
+#s101wrap .fstrip>.fsrc0{flex:1 1 160px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;text-align:right;cursor:help}
+#s101wrap .s101zone{border-color:#e3ece7}
+#s101wrap tr.fblk .fxm{display:none!important}
+#s101wrap tr.fblk .fxo .fxm{display:inline!important}
+#s101wrap tr.fblk .fxt{margin-left:auto;font-size:11.5px;font-weight:600;color:#1B8A60;text-decoration:none;border:1px solid #cfdcd5;border-radius:999px;padding:1px 10px;background:#fff;white-space:nowrap}
+#s101wrap tr.fblk .fxt:hover{border-color:#1B8A60}
+#s101wrap tr.fblk .fxo{background:#fbfdfc;border-radius:8px}
+</style>
+<script>
+/* ══ V129-26：表格框高度吃滿畫面剩下的空間（原本固定 100vh − 258px）——只調資料登錄頁最後一個表格框；最少 320px ══ */
+(function(){
+  const box=()=>document.getElementById('src_form');
+  let raf=0;
+  function tidy(b){ b.querySelectorAll('.ehead').forEach(eh=>{ const t=eh.querySelector('.eh-t'); eh.querySelectorAll('.eh-x>span.fmini:not([data-mv])').forEach(sp=>{ const tx=sp.innerText.replace(/\s+/g,' ').trim(); sp.dataset.mv='1'; sp.style.display='none'; if(t&&tx)t.title=(t.title||t.textContent)+'　'+tx; }); }); }   /* 表頭第二行的灰字（填法＋現行碼）收進標題的游標提示 */
+  const FXO={};   /* 每塊設定列展開狀態（重畫後保留）：鍵＝類別｜廠｜年｜第幾塊 */
+  function fxKey(i){ const b=box(); const sv=b.querySelector('select.ehsite'), yv=b.querySelector('select.ehyear'); return [window._gCat||'',sv?sv.value:'',yv?yv.value:'',i].join('|'); }
+  function fold(b){ [...b.querySelectorAll('tr.fblk>td>div')].forEach((d,i)=>{ if(d.dataset.fx)return; d.dataset.fx='1';
+      const keep=/^(電號|名稱|設備名稱|水號|電力來源)$/; let n=0;
+      [...d.children].forEach(c=>{ const lb=c.querySelector(':scope>.fmini'); const t=lb?lb.textContent.trim():''; if(!lb||keep.test(t))return; c.classList.add('fxm'); n++; });
+      if(!n)return; const k=fxKey(i); const a=document.createElement('a'); a.href='javascript:void(0)'; a.className='fxt'; a.title='這個設備的備註、負責部門、資料來源、單位、填報方式…（點一下展開／收起）';
+      const set=on=>{ d.classList.toggle('fxo',on); a.textContent=on?'⚙ 收起':'⚙ 設定'; }; set(!!FXO[k]);
+      a.onclick=e=>{ e.preventDefault(); e.stopPropagation(); FXO[k]=!d.classList.contains('fxo'); set(FXO[k]); req(); };
+      d.appendChild(a); }); }   /* V129-26：設備設定列平常收起，只留電號／名稱、電力來源；點「⚙ 設定」才展開 */
+  function fit(){ raf=0; const b=box(); if(!b||!b.offsetParent)return; tidy(b); fold(b); const zs=[...b.querySelectorAll('#s101wrap .s101zone')].filter(z=>z.offsetParent); if(!zs.length)return;
+    const z=zs[zs.length-1]; const zm=parseFloat(getComputedStyle(document.body).zoom)||1;
+    const top=z.getBoundingClientRect().top+window.scrollY; const avail=(window.innerHeight-top-14)/zm;
+    const h=Math.max(320,Math.floor(avail)); if(z.style.maxHeight!==h+'px')z.style.maxHeight=h+'px'; }
+  function req(){ if(!raf)raf=requestAnimationFrame(fit); }
+  let mo=null; function hook(){ const b=box(); if(!b||mo)return; mo=new MutationObserver(req); mo.observe(b,{childList:true,subtree:true}); req(); }
+  hook(); window.addEventListener('load',hook); window.addEventListener('resize',req);
+  window._v12926fit=fit;
 })();
 </script>
 </body>
