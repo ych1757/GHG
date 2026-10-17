@@ -288,7 +288,7 @@ td.fachl{background:#fffbe6!important;box-shadow:inset 3px 0 0 #e6a700}   /* V38
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-18</b> · 2026/10/17</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-19</b> · 2026/10/17</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -7363,6 +7363,7 @@ async function svcLoad(){
     if(r.site_id===F.site){ SHIST.names.add(nm); if(r.data_year!==F.year&&!SHIST.byName[k])SHIST.byName[k]={code:m.code,y:r.data_year}; }
     const c=(cnt[k]=cnt[k]||{}); (c[m.code]=c[m.code]||new Set()).add(r.site_id); });
   Object.keys(cnt).forEach(k=>{ const best=Object.keys(cnt[k]).sort((a,b)=>cnt[k][b].size-cnt[k][a].size)[0]; SHIST.any[k]={code:best,sites:[...cnt[k][best]].sort()}; });
+  F.svNote=await entryNote(F.pno(F.site),F.year,F.cat);   /* V129-19：與明細檔的差異原因（鍵＝類別@登錄） */
   svcRender();
 }
 function svcFitCols(){   /* V94-4：數字欄放不下就加寬（泰銖／越南盾上億的合計會跟隔壁欄黏在一起）；從文字欄勻，不夠才動備註；總寬不變、不會左右捲 */
@@ -7405,6 +7406,7 @@ function svcRender(){
     btns:tplBtn(F.cat,F.site,Y)+(decl?'':'<button class="sec" '+(canEdit?'':'disabled')+' onclick="svcAdd()" title="新增一列'+esc(C.noun)+'；儲存時才寫入">＋ 新增項目</button>'
       +'<button class="sec" '+(canEdit?'':'disabled')+' onclick="svcImpPick()" title="匯入 ESG 收集表「'+esc(C.form)+'」（先預覽，按儲存才寫入）">⬆ 匯入</button>'
       +'<button class="'+(canEdit?'':'sec')+'" '+(canEdit?'':'disabled')+' onclick="svcAsk()">💾 儲存</button>')});
+  h+=entryNoteHTML(F.svNote);   /* V129-19 */
   h+='<div id="s101wrap" data-k="'+esc(F.cat+'|'+F.site+'|'+Y)+'"><div class="s101zone" style="overflow-x:hidden">';   /* data-k＝目前畫面是哪類哪廠哪年（測試等畫面重畫完用） */
   h+='<div style="padding:8px 12px;font-size:12px;color:var(--d);background:#eef4f0;border-bottom:1px solid #d7e5dd;display:flex;gap:14px 22px;flex-wrap:wrap;align-items:flex-end">'
     +'<div><div class="fmini">匯率</div>'+rateTxt+'</div>'
