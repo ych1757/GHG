@@ -288,7 +288,7 @@ td.fachl{background:#fffbe6!important;box-shadow:inset 3px 0 0 #e6a700}   /* V38
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-22</b> · 2026/10/17</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-23</b> · 2026/10/17</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -12923,6 +12923,44 @@ window.xpProtoSheets=function(o){
   document.addEventListener('focusout',function(ev){ if(P&&P.el===ev.target)flush(); },true);   /* 挑到一半就離開這格 → 這時送出 */
 })();
 
+</script>
+<script>
+/* ══ V129-23（ESG 文件第 11 點「C02 資本財每填完一格表格就會跳到最上面」，全部登錄頁一起修）
+   原因：登錄頁每改一格就把整張表重畫，表格的捲動框是新做的，捲動位置回到 0。按 Tab／點另一格時游標放進下一格、瀏覽器自己捲過去，
+   看起來沒事；填完點灰底系統欄、空白處，或下拉用滑鼠選完，就跳回第一列。
+   這裡統一處理（不改各頁模組）：記住資料登錄頁（#src_form）裡每個捲動框捲到哪；重畫後還是同一頁（同類別、同廠、同年度）就放回原處；
+   換類別／廠區／年度照舊從最上面開始；游標所在的格子被擋住時，只捲到剛好看得到。 ══ */
+(function(){
+  const box=()=>document.getElementById('src_form');
+  const isScr=el=>{ if(!el||el.nodeType!==1||el.scrollHeight<=el.clientHeight+1&&el.scrollWidth<=el.clientWidth+1)return false;
+    const cs=getComputedStyle(el); return /(auto|scroll)/.test(cs.overflowY+' '+cs.overflowX); };
+  const sigOf=el=>el.tagName+'.'+String(el.className||'').trim().split(/\s+/).sort().join('.');
+  const CAND='.s101zone,.fyw,[style*="overflow"]';   /* 只看會捲的框，不掃整張表的每一格 */
+  const scrolls=b=>[...b.querySelectorAll(CAND)].filter(isScr);
+  const idOf=(b,el)=>{ const g=sigOf(el); return g+'#'+scrolls(b).filter(x=>sigOf(x)===g).indexOf(el); };
+  function pageKey(){ const b=box(); if(!b)return '';
+    const sv=b.querySelector('select.ehsite')||b.querySelector('select[id$="_site"]'), yv=b.querySelector('select.ehyear')||b.querySelector('select[id$="_year"]');
+    const t=b.querySelector('.ehtitle,h2,h3'); return [window._gCat||'', t?t.textContent.trim().slice(0,30):'', sv?sv.value:'', yv?yv.value:''].join('|'); }
+  let key='', pos={};   /* pos[id]={el,top,left} */
+  function remember(el){ const b=box(); if(!b||!b.contains(el)||el===b||!el.matches(CAND))return; hook(); const k=pageKey(); if(k!==key){ key=k; pos={}; }
+    const top=el.scrollTop, left=el.scrollLeft; const id=idOf(b,el); if(id.endsWith('#-1'))return; pos[id]={el:el,top:top,left:left}; }
+  document.addEventListener('scroll',function(ev){ const t=ev.target; if(t&&t.nodeType===1)remember(t); },true);
+  /* 填格、點擊、按鍵的當下（各頁的變更處理重畫之前）也先記一次：捲動事件瀏覽器可能晚一點才送 */
+  function snapAll(ev){ const b=box(); if(!b||!ev.target||!ev.target.nodeType||!b.contains(ev.target))return; scrolls(b).forEach(remember); }
+  ['change','input','mousedown','keydown'].forEach(t=>document.addEventListener(t,snapAll,true));
+  function showFocus(z){ const a=document.activeElement; if(!a||a===document.body||!z.contains(a))return;
+    const zr=z.getBoundingClientRect(), ar=a.getBoundingClientRect(); const th=z.querySelector('thead'); const hd=th?th.getBoundingClientRect().height:0;
+    if(ar.top<zr.top+hd)z.scrollTop-=(zr.top+hd-ar.top)+4; else if(ar.bottom>zr.bottom)z.scrollTop+=(ar.bottom-zr.bottom)+4; }
+  function restore(){ const b=box(); if(!b)return; const k=pageKey(); if(k!==key){ key=k; pos={}; return; }
+    Object.keys(pos).forEach(id=>{ const p=pos[id]; if(p.el&&p.el.isConnected)return;   /* 沒被換掉的不動 */
+      const i=+id.slice(id.lastIndexOf('#')+1), g=id.slice(0,id.lastIndexOf('#')); const z=scrolls(b).filter(x=>sigOf(x)===g)[i]; if(!z)return;
+      if(p.top>0&&z.scrollTop!==p.top)z.scrollTop=p.top; if(p.left>0&&z.scrollLeft!==p.left)z.scrollLeft=p.left;
+      showFocus(z); p.el=z; p.top=z.scrollTop; p.left=z.scrollLeft; }); }
+  let mo=null;
+  function hook(){ const b=box(); if(!b||mo)return; mo=new MutationObserver(function(){ restore(); }); mo.observe(b,{childList:true,subtree:true}); }
+  hook(); window.addEventListener('load',hook);
+  window._v12923keep={key:()=>key,pos:()=>pos};   /* 本機測試看得到記了什麼 */
+})();
 </script>
 </body>
 </html>
