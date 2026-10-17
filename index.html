@@ -288,7 +288,7 @@ td.fachl{background:#fffbe6!important;box-shadow:inset 3px 0 0 #e6a700}   /* V38
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-31</b> · 2026/10/18</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-32</b> · 2026/10/18</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -9685,7 +9685,7 @@ async function cmSave(){
       const {data,error}=await sb.from('ghg_activity_data').insert(ins.map(strip)).select('record_id,extra');
       if(error)throw error; msg.push('新增 '+ins.length+' 列');
       { const typed=new Set(piiNew.map(r=>r.extra['登錄序'])); const cpy=(data||[]).filter(x=>(x.extra||{})['帶入自列']&&!typed.has((x.extra||{})['登錄序'])).map(x=>({src:+x.extra['帶入自列'],dst:x.record_id}));   /* V129-22：帶入去年的人，工號／姓名／住址由資料庫從去年複製 */
-        if(cpy.length){ const c=await sb.rpc('ghg_carry_pii',{p_pairs:cpy}); if(c.error)msg.push('⚠ 去年的工號／姓名／住址沒有帶到（'+c.error.message+'），請補填'); else msg.push('員工個資 '+(+c.data||0)+' 筆從去年帶入'); } }
+        if(cpy.length){ const c=await piiRest('rpc/ghg_carry_pii',{method:'POST',body:{p_pairs:cpy}}); if(c.error)msg.push('⚠ 去年的工號／姓名／住址沒有帶到（'+c.error.message+'），請補填'); else msg.push('員工個資 '+(+c.data||0)+' 筆從去年帶入');   /* V129-32：改走登入憑證（同其他個資讀寫）；用公開金鑰叫會被資料庫擋 */ } }
       if(piiNew.length){
         const key2id={}; (data||[]).forEach(x=>{ const k=(x.extra||{})['登錄序']; if(k)key2id[k]=x.record_id; });
         const rows=piiNew.map(r=>({record_id:key2id[r.extra['登錄序']],site_id:W7.site,data_year:W7.year,category_id:'C07',emp_no:r._pii.emp_no||null,person_name:r._pii.person_name||null,home_addr:r._pii.home_addr||null}))
