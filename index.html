@@ -288,7 +288,7 @@ td.fachl{background:#fffbe6!important;box-shadow:inset 3px 0 0 #e6a700}   /* V38
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-36</b> · 2026/10/18</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-37</b> · 2026/10/18</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -11434,7 +11434,8 @@ function fpSite(s,A,P){   /* 一個廠的進度 */
   const a=A[s]||{}, p=P[s]||{};
   const inSrc=c=>SRC.some(z=>z.c===c);   /* 只算目前清單裡的類別（2024 有些廠用舊碼 C01，後來拆成 C01-M／S／W） */
   const exp=Object.keys(p).filter(c=>(p[c].q>0||p[c].co>0)&&inSrc(c)&&!FP_AUTO[c]&&!(typeof srcNa==='function'&&srcNa(c)));
-  const done=exp.filter(c=>a[c]), miss=exp.filter(c=>!a[c]), big=done.filter(c=>fpBig(a[c].co,p[c].co));
+  const ES=window.FP_ES||{}, nd=c=>!!(ES[s+'|'+c]&&ES[s+'|'+c].no_data);   /* V129-37：勾了「本年沒有」算已填 */
+  const done=exp.filter(c=>a[c]||nd(c)), miss=exp.filter(c=>!a[c]&&!nd(c)), big=done.filter(c=>a[c]&&fpBig(a[c].co,p[c].co));
   const extra=Object.keys(a).filter(c=>inSrc(c)&&!FP_AUTO[c]&&exp.indexOf(c)<0);
   let last=''; Object.values(a).forEach(x=>{ if(x.last>last)last=x.last; });
   const st=!exp.length?(extra.length?'填寫中':'去年沒有資料'):(!miss.length?'已填完':(done.length||extra.length?'填寫中':'還沒開始'));
@@ -11457,6 +11458,8 @@ async function fpRender(){
   box.innerHTML='<div class="msg">讀取 '+Y+' 與 '+PY+' 年資料中…</div>';
   const [ry,rp]=await Promise.all([fpRows(Y),fpRows(PY)]);
   const A=fpAgg(ry), P=fpAgg(rp);
+  { const e=await sbAll(()=>sb.from('ghg_entry_status').select('site_id,category_id,status,no_data,no_data_reason').eq('data_year',Y).order('site_id').order('category_id'));   /* V129-37：本年沒有 */
+    if(e.error)throw e.error; window.FP_ES={}; (e.data||[]).forEach(r=>{ window.FP_ES[r.site_id+'|'+r.category_id]=r; }); }
   const sites=(FAC_SITES||[]).map(x=>x.site_id).filter(s=>!curGhgUser||READONLY||lgCanSite(s)).sort((a,b)=>(fpPno(a)+a).localeCompare(fpPno(b)+b));
   if(FP.site&&sites.indexOf(FP.site)<0)FP.site='';
   const ys=entryYears([]);
@@ -11496,6 +11499,7 @@ async function fpRender(){
       if(auto)st='<span style="color:#7a8f84">系統自動算</span>';
       else if(cy&&cp&&fpBig(cy.co,cp.co))st='<b style="color:#b8860b">已填 '+cy.n+' 筆・差 '+(cy.co>cp.co?'+':'−')+Math.round(Math.abs(cy.co-cp.co)/cp.co*100)+'%</b>';
       else if(cy)st='<span style="color:#1e6b43">已填 '+cy.n+' 筆</span>'+(exp?'':'<span class="fmini" style="color:#7a8f84">（去年沒有）</span>');
+      else if(exp&&(window.FP_ES||{})[s+'|'+c]&&window.FP_ES[s+'|'+c].no_data)st='<span style="color:#666" title="'+fpEsc(window.FP_ES[s+'|'+c].no_data_reason||'')+'">⊘ 本年沒有'+(window.FP_ES[s+'|'+c].no_data_reason?'（'+fpEsc(window.FP_ES[s+'|'+c].no_data_reason)+'）':'')+'</span>';   /* V129-37 */
       else if(exp)st='<b style="color:#a33">還沒填</b>';
       else { st='<span style="color:#a9b8b0">去年沒有</span>'; dim=true; }
       h+='<tr'+(dim?' style="color:#a9b8b0"':'')+'><td class="tl">'+fpEsc(fpCatLab(c))+'</td><td class="tl">'+st+'</td>'
