@@ -288,7 +288,7 @@ td.fachl{background:#fffbe6!important;box-shadow:inset 3px 0 0 #e6a700}   /* V38
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-38</b> · 2026/10/18</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-39</b> · 2026/10/18</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -13314,6 +13314,7 @@ body.ghgfocus #src_form .ehead>.fxfocus{background:#1B8A60;border-color:#1B8A60;
 #prog .c{display:inline-block;width:22px;height:20px;line-height:20px;border-radius:4px;font-size:12px;font-weight:700;cursor:pointer}
 #prog .c.ok{background:#d7f0e1;color:#1e6b43}#prog .c.wt{background:#dbe9f8;color:#1f4e79}#prog .c.rt{background:#fbe0de;color:#a33}
 #prog .c.ed{background:#fff3cd;color:#856404}#prog .c.no{background:#fff;color:#8a9a92;border:1px dashed #b9c6c0}#prog .c.nd{background:#eeeeee;color:#888}
+#prog .c.dc{background:#e6eef9;color:#1f4e79}
 #prog .c.dim{opacity:.18}
 #prog .pg-list{margin-top:10px;font-size:12px}
 #prog .pg-list table{border-collapse:collapse}#prog .pg-list td,#prog .pg-list th{border-bottom:1px solid #eef3f0;padding:3px 10px;text-align:left;white-space:nowrap}
@@ -13329,11 +13330,12 @@ body.ghgfocus #src_form .ehead>.fxfocus{background:#1B8A60;border-color:#1B8A60;
   const cname=c=>{ const t=(typeof ncText==='function')?ncText(c):c; return t; };
   const cats=()=>{ const seen={}; return (SRC||[]).filter(s=>{ if(seen[s.c])return false; seen[s.c]=1; return !(typeof srcNa==='function'&&srcNa(s.c)); }).map(s=>s.c); };
   const scope=c=>/^S1/.test(c)?'範疇一':(/^S2/.test(c)?'範疇二':'範疇三');
-  function cell(st,a,p){
+  function cell(st,a,p,dc){
+    if(dc)return (a&&a.n)?'dc':'';   /* V129-39：已申報／已鎖的年度不套送出審核 */
     if(st){ if(st.status==='approved')return 'ok'; if(st.status==='submitted')return 'wt'; if(st.status==='returned')return 'rt'; if(st.no_data)return 'nd'; }
     if(a&&a.n)return 'ed'; if(p&&(p.q>0||p.co>0))return 'no'; return ''; }
-  const SYM={ok:'✓',wt:'⏳',rt:'↩',ed:'✎',no:'○',nd:'⊘'};
-  const LAB={ok:'通過',wt:'等 ESG 確認',rt:'退回',ed:'填寫中',no:'還沒填',nd:'本年沒有'};
+  const SYM={ok:'✓',wt:'⏳',rt:'↩',ed:'✎',no:'○',nd:'⊘',dc:'📘'};
+  const LAB={ok:'通過',wt:'等 ESG 確認',rt:'退回',ed:'填寫中',no:'還沒填',nd:'本年沒有',dc:'已申報'};
   const FIL={all:null,wt:['wt'],rt:['rt'],todo:['ed','no']};
   window.progEnter=async function(){
     const box=document.getElementById('prog'); if(!box)return;
@@ -13352,22 +13354,23 @@ body.ghgfocus #src_form .ehead>.fxfocus{background:#1B8A60;border-color:#1B8A60;
     if(es.error)throw es.error;
     const A=fpAgg(ry), P=fpAgg(rp), S={}; (es.data||[]).forEach(r=>{ S[r.site_id+'|'+r.category_id]=r; });
     const sites=(FAC_SITES||[]).map(x=>x.site_id).filter(s=>!curGhgUser||READONLY||lgCanSite(s)).sort((a,b)=>(fpPno(a)+a).localeCompare(fpPno(b)+b));
-    const CS0=cats(); const M={}; const tot={ok:0,wt:0,rt:0,ed:0,no:0,nd:0};
-    sites.forEach(s=>{ M[s]={}; CS0.forEach(c=>{ const k=cell(S[s+'|'+c],(A[s]||{})[c],(P[s]||{})[c]); M[s][c]=k; if(k)tot[k]++; }); });
+    const DC=!trialY(Y)&&Y<=declMaxY();   /* V129-39：已申報的年度（年度只是還沒開放＝鎖著，不算申報，照常看進度） */
+    const CS0=cats(); const M={}; const tot={ok:0,wt:0,rt:0,ed:0,no:0,nd:0,dc:0};
+    sites.forEach(s=>{ M[s]={}; CS0.forEach(c=>{ const k=cell(S[s+'|'+c],(A[s]||{})[c],(P[s]||{})[c],DC); M[s][c]=k; if(k)tot[k]++; }); });
     const CS=CS0.filter(c=>sites.some(s=>M[s][c]));   /* 整欄都空白（沒有登錄頁或全集團都不適用）就不顯示 */
     const ys=entryYears([]);
     const want=FIL[PG.f];
     let h='<div class="pg-top"><span class="pg-title">📋 審核進度</span>'
       +'<span class="fpair"><span class="ehlab">年度</span><select onchange="PG.year=+this.value;progRender()">'+yearOpts(ys,Y)+'</select></span>'
-      +[['all','全部'],['wt','等 ESG 確認'],['rt','退回'],['todo','還沒送出']].map(([k,t])=>'<button class="pg-f'+(PG.f===k?' on':'')+'" onclick="PG.f=&#39;'+k+'&#39;;progRender()">'+t+'</button>').join('')
+      +(DC?'<span class="fmini" style="color:#1f4e79">'+Y+' 年已申報（定案），不用送出審核，只看不改</span>':[['all','全部'],['wt','等 ESG 確認'],['rt','退回'],['todo','還沒送出']].map(([k,t])=>'<button class="pg-f'+(PG.f===k?' on':'')+'" onclick="PG.f=&#39;'+k+'&#39;;progRender()">'+t+'</button>').join(''))
       +'<span style="flex:1"></span>'
-      +[['ok','#d7f0e1','#1e6b43'],['wt','#dbe9f8','#1f4e79'],['rt','#fbe0de','#a33'],['ed','#fff3cd','#856404'],['no','#fff','#5b6b63'],['nd','#eeeeee','#666']].map(([k,bg,fg])=>'<span class="pg-pill" style="background:'+bg+';color:'+fg+';border-color:'+fg+'33">'+SYM[k]+' '+LAB[k]+' '+tot[k]+'</span>').join(' ')
+      +(DC?[['dc','#e6eef9','#1f4e79']]:[['ok','#d7f0e1','#1e6b43'],['wt','#dbe9f8','#1f4e79'],['rt','#fbe0de','#a33'],['ed','#fff3cd','#856404'],['no','#fff','#5b6b63'],['nd','#eeeeee','#666']]).map(([k,bg,fg])=>'<span class="pg-pill" style="background:'+bg+';color:'+fg+';border-color:'+fg+'33">'+SYM[k]+' '+LAB[k]+' '+tot[k]+'</span>').join(' ')
       +'</div>'
       +'<div class="fmini" style="margin:0 2px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">一格＝一廠一類，點格子到那一頁　<span style="cursor:help;color:var(--p);font-weight:700" title="✓ 通過＝ESG 已確認；⏳ 已送出，等 ESG 確認；↩ 退回（滑鼠看原因）；✎ 有資料，還沒送出；○ '+PY+' 年有資料、'+Y+' 年還沒資料；⊘ 本年沒有（滑鼠看原因）；空白＝這廠不適用（去年今年都沒資料）">ⓘ 符號說明</span></div>';
     // 表頭：範疇分組＋類別代號
     const grp=[]; CS.forEach(c=>{ const g=scope(c); if(grp.length&&grp[grp.length-1][0]===g)grp[grp.length-1][1]++; else grp.push([g,1]); });
     h+='<div style="overflow:hidden"><table class="pgt"><colgroup><col style="width:128px">'+CS.map(()=>'<col>').join('')+'<col style="width:74px"></colgroup>'
-      +'<thead><tr><th rowspan="2">廠區</th>'+grp.map(([g,n])=>'<th class="grp" colspan="'+n+'">'+g+'</th>').join('')+'<th rowspan="2">通過／應填</th></tr>'
+      +'<thead><tr><th rowspan="2">廠區</th>'+grp.map(([g,n])=>'<th class="grp" colspan="'+n+'">'+g+'</th>').join('')+'<th rowspan="2">'+(DC?'已申報':'通過／應填')+'</th></tr>'
       +'<tr>'+CS.map(c=>'<th title="'+esc(cname(c))+'">'+esc(code(c))+'</th>').join('')+'</tr></thead><tbody>';
     sites.forEach(s=>{ let ok=0,need=0;
       h+='<tr><td class="s" title="'+esc(fpSiteName(s))+'">'+esc(fpSiteName(s))+'</td>';
@@ -13378,9 +13381,11 @@ body.ghgfocus #src_form .ehead>.fxfocus{background:#1B8A60;border-color:#1B8A60;
         if(st&&st.no_data)ti+='\n本年沒有：'+(st.no_data_reason||'');
         if(st&&st.submitted_at)ti+='\n送出：'+String(st.submitted_by||'').replace(/@.*/,'')+' '+String(st.submitted_at).slice(0,16).replace('T',' ');
         if(st&&st.reviewed_at)ti+='\n'+(st.status==='returned'?'退回':'確認')+'：'+String(st.reviewed_by||'').replace(/@.*/,'')+' '+String(st.reviewed_at).slice(0,16).replace('T',' ')+(st.review_note?'　'+st.review_note:'');
-        h+='<td><span class="c '+k+(want&&want.indexOf(k)<0?' dim':'')+'" title="'+esc(ti)+'" onclick="progGo(&#39;'+s+'&#39;,&#39;'+c+'&#39;,'+Y+')">'+SYM[k]+'</span></td>'; });
-      h+='<td style="font-weight:700'+(need&&ok===need?';color:#1e6b43':'')+'">'+ok+'／'+need+'</td></tr>'; });
-    h+='</tbody><tfoot><tr><td class="s">通過廠數</td>'+CS.map(c=>{ const n=sites.filter(s=>M[s][c]==='ok').length, m=sites.filter(s=>M[s][c]).length; return '<td style="font-size:10.5px'+(m&&n===m?';color:#1e6b43;font-weight:700':'')+'">'+(m?n+'/'+m:'')+'</td>'; }).join('')+'<td></td></tr></tfoot></table></div>';
+        if(DC)ti=cname(c)+'　'+fpSiteName(s)+' '+Y+'\n已申報：'+(a?a.n+' 筆、'+(+a.co||0).toFixed(4)+' t':'');
+        h+='<td><span class="c '+k+(!DC&&want&&want.indexOf(k)<0?' dim':'')+'" title="'+esc(ti)+'" onclick="progGo(&#39;'+s+'&#39;,&#39;'+c+'&#39;,'+Y+')">'+SYM[k]+'</span></td>'; });
+      h+='<td style="font-weight:700'+(!DC&&need&&ok===need?';color:#1e6b43':'')+'">'+(DC?need+' 類':ok+'／'+need)+'</td></tr>'; });
+    h+='</tbody><tfoot><tr><td class="s">'+(DC?'已申報廠數':'通過廠數')+'</td>'+CS.map(c=>{ const n=sites.filter(s=>M[s][c]==='ok').length, m=sites.filter(s=>M[s][c]).length; return '<td style="font-size:10.5px'+(!DC&&m&&n===m?';color:#1e6b43;font-weight:700':'')+'">'+(m?(DC?m:n+'/'+m):'')+'</td>'; }).join('')+'<td></td></tr></tfoot></table></div>';
+    if(DC){ box.innerHTML=h; return; }   /* V129-39：已申報年度不列等確認清單 */
     // 等 ESG 確認清單
     const wl=[]; sites.forEach(s=>CS.forEach(c=>{ if(M[s][c]==='wt')wl.push(S[s+'|'+c]); }));
     wl.sort((a,b)=>String(a.submitted_at||'').localeCompare(String(b.submitted_at||'')));
