@@ -288,7 +288,7 @@ td.fachl{background:#fffbe6!important;box-shadow:inset 3px 0 0 #e6a700}   /* V38
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-35</b> · 2026/10/18</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-36</b> · 2026/10/18</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -381,6 +381,7 @@ td.fachl{background:#fffbe6!important;box-shadow:inset 3px 0 0 #e6a700}   /* V38
     <div class="tab" data-t="group"><span class="ti">🏭</span><span class="tl"> 全集團</span><span class="ts">全集團</span></div>
     <div class="tab on" data-t="query"><span class="ti">🔍</span><span class="tl"> 查詢（明細）</span><span class="ts">查詢</span></div>
     <div class="tab" data-t="input"><span class="ti">📝</span><span class="tl"> 資料登錄</span><span class="ts">登錄</span></div>
+    <div class="tab" data-t="prog"><span class="ti">📋</span><span class="tl"> 審核進度</span><span class="ts">審核</span></div>
     <div class="tab" data-t="imp"><span class="ti">📤</span><span class="tl"> 匯入</span><span class="ts">匯入</span></div>
     <div class="tab" data-t="fac"><span class="ti">📐</span><span class="tl"> 係數庫</span><span class="ts">係數庫</span></div>
     <div class="tab" data-t="perm"><span class="ti">🔐</span><span class="tl"> 權限</span><span class="ts">權限</span></div>
@@ -460,6 +461,7 @@ td.fachl{background:#fffbe6!important;box-shadow:inset 3px 0 0 #e6a700}   /* V38
   </div>
 
   <!-- ===== V48 權限 ===== -->
+  <div id="prog" class="card hide"></div>
   <div id="perm" class="card hide"><div class="mobnote">📱 <b>這一頁要輸入或上傳資料，請用電腦開啟。</b><br>手機上建議看「查詢」「全集團」「係數庫」。<br><button class="sec" onclick="document.body.classList.add('mobforce');window.scrollTo(0,0)">仍要用手機開啟</button></div>
     <div class="ftitle" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:4px"><span>🔐 權限管理</span>
     <details style="margin:0;display:inline-block;font-weight:400">
@@ -2897,11 +2899,12 @@ setTimeout(lgInit,700);
 document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
   document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
   t.classList.add('on');
-  ['home','query','group','input','imp','fac','perm'].forEach(p=>{const el=document.getElementById(p); if(el)el.classList.toggle('hide',t.dataset.t!==p);});   /* V125：加首頁 */
+  ['home','query','group','input','prog','imp','fac','perm'].forEach(p=>{const el=document.getElementById(p); if(el)el.classList.toggle('hide',t.dataset.t!==p);});   /* V125：加首頁 */
   document.querySelector('.wrap').classList.toggle('wide',t.dataset.t==='perm');   // V65-5:權限頁全寬
   if(t.dataset.t==='fac'&&!window._facLoaded){window._facLoaded=true;loadFactors();}
   if(t.dataset.t==='perm')loadPerm();   // V48:權限頁每次進入重載(指派結果即時)
   if(t.dataset.t==='home')homeEnter();   /* V125 */
+  if(t.dataset.t==='prog'&&typeof progEnter==='function')progEnter();   /* V129-36 */
   if(t.dataset.t!=='home'&&typeof hmTipHide==='function')hmTipHide();
 });
 
@@ -13290,6 +13293,100 @@ body.ghgfocus #src_form .ehead>.fxfocus{background:#1B8A60;border-color:#1B8A60;
   window.esReturn=async function(c){
     const note=prompt('退回「'+nm(c)+'」給廠端修改。原因（必填，廠端會看到）：',''); if(note==null)return; if(!String(note).trim()){ alert('要寫退回原因'); return; }
     await esWrite(c,{status:'returned',review_note:String(note).trim()},'已退回。'); };
+})();
+</script>
+<style id="pgcss">
+#prog .pg-top{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
+#prog .pg-title{font-size:16px;font-weight:800;color:var(--d)}
+#prog .pg-pill{display:inline-block;white-space:nowrap;border:1px solid;border-radius:999px;padding:1px 10px;font-size:11.5px;font-weight:700}
+#prog .pg-f{font:inherit;font-size:12px;padding:2px 10px;border-radius:999px;border:1px solid #d7dfdb;background:#fff!important;color:#2d3b35!important;cursor:pointer}
+#prog .pg-f.on{background:#14603F!important;color:#fff!important;border-color:#14603F}
+
+#prog table.pgt{width:100%;table-layout:fixed;border-collapse:collapse;font-size:11.5px}
+#prog table.pgt th,#prog table.pgt td{border:1px solid #e3ebe7;text-align:center;padding:2px 0;overflow:hidden;white-space:nowrap}
+#prog table.pgt th{background:#f3f7f5;font-weight:700;font-size:10.5px;line-height:1.15;white-space:normal;word-break:break-all;padding:3px 1px}
+#prog table.pgt th.grp{font-size:11px}
+#prog table.pgt td.s{text-align:left;padding:2px 6px;font-weight:700}
+#prog .c{display:inline-block;width:22px;height:20px;line-height:20px;border-radius:4px;font-size:12px;font-weight:700;cursor:pointer}
+#prog .c.ok{background:#d7f0e1;color:#1e6b43}#prog .c.wt{background:#dbe9f8;color:#1f4e79}#prog .c.rt{background:#fbe0de;color:#a33}
+#prog .c.ed{background:#fff3cd;color:#856404}#prog .c.no{background:#fff;color:#8a9a92;border:1px dashed #b9c6c0}#prog .c.nd{background:#eeeeee;color:#888}
+#prog .c.dim{opacity:.18}
+#prog .pg-list{margin-top:10px;font-size:12px}
+#prog .pg-list table{border-collapse:collapse}#prog .pg-list td,#prog .pg-list th{border-bottom:1px solid #eef3f0;padding:3px 10px;text-align:left;white-space:nowrap}
+</style>
+<script>
+/* ══ V129-36：📋 審核進度（使用者 261018 OK）——廠 × 類別一格一狀態；查看帳號（外部顧問）也看得到
+   格子：✓ 通過／⏳ 等 ESG 確認／↩ 退回／✎ 填寫中（有資料沒送）／○ 還沒填（去年有、今年沒資料）／⊘ 本年沒有／空白＝不適用
+   資料：明細（fpRows，今年＋去年）＋ ghg_entry_status（批254）；點格子跳到那一廠那一類的登錄頁。只讀。 ══ */
+(function(){
+  const PG={year:0,f:'all'}; window.PG=PG;
+  const esc=t=>String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+  const code=c=>{ const t=(typeof ncText==='function')?ncText(c):c; return String(t).split(' ')[0]||c; };
+  const cname=c=>{ const t=(typeof ncText==='function')?ncText(c):c; return t; };
+  const cats=()=>{ const seen={}; return (SRC||[]).filter(s=>{ if(seen[s.c])return false; seen[s.c]=1; return !(typeof srcNa==='function'&&srcNa(s.c)); }).map(s=>s.c); };
+  const scope=c=>/^S1/.test(c)?'範疇一':(/^S2/.test(c)?'範疇二':'範疇三');
+  function cell(st,a,p){
+    if(st){ if(st.status==='approved')return 'ok'; if(st.status==='submitted')return 'wt'; if(st.status==='returned')return 'rt'; if(st.no_data)return 'nd'; }
+    if(a&&a.n)return 'ed'; if(p&&(p.q>0||p.co>0))return 'no'; return ''; }
+  const SYM={ok:'✓',wt:'⏳',rt:'↩',ed:'✎',no:'○',nd:'⊘'};
+  const LAB={ok:'通過',wt:'等 ESG 確認',rt:'退回',ed:'填寫中',no:'還沒填',nd:'本年沒有'};
+  const FIL={all:null,wt:['wt'],rt:['rt'],todo:['ed','no']};
+  window.progEnter=async function(){
+    const box=document.getElementById('prog'); if(!box)return;
+    box.innerHTML='<div class="msg">讀取各廠資料中…</div>';
+    try{
+      if(typeof ensureYLocks==='function')await ensureYLocks();
+      if(typeof ensureESRC==='function')await ensureESRC();
+      if(typeof ensureFacSites==='function')await ensureFacSites();
+      const ys=entryYears([]); if(!PG.year||ys.indexOf(PG.year)<0)PG.year=ys.filter(y=>!trialY(y)&&y>declMaxY())[0]||ys[ys.length-1];
+      await progRender();
+    }catch(e){ box.innerHTML='<div class="msg err">讀不到資料：'+esc(e.message||e)+'（審核進度沒有算出來，請重新整理再試）</div>'; } };
+  async function progRender(){
+    const box=document.getElementById('prog'); const Y=PG.year, PY=fpPrevY(Y);
+    box.innerHTML='<div class="msg">讀取 '+Y+' 年資料中…</div>';
+    const [ry,rp,es]=await Promise.all([fpRows(Y),fpRows(PY),sbAll(()=>sb.from('ghg_entry_status').select('*').eq('data_year',Y).order('site_id').order('category_id'))]);
+    if(es.error)throw es.error;
+    const A=fpAgg(ry), P=fpAgg(rp), S={}; (es.data||[]).forEach(r=>{ S[r.site_id+'|'+r.category_id]=r; });
+    const sites=(FAC_SITES||[]).map(x=>x.site_id).filter(s=>!curGhgUser||READONLY||lgCanSite(s)).sort((a,b)=>(fpPno(a)+a).localeCompare(fpPno(b)+b));
+    const CS0=cats(); const M={}; const tot={ok:0,wt:0,rt:0,ed:0,no:0,nd:0};
+    sites.forEach(s=>{ M[s]={}; CS0.forEach(c=>{ const k=cell(S[s+'|'+c],(A[s]||{})[c],(P[s]||{})[c]); M[s][c]=k; if(k)tot[k]++; }); });
+    const CS=CS0.filter(c=>sites.some(s=>M[s][c]));   /* 整欄都空白（沒有登錄頁或全集團都不適用）就不顯示 */
+    const ys=entryYears([]);
+    const want=FIL[PG.f];
+    let h='<div class="pg-top"><span class="pg-title">📋 審核進度</span>'
+      +'<span class="fpair"><span class="ehlab">年度</span><select onchange="PG.year=+this.value;progRender()">'+yearOpts(ys,Y)+'</select></span>'
+      +[['all','全部'],['wt','等 ESG 確認'],['rt','退回'],['todo','還沒送出']].map(([k,t])=>'<button class="pg-f'+(PG.f===k?' on':'')+'" onclick="PG.f=&#39;'+k+'&#39;;progRender()">'+t+'</button>').join('')
+      +'<span style="flex:1"></span>'
+      +[['ok','#d7f0e1','#1e6b43'],['wt','#dbe9f8','#1f4e79'],['rt','#fbe0de','#a33'],['ed','#fff3cd','#856404'],['no','#fff','#5b6b63'],['nd','#eeeeee','#666']].map(([k,bg,fg])=>'<span class="pg-pill" style="background:'+bg+';color:'+fg+';border-color:'+fg+'33">'+SYM[k]+' '+LAB[k]+' '+tot[k]+'</span>').join(' ')
+      +'</div>'
+      +'<div class="fmini" style="margin:0 2px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">一格＝一廠一類，點格子到那一頁　<span style="cursor:help;color:var(--p);font-weight:700" title="✓ 通過＝ESG 已確認；⏳ 已送出，等 ESG 確認；↩ 退回（滑鼠看原因）；✎ 有資料，還沒送出；○ '+PY+' 年有資料、'+Y+' 年還沒資料；⊘ 本年沒有（滑鼠看原因）；空白＝這廠不適用（去年今年都沒資料）">ⓘ 符號說明</span></div>';
+    // 表頭：範疇分組＋類別代號
+    const grp=[]; CS.forEach(c=>{ const g=scope(c); if(grp.length&&grp[grp.length-1][0]===g)grp[grp.length-1][1]++; else grp.push([g,1]); });
+    h+='<div style="overflow:hidden"><table class="pgt"><colgroup><col style="width:128px">'+CS.map(()=>'<col>').join('')+'<col style="width:74px"></colgroup>'
+      +'<thead><tr><th rowspan="2">廠區</th>'+grp.map(([g,n])=>'<th class="grp" colspan="'+n+'">'+g+'</th>').join('')+'<th rowspan="2">通過／應填</th></tr>'
+      +'<tr>'+CS.map(c=>'<th title="'+esc(cname(c))+'">'+esc(code(c))+'</th>').join('')+'</tr></thead><tbody>';
+    sites.forEach(s=>{ let ok=0,need=0;
+      h+='<tr><td class="s" title="'+esc(fpSiteName(s))+'">'+esc(fpSiteName(s))+'</td>';
+      CS.forEach(c=>{ const k=M[s][c]; if(k){ need++; if(k==='ok')ok++; }
+        if(!k){ h+='<td></td>'; return; }
+        const st=S[s+'|'+c], a=(A[s]||{})[c], p=(P[s]||{})[c];
+        let ti=cname(c)+'　'+fpSiteName(s)+' '+Y+'\n狀態：'+LAB[k]+'\n'+Y+' 年：'+(a?a.n+' 筆、'+(+a.co||0).toFixed(4)+' t':'沒有資料')+'　'+PY+' 年：'+(p?p.n+' 筆、'+(+p.co||0).toFixed(4)+' t':'沒有資料');
+        if(st&&st.no_data)ti+='\n本年沒有：'+(st.no_data_reason||'');
+        if(st&&st.submitted_at)ti+='\n送出：'+String(st.submitted_by||'').replace(/@.*/,'')+' '+String(st.submitted_at).slice(0,16).replace('T',' ');
+        if(st&&st.reviewed_at)ti+='\n'+(st.status==='returned'?'退回':'確認')+'：'+String(st.reviewed_by||'').replace(/@.*/,'')+' '+String(st.reviewed_at).slice(0,16).replace('T',' ')+(st.review_note?'　'+st.review_note:'');
+        h+='<td><span class="c '+k+(want&&want.indexOf(k)<0?' dim':'')+'" title="'+esc(ti)+'" onclick="progGo(&#39;'+s+'&#39;,&#39;'+c+'&#39;,'+Y+')">'+SYM[k]+'</span></td>'; });
+      h+='<td style="font-weight:700'+(need&&ok===need?';color:#1e6b43':'')+'">'+ok+'／'+need+'</td></tr>'; });
+    h+='</tbody><tfoot><tr><td class="s">通過廠數</td>'+CS.map(c=>{ const n=sites.filter(s=>M[s][c]==='ok').length, m=sites.filter(s=>M[s][c]).length; return '<td style="font-size:10.5px'+(m&&n===m?';color:#1e6b43;font-weight:700':'')+'">'+(m?n+'/'+m:'')+'</td>'; }).join('')+'<td></td></tr></tfoot></table></div>';
+    // 等 ESG 確認清單
+    const wl=[]; sites.forEach(s=>CS.forEach(c=>{ if(M[s][c]==='wt')wl.push(S[s+'|'+c]); }));
+    wl.sort((a,b)=>String(a.submitted_at||'').localeCompare(String(b.submitted_at||'')));
+    h+='<div class="pg-list"><b>⏳ 等 ESG 確認（'+wl.length+'）</b>'+(wl.length?'<table><thead><tr><th>廠區</th><th>類別</th><th>送出</th><th>時間</th><th></th></tr></thead><tbody>'+wl.map(r=>'<tr><td>'+esc(fpSiteName(r.site_id))+'</td><td>'+esc(cname(r.category_id))+(r.no_data?'（本年沒有：'+esc(r.no_data_reason||'')+'）':'')+'</td><td>'+esc(String(r.submitted_by||'').replace(/@.*/,''))+'</td><td>'+esc(String(r.submitted_at||'').slice(0,16).replace('T',' '))+'</td><td><a href="javascript:void(0)" onclick="progGo(&#39;'+r.site_id+'&#39;,&#39;'+r.category_id+'&#39;,'+Y+')">前往 →</a></td></tr>').join('')+'</tbody></table>':'<span class="fmini">　目前沒有</span>')+'</div>';
+    box.innerHTML=h; }
+  window.progRender=progRender;
+  window.progGo=function(s,c,y){
+    window.entryCur={site:s,year:+y};
+    const t=document.querySelector('.tab[data-t="input"]'); if(t)t.click();
+    setTimeout(()=>{ const i=(SRC||[]).findIndex(x=>x.c===c); if(i>=0)selectSrc(i); if(typeof entryKeepSY==='function')entryKeepSY(s,+y); },300); };
 })();
 </script>
 </body>
