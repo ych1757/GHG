@@ -288,7 +288,7 @@ td.fachl{background:#fffbe6!important;box-shadow:inset 3px 0 0 #e6a700}   /* V38
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-37</b> · 2026/10/18</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-38</b> · 2026/10/18</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -13242,7 +13242,7 @@ body.ghgfocus #src_form .ehead>.fxfocus{background:#1B8A60;border-color:#1B8A60;
       h+=b('📤 送出審核','esSubmit','go','這一類填好了：送出給 ESG 確認。送出後這一頁會鎖住，要改請 ESG 退回');
     }
     if(st==='submitted'&&(rl==='esg'||rl==='admin')){ h+=b('✓ 確認','esApprove','go','確認這一類 OK（顧問看過後按）＝通過'); h+=b('↩ 退回','esReturn','no','退回給廠端修改（要寫原因）'); }
-    if(st==='approved'&&rl==='admin')h+=b('↩ 退回','esReturn','no','系統管理：把已通過的退回重改（救急用）');
+    if(st==='approved'&&(rl==='esg'||rl==='admin'))h+=b('↩ 退回','esReturn','no','已通過的發現有錯：退回給廠端修改（要寫原因）');   /* V129-38：ESG 也能退回已通過（批255） */
     return h; }
   const KEEP=/下載樣板|怎麼填|選單|算法|說明|設定/;
   const HIDE=/儲存|匯入|新增|清空|帶入|刪除|重算|寫入|＋/;
