@@ -288,7 +288,7 @@ td.fachl{background:#fffbe6!important;box-shadow:inset 3px 0 0 #e6a700}   /* V38
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-33</b> · 2026/10/18</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-35</b> · 2026/10/18</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -12482,6 +12482,7 @@ window.xpGo=async function(){
       try{ const m=trnXp.match('L',vh,o); return (m&&m.it&&m.it.f)?String(m.it.f.esg_code||'').trim():''; }catch(e){ return ''; } };
     const xpNewCode=r=>{ const c=xpBase(r); if(c)return {c:c}; const p=r.site_id+'|'+r.data_year+'|'+r.category_id+'|';
       let k=xpOne(xpCatC[r.category_id]); if(k)return {c:k,fill:1};
+      if(r.category_id==='C06'){ k=({'航空':'C06-A01','高鐵(台灣)':'C06-R05'})[String(r.equipment_name||'').trim()]; if(k)return {c:k,fill:5}; }   /* V129-34：航空（ICAO 每趟查）、台灣高鐵（站間碳足跡）沒有固定係數，照名稱給編碼 */
       const v=xpVeh(r); if(v){ k=xpOne(xpVK[p+v]); if(k)return {c:k,fill:2}; }
       k=xpW5(r); if(k)return {c:k,fill:4};   /* V129-31：營運廢棄物運輸列寫共用運輸表的編碼 */
       k=xpOne(xpNK[p+xpNm(r)]); if(k)return {c:k,fill:3};
@@ -12518,7 +12519,7 @@ window.xpGo=async function(){
     ['範疇一','範疇二','範疇三'].forEach(sc=>K.push([sc,{t:'n',f:'SUMIFS(排放源彙總!$G$2:$G$'+M+',排放源彙總!$B$2:$B$'+M+',"'+sc+'")',v:+(tot[sc]||0).toFixed(10)}]));
     const kr=K.length; K.push(['合計',{t:'n',f:'SUM(B'+(kr-2)+':B'+kr+')',v:+((tot['範疇一']||0)+(tot['範疇二']||0)+(tot['範疇三']||0)).toFixed(10)}]);
     K.push([],['說明'],['・排放源彙總、本頁合計都是公式，加總「逐筆明細」。'],['・逐筆明細「碳排怎麼來」寫「公式」的列，碳排＝活動量 × 係數 × GWP ÷ 1000，可以直接驗算；其他列（航空 ICAO、高鐵站間、多氣體、單位換算過的）照系統存的數字，換算過程在「換算說明」。'],
-      ['・範疇二外購電力：市場基礎與位置基礎分兩欄（太陽能／綠電市場基礎 0）。'],['・係數代號可以在「係數表」找到數值與出處；金額法的美金依「匯率表」換算。'],['・「新編碼」＝我們給 ESG 的那套編碼（例：資本商品 C02-01～C02-43、採購服務 C01-02-01～45、天然氣 A01-01），以係數庫為準：有連到係數庫的列寫該係數的新編碼；空白＝這筆沒有連到有新編碼的係數（例如用收集表自帶的係數，或該類別還沒有逐項的新編碼）。'],['・沒連係數的列「補判」新編碼（只補標籤，碳排不變）：①這一類在係數庫只有一個新編碼就用它（例：化糞池 A04-03）；②員工通勤、商務旅行的逐人逐趟列，用同廠同年同車種彙總列的新編碼（碳排記在彙總列）；③同廠同年有名稱完全一樣、已有新編碼的列就借用；④營運廢棄物的運輸列，碳排是用上游運輸共用表的係數算的，新編碼就寫共用表那一種的編碼（例：中型貨車 C04-L06）。對到兩個以上新編碼的不補，留空白。']);
+      ['・範疇二外購電力：市場基礎與位置基礎分兩欄（太陽能／綠電市場基礎 0）。'],['・係數代號可以在「係數表」找到數值與出處；金額法的美金依「匯率表」換算。'],['・「新編碼」＝我們給 ESG 的那套編碼（例：資本商品 C02-01～C02-43、採購服務 C01-02-01～45、天然氣 A01-01），以係數庫為準：有連到係數庫的列寫該係數的新編碼；空白＝這筆沒有連到有新編碼的係數（例如用收集表自帶的係數，或該類別還沒有逐項的新編碼）。'],['・沒連係數的列「補判」新編碼（只補標籤，碳排不變）：①這一類在係數庫只有一個新編碼就用它（例：化糞池 A04-03）；②員工通勤、商務旅行的逐人逐趟列，用同廠同年同車種彙總列的新編碼（碳排記在彙總列）；③同廠同年有名稱完全一樣、已有新編碼的列就借用；④營運廢棄物的運輸列，碳排是用上游運輸共用表的係數算的，新編碼就寫共用表那一種的編碼（例：中型貨車 C04-L06）；⑤商務旅行的航空（每趟用 ICAO 查）寫 C06-A01、台灣高鐵（每趟用高鐵站間碳足跡）寫 C06-R05，這兩種沒有固定係數。對到兩個以上新編碼的不補，留空白。']);
     /* ── 係數表 ── */
     const fm={}; FF.forEach(f=>fm[f.factor_id]=f);
     const C=[['係數代號','新編碼','年度','區域','氣體','數值','單位','GWP','名稱／說明','出處']];   /* V119-13：加「新編碼」欄 */
@@ -13180,6 +13181,115 @@ body.ghgfocus #src_form .ehead>.fxfocus{background:#1B8A60;border-color:#1B8A60;
     bt.onclick=e=>{ e.preventDefault(); e.stopPropagation(); ghgFocus(!document.body.classList.contains('ghgfocus')); }; eh.insertBefore(bt,eh.firstChild); }
   document.addEventListener('keydown',e=>{ if(e.key!=='Escape'||!document.body.classList.contains('ghgfocus'))return; const dl=document.getElementById('s101dlg'); if(dl&&dl.offsetParent)return; ghgFocus(false); });
   const _ssF=window.selectSrc; if(typeof _ssF==='function')window.selectSrc=function(){ const r=_ssF.apply(this,arguments); try{ const inp=document.getElementById('input'); if(inp&&!inp.classList.contains('hide'))ghgFocus(true); }catch(e){} return r; };   /* 選了類別就全畫面 */
+})();
+</script>
+<style id="escss">
+.esbar{display:inline-flex;gap:4px;align-items:center;flex-wrap:wrap;margin-right:6px}
+.esbar .eschip{border-radius:999px;padding:2px 10px;font-size:11.5px;font-weight:700;white-space:nowrap;border:1px solid;cursor:help}
+.esbar .esb{font:inherit;font-size:11.5px;padding:2px 9px;border-radius:6px;border:1px solid #bcd4ee;background:#e8f1fb;color:#1f4e79;cursor:pointer;white-space:nowrap}
+.esbar .esb.go{background:#14603F;border-color:#14603F;color:#fff}
+.esbar .esb.no{background:#fff5f5;border-color:#e3b5b0;color:#a33}
+#src_form.eslock :is(input,select,textarea):not(.ehead *){pointer-events:none;background:#f3f5f4!important;color:#555}
+#src_form.eslock a.edx,#src_form.eslock .eshidx{display:none!important}
+#src_form.eslock [contenteditable]:not(.ehead *){pointer-events:none}
+</style>
+<script>
+/* ══ V129-35：各類「本年沒有」＋送出審核（批254 ghg_entry_status；使用者 261018 定：廠端各類自己送出 → 顧問用查看帳號看 → ESG 按確認＝通過；退回＝回填寫中）
+   全部類別共用：表頭（ehead）加狀態膠囊＋按鈕；已送出／已通過／本年沒有 → 這一頁鎖住（表格不能改、儲存／匯入／新增／清空／帶入按鈕收起）。
+   資料庫守門員（批254）才是真的把關；這裡只是讓畫面跟著狀態走。 ══ */
+(function(){
+  const ES={rows:{},at:{}};
+  window.ES=ES;
+  const K=(s,y,c)=>s+'|'+y+'|'+c;
+  const esc=t=>String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+  const role=()=>(typeof curGhgUser!=='undefined'&&curGhgUser)?curGhgUser.role:'';
+  const canAct=(s,y)=>['input','esg','admin'].indexOf(role())>=0&&typeof entryCanDel==='function'&&entryCanDel(s,y);
+  async function esLoad(s,y,force){
+    const k=s+'|'+y; if(!force&&ES.at[k]&&Date.now()-ES.at[k]<60000)return;
+    const {data,error}=await sb.from('ghg_entry_status').select('*').eq('site_id',s).eq('data_year',+y).order('category_id');
+    if(error){ ES.err=error.message; return; } ES.err=null;
+    Object.keys(ES.rows).forEach(x=>{ if(x.indexOf(k+'|')===0)delete ES.rows[x]; });
+    (data||[]).forEach(r=>{ ES.rows[K(r.site_id,r.data_year,r.category_id)]=r; }); ES.at[k]=Date.now(); }
+  window.esLoad=esLoad;
+  function esRow(s,y,c){ return ES.rows[K(s,y,c)]||null; }
+  window.esRow=esRow;
+  function esLocked(r){ return !!(r&&(r.status==='submitted'||r.status==='approved'||r.no_data)); }
+  window.esLocked=esLocked;
+  function chip(r){
+    const who=t=>t?String(t).replace(/@.*/,''):'';
+    const tm=t=>t?String(t).slice(0,16).replace('T',' '):'';
+    const p=(t,bg,fg,bd,ti)=>'<span class="eschip" style="background:'+bg+';color:'+fg+';border-color:'+bd+'" title="'+esc(ti)+'">'+t+'</span>';
+    const nd=r&&r.no_data?'（本年沒有：'+esc(r.no_data_reason||'')+'）':'';
+    if(!r||(r.status==='draft'&&!r.no_data))return p('✏️ 填寫中','#f3f5f4','#5b6b63','#d7dfdb','這一類還沒送出。填好了按「📤 送出審核」，ESG 確認後就算通過');
+    if(r.status==='draft')return p('⊘ 本年沒有'+(r.no_data_reason?'：'+esc(r.no_data_reason):''),'#f1f1f1','#666','#d5d5d5','勾的人：'+who(r.updated_by)+' '+tm(r.updated_at)+'。還沒送出，確定了請按「📤 送出審核」');
+    if(r.status==='submitted')return p('📤 已送出，等 ESG 確認'+nd,'#e8f1fb','#1f4e79','#bcd4ee','送出：'+who(r.submitted_by)+' '+tm(r.submitted_at)+'。等 ESG 確認期間這一頁不能改；要改請 ESG 退回');
+    if(r.status==='approved')return p('✅ 通過'+nd,'#e3f4ea','#1e6b43','#bfe3cd','送出：'+who(r.submitted_by)+' '+tm(r.submitted_at)+'；ESG 確認：'+who(r.reviewed_by)+' '+tm(r.reviewed_at)+(r.review_note?'；備註：'+r.review_note:''));
+    if(r.status==='returned'){ const rn=String(r.review_note||''); return p('↩ 退回：'+esc(rn.length>28?rn.slice(0,28)+'…':rn)+nd,'#fff5f5','#a33','#e3b5b0','ESG 退回：'+who(r.reviewed_by)+' '+tm(r.reviewed_at)+'；原因：'+rn+'；改好後再按「📤 送出審核」'); }   /* 退回原因放膠囊（全畫面模式會收起表頭下的說明框） */
+    return ''; }
+  function btns(s,y,c,r){
+    if(!canAct(s,y))return '';
+    const st=r?r.status:'draft', rl=role(), b=(t,f,cl,ti)=>'<button class="esb'+(cl?' '+cl:'')+'" onclick="'+f+'(&#39;'+c+'&#39;)" title="'+esc(ti)+'">'+t+'</button>';
+    let h='';
+    if(st==='draft'||st==='returned'){
+      h+=(r&&r.no_data)?b('取消本年沒有','esNoDataOff','','改回要填資料'):b('⊘ 本年沒有','esNoData','','這一廠這一年確定沒有這一類（要寫原因；這一頁要先沒有資料）');
+      h+=b('📤 送出審核','esSubmit','go','這一類填好了：送出給 ESG 確認。送出後這一頁會鎖住，要改請 ESG 退回');
+    }
+    if(st==='submitted'&&(rl==='esg'||rl==='admin')){ h+=b('✓ 確認','esApprove','go','確認這一類 OK（顧問看過後按）＝通過'); h+=b('↩ 退回','esReturn','no','退回給廠端修改（要寫原因）'); }
+    if(st==='approved'&&rl==='admin')h+=b('↩ 退回','esReturn','no','系統管理：把已通過的退回重改（救急用）');
+    return h; }
+  const KEEP=/下載樣板|怎麼填|選單|算法|說明|設定/;
+  const HIDE=/儲存|匯入|新增|清空|帶入|刪除|重算|寫入|＋/;
+  function applyLock(box,lock){
+    box.classList.toggle('eslock',!!lock);
+    box.querySelectorAll('button').forEach(x=>{
+      if(x.closest('.esbar'))return; const t=x.innerText||'';
+      if(lock&&HIDE.test(t)&&!KEEP.test(t)){ if(x.style.display!=='none'){ x.dataset.eshid='1'; x.style.display='none'; } }
+      else if(!lock&&x.dataset.eshid){ x.style.display=''; delete x.dataset.eshid; } });
+    box.querySelectorAll('a,span,button').forEach(e=>{ if(e.children.length||e.closest('.ehead'))return; const t=(e.innerText||'').trim();   /* 各頁的逐列刪除（✕／🗑／取消刪除）：鎖住時收起 */
+      if(/^([✕×🗑]|↩ 取消刪除)$/.test(t)){ if(lock)e.classList.add('eshidx'); else e.classList.remove('eshidx'); } }); }
+  let busy=false;
+  async function esFill(){
+    if(busy)return; const box=document.getElementById('src_form'); if(!box)return;
+    const bar=box.querySelector('.esbar'); if(!bar){ box.classList.remove('eslock'); return; }
+    const c=bar.dataset.c; const {site,year}=(typeof entryCurSY==='function')?entryCurSY():{}; if(!c||!site||!year)return;
+    busy=true; try{ await esLoad(site,year); }catch(e){} busy=false;
+    const box2=document.getElementById('src_form'); const bar2=box2&&box2.querySelector('.esbar'); if(!bar2||bar2.dataset.c!==c)return;
+    const r=esRow(site,year,c); const sig=c+'|'+site+'|'+year+'|'+JSON.stringify(r)+'|'+role()+'|'+canAct(site,year);
+    if(bar2.dataset.sig!==sig){
+      bar2.dataset.sig=sig;
+      bar2.innerHTML=(r||canAct(site,year))?chip(r)+btns(site,year,c,r):'';
+    }
+    applyLock(box2,esLocked(r)); }
+  window.esFill=esFill;
+  let tmr=null; const kick=()=>{ clearTimeout(tmr); tmr=setTimeout(esFill,60); };
+  (function(){ const f=document.getElementById('src_form'); if(f)new MutationObserver(kick).observe(f,{childList:true,subtree:true}); })();
+  const _eh=window.ehead;
+  if(_eh)window.ehead=function(o){ let h=_eh(o); try{ const c=window._gCat||null; if(c&&!/填報進度/.test(String(o.title||'')))h=h.replace('<span class="eh-x">','<span class="eh-x"><span class="esbar" data-c="'+esc(c)+'"></span>'); }catch(e){} return h; };
+  async function esWrite(c,patch,okMsg){
+    const {site,year}=entryCurSY(); if(!site||!year)return;
+    const cur=esRow(site,year,c); let res;
+    if(cur)res=await sb.from('ghg_entry_status').update(patch).eq('site_id',site).eq('data_year',+year).eq('category_id',c).select();
+    else res=await sb.from('ghg_entry_status').insert(Object.assign({site_id:site,data_year:+year,category_id:c},patch)).select();
+    if(res.error||!res.data||!res.data.length){ alert('沒有存到：'+((res.error&&res.error.message)||'沒有權限或資料已變更，請重新整理再試')); await esLoad(site,year,true); esFill(); return false; }
+    await esLoad(site,year,true); const b=document.querySelector('#src_form .esbar'); if(b)b.dataset.sig=''; await esFill();
+    if(okMsg)alert(okMsg); return true; }
+  const nm=c=>{ const s=(SRC||[]).find(x=>x.c===c); return s?s.name||c:c; };
+  window.esNoData=async function(c){
+    const why=prompt('「'+nm(c)+'」本年沒有的原因（必填，例：已改付汙水處理費、租約已結束、設備已停用）：',''); if(why==null)return; if(!String(why).trim()){ alert('要寫原因'); return; }
+    await esWrite(c,{no_data:true,no_data_reason:String(why).trim()},'已標「本年沒有」。確定了請再按「📤 送出審核」。'); };
+  window.esNoDataOff=async function(c){ if(!confirm('取消「本年沒有」，改回要填資料？'))return; await esWrite(c,{no_data:false,no_data_reason:null}); };
+  window.esSubmit=async function(c){
+    const {site,year}=entryCurSY(); const r=esRow(site,year,c);
+    if(!(r&&r.no_data)){ const q=await sb.from('ghg_activity_data').select('record_id',{count:'exact',head:true}).eq('site_id',site).eq('data_year',+year).eq('category_id',c);
+      if(!q.error&&!q.count){ alert('這一頁還沒有存任何資料。\n確定本年沒有，請先按「⊘ 本年沒有」寫原因；有資料請先填好按「💾 儲存」。'); return; } }
+    if(!confirm('送出「'+nm(c)+'」'+site+' '+year+' 年給 ESG 確認？\n送出後這一頁會鎖住，要改請 ESG 退回。\n（還沒按「💾 儲存」的修改不會送出）'))return;
+    await esWrite(c,{status:'submitted'},'已送出，等 ESG 確認。'); };
+  window.esApprove=async function(c){
+    const note=prompt('確認「'+nm(c)+'」通過。備註（可空白，例：顧問 10/20 看過）：',''); if(note==null)return;
+    await esWrite(c,{status:'approved',review_note:String(note).trim()||null},'已確認通過。'); };
+  window.esReturn=async function(c){
+    const note=prompt('退回「'+nm(c)+'」給廠端修改。原因（必填，廠端會看到）：',''); if(note==null)return; if(!String(note).trim()){ alert('要寫退回原因'); return; }
+    await esWrite(c,{status:'returned',review_note:String(note).trim()},'已退回。'); };
 })();
 </script>
 </body>
