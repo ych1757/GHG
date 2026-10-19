@@ -291,7 +291,7 @@ function facChg(on){ return '<span class="fchg'+(on?'':' off')+'">🟡</span>'; 
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-40-11</b> · 2026/10/19</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-40-12</b> · 2026/10/19</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -13533,7 +13533,12 @@ body.ghgfocus #src_form .ehead>.fxfocus{background:#1B8A60;border-color:#1B8A60;
       +'<b>廠區</b><select onchange="IV.pc=this.value;invRender()">'+ps.map(p=>'<option value="'+p+'"'+(p===IV.pc?' selected':'')+'>'+esc(pname(p))+'</option>').join('')+'</select>'
       +'<span class="ipill" title="2022～2025＝官方申報 Excel（集團 SBT 盤查清冊最終版，批256 收進系統）；2026 起改成系統算＋ESG 定版（還沒開放）">📘 官方申報（集團 SBT 盤查清冊最終版）</span>'
       +'<button class="sec" style="margin-left:auto;padding:3px 12px;font-size:12.5px" onclick="invExport()" title="把這張總表下載成 Excel">📥 匯出 Excel</button>'; }
-  function grid(pc,y){ const V={}; (IV.rows||[]).forEach(r=>{ if(r.plant_code===pc&&+r.data_year===y)(V[r.row_code]=V[r.row_code]||{})[r.col]=Number(r.value); }); return V; }
+  function grid(pc,y){ const V={}; (IV.rows||[]).forEach(r=>{ if(r.plant_code===pc&&+r.data_year===y)(V[r.row_code]=V[r.row_code]||{})[r.col]=Number(r.value); });
+    /* V129-40-12：官方表缺「範疇一＋二＋三合計」或「七大溫室氣體彙整」→ 用官方各列推算（_calc＝推算，畫面標示；不寫資料庫） */
+    const g=(rc,c)=>((V[rc]||{})[c])||0;
+    if(!V.TOTAL&&V.S1&&V.S3){ V.TOTAL={CO2e:+(g('S1','CO2e')+g('S2-M','CO2e')+g('S3','CO2e')).toFixed(10),_calc:1}; }
+    if(!V.GAS&&V.S1){ const G={_calc:1}; GS.forEach(x=>{ let t=g('S1',x)+g('S2-M',x); if(x==='CO2'){ if((V['S2-M']||{}).CO2==null)t+=g('S2-M','CO2e'); t+=g('S3','CO2e'); } G[x]=+t.toFixed(10); }); G.CO2e=g('TOTAL','CO2e'); V.GAS=G; }
+    return V; }
   window.invRender=function(){ const box=document.getElementById('g_result'); if(!box)return;
     if(IV.err){ box.innerHTML='<div class="msg err">⚠ 讀不到官方總表（ghg_official_inventory）：'+esc(IV.err)+'。盤查總表先不顯示，請重新整理再試。</div>'; return; }
     ctl(); if(!IV.pc||!IV.year){ box.innerHTML='<div class="msg">你的廠區權限範圍內沒有官方總表資料。</div>'; return; }
@@ -13542,20 +13547,20 @@ body.ghgfocus #src_form .ehead>.fxfocus{background:#1B8A60;border-color:#1B8A60;
     let h='<div class="invt"><table class="invtab"><thead><tr><th>GHG Protocol　溫室氣體盤查總表（公噸 CO2e）</th><th>CO2e 總量</th>'+GS.map(g=>'<th>'+g+'</th>').join('')+'<th>排放占比</th></tr></thead><tbody>';
     ROWS.forEach(([rc,lab,cls,gas,key])=>{ const v=V[rc]||{}; const co=v.CO2e;
       const dq=(can&&key&&co!=null)?' dq" title="到查詢頁看 '+esc(pname(IV.pc))+' '+IV.year+' '+key+' 的明細" onclick="drillQuery(&#39;'+IV.pc+'&#39;,&#39;'+key+'&#39;,'+IV.year+')':'';
-      h+='<tr class="'+(cls.indexOf('sc')>=0?'sc':'')+(cls.indexOf('tot')>=0?'tot':'')+(cls.indexOf('bio')>=0?' bio':'')+'"><td class="c'+(cls.indexOf('i')>=0?' i':'')+'">'+esc(lab)+'</td><td class="b'+dq+'">'+f4(co)+'</td>'
+      h+='<tr class="'+(cls.indexOf('sc')>=0?'sc':'')+(cls.indexOf('tot')>=0?'tot':'')+(cls.indexOf('bio')>=0?' bio':'')+'"><td class="c'+(cls.indexOf('i')>=0?' i':'')+'">'+esc(lab)+'</td><td class="b'+dq+'">'+f4(co)+(v._calc?'<span style="display:inline-block;margin-left:4px;padding:0 6px;border-radius:999px;background:#d99a00;color:#fff;font-size:10px;font-weight:700;vertical-align:1px;cursor:help" title="官方 Excel 這一廠沒有這一段，系統用官方各列推算（各氣體＝範疇一＋範疇二市場基礎；CO2 另加範疇二與範疇三全部；合計＝範疇一＋二＋三）。有彙整表的 69 個廠年用同一公式驗證全對。">推算</span>':'')+'</td>'
         +GS.map(g=>'<td>'+(gas?f4(v[g]):'')+'</td>').join('')+'<td class="p">'+pct(co)+'</td></tr>'; });
     h+='</tbody></table></div>';
     const G=V.GAS||{}, GT=G.CO2e||0;
-    h+='<div class="invgas"><div class="h"><b>七大溫室氣體彙整</b><span>範疇三官方不分氣體，彙整時全部計入 CO2</span></div>'
+    h+='<div class="invgas"><div class="h"><b>七大溫室氣體彙整</b>'+(G._calc?'<span style="display:inline-block;margin-left:4px;padding:0 6px;border-radius:999px;background:#d99a00;color:#fff;font-size:10px;font-weight:700;vertical-align:1px;cursor:help" title="官方 Excel 這一廠沒有這一段，系統用官方各列推算（各氣體＝範疇一＋範疇二市場基礎；CO2 另加範疇二與範疇三全部；合計＝範疇一＋二＋三）。有彙整表的 69 個廠年用同一公式驗證全對。">推算</span>':'')+'<span>範疇三官方不分氣體，彙整時全部計入 CO2</span></div>'
       +GS.map(g=>'<div><span>'+g+'</span><b>'+f4(G[g])+'</b><span>'+(GT?((G[g]||0)/GT*100).toFixed(2)+'%':'')+'</span></div>').join('')
       +'<div style="background:#eef6f1"><span>七種合計</span><b>'+f4(GT)+'</b><span>100%</span></div></div>';
-    h+='<div class="invnote">數字＝官方申報「溫室氣體盤查總表」（'+esc(pname(IV.pc))+' '+IV.year+'，集團 SBT 盤查清冊最終版）。'+(can?'點 CO2e 總量的數字到查詢頁看明細。':'集團合計沒有單一廠明細，選某一廠才能點數字看明細。')+'</div>';
+    h+='<div class="invnote">數字＝官方申報「溫室氣體盤查總表」（'+esc(pname(IV.pc))+' '+IV.year+'，集團 SBT 盤查清冊最終版）。'+(can?'點 CO2e 總量的數字到查詢頁看明細。':'集團合計沒有單一廠明細，選某一廠才能點數字看明細。')+((G._calc||(V.TOTAL||{})._calc)?'<div style="margin-top:4px;padding:6px 10px;border:1px solid #f0cf7a;border-left:5px solid #d99a00;background:#fff6dc;color:#5d4a1f;line-height:1.6"><b style="color:#7a4f00">備註（反推）：</b>標「推算」的數字不是官方數字——官方 Excel（集團 SBT 盤查清冊最終版）'+esc(pname(IV.pc))+' '+IV.year+' 分頁沒有'+(G._calc?'「七大溫室氣體彙整」':'')+((G._calc&&(V.TOTAL||{})._calc)?'與':'')+((V.TOTAL||{})._calc?'「範疇一＋二＋三合計」':'')+'這一段，系統用同一張官方表的各列反推：<br>'+(G._calc?'・各氣體＝範疇一該氣體＋範疇二（市場基礎）；CO2 另加範疇二 CO2e（官方範疇二只填 CO2e）＋範疇三全部（官方範疇三不分氣體）；七種合計＝範疇一＋二＋三合計<br>':'')+((V.TOTAL||{})._calc?'・範疇一＋二＋三合計＝範疇一＋範疇二（市場基礎）＋範疇三<br>':'')+'・同一公式拿有彙整表的 69 個廠年逐格比對，全部跟官方一致。推算值只在畫面計算，資料庫沒有存。</div>':'')+'</div>';
     box.innerHTML=h; setTimeout(invFit,0); setTimeout(invFit,300); };   /* 畫面排程在背景會暫停（V129-27 同一課），用 setTimeout */
   window.invExport=function(){ if(!IV.rows||!IV.pc)return; const V=grid(IV.pc,IV.year), TOT=(V.TOTAL||{}).CO2e||0;
     const aoa=[['GHG 溫室氣體盤查系統　溫室氣體盤查總表'],['廠區',pname(IV.pc),'年度',IV.year,'來源','官方申報（集團 SBT 盤查清冊最終版）'],[],['GHG Protocol（公噸 CO2e）','CO2e 總量'].concat(GS).concat(['排放占比'])];
-    ROWS.forEach(([rc,lab,cls,gas])=>{ const v=V[rc]||{}; aoa.push([lab,v.CO2e==null?'':v.CO2e].concat(GS.map(g=>gas&&v[g]!=null?v[g]:'')).concat([v.CO2e!=null&&TOT?v.CO2e/TOT:''])); });
-    const G=V.GAS||{}; aoa.push([]); aoa.push(['七大溫室氣體彙整（範疇三官方不分氣體，彙整時全部計入 CO2）','七種合計'].concat(GS)); aoa.push(['排放當量（公噸 CO2e）',G.CO2e==null?'':G.CO2e].concat(GS.map(g=>G[g]==null?'':G[g])));
-    const ws=XLSX.utils.aoa_to_sheet(aoa); ws['!cols']=[{wch:44},{wch:14}].concat(GS.map(()=>({wch:12}))).concat([{wch:10}]);
+    ROWS.forEach(([rc,lab,cls,gas])=>{ const v=V[rc]||{}; aoa.push([lab+(v._calc?'【推算】':''),v.CO2e==null?'':v.CO2e].concat(GS.map(g=>gas&&v[g]!=null?v[g]:'')).concat([v.CO2e!=null&&TOT?v.CO2e/TOT:''])); });
+    const G=V.GAS||{}; aoa.push([]); aoa.push(['七大溫室氣體彙整（範疇三官方不分氣體，彙整時全部計入 CO2）'+(G._calc?'【推算】':''),'七種合計'].concat(GS)); aoa.push(['排放當量（公噸 CO2e）',G.CO2e==null?'':G.CO2e].concat(GS.map(g=>G[g]==null?'':G[g])));
+    if(G._calc||(V.TOTAL||{})._calc){ aoa.push([]); aoa.push(['備註（反推）','標【推算】或下列項目不是官方數字：官方 Excel 這一廠這一年沒有'+(G._calc?'「七大溫室氣體彙整」':'')+((G._calc&&(V.TOTAL||{})._calc)?'與':'')+((V.TOTAL||{})._calc?'「範疇一＋二＋三合計」':'')+'，系統用同一張官方表的各列反推。']); if(G._calc)aoa.push(['','七大氣體：各氣體＝範疇一＋範疇二（市場基礎）；CO2 另加範疇二 CO2e＋範疇三全部；七種合計＝範疇一＋二＋三合計']); if((V.TOTAL||{})._calc)aoa.push(['','範疇一＋二＋三合計＝範疇一＋範疇二（市場基礎）＋範疇三']); aoa.push(['','同一公式拿有彙整表的 69 個廠年逐格比對全部一致；推算值資料庫沒有存。']); }   /* V129-40-12：反推一定要備註（使用者 261019） */ const ws=XLSX.utils.aoa_to_sheet(aoa); ws['!cols']=[{wch:44},{wch:14}].concat(GS.map(()=>({wch:12}))).concat([{wch:10}]);
     const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'盤查總表'); XLSX.writeFile(wb,'GHG_盤查總表_'+(IV.pc==='GRP'?'集團':IV.pc)+'_'+IV.year+'.xlsx'); };
   window.loadInvTable=async function(){ if(typeof gViewBtn==='function')gViewBtn('inv');
     const box=document.getElementById('g_result'), kp=document.getElementById('g_kpis'); if(kp)kp.classList.add('hide');
