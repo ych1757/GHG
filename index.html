@@ -291,7 +291,7 @@ function facChg(on){ return '<span class="fchg'+(on?'':' off')+'">🟡</span>'; 
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-40-6</b> · 2026/10/19</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-40-11</b> · 2026/10/19</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -2723,10 +2723,10 @@ function tplCheck(wb,key,site,year){ const m=tplMark(wb); if(!m)return '';
   delete wb.Sheets[TPL_INFO]; wb.SheetNames=wb.SheetNames.filter(n=>n!==TPL_INFO); return ''; }
 
 /* ── C06 商務旅行：照交通方式分頁（分頁名稱與表頭＝現有匯入認得的寫法） ── */
-TPLS['C06']={code:'C06',name:'商務旅行',how:[
+TPLS['C06']={code:'C06',name:'商務旅行',lists:(site,year)=>[['陸運車種（請照抄，含動力）',btVehOpts(site,year)]],how:[
   '1. 一趟出差填一列，照交通方式填在對應的分頁；沒有用到的交通方式，那一頁留空白就好。',
   '2. 每個分頁第 1 列寫「必填」的欄位一定要填；「建議填」是各廠本來都有填的；「選填」有資料再填。第 1、2 列與分頁名稱請不要改。',
-  '3. 飛機：到 ICAO 碳排計算器查這一趟的 CO2 公斤數填進去。台灣高鐵：填台灣高鐵公布的站間碳足跡公斤數。火車、捷運、汽車、計程車、機車只要填延人公里（公里 × 人數），碳排由系統用係數算。',
+  '3. 飛機：到 ICAO 碳排計算器查這一趟的 CO2 公斤數填進去。台灣高鐵：填台灣高鐵公布的站間碳足跡公斤數。火車、捷運、汽車、計程車、機車只要填延人公里（公里 × 人數），碳排由系統用係數算。陸運的「車輛來源」請用下拉選單選到動力（例：汽車（汽油）、汽車（純電）），油車和電車的係數不同。',
   '4. 填好回系統「資料登錄 › C06 商務旅行」，選好跟樣板一樣的廠區與年度，按「📥 匯入收集表」選這個檔。會先預覽，按確認才寫入。',
   '5. 匯入會取代這個廠這一年原本用匯入或登錄頁輸入的商務旅行資料，所以請把整年的資料放在同一個檔。'],
  sheets:[
@@ -2735,7 +2735,7 @@ TPLS['C06']={code:'C06',name:'商務旅行',how:[
   {name:'鐵路(台灣)',cols:[['序號','O','流水號','1'],['廠區','O','','台北總公司'],['出差人員','S','','王小明'],['出差日期','S','西元年/月/日','2026/03/15'],['起點站','R','','台北'],['終點站','R','','新竹'],['車票/憑單佐證編號','O','','C-001'],['車輛類型','S','自強號、區間車…','自強號'],['延人公里(pkm)','R','這一趟的公里數 × 人數','78.1'],['備註','O','','']]},
   {name:'捷運',cols:[['序號','O','流水號','1'],['廠區','O','','台北總公司'],['車票佐證編號','O','','D-001'],['出差人員','S','','王小明'],['出差日期','S','西元年/月/日','2026/03/15'],['起點站','R','','景安'],['終點站','R','','台北車站'],['延人公里(pkm)','R','這一趟的公里數 × 人數','9.2'],['備註','O','','']]},
   {name:'高鐵鐵路地下鐵(中國及其他國家)',cols:[['序號','O','流水號','1'],['廠區','O','','蘇州富鴻齊'],['出差人員','S','','王小明'],['出差日期','S','西元年/月/日','2026/03/15'],['起點','R','','蘇州'],['終點','R','','上海'],['車票/憑單佐證編號','O','','E-001'],['車輛類型','S','高鐵、動車、地鐵…','高鐵'],['延人公里(pkm)','R','這一趟的公里數 × 人數','84'],['備註','O','','']]},
-  {name:'陸運',cols:[['序號','O','流水號','1'],['廠區','O','','台北總公司'],['憑單佐證編號','O','','F-001'],['出差人員','S','','王小明'],['出差日期','S','西元年/月/日','2026/03/15'],['起點','S','','公司'],['起點地址','O','','新北市中和區建康路168號'],['終點','S','','客戶'],['終點地址','O','','桃園市龜山區'],['車輛來源','R','計程車／自用小客車／機車／公車 擇一','計程車'],['延人公里(pkm)','R','這一趟的公里數 × 人數','12.5'],['Googlemap截圖','O','截圖編號','1-17'],['備註','O','','']]}]};
+  {name:'陸運',cols:[['序號','O','流水號','1'],['廠區','O','','台北總公司'],['憑單佐證編號','O','','F-001'],['出差人員','S','','王小明'],['出差日期','S','西元年/月/日','2026/03/15'],['起點','S','','公司'],['起點地址','O','','新北市中和區建康路168號'],['終點','S','','客戶'],['終點地址','O','','桃園市龜山區'],['車輛來源','R','下拉選單：車種＋動力（選項在說明頁最下面）；選不到的車種請先問 ESG','汽車（汽油）',null,{l:0}],['延人公里(pkm)','R','這一趟的公里數 × 人數','12.5'],['Googlemap截圖','O','截圖編號','1-17'],['備註','O','','']]}]};
 
 /* ── C07 員工通勤：一人一列；延人公里用公式自動算 ── */
 TPLS['C07']={code:'C07',name:'員工通勤',how:[
@@ -3389,7 +3389,7 @@ function facSrcTree(){   // 與 buildNav 同一棵樹（SRC 定義），葉節�
   const leaf=(lf,cls,label)=>{const r=ncRow(lf.c), n=cnt[lf.c]||0;
     return `<div class="navi ${cls} fsrc" data-c="${lf.c}" onclick="facPickSrc('${lf.c}')" title="${r?'現行碼 '+lf.c:'ESG 新編碼未列此源'}">`
       +(label?`<span style="visibility:hidden">▸ </span>${label}`:`<span class="ncode"${r?'':' style="color:#c3cfc9"'}>${r?r.code:lf.c}</span>${r?r.name:lf.name}`)   /* V70-3:葉節點名稱以主檔為準（ESG 9/14：焊接保護氣體→乙炔焊接、SF6/乙炔→SF6，主檔早已是 乙炔（焊接）/SF6（製程氣體），樹卻讀寫死的舊名） */
-      +(srcNa(lf.c)?srcNaTag(lf.c):(n?` <span style="font-size:10px;color:var(--g)" title="係數庫條目數">${n}</span>`:` <span style="font-size:10px;color:#c9821e" title="係數庫尚無此排放源的條目">無</span>`))+`</div>`;};   /* V99：C11／C14 標不適用，不標「無」 */
+      +(srcNa(lf.c)?srcNaTag(lf.c):FAC_SHARE[lf.c]?facShareTag(lf.c):(n?` <span style="font-size:10px;color:var(--g)" title="係數庫條目數">${n}</span>`:` <span style="font-size:10px;color:#c9821e" title="係數庫尚無此排放源的條目">無</span>`))+`</div>`;};   /* V99：C11／C14 標不適用，不標「無」 */
   let h='';
   Object.keys(tree).forEach((sc,a)=>{const sid='fnsc'+a;
     h+=`<div class="t1" id="${sid}_t" onclick="tg('${sid}')">▾ ${sc}</div><div id="${sid}" style="display:block">`;
@@ -3455,6 +3455,13 @@ function facEntEq(gv){   /* V121-2：一筆條目的合成當量＝「計算用�
   gv=gv||[]; const tot=gv.find(g=>g.gas_code==='CO2e'); if(tot&&gv.length>1)return Number(tot.factor_value||0)*(tot.gwp==null?1:Number(tot.gwp));
   const fam=gv.filter(g=>/^CO2e·/.test(g.gas_code||'')); if(fam.length)return fam.reduce((a,g)=>a+Number(g.factor_value||0),0);
   return gv.reduce((a,g)=>a+Number(g.factor_value||0)*(g.gwp==null?1:Number(g.gwp)),0); }
+/* V129-40-10：係數借用別類的（C09 用 C04 共用運輸表）——選單標「共用 C04」不標「無」 */
+const FAC_SHARE={'C09':'C04'};
+function facShareTag(c){ const to=FAC_SHARE[c]; return to?' <span style="font-size:10px;font-weight:700;color:#fff;background:#d99a00;border-radius:999px;padding:0 6px;white-space:nowrap" title="'+facEsc(c)+' 沒有自己的條目：係數用 '+facEsc(to)+' 上游運輸的共用運輸表（以 '+facEsc(to)+' 為主維護）">共用 '+facEsc(to)+'</span>':''; }
+/* V129-40-11：合成當量的單位照這一區條目的分母（kgCO₂e/pkm、kgCO₂e/kWh…）；不一致或讀不到＝kgCO₂e */
+function facBlkUnit(b){ const dens=new Set(); let ok=true;
+  const walk=o=>{ if(!o||typeof o!=='object')return; if(typeof o.unit==='string'&&o.unit.trim()){ const u=o.unit.replace(/\s+/g,''), p=u.split('/'); if(p.length!==2||!/^kg/i.test(p[0]))ok=false; else dens.add(p[1]); return; } Object.values(o).forEach(walk); };
+  walk(b&&b.cells); return (ok&&dens.size===1)?'kgCO₂e/'+[...dens][0]:'kgCO₂e'; }
 function facSrcModel(code,flt,pool){   /* V121：pool＝指定條目池（C09 用 C04 的共用運輸表） */   // 純計算：排放源碼 → {years, openY, blocks:[{rg, cells{y→{gas→{v,gwp,unit,...}}}, gases, eq, sites}]}
   const facs=(pool||(FACALL||[])).filter(f=>(pool?true:f.category_id===code)&&(!flt||flt(f)));   /* V103-7：flt＝只看某一種交通工具的代號 */
   // 年度範圍＝2022 起到「最後一個有明細或係數效期截止的年度」（業務上＝最後申報年，如 2025）；開帳預覽欄＝其下一年（2026）。不用系統時鐘，否則會跳到 2027。
@@ -3531,7 +3538,7 @@ function facSrcRender(m,o){
     /* V119-7：明細預設收起來，點地區這一列才展開；data-rg 給追溯標亮認地區用（＝原本列首的第一個字） */
     const bk=(o.midKey||m.code)+'|'+b.rg, op=(FSM_ALL||FSM_OPEN.has(bk)), dC=' class="fsmd'+(op?' on':'')+'"', rgTok=String(RG).trim().split(/[\s　]/)[0];
     const nEnt=y=>{ const gs=b.cells[(y===m.openY)?last:y]||{}; return new Set(Object.values(gs).flatMap(x=>[x.fid].concat((x.alts||[]).map(a=>a.fid))).filter(Boolean)).size; };
-    h+=`<tr class="fsmh" data-k="${facEsc(bk)}" data-rg="${facEsc(rgTok)}" onclick="fsmTog(this)" title="點一下展開／收起這個地區的明細（係數代號、適用廠區、GWP 版本、各氣體係數、來源）" style="background:#e3f2e9;cursor:pointer"><td style="text-align:left;font-weight:800"><span class="fsmar">${op?'▾':'▸'}</span> ${facEsc(RG)}　<span style="font-weight:400;font-size:11px;color:var(--g)">合成當量 kgCO₂e</span>${(b.hist&&b.hist.length&&ys.every(y=>b.eq[y]==null))?' <span style="font-weight:400;font-size:11px;color:#8a6400" title="這個區域只有 2022～2024 歸戶的舊條目（批218 標記），沒有正式條目；舊明細連著所以留著、不再維護">只有歷史歸戶條目</span>':''}</td>`
+    h+=`<tr class="fsmh" data-k="${facEsc(bk)}" data-rg="${facEsc(rgTok)}" onclick="fsmTog(this)" title="點一下展開／收起這個地區的明細（係數代號、適用廠區、GWP 版本、各氣體係數、來源）" style="background:#e3f2e9;cursor:pointer"><td style="text-align:left;font-weight:800"><span class="fsmar">${op?'▾':'▸'}</span> ${facEsc(RG)}　<span style="font-weight:400;font-size:11px;color:var(--g)">合成當量 ${facEsc(facBlkUnit(b))}</span>${(b.hist&&b.hist.length&&ys.every(y=>b.eq[y]==null))?' <span style="font-weight:400;font-size:11px;color:#8a6400" title="這個區域只有 2022～2024 歸戶的舊條目（批218 標記），沒有正式條目；舊明細連著所以留著、不再維護">只有歷史歸戶條目</span>':''}</td>`
       +ys.map((y,i)=>{const v=b.eq[y],p=i?b.eq[ys[i-1]]:null,chg=(i>0&&v!=null&&p!=null&&Math.abs(v-p)>1e-12); const od=facOdd(m.code,b.cells[y]);return `<td style="text-align:right;font-weight:800${openSt(y)}"${chg?' class="chg"':''}>${f10(v)}${(y!==m.openY&&facYOpen(y)&&Object.values(b.cells[y]||{}).some(c=>c.from&&c.from<y))?' <span style="font-size:10px;color:#b8860b;font-weight:400" title="有氣體的 '+y+' 年條目尚未維護（點開這個地區看各氣體列）">⚠ 未維護</span>':''}${od?' <span style="font-size:10px;color:#c0392b;font-weight:700;white-space:nowrap" title="'+od.gases.join('／')+' 合計佔了這格的 '+(od.pct*100).toFixed(1)+'%（CO2 只佔 '+((1-od.pct)*100).toFixed(1)+'%）。燃料燃燒的 CO2 應佔絕大多數，這格疑似 '+od.gases.join('／')+' 的係數本身已是 CO2e、又被乘了一次 GWP。請對照原始係數表的欄位標題確認。系統沒有更動任何數字。">⚠ 待查</span>':''}${nEnt(y)>1?' <span style="font-size:10px;color:#b8860b;font-weight:400;white-space:nowrap" title="這一格底下有 '+nEnt(y)+' 筆條目，點開這個地區看「係數代號」列">⚠ '+nEnt(y)+' 筆</span>':''}${facChg(chg)}</td>`;}).join('')+`</tr>`;   // V74-1:沿用標記
     { /* V103-11：一個年度一個代號（使用者 260929）——代號＝中分類或排放源碼·區域·年度；每年 ESG 維護、來源沒變沿用數值但代號不同。
          底下有好幾筆條目（同年多版本／氣體拆開存）時標出筆數，滑鼠看每一筆；跨年共用一筆（舊做法）只寫在滑鼠提示 */
@@ -3991,7 +3998,7 @@ function facVehRender(code){   /* V103-7 交通工具型；V103-11 泛化成中�
     raw.split(/[、,，\s]+/).forEach(x=>{ x=x.trim(); if(!x)return; if((FAC_SITES||[]).some(z=>z.site_id===x)){ out.push(x); return; } const mm=x.match(/^(\d{2})/); if(mm&&typeof PLANT2OMS!=='undefined'&&PLANT2OMS[mm[1]])out.push(PLANT2OMS[mm[1]]); });
     return out; };
   const f0=items[keys[0]][0];
-  let h='<div class="ftitle" style="margin-bottom:2px">'+title+'<span class="fmini" style="margin-left:8px">係數（中分類 × 區域 × 年度）·唯讀</span></div>'+(code==='C09'?'<div class="msg" style="background:#eef7f1;font-size:12px;margin:4px 0 6px">係數來源＝<b>C04 上游運輸的共用運輸表</b>（同一批條目，代號前綴換成 C09；以 C04 為主維護，這裡自動跟著動）。2022～2024 歸戶的歷史條目另列在各車種底下，不再維護。</div>':'')
+  let h='<div class="ftitle" style="margin-bottom:2px">'+title+'<span class="fmini" style="margin-left:8px">係數（中分類 × 區域 × 年度）·唯讀</span></div>'+(code==='C09'?'<div class="msg" style="background:#fff6dc;border:1px solid #f0cf7a;border-left:6px solid #d99a00;font-size:14px;margin:6px 0 8px;padding:8px 12px;line-height:1.6">🔗 <b style="color:#7a4f00">係數來源＝C04 上游運輸的共用運輸表</b>　<a href="javascript:void(0)" onclick="facGoSrc(&#39;C04&#39;)" style="font-size:12.5px;font-weight:700;color:var(--p)">到 C04 看 →</a>'+'<div style="font-size:12px;color:#5d4a1f;margin-top:2px">同一批條目，代號前綴換成 C09；以 C04 為主維護，這裡自動跟著動。2022～2024 歸戶的歷史條目另列在各車種底下，不再維護。</div></div>':'')
     +'<div style="font-size:11.5px;color:var(--g);margin-bottom:6px;line-height:1.65">每個地區先只顯示<b>合成當量</b>，點地區那一列（▸）展開明細，表頭可以「全部展開」。這一類一個中分類一張表；代號＝中分類·區域·年度（例 <b>'+facEsc(keys[0]+'·'+rgOf(f0)+'·2025')+'</b>＝'+facEsc(nm(keys[0]))+'·'+facEsc(FSM_RG[rgOf(f0)]||rgOf(f0))+'·2025），每個年度各自一個代號、係數來源沒變就沿用數值。資料登錄頁依「年度 × 廠區所在區域 × 中分類」自動找到這一格，跟登錄頁一一對得上。格＝係數（固定 10 位）；🟡＝與前一年不同；適用廠區＝條目記錄用到這個代號的廠。</div>'
     +'<div style="font-size:12px;margin-bottom:6px;line-height:1.9">'+keys.map(k=>'<a href="javascript:void(0)" onclick="var e=document.getElementById(&#39;fveh_'+k+'&#39;);if(e)e.scrollIntoView({block:&#39;start&#39;})" style="margin-right:14px;white-space:nowrap;color:var(--p)"><b>'+facEsc(k)+'</b> '+facEsc(nm(k))+'</a>').join('')+'</div>';
   keys.forEach(k=>{
@@ -4052,8 +4059,8 @@ async function facOverview(){
     list.forEach(c=>{ const i=_fovCats.push(c)-1;
       const l0=c.leaves[0], r0=l0?ncRow(l0.c):null, code0=l0?(r0?r0.code:l0.c):'';   /* V84-4：同排放源樹的規則——只有一個排放源、且類別標籤開頭已是它的碼（C02／C04…C15）→ 卡片只留一列，不再「C05 營運廢棄物」標題＋子列重複兩次（使用者 9/17 紅框）；點了直接開矩陣。1.5／2.1／2.2 標籤看不到 A／B 碼 → 維持標題＋子列 */
       if(c.leaves.length===1&&String(c.mid).split(' ')[0]===code0){ const n=cntSrc[l0.c]||0;
-        h+='<div class="fovcard orgcard'+(n?'':' fovdim')+'" onclick="facGoSrc(&#39;'+l0.c+'&#39;)" title="點選 → 開這張係數表（區域 × 年度 × 氣體矩陣）"><div class="fn" style="display:flex;align-items:center;gap:6px"><span style="flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis">'+facEsc(c.mid)+'</span><b style="margin-left:auto;flex:0 0 auto;font-size:11px;font-weight:600;color:'+(n?'var(--g)':'#c9821e')+'">'+(n?n:'無')+'</b></div></div>'; return; }
-      const menu=c.leaves.map(l=>{const r=ncRow(l.c), n=cntSrc[l.c]||0; return '<li onclick="event.stopPropagation();facGoSrc(&#39;'+l.c+'&#39;)" title="點選 → 開這張係數表（區域 × 年度 × 氣體矩陣）"'+(n?'':' class="none"')+'><span class="ncode">'+facEsc(r?r.code:l.c)+'</span><span class="nm">'+facEsc(r?r.name:l.name)+'</span><b>'+(n?n:'無')+'</b></li>';   /* V84-3：名稱包 .nm */}).join('');   // V70-11:係數表選單
+        h+='<div class="fovcard orgcard'+(n?'':' fovdim')+'" onclick="facGoSrc(&#39;'+l0.c+'&#39;)" title="點選 → 開這張係數表（區域 × 年度 × 氣體矩陣）"><div class="fn" style="display:flex;align-items:center;gap:6px"><span style="flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis">'+facEsc(c.mid)+'</span><b style="margin-left:auto;flex:0 0 auto;font-size:11px;font-weight:600;color:'+(n?'var(--g)':'#c9821e')+'">'+(n?n:(FAC_SHARE[l0.c]?'':'無'))+'</b>'+(n?'':facShareTag(l0.c))+'</div></div>'; return; }
+      const menu=c.leaves.map(l=>{const r=ncRow(l.c), n=cntSrc[l.c]||0; return '<li onclick="event.stopPropagation();facGoSrc(&#39;'+l.c+'&#39;)" title="點選 → 開這張係數表（區域 × 年度 × 氣體矩陣）"'+(n?'':' class="none"')+'><span class="ncode">'+facEsc(r?r.code:l.c)+'</span><span class="nm">'+facEsc(r?r.name:l.name)+'</span><b>'+(n?n:(FAC_SHARE[l.c]?'':'無'))+'</b>'+(n?'':facShareTag(l.c))+'</li>';   /* V84-3：名稱包 .nm */}).join('');   // V70-11:係數表選單
       h+='<div class="fovcard orgcard'+(c.n?'':' fovdim')+'" onclick="facCatView('+i+')" title="點選標題 → 列出此類別全部條目"><div class="fn">'+facEsc(c.mid)+'</div>'
         +(menu?('<ul class="orgmenu">'+menu+'</ul>'):'<div class="fm"><span style="color:#c9821e">無排放源定義</span></div>')
         +'</div>'; });   // V70-11:方塊不顯示 條目數／地區／效期（使用者：點入該係數表才需要）
@@ -4743,6 +4750,13 @@ function hvApply(rows,adj,allowNew){   // rows＝v_ghg_summary 列；就地把�
 function gViewBtn(v){   /* V129-40：全集團兩顆按鈕照目前畫面顯示——現在的那顆綠色、另一顆白底（使用者 261018：不然看截圖會誤會是哪個畫面） */
   [['g_btn','group'],['g_cmpbtn','cmp']].forEach(([id,k])=>{ const b=document.getElementById(id); if(!b)return; b.classList.toggle('sec',k!==v); b.setAttribute('aria-pressed',k===v?'true':'false'); });
 }
+/* V129-40-9：全集團 C01／C03 展開＝各登錄頁小計 */
+const GSUBN={'C01-M':'C01-01 直接物料（重量法）','C01-S':'C01-02 非直接物料與服務（金額法）','C01-W':'C01-03 上游自來水','C01-X':'C01 未歸登錄頁（舊資料直接記 C01）',
+  'C03-E':'C03-01 電力上游與輸配電損失','C03-F':'C03-02 燃料上游（WTT）','C03-X':'C03 未歸登錄頁'};
+const GSUBP={'C01':['C01-M','C01-S','C01-W','C01-X'],'C03':['C03-E','C03-F','C03-X']};
+function gSubKey(cid){ cid=String(cid||''); if(GSUBN[cid]&&!/-X$/.test(cid))return cid; if(/^C01/.test(cid))return 'C01-X'; if(/^C03/.test(cid))return 'C03-X'; return null; }
+function gHasSub(p,cat){ return !!(GSUBP[cat]&&GSUBP[cat].some(k=>(p.d[k]||0)>0.00005)); }
+function gSubLab(pc,cat,yr){ return facEsc(GSUBN[cat])+(/-X$/.test(cat)?'':' <span style="cursor:pointer" title="到資料登錄頁看這一頁" onclick="event.stopPropagation();drillDown(\''+pc+'\',\''+cat+'\','+yr+')">🔍</span>'); }
 async function loadGroup(){
   gViewBtn('group');
   await ensureESRC();   // V69
@@ -4784,6 +4798,13 @@ async function loadGroup(){
       if(Math.abs(locT-mkT)>0.01){ dd['範疇二-L']=locT; }
       else { delete dd['2.1-L']; delete dd['2.2-L']; }});
   }catch(e){}
+  try{   /* V129-40-9：C01／C03 各登錄頁小計 */
+    const O2P={}; Object.entries(PLANT2OMS).forEach(([pc,sc])=>{ O2P[sc]=pc; });
+    const r13=await sbAll(()=>{ let q=sb.from('ghg_activity_data').select('site_id,category_id,co2e_draft').or('category_id.like.C01%,category_id.like.C03%').eq('data_year',yr); if(!lgScopeAll())q=q.in('site_id',(curGhgUser&&curGhgUser.scope)||[]); return q.order('record_id'); });
+    if(r13.error)throw r13.error;
+    (r13.data||[]).forEach(r=>{ const pc=O2P[r.site_id], k=gSubKey(r.category_id); if(!pc||!m[pc]||!k)return; m[pc].d[k]=(m[pc].d[k]||0)+(Number(r.co2e_draft)||0); });
+    HVA_LAST.forEach(a=>{ const p=m[a.pc], k=gSubKey(a.cid); if(!p||!k)return; p.d[k]=(p.d[k]||0)+a.dv; });   /* 2022–2025 換回收割數字（跟 C01 列同一套） */
+  }catch(e){ Object.values(m).forEach(p=>{ Object.keys(GSUBN).forEach(k=>{ delete p.d[k]; }); }); }   /* 讀不全＝子項整組不顯示，不顯示錯的 */
   const arr=Object.entries(m).map(([c,v])=>{const nd=Object.keys(v.d).length===0;const s1=v.d['範疇一']||0,s2=v.d['範疇二']||0,s3=v.d['範疇三']||0;const vv=v.v||{};
     return {c,name:v.name,s1,s2,s3,total:s1+s2+s3,otot:(v.o['範疇一']||0)+(v.o['範疇二']||0)+(v.o['範疇三']||0),vtot:(vv['範疇一']||0)+(vv['範疇二']||0)+(vv['範疇三']||0),d:v.d,o:v.o,v:vv,nd,noData:v.noData};}).sort((a,b)=>{const k=_gsort.key,gv=(p)=>k==='c'?(parseInt(p.c,10)||999):k==='diff'?(p.total-p.otot):k==='diffp'?((p.total-p.otot)/(p.otot||1)):(p[k]||0);return (gv(a)-gv(b))*_gsort.dir;});
   const gt=arr.reduce((s,p)=>s+p.total,0),g1=arr.reduce((s,p)=>s+p.s1,0),g2=arr.reduce((s,p)=>s+p.s2,0),g3=arr.reduce((s,p)=>s+p.s3,0),goff=arr.reduce((s,p)=>s+p.otot,0),gver=arr.reduce((s,p)=>s+(p.vtot||0),0);   // V65-22:各廠查證合計卡
@@ -4799,7 +4820,7 @@ async function loadGroup(){
   const dbgOf=(diff,o)=>{ if(!o) return ''; if(Math.abs(diff)<Math.max(1,o*0.02)) return ''; return (Math.abs(diff)/o>0.1)?'background:#FBE0E0':'background:#FFF3CD'; };
   // V29:對齊申報表完整項目層次。子項(1.x/2.x)=明細揭露,官方無細分故不對帳。範疇二 Location(揭露)在前、Market(計統計)在後
   const CATS=['範疇一','1.1','1.2','1.3','1.4','1.5','範疇二-L','2.1-L','2.2-L','範疇二','2.1-M','2.2-M','範疇三','C01','C02','C03','C04','C05','C06','C07','C08','C09','C10','C11','C12','C13','C14','C15'];
-  const SUBONLY=new Set(['1.1','1.2','1.3','1.4','1.5','2.1-L','2.2-L','2.1-M','2.2-M']);   // 子項:只顯明細、無官方對帳
+  const SUBONLY=new Set(['1.1','1.2','1.3','1.4','1.5','2.1-L','2.2-L','2.1-M','2.2-M'].concat(Object.keys(GSUBN)));   /* V129-40-9：加 C01／C03 登錄頁小計 */   // 子項:只顯明細、無官方對帳
   const sar=k=>_gsort.key===k?(_gsort.dir>0?' ▲':' ▼'):'';
   // 兩版(集團 vs 各廠查證)不一致 → 橘底標示
   const vinc=(ov,vv)=>(vv!==undefined&&Math.abs(vv-ov)>Math.max(0.01,Math.abs(ov)*0.001))?'background:#FFE8CC;font-weight:700':'';
@@ -4835,15 +4856,15 @@ async function loadGroup(){
       const cd=R4(dv)-R4(ov),ccol=dcolOf(cd,ov),cbg=dbgOf(cd,ov),vinc2=vinc(ov,vv);
       const canDrill=!p.nd && dv>0 && !isSub;        // 子項不下鑽(官方無細分)
       const isScope=cat.startsWith('範疇');
-      if(isSub){const sk=cat.endsWith('-L')?'s2l':(cat.startsWith('1')?'s1':'s2');   // V65-7:1.x/2.x 收在範疇列下,點▸展開(比照跨年)
-      return `<tr class="grp-${gi} gsub gsub-${gi}-${sk}" style="display:none;background:#fcfefd"><td style="text-align:left;padding-left:44px;color:var(--g);font-size:12px">└ ${cat} ${CATNAME[cat]||''}</td><td colspan="3" style="color:#ccc">└ 揭露明細</td><td style="color:var(--g)">${fmt2(dv)}</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>`}
+      if(isSub){const sk=GSUBN[cat]?cat.slice(0,3).toLowerCase():(cat.endsWith('-L')?'s2l':(cat.startsWith('1')?'s1':'s2'));   // V65-7:1.x/2.x 收在範疇列下,點▸展開(比照跨年)
+      return `<tr class="grp-${gi} gsub gsub-${gi}-${sk}" style="display:none;background:#fcfefd"><td style="text-align:left;padding-left:44px;color:var(--g);font-size:12px">└ ${GSUBN[cat]?gSubLab(p.c,cat,yr):cat+' '+(CATNAME[cat]||'')}</td><td colspan="3" style="color:#ccc">└ ${GSUBN[cat]?'登錄頁小計':'揭露明細'}</td><td style="color:var(--g)">${fmt2(dv)}</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>`}
       const rsty=isScope?'background:#f0f8f3;font-weight:700;border-top:1px solid #d5e8dc':'background:#fafdfb';   // V65-2:三層階層 廠#cfe6d9>小計#f0f8f3>明細白   // V65:範疇小計列加底色粗體區別
-      return `<tr class="grp-${gi}" data-gsite="${p.c}" data-gcat="${cat}" style="display:none;${rsty}${canDrill?';cursor:pointer':''}" ${canDrill?`onclick="drillQuery('${p.c}','${cat}',${yr})" title="點看逐筆明細"`:''}><td style="text-align:left;padding-left:28px;color:var(--m)">${(isScope&&cat!=='範疇三')?`<span onclick="event.stopPropagation();tgSub(this,${gi},'${cat.endsWith('-L')?'s2l':(cat==='範疇一'?'s1':'s2')}')" style="cursor:pointer;color:var(--g)">▸ </span>`:''}${cat}　${CATNAME[cat]||''}${canDrill?' 🔍':''}</td><td colspan="3" style="color:#ccc">${isScope?'':'└ 範疇三明細'}</td><td>${fmt2(dv)}</td><td style="${vinc2}${(p.vn&&p.vn[cat])?';text-decoration:underline dotted;cursor:help':''}" title="${(p.vn&&p.vn[cat])?p.vn[cat]:'各廠查證清冊'}">${vv!==undefined?fmt2(vv):'-'}${(p.vn&&p.vn[cat])?' ⓘ':''}</td><td>${ov?fmt2(ov):'-'}</td><td style="${ccol};${cbg}">${ov?(cd>0?'+':'')+fmt2(cd):(dv>0.00005?'明細獨有':'-')}</td><td style="${ccol};${cbg}">${ov?((cd>0?'+':'')+(cd/ov*100).toFixed(1)+'%'):'-'}</td></tr>`;
+      return `<tr class="grp-${gi}" data-gsite="${p.c}" data-gcat="${cat}" style="display:none;${rsty}${canDrill?';cursor:pointer':''}" ${canDrill?`onclick="drillQuery('${p.c}','${cat}',${yr})" title="點看逐筆明細"`:''}><td style="text-align:left;padding-left:28px;color:var(--m)">${((isScope&&cat!=='範疇三')||gHasSub(p,cat))?`<span onclick="event.stopPropagation();tgSub(this,${gi},'${GSUBP[cat]?cat.toLowerCase():(cat.endsWith('-L')?'s2l':(cat==='範疇一'?'s1':'s2'))}')" title="展開看小計" style="cursor:pointer;color:var(--g)">▸ </span>`:''}${cat}　${CATNAME[cat]||''}${canDrill?' 🔍':''}</td><td colspan="3" style="color:#ccc">${isScope?'':'└ 範疇三明細'}</td><td>${fmt2(dv)}</td><td style="${vinc2}${(p.vn&&p.vn[cat])?';text-decoration:underline dotted;cursor:help':''}" title="${(p.vn&&p.vn[cat])?p.vn[cat]:'各廠查證清冊'}">${vv!==undefined?fmt2(vv):'-'}${(p.vn&&p.vn[cat])?' ⓘ':''}</td><td>${ov?fmt2(ov):'-'}</td><td style="${ccol};${cbg}">${ov?(cd>0?'+':'')+fmt2(cd):(dv>0.00005?'明細獨有':'-')}</td><td style="${ccol};${cbg}">${ov?((cd>0?'+':'')+(cd/ov*100).toFixed(1)+'%'):'-'}</td></tr>`;
     };
     const GROUPS=[['範疇一',['1.1','1.2','1.3','1.4','1.5']],
                   ['範疇二-L',['2.1-L','2.2-L']],      // 位置基礎(僅有綠電廠顯示整組)
                   ['範疇二',['2.1-M','2.2-M']],         // 市場基礎(計統計)
-                  ['範疇三',['C01','C02','C03','C04','C05','C06','C07','C08','C09','C10','C11','C12','C13','C14','C15']]];
+                  ['範疇三',['C01'].concat(GSUBP['C01'],['C02','C03'],GSUBP['C03'],['C04','C05','C06','C07','C08','C09','C10','C11','C12','C13','C14','C15'])]];   /* V129-40-9 */
     GROUPS.forEach(([parent,kids])=>{
       if(parent==='範疇二-L' && p.d['範疇二-L']==null) return;   // 無位置塊(非綠電廠)→整組(含2.x-L子項)都不顯示
       const ph=renderCat(parent); if(!ph) return;               // 父範疇沒資料→跳過整組
@@ -8902,7 +8923,7 @@ function btblk(r){ const mt=String(r.measurement_type||''); if(mt==='逐趟'||mt
 function btIsAgg(r){ return String(r.measurement_type||'')==='車種彙總'; }
 /* 車種＋區域 → 批186 代號（同批187 SQL 產生器的後備規則） */
 function btcode(lab,raw,site){
-  const rg=btrg(site), s=String(raw||'')+'|'+String(lab||'');
+  const rg=btrg(site), s=String(raw||'')+'|'+String(lab||''); lab=String(lab||'').replace(/[（(].*$/,'');   /* V129-40-8：車種可帶動力（汽車（純電）），判斷用前面的車種 */
   if(/純電|纯电/.test(s))return 'C06-C04';
   if(lab==='高鐵')return /[輕轻][軌轨]|地下[鐵铁]/.test(s)?'C06-R02':'C06-R01';
   if(lab==='鐵路')return rg==='TW'?'C06-R03':null;
@@ -8912,6 +8933,16 @@ function btcode(lab,raw,site){
   if(lab==='機車')return rg==='TW'?'C06-C03':null;
   return null;
 }
+/* V129-40-8：陸運車種＋動力——名稱照係數庫代號（C06-C01 自用小客車汽油…C06-C07 大陸電動計程車）；選項只列該區域有係數的 */
+const BT_VEHNM={'C06-C01':'汽車（汽油）','C06-C02':'計程車（汽油）','C06-C03':'機車（汽油）','C06-C05':'計程車（汽油）','C06-C07':'計程車（電動）'};
+const BT_VEHOPT={TW:['汽車（汽油）','汽車（純電）','計程車（汽油）','機車（汽油）'],CN:['汽車（汽油）','汽車（純電）','計程車（汽油）','計程車（電動）'],OS:['汽車（純電）','計程車（汽油）']};
+function btVehCode(r){ const f=String(r.factor_id||''); if(/^C06-C\d\d/.test(f))return f.slice(0,7); return btcode(r.attr2,String(bte(r)['車輛(收集表)']||''),W6.site); }
+function btVehNm(r){ const c=btVehCode(r), base=String(r.attr2||'').replace(/[（(].*$/,'')||btLab6(bte(r)['車輛(收集表)']);
+  if(c==='C06-C04')return base==='計程車'?'計程車（純電）':'汽車（純電）'; if(c==='C06-C06')return base==='計程車'?'計程車（汽油）':'汽車（汽油）';
+  return BT_VEHNM[c]||String(r.attr2||bte(r)['車輛(收集表)']||'其他'); }
+function btVehOpts(site,year){ site=site||W6.site; const L=BT_VEHOPT[btrg(site)]||BT_VEHOPT.OS; if(!W6.fac)return L.slice(); const y=facY(year||W6.year); return L.filter(o=>{ const c=btcode(o,'',site); return c&&W6.fac[c+'|'+y]; }); }
+function btVehSel(r,veh){ const o=btVehOpts(), cur=o.indexOf(r.attr2)>=0?r.attr2:''; return '<select data-k="'+btesc(r.record_id)+'" data-f="v" style="font-size:12px;width:100%">'+(cur?'':'<option value="" selected>'+btesc(veh||'— 請選 —')+'</option>')+o.map(x=>'<option'+(x===cur?' selected':'')+'>'+btesc(x)+'</option>').join('')+'</select>'; }
+function btImpVeh(lab,raw){ return btVehNm({attr2:lab,factor_id:null,extra:{'車輛(收集表)':raw}}); }
 function btlib(lab,raw){ const code=btcode(lab,raw,W6.site); if(!code||!W6.fac)return null; return W6.fac[code+'|'+facY(W6.year)]||null; }
 /* ── 進入 ── */
 function btEnter(i){
@@ -8967,10 +8998,11 @@ async function btLoad(){
 function btrow(r){
   const e=bte(r);
   const pkm=(r.quantity_unit==='延人公里')?btn2(r.quantity):btn2(e['延人公里']);
-  const ef=btn2(r.ef_value);
+  let ef=btn2(r.ef_value), efx=null;
+  if(ef>0&&BT_RAIL[btblk(r)]){ const L=btlib(r.attr2,String(e['車輛(收集表)']||'')); if(L&&L.v>0&&Math.abs(ef/L.v-1000)<0.5){ efx=ef; ef=L.v; } }   /* V129-40-8：收集表把公克填在公斤欄（例 54＝0.054），改用係數庫值；資料庫不動 */
   const co=+(r.co2e_draft||0);
   const calc=(pkm!=null&&ef!=null)?+(pkm*ef/1000).toFixed(10):null;
-  return {pkm:pkm,ef:ef,co:co,calc:calc};
+  return {pkm:pkm,ef:ef,co:co,calc:calc,efx:efx};
 }
 function btflags(r){
   const e=bte(r), out=[];
@@ -9016,6 +9048,7 @@ function btdeclPanel(){
   if(nz1)why.push(nz1+' 趟清冊合計格沒加到（照清冊記 0，系統算合計 '+btf(sz1,4)+' t）');
   if(nz2)why.push(nz2+' 列清冊沒算這個車種（照批165 記 0，系統算合計 '+btf(sz2,4)+' t）');
   if(nc)why.push(nc+' 列年筆照舊保留（收集表抽不到逐趟明細，合計 '+btf(sc,4)+' t）');
+  { const ng=W6.recs.filter(r=>btrow(r).efx!=null).length; if(ng)why.push(ng+' 趟收集表係數填公克（例 '+btf(W6.recs.map(r=>btrow(r).efx).find(x=>x!=null),0)+'），系統改用係數庫的公斤值算'); }   /* V129-40-8 */
   if(nh)why.push(nh+' 趟「延人公里×係數」跟存的碳排差 '+btf(sh,4)+' t（照收集表原值存）');
   if(why.length)h+='<div style="margin-top:1px"><b>差異原因</b><br>'+why.map(x=>'・'+btesc(x)).join('<br>')+'</div>';
   h+='</div>';
@@ -9044,7 +9077,7 @@ function btRender(){
   const blocks={};
   W6.recs.forEach(r=>{const k=btblk(r); (blocks[k]=blocks[k]||[]).push(r);});
   const order=BT_BLKS.concat(['照舊年筆']).filter(k=>blocks[k]).concat(Object.keys(blocks).filter(k=>BT_BLKS.indexOf(k)<0&&k!=='照舊年筆').sort());
-  let GN=0,GC=0;
+  let GN=0,GC=0,GK=0,GKn=0;
   h+='<div class="s101zone"><table class="wtbl c6t" style="width:100%;table-layout:fixed">'
     +'<colgroup>'+[8,10,19,10,9,11,10,23].map(w=>'<col style="width:'+w+'%">').join('')+'</colgroup>'
     +'<tbody>'; let HDR='<tr class="cols fhd" style="background:#fafcfb">'
@@ -9062,15 +9095,27 @@ function btRender(){
     const trips=rs.filter(r=>!btIsAgg(r)), aggs=rs.filter(btIsAgg);
     let BC=0; rs.forEach(r=>BC+=(+r.co2e_draft||0));
     GN+=rs.length; GC+=BC;
-    const op=W6.open[bk]!==undefined?W6.open[bk]:(trips.length<=400);
+    const op=W6.open[bk]!==undefined?W6.open[bk]:btDefOpen();   /* V129-40-7：整頁超過 30 列＝各塊預設收合、先看小計 */
     if(!op&&_hN){ h+=HDR; _hN=false; }   /* V129-3：收合的組，表頭放分組列上方（連續收合只放一次） */
       h+='<tr class="s101blk" style="background:#eef6f1;cursor:pointer" onclick="btToggle('+JSON.stringify(bk).replace(/"/g,'&quot;')+')">'
       +'<td class="tl" colspan="4"><b>'+(op?'▾ ':'▸ ')+btesc(bk)+'</b> <span class="fmini">'+trips.length+' 趟'+(aggs.length?'＋'+aggs.length+' 列車種彙總':'')+(op?'':'（點開展開）')+'</span></td>'
       +'<td class="tl" colspan="4">'+(ed&&bk!=='照舊年筆'?'<a href="javascript:void(0)" onclick="event.stopPropagation();btAdd('+JSON.stringify(bk).replace(/"/g,'&quot;')+')" class="fmini">＋ 這一塊再加一趟</a>':'')+'</td></tr>'; if(op){ h+=HDR; _hN=true; }   /* V129-3 */
-    if(op){ trips.forEach(r=>{ h+=btTr(r,bk,ed); }); aggs.forEach(r=>{ h+=btTrAgg(r,ed); }); }
-    if(order.length>1)h+='<tr><td class="tl fmini" colspan="6" style="text-align:right;color:#4a5f55">小計　'+btesc(bk)+'　'+trips.length+' 趟'+(aggs.length?'＋'+aggs.length+' 列車種彙總':'')+'</td><td class="R" style="border-top:1px solid #cfdcd5"><b>'+btf(BC,4)+'</b></td><td></td></tr>';   /* V106：小計放在這一塊最後（比照 V104-2） */
+    if(BT_LAND[bk]){   /* V129-40-8：陸運照車種＋動力分組（油車／電車係數不同）；收合時也顯示各車種彙總列 */
+      const vs=[], byV={}; const put=(r,k)=>{ const v=btVehNm(r); if(!byV[v]){ byV[v]={t:[],a:[]}; vs.push(v); } byV[v][k].push(r); };
+      trips.forEach(r=>put(r,'t')); aggs.forEach(r=>put(r,'a'));
+      vs.forEach(v=>{ const g=byV[v], real=g.t.filter(r=>(btrow(r).pkm||0)>0), ppl=new Set(real.map(r=>String(bte(r)['出差人員']||'').trim()).filter(x=>x&&x!=='0'));
+        if(op)g.t.forEach(r=>{ h+=btTr(r,bk,ed); }); g.a.forEach(r=>{ h+=btTrAgg(r,ed,{n:real.length,p:ppl.size}); }); });
+    } else if(op){ trips.forEach(r=>{ h+=btTr(r,bk,ed); }); aggs.forEach(r=>{ h+=btTrAgg(r,ed); }); }
+    let BK=0,BKn=0; const efs={}; trips.forEach(r=>{ const c=btrow(r); if(c.pkm!=null){BK+=c.pkm;BKn++;} if(!BT_DIRECT[bk]&&!BT_LAND[bk]&&c.ef!=null)efs[c.ef]=1; }); if(BT_LAND[bk])aggs.forEach(r=>{ const c=btrow(r); if(c.ef!=null)efs[c.ef]=1; }); GK+=BK; GKn+=BKn;   /* V129-40-7：小計補延人公里（只加逐趟列，車種彙總列＝同一批延人公里，不重複加）；係數整塊同一個值才顯示（陸運看車種彙總列的係數） */
+    const bk2=v=>Number(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});   /* 延人公里小計／合計固定 2 位小數 */
+    const efk=Object.keys(efs), bt='border-top:1px solid #cfdcd5';
+    if(order.length>1)h+='<tr><td class="tl fmini" colspan="4" style="text-align:right;color:#4a5f55">小計　'+btesc(bk)+'　'+trips.length+' 趟'+(aggs.length?'＋'+aggs.length+' 列車種彙總':'')+'</td>'
+      +'<td class="R" style="'+bt+'"><b>'+(BKn?bk2(BK):'—')+'</b></td>'
+      +'<td class="R fmini" style="'+bt+';color:#4a5f55" title="'+(efk.length>1?'這一塊有 '+efk.length+' 種係數（不同車種／區域），展開看各列':'')+'">'+(efk.length===1?btf(+efk[0],10):(efk.length>1?'（'+efk.length+' 種）':'—'))+'</td>'
+      +'<td class="R" style="'+bt+'"><b>'+btf(BC,4)+'</b></td><td></td></tr>';   /* V106：小計放在這一塊最後（比照 V104-2）；V129-40-7：補延人公里／係數 */   /* V106：小計放在這一塊最後（比照 V104-2） */
   });
-  h+='<tr class="s101blk" style="background:#eef6f1"><td class="tl" colspan="6"><b>合計</b> <span class="fmini">'+GN+' 列</span></td>'
+  h+='<tr class="s101blk" style="background:#eef6f1"><td class="tl" colspan="4"><b>合計</b> <span class="fmini">'+GN+' 列</span></td>'
+    +'<td class="R"><b>'+(GKn?Number(GK).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—')+'</b></td><td></td>'   /* V129-40-7：合計補延人公里 */
     +'<td class="R"><b>'+btf(GC,4)+'</b></td><td></td></tr>';
   h+='</tbody></table></div>';
   h+='<div class="s101legend">一列＝一趟　｜　陸運：逐趟列碳排 0、碳排記在該車種的「車種彙總列」＊＝Σ延人公里 × 係數 ÷ 1000　｜　軌道（台鐵／捷運／海外鐵路）：逐趟碳排＊＝延人公里 × 係數 ÷ 1000　｜　航空／台灣高鐵／客船：碳排＝逐趟直查值（白底輸入）　｜　係數來自係數庫代號 C06-R01～R04（軌道）／C06-C01～C07（車輛），依區域 × 年度自動帶　｜　＊灰底＝系統算　｜　徽章：清0＝照清冊記 0（系統算值滑過去看）、÷2＝去回全額頁換算、舊＝無逐趟明細照舊年筆、新＝登錄頁輸入</div>';
@@ -9094,29 +9139,30 @@ function btTr(r,bk,ed){
     +(()=>{ const dv=String(e['出差日期']||''), isD=dv===''||/^\d{4}[-\/.]\d{1,2}[-\/.]\d{1,2}/.test(dv)&&dv.length<=24; return '<td class="tl fmini'+(isD||canRow?' nw':'')+'">'+(canRow?tin('d',dv,'YYYY-MM-DD'):(isD?btesc(dv):'<div class="cl2" title="'+btesc(dv)+'">'+btesc(dv)+'</div>'))+'</td>'; })()   /* V119-3：日期欄放的是說明文字時換行（最多兩行），不蓋到出差人欄 */
     +'<td class="tl">'+(canRow?tin('p',e['出差人員']||'','姓名'):who)+fl.map(btbadge).join('')+(ed&&entryCanDel(W6.site,W6.year)?entryDelX('btDelTg',r.record_id,r._del):'')+'</td>'
     +'<td class="tl fmini"><span class="cl2" title="'+btesc(route)+'">'+(canRow?(tin('o',o1,'起點')+'<span class="fmini">→</span>'+tin('t',o2,'終點')):btesc(route))+'</span></td>'
-    +'<td class="tl fmini">'+(canRow&&bk==='高鐵(台灣)'&&window.THSR_CF&&THSR_CF.on?'<select data-k="'+btesc(r.record_id)+'" data-f="v" style="font-size:12px;width:100%"><option value="1">單程</option><option value="2"'+(+(bte(r)['單趟來回'])===2?' selected':'')+'>來回</option></select>'+(bte(r)['站間表']?'<div class="fmini" style="color:#1f4e79" title="'+btesc(bte(r)['站間表'])+'">站間表 '+btf(bte(r)['碳足跡KG'],0)+' kg</div>':''):(canRow&&!direct?tin('v',veh,'車種'):(canRow?tin('v',veh,'艙等'):btesc(veh))))+'</td>'
+    +'<td class="tl fmini">'+(canRow&&bk==='高鐵(台灣)'&&window.THSR_CF&&THSR_CF.on?'<select data-k="'+btesc(r.record_id)+'" data-f="v" style="font-size:12px;width:100%"><option value="1">單程</option><option value="2"'+(+(bte(r)['單趟來回'])===2?' selected':'')+'>來回</option></select>'+(bte(r)['站間表']?'<div class="fmini" style="color:#1f4e79" title="'+btesc(bte(r)['站間表'])+'">站間表 '+btf(bte(r)['碳足跡KG'],0)+' kg</div>':''):(canRow&&land?btVehSel(r,veh):canRow&&!direct?tin('v',veh,'車種'):(canRow?tin('v',veh,'艙等'):btesc(veh))))+'</td>'
     +'<td class="R">'+(canRow?tin('q',c.pkm==null?'':c.pkm,'pkm',1):(c.pkm==null?(direct?'<span class="fmini" style="color:#7a8f84;cursor:help" title="'+btesc(bk==='高鐵(台灣)'?'高鐵收集表只填起訖站與單程／來回，碳排直接查高鐵碳足跡站距表，沒有公里數':'收集表這一趟沒填公里數；碳排是逐趟直接填的')+'">收集表沒填</span>':'—'):btf(c.pkm,1)))+'</td>'
     +(direct&&c.ef==null?(()=>{ const kg=btn2(e['CO2KG'])!=null?btn2(e['CO2KG']):(btn2(e['碳足跡KG'])!=null?btn2(e['碳足跡KG']):(c.co?+(c.co*1000).toFixed(4):null));   /* V105：直查型沒有係數，寫清楚（使用者 261001「這些沒有數據嗎?」） */
         const how=bk==='航空'?'國際民航組織（ICAO）碳排計算器逐趟查航線':(bk==='高鐵(台灣)'?'台灣高鐵碳足跡站距表':'請款單／船公司資料');
         const ref=(c.pkm>0&&c.co>0)?c.co*1000/c.pkm:null;
         return '<td class="R sysv" title="'+btesc('這一趟碳排是'+how+'直接查到的'+(kg!=null?'（'+kg+' kg）':'')+'，不是延人公里 × 係數'+(ref!=null?'；換算參考＝碳排 ÷ 延人公里 ≈ '+btf(ref,4)+' kg/延人公里（不是系統係數）':''))+'" style="cursor:help"><span class="fmini" style="color:#7a8f84">逐趟直查</span>'+(ref!=null?'<div class="fmini" style="color:#a9b8b0">≈ '+btf(ref,4)+'</div>':'')+'</td>'; })()
-      :'<td class="R sysv" title="'+btesc(e['下游係數']!=null||e['上游係數']!=null?('收集表 TTW '+(e['下游係數']==null?'—':e['下游係數'])+'／WTT '+(e['上游係數']==null?'—':e['上游係數'])):'')+'">'+(c.ef==null?'—':btf(c.ef,10))+'</td>')
+      :'<td class="R sysv" title="'+btesc(e['下游係數']!=null||e['上游係數']!=null?('收集表 TTW '+(e['下游係數']==null?'—':e['下游係數'])+'／WTT '+(e['上游係數']==null?'—':e['上游係數'])):'')+'">'+(c.ef==null?'—':btf(c.ef,10))+(c.efx!=null?'<div class="fmini" style="color:#b8860b;cursor:help" title="'+btesc('收集表係數欄填 '+c.efx+'，單位其實是公克（＝'+btf(c.ef,10)+' 公斤）；系統改用係數庫的值，碳排存的數字本來就是對的')+'">收集表填 '+btf(c.efx,0)+'（公克）</div>':'')+'</td>')
     +'<td class="R'+(direct&&!canRow?'':' ')+(direct?'':' sysv')+'">'+coCell+'</td>'
     +'<td class="tl fmini">'+src+'</td></tr>';
 }
-function btTrAgg(r,ed){
+function btTrAgg(r,ed,cnt){
   const e=bte(r), c=btrow(r);
   const canRow=ed&&(String(r.input_method||'')==='登錄頁'||r._new);
   const lib=btlib(r.attr2,e['車輛(收集表)']);
   return '<tr class="agg">'
-    +'<td class="tl fmini" colspan="3">'+(ed&&!bte(r)['自動彙總']&&entryCanDel(W6.site,W6.year)?entryDelX('btDelTg',r.record_id,r._del):'')+'　◇ <b>車種彙總·'+btesc(r.attr2||'')+'</b><span class="fmini">'+(e['收集表分頁']?'（'+btesc(String(e['收集表分頁']))+'）':'（登錄頁自動算）')+(e['人數']?'　'+btesc(e['人數'])+' 人':'')+'</span>'+btflags(r).map(btbadge).join('')+'</td>'
-    +'<td class="tl fmini">'+btesc(r.attr2||'')+'</td>'
+    +'<td class="tl fmini" colspan="3">'+(ed&&!bte(r)['自動彙總']&&entryCanDel(W6.site,W6.year)?entryDelX('btDelTg',r.record_id,r._del):'')+'　◇ <b>車種彙總·'+btesc(btVehNm(r))+'</b><span class="fmini">'+(e['收集表分頁']?'（'+btesc(String(e['收集表分頁']))+'）':'（登錄頁自動算）')+(cnt?'　<span title="'+btesc('人次＝這個車種有延人公里的趟數；人＝不同的出差人員'+(e['人數']!=null&&+e['人數']!==cnt.n?'；收集表「人數」欄填 '+e['人數']+'（其實是列數）':''))+'" style="cursor:help">'+cnt.n+' 人次·'+cnt.p+' 人</span>':(e['人數']?'　'+btesc(e['人數'])+' 人':''))+'</span>'+btflags(r).map(btbadge).join('')+'</td>'
+    +'<td class="tl fmini">'+btesc(btVehNm(r))+'</td>'
     +'<td class="R sysv">'+(c.pkm==null?'—':btf(c.pkm,1))+'</td>'
     +'<td class="R sysv" title="'+btesc(lib?('係數庫 '+facCodeYr(lib.fid)+'＝'+lib.parts):'')+'">'+(c.ef==null?'—':btf(c.ef,10))+'</td>'
     +'<td class="R sysv"><b>'+btf(c.co,4)+'</b></td>'
     +'<td class="tl fmini">'+(r.factor_id?btesc(facCodeYr(r.factor_id)):'')+'</td></tr>';
 }
-function btToggle(bk){ W6.open[bk]=W6.open[bk]===undefined?!(W6.recs.filter(r=>btblk(r)===bk&&!btIsAgg(r)).length<=400):!W6.open[bk]; btRender(); }
+function btDefOpen(){ return W6.recs.length<=30; }   /* V129-40-7：資料多（超過 30 列）先只看各塊小計，點開才看明細 */
+function btToggle(bk){ W6.open[bk]=W6.open[bk]===undefined?!btDefOpen():!W6.open[bk]; btRender(); }
 function btBind(){
   const ss=document.getElementById('bt_site'), yy=document.getElementById('bt_year');
   if(ss)ss.onchange=function(){ W6.site=this.value; btLoad(); };
@@ -9135,7 +9181,7 @@ function btEdit(k,f,v){
   else if(f==='o'){ setE('起點',v); }
   else if(f==='t'){ setE('終點',v); }
   else if(f==='v'&&bk==='高鐵(台灣)'&&window.THSR_CF&&THSR_CF.on){ setE('單趟來回',+v===2?2:1); }   /* V112 */
-  else if(f==='v'){ if(BT_DIRECT[bk]){setE('艙等',v);} else {setE('車輛(收集表)',v); if(BT_LAND[bk]){const lab=btLabNorm(v); r.attr2=lab;}} }
+  else if(f==='v'){ if(BT_DIRECT[bk]){setE('艙等',v);} else {setE('車輛(收集表)',v); if(BT_LAND[bk]){const lab=btVehOpts().indexOf(v)>=0?v:btLabNorm(v); r.attr2=lab;}   /* V129-40-8：存完整車種（含動力） */} }
   else if(f==='q'){ const n=btn2(v); r.quantity=n==null?0:n; r.quantity_unit=n==null?'-':'延人公里'; setE('延人公里',n);
     if(BT_RAIL[bk]&&r.ef_value!=null)r.co2e_draft=n==null?0:+(n*r.ef_value/1000).toFixed(10); }
   else if(f==='c'){ const n=btn2(v); r.co2e_draft=n==null?0:n; delete r.extra['站間表']; }
@@ -9174,7 +9220,7 @@ function btAdd(bk){
   if(!bk){
     let h='<div class="row" style="gap:10px;flex-wrap:wrap">'
       +'<div class="fld"><label>交通模式 *</label><select id="bt_a_bk">'+BT_BLKS.map(b=>'<option>'+b+'</option>').join('')+'</select></div>'
-      +'<div class="fld" id="bt_a_labw" style="display:none"><label>車種 *</label><select id="bt_a_lab">'+BT_LABS.map(x=>'<option>'+x+'</option>').join('')+'</select></div>'
+      +'<div class="fld" id="bt_a_labw" style="display:none"><label>車種 *</label><select id="bt_a_lab">'+btVehOpts().map(x=>'<option>'+btesc(x)+'</option>').join('')+'</select></div>'
       +'</div><div id="bt_a_hint" class="fmini" style="margin-top:6px"></div>';
     btdlg('＋ 新增一趟', h, '<button onclick="fuelClose()">取消</button> <button class="pri" onclick="btAddGo()">加一趟</button>');
     setTimeout(()=>{ const f=()=>{ const b=document.getElementById('bt_a_bk').value;
@@ -12221,7 +12267,7 @@ function btExtract(mode,ws){
     if(btHdrKind(all)===keys){ stopped='第二個表頭'; break; }
     const d={}; Object.entries(HL).forEach(([k,c])=>{ d[k]=BT_NUMK[k]?rlN(v[c]):rlT(v[c]); });
     const first=minL!=null?rlT(v[minL]):'';
-    const hasId=['人員','日期','起點','終點','佐證','路線'].some(k=>d[k]!=null&&String(d[k])!==''&&String(d[k])!=='None');
+    const hasId=['人員','日期','起點','終點','佐證','路線'].some(k=>d[k]!=null&&String(d[k])!==''&&String(d[k])!=='None'&&String(d[k])!=='0');   /* V129-40-8：人員／日期／起訖都是 0 的空列不收 */
     const labTot=/^合計|^總計|^总计|^总合计/.test(first)||/^(合計|總計|总计)$/.test(String(d['人員']||''));
     const cv=btTripT(d);
     if(labTot||(!hasId&&cv!=null&&cv!==0))totals.push(cv||0);
@@ -12272,7 +12318,7 @@ function btImportBuild(){
       else { const L=btlib(lab,String(d['車輛']||'')); const k=md+'|'+lab+'|'+(L?L.fid:'-'), g=(landAgg[k]=landAgg[k]||{md:md,lab:lab,lib:L,pk:0,raw:String(d['車輛']||''),xl:0,xpk:0,n:0,sheet:pk.sheet,hx:false}); if(!d._h){ g.pk+=(pkm||0); g.n++; if(xl!=null){ g.xl+=xl; g.hx=true; } }
         x['規則']='逐趟·碳排記在車種彙總列'; }
       const m=String(x['出差日期']||'').match(/^(\d{4})[.\/-](\d{1,2})/); const dm=(m&&+m[1]===+y&&+m[2]>=1&&+m[2]<=12)?+m[2]:null;
-      rows.push(Object.assign({},base,{data_month:dm,equipment_name:md,attr2:lab,measurement_type:'逐趟',quantity:pkm||0,quantity_unit:pkm?'延人公里':'-',extra:x,co2e_draft:co,
+      rows.push(Object.assign({},base,{data_month:dm,equipment_name:md,attr2:(BT_LAND[md]?btImpVeh(lab,String(d['車輛']||'')):lab),measurement_type:'逐趟',quantity:pkm||0,quantity_unit:pkm?'延人公里':'-',extra:x,co2e_draft:co,
         ef_value:lib?lib.v:null,ef_unit:lib?'kgCO2e/pkm':null,ef_source:BT_DIRECT[md]?(md==='航空'?'ICAO國際航空網站(逐航線查詢)':(md==='高鐵(台灣)'?'台灣高鐵碳足跡(站距對照表逐趟值)':'收集表逐趟值')):(lib?'C06 運具係數代號':null),factor_id:lib?lib.fid:null}));
       if(!d._h){ s.n++; s.co+=co; if(!BT_LAND[md]&&xl!=null){ s.xl+=xl; s.hx=true; } } });
     pk.aggs.forEach(a=>{ if(a._h)return; let v=a.WTW; if(v==null)v=a.CO2e; if(v==null&&(a['下游排放']!=null||a['上游排放']!=null))v=(a['下游排放']||0)+(a['上游排放']||0);
@@ -12286,7 +12332,7 @@ function btImportBuild(){
     if(!lib&&pk)warn.push(g.md+'「'+g.lab+'」在 '+btrg(W6.site)+' '+facY(y)+' 沒有係數（例：公車批186 未編碼），彙總列碳排先記 0');
     const x={'人數':g.n,'延人公里':pk,'彙總':'匯入後系統彙總＝同車種'+src+' × 係數','匯入彙總':1,'收集表':I.fname,'收集表分頁':g.sheet,'匯入':note,'匯入批':I.stamp};
     if(xl!=null)x['收集表碳排']=+xl.toFixed(10); if(lib)x['換算']='延人公里 '+btf(pk,4)+' × 係數 '+btf(lib.v,10)+' kgCO2e/pkm ÷ 1000 ＝ '+btf(co,6)+' t';
-    rows.push(Object.assign({},base,{data_month:null,equipment_name:g.md,attr2:g.lab,measurement_type:'車種彙總',quantity:pk,quantity_unit:'延人公里',extra:x,co2e_draft:co,
+    rows.push(Object.assign({},base,{data_month:null,equipment_name:g.md,attr2:btImpVeh(g.lab,g.raw),measurement_type:'車種彙總',quantity:pk,quantity_unit:'延人公里',extra:Object.assign(x,{'車輛(收集表)':g.raw}),co2e_draft:co,
       ef_value:lib?lib.v:null,ef_unit:lib?'kgCO2e/pkm':null,ef_source:lib?'C06 運具係數代號':null,factor_id:lib?lib.fid:null}));
     s.co+=co; if(xl!=null){ s.xl+=xl; s.hx=true; } });
   Object.entries(zero).forEach(([k,c])=>{ const p=k.split('|'); warn.unshift(p[0]+' '+c+' 趟碳排先記 0：'+p[1]); });   /* V119-5：放最前面 */
