@@ -291,7 +291,7 @@ function facChg(on){ return '<span class="fchg'+(on?'':' off')+'">🟡</span>'; 
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-41-3</b> · 2026/10/20</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-41-4</b> · 2026/10/20</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -3907,6 +3907,7 @@ async function facRefrigLoad3(code){
   const f=await sbAll(()=>sb.from('ghg_emission_factors').select('factor_id,factor_year,esg_code,country').like('factor_id','A04-01-%').order('factor_id')); if(f.error)throw f.error;
   const g=await sbAll(()=>sb.from('ghg_emission_factor_gases').select('id,factor_id,gas_code,factor_value,gwp').like('factor_id','A04-01-%').order('id')); if(g.error)throw g.error;
   const q=await sb.from('ghg_gases').select('gas_code,gas_name,default_gwp_ar6'); if(q.error)throw q.error;
+  if(typeof rfSyncNums==='function')rfSyncNums(f.data,g.data);   /* V129-41-4：冷媒號碼照資料庫 */
   return {rows:a.data||[],facs:f.data||[],gas:g.data||[],gases:q.data||[]};
 }
 function facRefrigRender3(code,D){   /* V129-11：一張表（使用者 261016）——一列＝一個「設備類別 × 冷媒」代號；年度格＝當年條目的合成當量 */
@@ -11661,8 +11662,17 @@ const RF_SRCTXT='逸散率＝IPCC 2006；GWP＝AR6';   /* V120：ESG 261006 五-
 /* 設備類型（ESG「設備類型逸散率」8 類；IPCC 2006 表 7.9 中值 %） */
 const RF_TYPES=[['住宅及商業建築空調',5.5],['家用冷凍冷藏（冰箱、飲水機）',0.3],['車輛空調',15],['工業冷凍冷藏',16],['冰水機',8.5],['獨立商用冷凍冷藏',8],['中大型冷凍冷藏',22.5],['運輸用冷凍冷藏',32.5]];
 /* 冷媒：名稱、代號、GWP、暫碼、待 ESG 題號 */
-const RF_GAS=[['R-22','A04-01-01',0,0,''],['R-32','A04-01-02',771,0,''],['R-134a','A04-01-03',1530,0,''],['R-410A','A04-01-04',2256,0,''],['R-290','A04-01-05',0,0,''],['R-600a','A04-01-06',0,0,''],['R-407C','A04-01-07',1908,0,''],
-  ['R-404A','A04-01-08',4728,0,''],['R-23','A04-01-09',14600,0,''],['R-600','A04-01-10',0,0,''],['R-12','A04-01-11',0,0,''],['R-427A','A04-01-12',2396.65,0,''],['HFO-1234yf','A04-01-13',0.501,0,'']];   /* V120：ESG 261006 回覆——五-1 R22／R12 GWP 一律記 0；五-3 六種暫編代號轉正式（第 4 欄 1→0） */
+const RF_GAS=[['R-12','A04-01-01',0,0,''],['R-22','A04-01-02',0,0,''],['R-23','A04-01-03',14600,0,''],['R-32','A04-01-04',771,0,''],['R-134a','A04-01-05',1530,0,''],['R-290','A04-01-06',0,0,''],['R-404A','A04-01-07',4728,0,''],
+  ['R-407C','A04-01-08',1908,0,''],['R-410A','A04-01-09',2256,0,''],['R-427A','A04-01-10',2396.65,0,''],['R-600','A04-01-11',0,0,''],['R-600a','A04-01-12',0,0,''],['HFO-1234yf','A04-01-13',0.501,0,'']];   /* V129-41-4：號碼照英文重排（批263；使用者 261020 做法甲） */
+/* V129-41-4：冷媒號碼照資料庫對齊——係數條目（A04-01-字母兩碼）的冷媒 gas_code → 兩碼；批263 跑之前資料庫是舊號，就照舊號，跑完自動變新號（同一冷媒在各類設備號碼一致才採用） */
+function rfSyncNums(facs,gas){ try{
+  const EC={}; (facs||[]).forEach(x=>{ EC[x.factor_id]=x.esg_code||String(x.factor_id).replace(/-ALL-\d+$/,''); });
+  const GN={}, bad={}; (gas||[]).forEach(z=>{ const m=String(EC[z.factor_id]||'').match(/^A04-01-[A-H](\d\d)$/); if(!m)return; if(GN[z.gas_code]&&GN[z.gas_code]!==m[1])bad[z.gas_code]=1; GN[z.gas_code]=m[1]; });
+  if(Object.keys(bad).length){ console.warn('[冷媒號碼] 同一冷媒在不同設備類別號碼不同，不對齊：',Object.keys(bad)); return; }
+  RF_GAS.forEach(g=>{ if(GN[g[0]])g[1]='A04-01-'+GN[g[0]]; });
+  RF_GAS.sort((a,b)=>String(a[1]).localeCompare(String(b[1])));
+}catch(e){ console.warn('[冷媒號碼] 對齊失敗，照網頁內建號碼：',e); } }
+window.rfSyncNums=rfSyncNums;   /* V120：ESG 261006 回覆——五-1 R22／R12 GWP 一律記 0；五-3 六種暫編代號轉正式（第 4 欄 1→0） */
 /* 名稱 → 設備類型（照盤點腳本的規則；前五條＝ESG 第②題那幾種，先照多數廠歸類） */
 const RF_TRULE=[[/乾燥|干燥|冷幹|冷干|冷乾|烘乾|烘干/,'工業冷凍冷藏','','乾燥機：ESG 261006 定 16%（工業冷凍冷藏）'],[/冷卻機|冷却机/,'冰水機','','冷卻機（冰水機）：ESG 261006 定 8.5%（冰水機）'],
   [/除濕|除湿/,'家用冷凍冷藏（冰箱、飲水機）','','除濕機：ESG 261006 定 0.3%（家用冷凍冷藏）'],[/^(?!.*(?:空調|空调|冷氣|冷气)).*(?:熱水|热水|空氣能|空气能|熱泵|热泵)/,'冰水機','','熱泵熱水器／空氣能：ESG 261006 定 8.5%（冰水機）；名稱裡有「空調」的（例：分体热泵型房间空调器）仍算空調'],
@@ -11700,7 +11710,7 @@ async function rfFxLoad(){ if(W10.FX)return;
   const FX={}; (f.data||[]).forEach(x=>{ const gl=GL[x.factor_id]; if(!gl||!gl.length)return; const cd=x.esg_code||String(x.factor_id).replace(/-ALL-\d+$/,'');
     (FX[cd]=FX[cd]||{})[Number(x.factor_year)]={fid:x.factor_id,rate:+(Number(gl[0].factor_value)*100).toFixed(6),gwp:Number(gl[0].gwp)}; });
   const GW={}; (q.data||[]).forEach(x=>{ if(x.default_gwp_ar6!=null)GW[x.gas_code]=Number(x.default_gwp_ar6); });
-  W10.FX=FX; W10.GW=GW; }
+  W10.FX=FX; W10.GW=GW; rfSyncNums(f.data,g.data); }   /* V129-41-4 */
 function rfFx(t,g){ if(!t||!g)return null; const i=RF_TYPES.indexOf(t); if(i<0)return null;
   const code='A04-01-'+'ABCDEFGH'.charAt(i)+String(g[1]).slice(-2); if(!W10.FX)return {code:code,none:1};
   const by=W10.FX[code], y=Number(W10.year); if(!by)return {code:code,miss:1};
