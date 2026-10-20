@@ -292,7 +292,7 @@ function facChg(on){ return '<span class="fchg'+(on?'':' off')+'">🟡</span>'; 
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-42-1</b> · 2026/10/20</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-42-2</b> · 2026/10/20</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -3473,6 +3473,7 @@ function facPickSrc(code){
   FAC_CUR=code;
   document.querySelectorAll('#fsrcnav .fsrc').forEach(el=>el.classList.toggle('on',el.dataset.c===code));
   const pane=document.getElementById('fsrcpane'); if(!pane)return;
+  pane.style.overflow=(code==='C12MAP')?'visible':'';   /* V129-42-2：材質對照表頭要凍結——右側框自己 overflow:auto 會讓表頭黏在框上（框不會捲），改成跟著外框捲 */
   if(code==='C12MAP'){ c12MapShow(pane); return; }   /* V129-42 */
   if(typeof FSM_ITEM!=='undefined'&&FSM_ITEM[code]){ facItemShow(code,pane); return; }   // V76：品項型（冷媒）走兩張品項表，不用區域×年度矩陣
   try{ pane.innerHTML=facSrcRender(facSrcModel(code)); }catch(e){ pane.innerHTML='<div class="msg err">矩陣產生失敗：'+facEsc(e.message||e)+'</div>'; }
