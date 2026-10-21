@@ -292,7 +292,7 @@ function facChg(on){ return '<span class="fchg'+(on?'':' off')+'">🟡</span>'; 
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-50</b> · 2026/10/21</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-51</b> · 2026/10/21</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -2201,7 +2201,7 @@ async function ensureYLocks(force){ if(YLOCKS&&!YLOCKS._err&&!force)return;
 function yearLocked(y){ if(YLOCKS&&YLOCKS._err)return true;   /* V87-6：鎖定表讀不到＝保守當鎖定 */ if(!YLOCKS||YLOCKS._missing)return false;   // 表未建=機制未啟用(相容)
   const r=YLOCKS[parseInt(y)]; return r? r.status==='locked' : true;}   // 未列年度預設鎖定(新年度由系統管理開啟)
 /* ── V99：試打年度（2099）──
-   給 ESG 試用登錄畫面：權限頁開放後，各登錄頁年度選單出現「2099 試打」；係數、匯率一律用最後申報年（目前 2025）；
+   給 ESG 試用登錄畫面：權限頁開放後，各登錄頁年度選單出現「2099 試打」；係數、匯率用最後申報年的下一年（目前 2026；係數庫還沒有那一年就用最後申報年）（V129-51，原本用最後申報年）；
    2099 的資料不進任何正式年度的查詢、全集團、係數庫統計、路線範本，試完由 DTO 整批刪除。
    facY(y)＝挑係數／匯率用的年度：非試打年度就是原值（既有年度行為不變）。
    年度選單收斂成 entryYears：有資料的年度＋最後申報年＋下一年＋權限頁開放的年度（含試打年度）。 */
@@ -2209,8 +2209,9 @@ const TRIAL_Y=2099;
 function trialY(y){ return +y===TRIAL_Y; }
 function trialOpen(){ return !!(typeof YLOCKS!=='undefined'&&YLOCKS&&YLOCKS[TRIAL_Y]&&YLOCKS[TRIAL_Y].status==='open'); }
 function declMaxY(){ return (typeof YLOCKS!=='undefined'&&YLOCKS&&YLOCKS._declMax)||2025; }
-function facY(y){ return trialY(y)?declMaxY():+y; }
-function facCellY(m,y){ return trialY(y)?Math.min(declMaxY(),m&&m.openY?m.openY:declMaxY()):y; }   /* 係數矩陣的欄：試打年度取最後申報年那一欄（沒有就取開帳欄） */
+function trialFacY(){ const n=declMaxY()+1; if(typeof FACALL!=='undefined'&&Array.isArray(FACALL)&&FACALL.length&&!FACALL.some(f=>+f.factor_year===n))return declMaxY(); return n; }   /* V129-51：試打用的係數年度＝最後申報年的下一年（ESG 練的是下一年的填報）；係數庫沒有那一年就退回最後申報年 */
+function facY(y){ return trialY(y)?trialFacY():+y; }
+function facCellY(m,y){ return trialY(y)?(m&&m.openY?Math.min(trialFacY(),m.openY):trialFacY()):y; }   /* 係數矩陣的欄：試打年度取試打係數年那一欄（V129-51；開帳欄較早就取開帳欄） */
 function entryYears(dataYears){ const dm=declMaxY(), set=new Set([dm,dm+1]);
   (dataYears||[]).forEach(y=>{ y=+y; if(isFinite(y)&&y>2000&&!trialY(y))set.add(y); });
   if(typeof YLOCKS!=='undefined'&&YLOCKS)Object.keys(YLOCKS).forEach(k=>{ if(/^\d{4}$/.test(k)&&YLOCKS[k]&&YLOCKS[k].status==='open')set.add(+k); });
@@ -2258,7 +2259,7 @@ function trialOptsSync(){   /* V99-2：查詢頁／全集團年度選單依權�
   const on=trialOpen(); ['q_year','g_year'].forEach(id=>{ const sel=document.getElementById(id); if(!sel)return; const o=[...sel.options].find(x=>x.value===String(TRIAL_Y));
     if(on&&!o)sel.add(new Option(TRIAL_Y+' 試打',String(TRIAL_Y))); else if(!on&&o){ if(sel.value===String(TRIAL_Y))sel.value=sel.options[0].value; o.remove(); } });
   if(typeof qCascade==='function')try{qCascade();}catch(e){} }
-function trialChip(){ const fy=declMaxY(); return '<span title="試打年度：給 ESG 試用登錄畫面。係數、匯率一律用 '+fy+' 年；存下去的資料只在 '+TRIAL_Y+'，不進任何正式年度，試完由 DTO 整批刪除" style="background:#f3ecfb;color:#5e3a8c;border:1px dashed #a98bd0;border-radius:999px;padding:3px 12px;font-size:12px;font-weight:700;white-space:nowrap">🧪 '+TRIAL_Y+' 試打·係數用 '+fy+'</span>'; }
+function trialChip(){ const fy=trialFacY(); return '<span title="試打年度：給 ESG 試用登錄畫面。係數、匯率一律用 '+fy+' 年；存下去的資料只在 '+TRIAL_Y+'，不進任何正式年度，試完由 DTO 整批刪除" style="background:#f3ecfb;color:#5e3a8c;border:1px dashed #a98bd0;border-radius:999px;padding:3px 12px;font-size:12px;font-weight:700;white-space:nowrap">🧪 '+TRIAL_Y+' 試打·係數用 '+fy+'</span>'; }
 async function inputLockGate(){ await ensureYLocks();
   const ey=document.getElementById('e_year');
   if(ey&&!ey._ylk){ey._ylk=1; ey.addEventListener('change',()=>setTimeout(inputLockGate,60));}
@@ -2294,7 +2295,7 @@ async function ylockAdd(){ await ensureYLocks(true);
   ylockRender();}
 async function ylockToggle(y){ if(curGhgUser&&['esg','admin'].indexOf(curGhgUser.role)<0){alert('僅 ESG 小組／系統管理可切換年度鎖定');return;}
   const lk=yearLocked(y);
-  if(!confirm(trialY(y)?(lk?('開放 '+y+' 試打？（各登錄頁年度選單會出現「'+y+' 試打」，係數、匯率用 '+declMaxY()+' 年；資料不進任何正式年度）'):('鎖定 '+y+' 試打？（年度選單不再出現 '+y+'；已經打的資料還在，要刪除請洽 DTO）')):((lk?'解鎖':'鎖定')+' '+y+' 年度？'+(lk?'（解鎖後全員可輸入／修改該年度）':'（鎖定後全員僅供查看）'))))return;
+  if(!confirm(trialY(y)?(lk?('開放 '+y+' 試打？（各登錄頁年度選單會出現「'+y+' 試打」，係數、匯率用 '+trialFacY()+' 年；資料不進任何正式年度）'):('鎖定 '+y+' 試打？（年度選單不再出現 '+y+'；已經打的資料還在，要刪除請洽 DTO）')):((lk?'解鎖':'鎖定')+' '+y+' 年度？'+(lk?'（解鎖後全員可輸入／修改該年度）':'（鎖定後全員僅供查看）'))))return;
   const who=curGhgUser?(curGhgUser.emp_id+' '+curGhgUser.name):'(建置期·未登入)';
   const {error}=await sb.from('ghg_year_locks').upsert({data_year:y,status:lk?'open':'locked',updated_by:who,updated_at:new Date().toISOString()});
   if(error){alert('寫入失敗：'+error.message);return;}
@@ -5176,7 +5177,7 @@ async function loadGroup(){
     });
   });
   box.innerHTML=h+'</tbody></table>'; GNOTES=null; gNotesDecorate(yr); grpScopeNote(box);
-  if(trialY(yr))box.insertAdjacentHTML('afterbegin','<div class="msg" style="background:#f3ecfb;color:#5e3a8c;border:1px dashed #a98bd0;font-size:12.5px;margin:4px 0">🧪 <b>'+TRIAL_Y+' 試打</b>：只有試打輸入的明細（係數用 '+declMaxY()+' 年），沒有官方申報、查證可以比對；試完會整批刪除。</div>');   /* V99-2 */   // V50:差異註記圖示
+  if(trialY(yr))box.insertAdjacentHTML('afterbegin','<div class="msg" style="background:#f3ecfb;color:#5e3a8c;border:1px dashed #a98bd0;font-size:12.5px;margin:4px 0">🧪 <b>'+TRIAL_Y+' 試打</b>：只有試打輸入的明細（係數用 '+trialFacY()+' 年），沒有官方申報、查證可以比對；試完會整批刪除。</div>');   /* V99-2 */   // V50:差異註記圖示
 }
 
 function tgGrp(gi){const a=document.getElementById('gga'+gi);const opening=a&&a.textContent==='▸';document.querySelectorAll('.grp-'+gi).forEach(e=>{e.style.display=(opening&&!e.classList.contains('gsub'))?'':'none';});if(!opening)document.querySelectorAll('.grp-'+gi+' , .gsubtg-'+gi).forEach(()=>{});document.querySelectorAll('tr.grp-'+gi+':not(.gsub) td span').forEach(s=>{if(s.textContent.trim()==='▾')s.textContent='▸ ';});if(a)a.textContent=opening?'▾':'▸';}
