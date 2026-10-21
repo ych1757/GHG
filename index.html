@@ -292,7 +292,7 @@ function facChg(on){ return '<span class="fchg'+(on?'':' off')+'">🟡</span>'; 
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-51</b> · 2026/10/21</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-52</b> · 2026/10/21</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -624,7 +624,7 @@ const SRC=[
  {c:'S1-12',sc:'範疇一',mid:'1.4 人為系統釋放之直接暫時性排放(逸散)',name:'化糞池',unit:'人時',qty:'總工時數/h',f:['月份','月平均人數','資料來源']},
  {c:'S1-13',sc:'範疇一',mid:'1.4 人為系統釋放之直接暫時性排放(逸散)',name:'噴式潤滑劑/推進劑',unit:'瓶/L',qty:'使用數量',f:['類型','日期','單位','密度(kg/L)','單重(L)','二氧化碳含量(kgCO2e)','負責部門','資料來源','備註']},
  {c:'S2-01',sc:'範疇二',mid:'2.1 來自輸入電力的間接排放',name:'外購電力',unit:'度(kWh)',qty:'總用電量(kWh)',f:['計費期間-起','計費期間-迄','計費天數','廠區用電量','宿舍用電量','平均每天用電','費用','幣別','備註','資料來源']},
- {c:'S2-02',sc:'範疇二',mid:'2.2 來自輸入能源的間接排放',name:'外購蒸汽/能源',unit:'GJ',qty:'使用量',f:['項目','日期','費用','幣別','資料來源']},
+ {c:'S2-02',sc:'範疇二',mid:'2.2 來自輸入能源的間接排放',name:'外購蒸汽/能源',unit:'GJ',qty:'使用量',na:'不適用',naWhy:'集團沒有使用外購蒸汽（使用者 2026/10/21）；2022–2025 各廠也都沒有這一類的資料',f:[]},   /* V129-52 */
  {c:'S1-LU',sc:'範疇一',mid:'1.5 土地使用、土地使用變更及林業',name:'土地使用變更與林業(如適用)',unit:'-',qty:'排放/移除量',f:['說明','資料來源']},
  {c:'C01-M',sc:'範疇三',mid:'C01 採購商品與服務',name:'直接物料(重量法)',unit:'公噸',qty:'採購重量(噸)',a1:'物料',f:[{l:'大類',col:'attr2'},{l:'部件/零組件',k:'細類',alt:['服務項目/材料別']},{l:'材質',k:'微類',alt:['細項/材質']},{l:'是否回收',k:'是否回收'},{l:'採購佔比(%)',k:'佔比',t:'text'},'量化係數',{l:'資料來源',k:'資料來源'}]},
  {c:'C01-S',sc:'範疇三',mid:'C01 採購商品與服務',name:'非直接物料(服務·金額法)',unit:'USD',qty:'支付金額(USD)',a1:'服務',f:[{l:'費用項目',src:true,t:'text'},{l:'量化係數依據',k:'係數品名',t:'text'},'量化係數',{l:'資料來源',k:'資料來源'}]},
@@ -666,7 +666,7 @@ function buildNav(){
       if(grp.length+sib.length===1&&String(mid).split(' ')[0]===code0){const lf=grp[0];
         h+=`<div class="navi t2" data-i="${lf.i}" onclick="selectSrc(${lf.i})" title="${srcNa(lf.c)?srcNa(lf.c).naWhy:(r0?'現行碼 '+lf.c:'ESG 新編碼未列此源')}"><span style="visibility:hidden">▸ </span>${mid}${srcNaTag(lf.c)}</div>`; return;}
       h+=`<div class="t2" id="${mid_id}_t" onclick="tg('${mid_id}')">${op?'▾':'▸'} ${mid}</div><div id="${mid_id}" style="display:${op?'block':'none'}">`;
-      grp.forEach(lf=>h+=`<div class="navi t3" data-i="${lf.i}" onclick="selectSrc(${lf.i})" title="${ncRow(lf.c)?'現行碼 '+lf.c:'ESG 新編碼未列此源（批73 Q8 待確認移除）'}">${ncRow(lf.c)?`<span class="ncode">${ncRow(lf.c).code}</span>${ncRow(lf.c).name}`:`<span class="ncode" style="color:#c3cfc9">${lf.c}</span><span style="color:#9aa">${lf.name}</span>`}</div>`);   // V69-2:葉節點顯新碼；ESG 未列者灰字   // V65-9:代號等寬定位,中文對齊
+      grp.forEach(lf=>h+=`<div class="navi t3" data-i="${lf.i}" onclick="selectSrc(${lf.i})" title="${srcNa(lf.c)?srcNa(lf.c).naWhy:(ncRow(lf.c)?'現行碼 '+lf.c:'ESG 新編碼未列此源（批73 Q8 待確認移除）')}">${ncRow(lf.c)?`<span class="ncode">${ncRow(lf.c).code}</span>${ncRow(lf.c).name}`:`<span class="ncode" style="color:#c3cfc9">${lf.c}</span><span style="color:#9aa">${lf.name}</span>`}${srcNaTag(lf.c)}</div>`);   /* V129-52：子項也標不適用 */   // V69-2:葉節點顯新碼；ESG 未列者灰字   // V65-9:代號等寬定位,中文對齊
       sib.forEach(x=>{ h+=`<div class="navi t3 nsib" title="${(x.note||'')}；不用另外點：在 ${r0.code} 頁新增電號時「電力來源」選 太陽能（或綠電）"><span class="ncode">${x.code}</span>${x.name}<span class="fmini" style="margin-left:4px">→ ${r0.code} 選太陽能</span></div>`; });   /* V129-24：只是說明，不能點、不跟 ${r0.code} 一起反綠 */
       h+='</div>';});
     h+='</div>';});
@@ -2844,7 +2844,7 @@ TPLS['C05']={code:'C05',name:'營運廢棄物',lists:tplC05Lists,how:[
    ['廢棄物種類','R','下拉選單選一種','生活廢棄物',null,{l:0}],['廢棄物(資源品)名稱','O','','一般生活垃圾'],['廢棄物(資源品)重量(公噸)','R','公噸（公斤 ÷ 1000）','1.25'],['支出費用','O','清運處理費，當地幣','3500'],
    ['處理方式','R','下拉選單選一種','焚化',null,{l:1}],['佐證資料編碼','O','清運單或收據的編號','W-001'],['處理地點','S','處理廠的名稱或地點','新店焚化廠'],
    ['運輸距離(KM)','S','要算運輸排放才填：廠區到處理地點的公里數','18.5'],['延噸公里(T.KM)','A','公式自動算（重量 × 運輸距離），也可以直接打數字','23.125',r=>'IF(OR(H'+r+'="",M'+r+'=""),"",H'+r+'*M'+r+')'],
-   ['運輸工具','C','有填運輸距離就要選（下拉選單：清運車的車種，照噸數）','',null,{l:2}],['使用燃料','O','','柴油'],['備註','O','','']]}]};
+   ['運輸工具','C','有填運輸距離就要選（下拉選單：清運車的車種，照噸數）','營業大貨車(柴油)',null,{l:2}],['使用燃料','O','','柴油'],['備註','O','','']]}]};
 
 /* ── 運輸兩類共用一套：C09 下游運輸／C04 上游運輸（一條路線一列；表頭照各廠「產出3」那一版，路段欄＝陸運-1／空運／海運／陸運-2 的公里數）
    碳排＝重量 × 各段公里數 × 運輸係數表的係數：陸運照「交通工具」（下拉＝運輸係數表的車種），空運海運系統照廠區自動帶（台灣廠＝台灣、其他＝全球），「空運／海運係數區域」欄可以改選（登錄頁本來就能選，匯入端加認這一欄）。
@@ -2863,8 +2863,8 @@ const tplTrnHow=(page,who,extra)=>[
   '4. 陸運段要用下拉選單選「交通工具」（照貨車噸數；選項在這一頁最下面）。空運、海運不用選車種，系統自動帶係數（台灣廠用台灣的係數、其他廠用全球的）；要改用另一組，在「空運係數區域」「海運係數區域」選。',
   '5. 碳排由系統算（重量 × 公里數 × 運輸係數），樣板不用填係數。'].concat(extra||[]).concat([
   ((extra||[]).length?'7':'6')+'. 填好回系統「資料登錄 › '+page+'」，選好跟樣板一樣的廠區與年度，按「⬆ 匯入」選這個檔。會先預覽，按「帶入表格」後檢查，再按「💾 儲存」才寫入。預覽的「取代」勾著＝畫面上原有的路線會全部換成檔案裡的，所以請把整年的路線放在同一個檔。']);
-const TPL_TRN_LEGS=(v,g)=>[['陸運-1(km)','E','第一段陸運的公里數（出發地到港口／機場，或直接送到）','35'],['陸運-1交通工具','C','有填陸運-1 的公里數就要選（下拉選單）','',null,{l:v}],['空運(km)','E','空運的公里數',''],['空運係數區域','O','下拉：全球／台灣；沒填＝台灣廠用台灣、其他廠用全球','',null,{l:g,stop:1}],['海運(km)','E','海運的公里數','11500'],['海運係數區域','O','下拉：全球／台灣；沒填＝台灣廠用台灣、其他廠用全球','',null,{l:g,stop:1}],
-  ['陸運-2(km)','E','到港後第二段陸運的公里數','40'],['陸運-2交通工具','C','有填陸運-2 的公里數就要選（下拉選單）','',null,{l:v}]];
+const TPL_TRN_LEGS=(v,g)=>[['陸運-1(km)','E','第一段陸運的公里數（出發地到港口／機場，或直接送到）','35'],['陸運-1交通工具','C','有填陸運-1 的公里數就要選（下拉選單）','營業大貨車(柴油)',null,{l:v}],['空運(km)','E','空運的公里數',''],['空運係數區域','O','下拉：全球／台灣；沒填＝台灣廠用台灣、其他廠用全球','',null,{l:g,stop:1}],['海運(km)','E','海運的公里數','11500'],['海運係數區域','O','下拉：全球／台灣；沒填＝台灣廠用台灣、其他廠用全球','',null,{l:g,stop:1}],
+  ['陸運-2(km)','E','到港後第二段陸運的公里數','40'],['陸運-2交通工具','C','有填陸運-2 的公里數就要選（下拉選單）','營業大貨車(柴油)',null,{l:v}]];
 const TPL_TRN_RULE={need:[['陸運-1(km)','空運(km)','海運(km)','陸運-2(km)']],cond:[['陸運-1(km)','陸運-1交通工具'],['陸運-2(km)','陸運-2交通工具']]};
 TPLS['C09']={code:'C09',name:'下游運輸',lists:tplTrnLists('C09'),how:tplTrnHow('C09 下游運輸','客戶',['6. 「排放源分類」：一般出貨選 C9；本廠出貨、運費由本廠付的選 C4-2（碳排會算進 C04 上游運輸）。沒填＝C9。']),
  sheets:[Object.assign({name:'產出3.下游運輸C9',cols:[['序號','O','流水號','1'],['產品類別','S','','樞紐'],['產品名稱','S','','LCD Hinge'],['型號','O','',''],['客戶名稱','R','每一列都要填；沒有名稱的列不會匯入','○○科技'],['出貨國家或地區','S','','美國'],
