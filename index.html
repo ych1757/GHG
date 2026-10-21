@@ -292,7 +292,7 @@ function facChg(on){ return '<span class="fchg'+(on?'':' off')+'">🟡</span>'; 
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-48-4</b> · 2026/10/21</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-48-5</b> · 2026/10/21</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -2066,9 +2066,10 @@ async function permSetRole(emp,role){   // V48-1:點膠囊指派;再點同角色
 async function permAlertCheck(){
   try{
     if(!sb)return;
-    if(curGhgUser&&curGhgUser.role!=='admin'){permAlertRender([]);return;}   // V51:限系統管理
+    if(!curGhgUser||curGhgUser.role!=='admin'){permAlertRender([],[]);return;}   // V51:限系統管理；V129-48-5：還沒登入也不檢查（開頁時還沒登入→讀到空名單→誤報）
     const {data:ppl,error:pe}=await sb.from('identity_access').select('emp_id,name,active').contains('systems','["GHG"]').eq('active',true);
-    const {data:rl}=await sb.from('ghg_user_roles').select('emp_id');
+    const {data:rl,error:rle}=await sb.from('ghg_user_roles').select('emp_id');
+    if(pe||rle||!ppl||!rl||(!rl.length&&ppl.length)){permAlertRender([],[]);return;}   // V129-48-5：名單讀不到或讀到空＝不判定（不可把讀不到印成全部沒指派）
     const has=new Set((rl||[]).map(r=>r.emp_id));
     const inOms=new Set((ppl||[]).map(p=>String(p.emp_id||'').toUpperCase()));
     const orph=(pe||!ppl)?undefined:(rl||[]).filter(r=>!inOms.has(String(r.emp_id||'').toUpperCase())).map(r=>({emp_id:r.emp_id,name:''}));   // V107-1
@@ -2484,6 +2485,7 @@ function lgApply(){
   chip.style.display='';
   chip.innerHTML='👤 <b>'+facEsc(u.name)+'</b>（'+facEsc(u.roleName)+'·'+facEsc(lgScopeAll()?'全部廠區':(u.scope||[]).join(','))+'）　<a href="javascript:void(0)" onclick="lgLogout()" style="color:#c0392b;font-weight:700">登出</a>　<a href="https://ych1757.github.io/HUB/" style="color:var(--d);font-weight:700;text-decoration:none">回 SyncHub</a>';
   READONLY=['input','esg','admin'].indexOf(u.role)<0;   // 寫入權
+  setTimeout(permAlertCheck,0);   // V129-48-5：登入完成後重查未指派角色（開頁那次還沒登入）
   const tabOf=k=>[...document.querySelectorAll('.tab')].find(t=>t.dataset.t===k);
   if(u.role==='esg'){window._permEsgOnly=true;}
   else if(u.role!=='admin'){const pt=tabOf('perm'); if(pt)pt.style.display='none';}
@@ -3798,7 +3800,7 @@ function c12MapPaint(){
   GO.forEach(g=>{ if(!hitG(g))return; const xs=g.xs.filter(hitX); if(!xs.length)return; shown++;
     if(g.xs.length>1){ const gi=C12MV.gks.push(g.gk)-1; const cl=g.cls.map(c=>C12_ENZH[c]).join('／')||'<span style="color:#D42B3A">待 ESG 選</span>';
       h+='<tr class="grp'+(g.pend?' pend':'')+'"><td style="text-align:left;white-space:normal"><b style="font-size:13.5px">'+facEsc(g.head)+'</b> <span class="fmini">'+g.xs.length+' 種寫法'+(xs.length<g.xs.length?'（顯示 '+xs.length+'）':'')+'</span></td><td></td><td></td>'
-        +'<td style="text-align:left;white-space:normal"><div style="font-size:12px;margin-bottom:2px">'+cl+'</div>'+(can?'<select onchange="c12MapGrp('+gi+',this.value);this.value=&#39;&#39;" style="width:100%;font-size:12px" title="這一組所有寫法一起改成同一個大類"><option value="">整組改成…</option>'+['Metal','Plastic','Paper','Other'].map(k=>'<option value="'+k+'">整組改成'+C12_ENZH[k]+'</option>').join('')+'</select>':'')+'</td>'
+        +'<td style="text-align:left;white-space:normal"><div style="font-size:12px;margin-bottom:2px">'+cl+'</div>'+(can?'<select onchange="c12MapGrp('+gi+',this.value);this.value=&#39;&#39;" style="width:100%;font-size:12px" title="這一組所有寫法一起改成同一個大類"><option value="">整組改成…</option>'+['Metal','Plastic','Paper','Other'].map(k=>{ const same=(g.cls.length===1&&!g.pend&&g.cls[0]===k); return '<option value="'+k+'"'+(same?' disabled':'')+'>整組改成'+C12_ENZH[k]+(same?'（已是）':'')+'</option>'; }).join('')+'</select>':'')+'</td>'
         +'<td style="text-align:left;font-size:12px">'+(g.bad?'<span style="background:#FBE0E0;color:#D42B3A;border-radius:9px;padding:1px 7px;font-size:11px">同材質歸不同類</span><div style="font-size:11.5px;color:#a33;margin-top:2px">請統一成一類'+(can?'：':'')+'</div>'+(can?'<div style="margin-top:3px;display:flex;flex-wrap:wrap;gap:4px">'+g.cls.map(c=>'<button class="sec" onclick="c12MapGrp('+gi+',&#39;'+c+'&#39;)" style="padding:1px 8px;font-size:11.5px">統一成'+C12_ENZH[c]+'</button>').join('')+'</div><div style="font-size:10.5px;color:#8a9c93">按了再按上面「儲存」</div>':''):'')+'</td>'
         +'<td style="text-align:left;white-space:normal;font-size:11.5px;color:#5c7568">'+facEsc(useOf(xs.map(x=>x.mat_key)))+'</td><td></td></tr>';
       xs.forEach(x=>{ h+=row(x,true); }); }
