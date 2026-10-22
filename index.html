@@ -282,7 +282,17 @@ td.fachl{background:#fffbe6!important;box-shadow:inset 3px 0 0 #e6a700}   /* V38
   #home .hm-tbl .c-s{display:none}
 }
 </style>
-<style id="fchgcss">.fchg{display:inline-block;width:1.35em;text-align:right;font-size:10px}.fchg.off{visibility:hidden}</style>
+<style id="ghgpal">/* V129-58：分區配色 D（使用者 261022）。範疇＝橘／藍／綠；狀態＝填寫中藍、等確認琥珀、退回玫瑰、通過綠；區塊＝進度淡綠、要處理淡杏 */
+:root{--s1:#D9692E;--s1t:#FDEEE3;--s2:#2B6CB0;--s2t:#E6EFFA;--s3:#2F9A63;--s3t:#E7F4EC;
+--st-fill-bg:#E6EFFA;--st-fill-fg:#2B5B9A;--st-fill-bd:#C3D6EE;--st-wait-bg:#FFF1D6;--st-wait-fg:#8A5A00;--st-wait-bd:#F0D69A;
+--st-back-bg:#FBE4EA;--st-back-fg:#A3264E;--st-back-bd:#EDB9C7;--st-done-bg:#DFF0E8;--st-done-fg:#1E6B43;--st-done-bd:#BFE3CD;
+--zone-prog-bg:#E5F0E3;--zone-prog-bd:#CFE2CB;--zone-att-bg:#F8EBE3;--zone-att-bd:#EED3C3}
+tr[data-gcat="範疇一"]>td:first-child,tr[data-gcat^="1."]>td:first-child{box-shadow:inset 4px 0 0 var(--s1)}
+tr[data-gcat^="範疇二"]>td:first-child,tr[data-gcat^="2."]>td:first-child{box-shadow:inset 4px 0 0 var(--s2)}
+tr[data-gcat="範疇三"]>td:first-child,tr[data-gcat^="C"]>td:first-child{box-shadow:inset 4px 0 0 var(--s3)}
+#fnsc0_t,#prog table.pgt tr:first-child th.grp:nth-child(2){color:var(--s1)!important}#fnsc1_t,#prog table.pgt tr:first-child th.grp:nth-child(3){color:var(--s2)!important}#fnsc2_t,#prog table.pgt tr:first-child th.grp:nth-child(4){color:var(--s3)!important}
+#prog table.pgt tr:first-child th.grp:nth-child(2){box-shadow:inset 0 -3px 0 var(--s1)}#prog table.pgt tr:first-child th.grp:nth-child(3){box-shadow:inset 0 -3px 0 var(--s2)}#prog table.pgt tr:first-child th.grp:nth-child(4){box-shadow:inset 0 -3px 0 var(--s3)}
+</style><style id="fchgcss">.fchg{display:inline-block;width:1.35em;text-align:right;font-size:10px}.fchg.off{visibility:hidden}</style>
 <script>/* V129-40-4：🟡＝與前一年不同；每格都留同寬的位置（沒變＝看不見），數字才對齊 */
 function facChg(on){ return '<span class="fchg'+(on?'':' off')+'">🟡</span>'; }</script>
 <script>/* V89：自動等比縮放。主畫面排版以 1440 寬為準（.wrap max-width 1440）；畫面不夠寬（筆電）就整頁等比縮小，讓筆電看到的排版跟公司大螢幕一樣；大螢幕沿用 V67-4 的放大（≥1680 1.15、≥2200 1.2）；手機（≤768）不縮，走手機版面。--z 給 body zoom 與所有 vh 高度共用（vh 一律除以 --z，否則縮放後高度跟著變小、下方留白）。 */
@@ -292,7 +302,7 @@ function facChg(on){ return '<span class="fchg'+(on?'':' off')+'">🟡</span>'; 
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-55</b> · 2026/10/22</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-58</b> · 2026/10/22</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -2540,7 +2550,7 @@ function lgApply(){
    顏色：三個範疇＝琥珀／藍／品牌綠（色盲辨識驗證過，任兩色都分得開）；各廠占比＝靛／青／玫紅／黃綠／淡紫＋其餘淺灰（V125-5 起；跟著名次、避開範疇色）；增減＝紅升綠降＋箭頭。
    畫面上的廠名、類別名一律用 textContent 或已跳脫的 plantLabelHTML 放進去。 ══ */
 const HM={rows:null,err:'',years:[],year:null,by:{},tot:{}};
-const HM_SC=[{k:'範疇一',n:'直接排放',c:'#eda100'},{k:'範疇二',n:'能源間接',c:'#2a78d6'},{k:'範疇三',n:'價值鏈',c:'#1B8A60'}];
+const HM_SC=[{k:'範疇一',n:'直接排放',c:'#D9692E',t:'var(--s1t)'},{k:'範疇二',n:'能源間接',c:'#2B6CB0',t:'var(--s2t)'},{k:'範疇三',n:'價值鏈',c:'#2F9A63',t:'var(--s3t)'}];   /* V129-58：跟全系統範疇色同一組（--s1/--s2/--s3） */
 const HM_RAMP=['#5B5BD6','#22A9C9','#E0668C','#8DB33A','#9A8AD8'], HM_OTHER='#DDE2E8';   /* V125-5：原本是中性藍灰（看起來像黑白），使用者 261013 要換；這五色用 validate_palette.js 驗過（相鄰可分）、避開三個範疇的顏色；顏色跟著名次 */
 function homeCanSee(){ return !!(typeof curGhgUser!=='undefined'&&curGhgUser&&lgScopeAll()); }   /* 跟「全集團」分頁同一條規則：全部廠區權限才看得到跨廠數字 */
 const hmN0=n=>Math.round(Number(n)||0).toLocaleString('en-US');
@@ -2603,7 +2613,7 @@ function homeRender(){
   else if(prevY===baseY)h+=chip(hmDelta(T.t,P.t),'較 '+prevY+' 年・基準年（'+sgn(T.t-P.t)+'）');
   else h+=chip(hmDelta(T.t,P.t),'較 '+prevY+' 年（'+sgn(T.t-P.t)+'）')+chip(hmDelta(T.t,B.t),'較基準年 '+baseY+'（'+sgn(T.t-B.t)+'）');
   h+='</div></div>';
-  HM_SC.forEach((s,i)=>{ h+='<div class="hm-tile"><div class="hm-tl"><i class="hm-sw" style="background:'+s.c+'"></i>'+s.k+'　'+s.n+'</div><div class="hm-tv">'+hmN0(T.s[i])+'<small>占 '+hmPct(T.s[i]/T.t)+'</small></div><div class="hm-dl">'
+  HM_SC.forEach((s,i)=>{ h+='<div class="hm-tile" style="background:'+s.t+'"><div class="hm-tl"><i class="hm-sw" style="background:'+s.c+'"></i>'+s.k+'　'+s.n+'</div><div class="hm-tv">'+hmN0(T.s[i])+'<small>占 '+hmPct(T.s[i]/T.t)+'</small></div><div class="hm-dl">'
       +(P?(chip(hmDelta(T.s[i],P.s[i]),'較 '+prevY+' 年'+(prevY===baseY?'・基準年':''))+(prevY!==baseY?chip(hmDelta(T.s[i],B.s[i]),'較基準年 '+baseY):'')):'<span>基準年</span>')+'</div></div>'; });
   h+='</div><div class="hm-row"><div class="hm-card"><div class="hm-ch"><span class="hm-ct">年度排放趨勢</span><span class="hm-cs">依範疇堆疊・點年度可切換</span><span class="hm-leg">'+leg+'</span></div><div id="hm_trend"></div><div id="hm_ttbl"></div></div>'
     +'<div class="hm-card"><div class="hm-ch"><span class="hm-ct">各廠占比</span><span class="hm-cs">'+Y+' 年・前 '+topN+' 大廠合計占 '+hmPct(T.t>0?topSum/T.t:0)+'</span></div><div class="hm-do"><div class="hm-dsvg" id="hm_donut"></div><div class="hm-dlist" id="hm_dlist"></div></div><div id="hm_movers"></div></div></div>'
@@ -3629,7 +3639,7 @@ function facSrcRender(m,o){
     const bk=(o.midKey||m.code)+'|'+b.rg, op=(FSM_ALL||FSM_OPEN.has(bk)), dC=' class="fsmd'+(op?' on':'')+'"', rgTok=String(RG).trim().split(/[\s　]/)[0];
     const nEnt=y=>{ const gs=b.cells[(y===m.openY)?last:y]||{}; return new Set(Object.values(gs).flatMap(x=>[x.fid].concat((x.alts||[]).map(a=>a.fid))).filter(Boolean)).size; };
     h+=`<tr class="fsmh" data-k="${facEsc(bk)}" data-rg="${facEsc(rgTok)}" onclick="fsmTog(this)" title="點一下展開／收起這個地區的明細（係數代號、適用廠區、GWP 版本、各氣體係數、來源）" style="background:#e3f2e9;cursor:pointer"><td style="text-align:left;font-weight:800"><span class="fsmar">${op?'▾':'▸'}</span> ${facEsc(RG)}　<span style="font-weight:400;font-size:11px;color:var(--g)">合成當量 ${facEsc(facBlkUnit(b))}</span>${(b.hist&&b.hist.length&&ys.every(y=>b.eq[y]==null))?' <span style="font-weight:400;font-size:11px;color:#8a6400" title="這個區域只有 2022～2024 歸戶的舊條目（批218 標記），沒有正式條目；舊明細連著所以留著、不再維護">只有歷史歸戶條目</span>':''}</td>`
-      +ys.map((y,i)=>{const v=b.eq[y],p=i?b.eq[ys[i-1]]:null,chg=(i>0&&v!=null&&p!=null&&Math.abs(v-p)>1e-12); const od=facOdd(m.code,b.cells[y]);return `<td style="text-align:right;font-weight:800${openSt(y)}"${chg?' class="chg"':''}>${f10(v)}${(y!==m.openY&&facYOpen(y)&&Object.values(b.cells[y]||{}).some(c=>c.from&&c.from<y))?' <span style="font-size:10px;color:#b8860b;font-weight:400" title="有氣體的 '+y+' 年條目尚未維護（點開這個地區看各氣體列）">⚠ 未維護</span>':''}${od?' <span style="font-size:10px;color:#c0392b;font-weight:700;white-space:nowrap" title="'+od.gases.join('／')+' 合計佔了這格的 '+(od.pct*100).toFixed(1)+'%（CO2 只佔 '+((1-od.pct)*100).toFixed(1)+'%）。燃料燃燒的 CO2 應佔絕大多數，這格疑似 '+od.gases.join('／')+' 的係數本身已是 CO2e、又被乘了一次 GWP。請對照原始係數表的欄位標題確認。系統沒有更動任何數字。">⚠ 待查</span>':''}${nEnt(y)>1?' <span style="font-size:10px;color:#b8860b;font-weight:400;white-space:nowrap" title="這一格底下有 '+nEnt(y)+' 筆條目，點開這個地區看「係數代號」列">⚠ '+nEnt(y)+' 筆</span>':''}${facChg(chg)}</td>`;}).join('')+`</tr>`;   // V74-1:沿用標記
+      +ys.map((y,i)=>{const v=b.eq[y],p=i?b.eq[ys[i-1]]:null,chg=(i>0&&v!=null&&p!=null&&Math.abs(v-p)>1e-12); const od=facOdd(m.code,b.cells[y]);return `<td style="text-align:right;font-weight:800${openSt(y)}"${chg?' class="chg"':''}>${f10(v)}${(y!==m.openY&&facYOpen(y)&&Object.values(b.cells[y]||{}).some(c=>c.from&&c.from<y))?' <span style="font-size:10px;color:#b8860b;font-weight:400" title="有氣體的 '+y+' 年條目尚未維護（點開這個地區看各氣體列）">⚠ 未維護</span>':''}${od?' <span style="font-size:10px;color:#c0392b;font-weight:700;white-space:nowrap" title="'+od.gases.join('／')+' 合計佔了這格的 '+(od.pct*100).toFixed(1)+'%（CO2 只佔 '+((1-od.pct)*100).toFixed(1)+'%）。燃料燃燒的 CO2 應佔絕大多數，這格疑似 '+od.gases.join('／')+' 的係數本身已是 CO2e、又被乘了一次 GWP。請對照原始係數表的欄位標題確認。系統沒有更動任何數字。">⚠ 待查</span>':''}${nEnt(y)>1?' <span style="font-size:10px;color:#b8860b;font-weight:400;white-space:nowrap" title="這一格底下有 '+nEnt(y)+' 筆條目，點開這個地區看「係數代號」列">⚠ '+nEnt(y)+' 筆</span>':''}${facChg(chg)}${(y!==m.openY&&typeof frevCellAct==='function')?frevCellAct(b,y):''}</td>`;}).join('')+`</tr>`;   // V129-57-1：確認／修改放在 🟡 後面（數字旁邊的 🟡 不被擠到下一行）；V74-1:沿用標記
     { /* V103-11：一個年度一個代號（使用者 260929）——代號＝中分類或排放源碼·區域·年度；每年 ESG 維護、來源沒變沿用數值但代號不同。
          底下有好幾筆條目（同年多版本／氣體拆開存）時標出筆數，滑鼠看每一筆；跨年共用一筆（舊做法）只寫在滑鼠提示 */
       const kb=o.midKey||(r?r.code:m.code);
@@ -3917,52 +3927,63 @@ function c12RowCls(r){ const e=(r&&r.extra)||{}; return c12ClsOf(r&&r.source_nam
 function c12RowCode(r){ const k=c12RowCls(r); const kd=k&&C12_KINDS.find(x=>x.k===k); return kd?kd.code:null; }
 function c12FacVal(f){ const gs=(FGAS&&f&&FGAS[f.factor_id])||[]; let v=0,u=''; gs.forEach(g=>{ v+=(+g.factor_value||0)*(g.gwp==null?1:+g.gwp); u=u||g.factor_unit||''; }); return {v:v,u:u}; }
 function c12FacName(f){ const m=String((f&&f.notes)||'').match(/(?:^|\|)材質:([^|]*)/); return m?m[1].trim():''; }
-function facC12Render(code){   /* V94：一列＝一種材質大類；年度格＝該年有效的條目值（同類同年不同值＝淡紅底，待 ESG 指定）；清冊實際用、係數庫沒有的值另標 */
-  const all=(FACALL||[]).filter(f=>f.category_id===code); const YS=facYears();   /* V129-11：原本寫死 2022～2025 */
-  if(typeof FAC_TRACE!=='undefined'&&FAC_TRACE&&FAC_TRACE.cat===code&&+FAC_TRACE.y>YS[YS.length-1]&&+FAC_TRACE.y<=2030)for(let y=YS[YS.length-1]+1;y<=+FAC_TRACE.y;y++)YS.push(y);   /* 從登錄頁追溯 2026 以後進來，多開那幾年 */
+function facC12Render(code){   /* V94；V129-57-1：歷年表跟 2026 起處理方式表合成一張（使用者 261022），這裡只算歷年資料，表在 fc12tdPaint 畫 */
+  const all=(FACALL||[]).filter(f=>f.category_id===code); const YS=facYears();
   const f5=v=>Number(v||0).toLocaleString('en-US',{minimumFractionDigits:5,maximumFractionDigits:5});
   const R=((typeof ITEM_ROWS!=='undefined'&&ITEM_ROWS.C12)||[]).filter(r=>r.input_method!=='C12自動');
-  const USE={}, SU={}, AL={};
-  R.forEach(r=>{ const cd=c12RowCode(r); if(!cd)return; (SU[cd]=SU[cd]||new Set()).add(r.site_id); const a=String(r.source_name||'').trim(); if(a&&!/^C12$/i.test(a))(AL[cd]=AL[cd]||new Set()).add(a); const v=r.ef_value; if(v==null||!isFinite(+v))return; const k=cd+'|'+r.data_year+'|'+f5(+v); (USE[k]=USE[k]||new Set()).add(r.site_id); });
+  const USE={}, AL={};
+  R.forEach(r=>{ const cd=c12RowCode(r); if(!cd)return; const a=String(r.source_name||'').trim(); if(a&&!/^C12$/i.test(a))(AL[cd]=AL[cd]||new Set()).add(a); const v=r.ef_value; if(v==null||!isFinite(+v))return; const k=cd+'|'+r.data_year+'|'+f5(+v); (USE[k]=USE[k]||new Set()).add(r.site_id); });
   const srcs=[...new Set(all.map(f=>f.factor_source||'').filter(Boolean))];
-  let h='<div style="padding:6px 0 8px;font-size:15px;font-weight:800;color:var(--d)">'+facEsc(ncText(code))+' <span style="font-weight:400;font-size:12px;color:#a9b8b0">'+facEsc(code)+'</span>　<span style="font-weight:600;font-size:13px">材質大類 × 年度（kgCO₂e／公噸）· 唯讀　'+all.length+' 條</span></div>'
-    +'<div style="font-size:11.5px;color:var(--g);margin-bottom:6px">C12 按四大類算（金屬／塑膠／紙類／其他）：一列＝一類；年度格＝係數庫那一年有效的值；<span style="background:#fde2e2;padding:0 4px">淡紅底</span>＝同一類同一年有不同的值，待 ESG 指定一條；值下面的小字＝清冊用了這個值的廠；<span style="color:#b8860b">清冊用 …</span>＝清冊實際用的值，係數庫這一年沒有；<span style="color:#b8860b">⚠ 未維護</span>＝還開著的年度沒有自己的條目。係數庫這 '+all.length+' 條是照各廠清冊的材質寫法收進來的，所以同一類有很多條；灰字＝各廠清冊的寫法。來源：'+facEsc(srcs.join('／')||'—')+'</div>';
-  if(!all.length)return h+'<div class="msg" style="background:#fff8e1">係數庫還沒有 C12 條目。</div>';
-  h+='<table class="fsm" style="width:100%;min-width:760px;table-layout:fixed;font-size:12.5px"><colgroup><col style="width:72px"><col style="width:64px">'+YS.map(()=>'<col>').join('')+'<col style="width:76px"></colgroup><thead><tr><th style="text-align:left">代號</th><th style="text-align:left">大類</th>'+YS.map(y=>'<th style="text-align:right">'+y+'</th>').join('')+'<th style="text-align:left">單位</th></tr></thead><tbody>';
-  C12_KINDS.forEach(kd=>{ const L=all.filter(f=>f.esg_code===kd.code); const units=[...new Set(L.map(f=>(window.ghgUnit||(x=>x))(c12FacVal(f).u)).filter(Boolean))];
-    h+='<tr data-code="'+kd.code+'" style="border-top:2px solid #b8d2c4"><td style="text-align:left"><span class="ncode" style="min-width:0">'+kd.code+'</span></td><td style="text-align:left;font-weight:700;color:var(--d)">'+kd.name+'<div style="font-size:10.5px;font-weight:400;color:#8a9c93">'+kd.en+'</div></td>'
-      +YS.map((y,yi)=>{ const hit=L.filter(f=>inEff(f,y));   /* C12 條目是各廠材質寫法（別名），不是新舊版本：該年有效的全列 */ const libV=[...new Set(hit.map(f=>f5(c12FacVal(f).v)))];
-        const usedV=Object.keys(USE).filter(k=>k.indexOf(kd.code+'|'+y+'|')===0).map(k=>k.split('|')[2]); const other=usedV.filter(v=>libV.indexOf(v)<0);
-        const pv=yi>0?[...new Set(L.filter(f=>inEff(f,YS[yi-1])).map(f=>f5(c12FacVal(f).v)))]:[]; const chg=libV.length===1&&pv.length===1&&pv[0]!==libV[0];
-        const stale=(typeof facYOpen==='function')&&facYOpen(y)&&hit.length&&hit.every(f=>(efF(f)!=null?efF(f):0)<y);
-        const who=v=>{ const s=USE[kd.code+'|'+y+'|'+v]; return s&&s.size?'<div style="font-size:10px;color:#7a5a00;white-space:normal;line-height:1.15;margin-bottom:2px">'+facEsc([...s].sort().join(' '))+'</div>':''; };
-        const tip=kd.code+'·ALL·'+y+String.fromCharCode(10)+hit.map(f=>f.factor_id+'＝'+f5(c12FacVal(f).v)+' '+c12FacVal(f).u+'（'+(c12FacName(f)||'')+'）').join(String.fromCharCode(10));
-        let body=!hit.length?'<span style="color:#c3cfc9">—</span>':(libV.length>1?libV.map(v=>'<div>'+v+who(v)+'</div>').join('')+'<div style="font-size:10px;color:#c0392b">⚠ '+libV.length+' 個值</div>':(libV[0]+facChg(chg)+who(libV[0])));
-        if(other.length)body+=other.map(v=>'<div style="font-size:10px;color:#b8860b;white-space:normal;line-height:1.2;margin-top:2px">清冊用 '+v+'：'+facEsc([...USE[kd.code+'|'+y+'|'+v]].sort().join(' '))+'</div>').join('');
-        if(stale)body+='<div style="font-size:10px;color:#b8860b">⚠ 未維護</div>';
-        return '<td data-y="'+y+'"'+(chg?' class="chg"':'')+' style="text-align:right;white-space:normal'+(libV.length>1?';background:#fde2e2':'')+'" title="'+facEsc(tip)+'">'+body+'</td>'; }).join('')
-      +'<td style="text-align:left;font-size:11px;white-space:normal;word-break:break-word">'+(units.map(facEsc).join('<br>')||'—')+'</td></tr>'
-      +'<tr><td></td><td colspan="'+(YS.length+2)+'" style="text-align:left;font-size:10.5px;color:#8a9c93;white-space:normal;line-height:1.4;padding-top:0">清冊寫法：'+facEsc([...(AL[kd.code]||[])].sort().join('、')||'—')+'</td></tr>'; });
-  const un=all.filter(f=>!C12_KINDS.some(k=>k.code===f.esg_code)&&!/^C12-\d\d-\d\d$/.test(String(f.esg_code||'')));   /* V129-47：新分法代號在上面另一張表 */ if(un.length)h+='<tr><td colspan="'+(YS.length+4)+'" style="text-align:left;color:#a33;font-size:11.5px">⚠ 另有 '+un.length+' 條沒有代號：'+facEsc(un.map(f=>f.factor_id).join('、'))+'</td></tr>';
-  return '<div id="fc12td" class="msg" style="background:var(--t)">讀取 2026 起的處理方式設定…</div>'+h+'</tbody></table>'+facC12TreatOverview(R)+fc12tdKick(); }   /* V129-44；V129-47：最上面加新分法 */
+  if(!all.length)return '<div class="msg" style="background:#fff8e1">係數庫還沒有 C12 條目。</div>';
+  const old=all.filter(f=>C12_KINDS.some(k=>k.code===f.esg_code));
+  const HY=YS.filter(y=>old.some(f=>inEff(f,y))||Object.keys(USE).some(k=>k.split('|')[1]===String(y)));
+  const K={}; C12_KINDS.forEach(kd=>{ const L=old.filter(f=>f.esg_code===kd.code); const Y={};
+    HY.forEach(y=>{ const hit=L.filter(f=>inEff(f,y)); const libV=[...new Set(hit.map(f=>f5(c12FacVal(f).v)))]; const usedV=Object.keys(USE).filter(k=>k.indexOf(kd.code+'|'+y+'|')===0).map(k=>k.split('|')[2]);
+      Y[y]={hit:hit,libV:libV,other:usedV.filter(v=>libV.indexOf(v)<0),stale:(typeof facYOpen==='function')&&facYOpen(y)&&hit.length&&hit.every(f=>(efF(f)!=null?efF(f):0)<y)}; });
+    K[kd.k]={Y:Y,AL:[...(AL[kd.code]||[])].sort()}; });
+  window.FC12HIST={HY:HY,K:K,srcs:srcs,n:all.length,f5:f5};
+  const un=all.filter(f=>!C12_KINDS.some(k=>k.code===f.esg_code)&&!/^C12-\d\d-\d\d$/.test(String(f.esg_code||'')));
+  return '<div id="fc12td" class="msg" style="background:var(--t)">讀取 C12 係數與處理方式設定…</div>'+(un.length?'<div style="color:#a33;font-size:11.5px;margin:4px 0">⚠ 另有 '+un.length+' 條沒有代號：'+facEsc(un.map(f=>f.factor_id).join('、'))+'</div>':'')+facC12TreatOverview(R)+fc12tdKick(); }
 let FC12TD={rows:null,edit:{},err:''};
 function fc12tdKick(){ setTimeout(()=>{ fc12tdLoad(); },0); return ''; }
 async function fc12tdLoad(){ const box=document.getElementById('fc12td'); if(!box)return;   /* V129-47：2026 起 C12＝4 材質 × 3 處理方式；ESG 每年定預設 */
   try{ const {data,error}=await sb.from('ghg_c12_treat_default').select('*').order('data_year').order('mat'); if(error)throw error; FC12TD.rows=data||[]; FC12TD.err=''; }catch(e){ FC12TD.rows=null; FC12TD.err=String(e.message||e); }
   fc12tdPaint(); }
 function fc12tdPaint(){ const box=document.getElementById('fc12td'); if(!box)return; box.className=''; box.style.background='';
-  if(FC12TD.err){ box.innerHTML=/ghg_c12_treat_default/.test(FC12TD.err)&&/does not exist|could not find|schema cache/i.test(FC12TD.err)?'<div class="msg" style="background:#fff8e1;margin-bottom:8px">2026 起的 C12 處理方式設定還沒建（批270 SQL 還沒跑）。</div>':'<div class="msg err">處理方式設定讀取失敗：'+facEsc(FC12TD.err)+'</div>'; return; }
+  const errH=!FC12TD.err?'':(/ghg_c12_treat_default/.test(FC12TD.err)&&/does not exist|could not find|schema cache/i.test(FC12TD.err)?'<div class="msg" style="background:#fff8e1;margin-bottom:8px">2026 起的 C12 處理方式設定還沒建（批270 SQL 還沒跑）。</div>':'<div class="msg err">處理方式設定讀取失敗：'+facEsc(FC12TD.err)+'</div>');   /* V129-57-1：讀取失敗也照畫係數表 */
   const TR=['回收','燃燒','掩埋'], MK=[['M','01'],['P','02'],['R','03'],['O','99']]; const KN={}; C12_KINDS.forEach(k=>{ KN[k.k]=k; });
   const nf2=v=>(+v).toLocaleString('en-US',{maximumFractionDigits:5}); const fl=(FACALL||[]).filter(f=>f.category_id==='C12'&&/^C12-\d\d-\d\d$/.test(String(f.esg_code||'')));
   const yrs=[...new Set(fl.map(f=>f.valid_from).concat((FC12TD.rows||[]).map(r=>r.data_year)))].filter(y=>y>=2026).sort();
   const D={}; (FC12TD.rows||[]).forEach(r=>{ D[r.data_year+'|'+r.mat]=r; }); const can=(typeof c12MapCan==='function')&&c12MapCan();
-  let h='<div style="margin:0 0 4px;font-size:15px;font-weight:800;color:var(--d)">2026 起：處理方式係數（4 材質 × 3 處理方式）<span title="賣出去的產品壞了之後怎麼處理，各地不同，取最常見三種：回收、燃燒、掩埋。每一格＝一個代號（C12-材質-處理）。綠底＝那一年 ESG 定的預設處理方式，各廠 C12 頁自動用綠底那一格的係數，廠端不用選。係數值＝ESG C12 收集表附表（UK Conversion Factors 2024）：回收＝Open-loop（紙＝Closed-loop）、燃燒＝Combustion、掩埋＝Landfill；其他＝玻璃與電子電器廢棄物同一組（附表 Glass 列）。2025 以前照各廠當年申報（見最下面「各廠歷年處理方式」）。" style="cursor:help;color:var(--p);font-size:13px;margin-left:6px">ⓘ</span></div>';
-  h+='<table class="fsm" style="width:auto;min-width:56%;font-size:12.5px;margin-bottom:6px"><thead><tr><th style="text-align:left">代號</th><th style="text-align:left">材質</th><th style="text-align:left">處理方式</th>'+yrs.map(y=>'<th style="text-align:right">'+y+'</th>').join('')+'<th style="text-align:left">單位</th></tr></thead><tbody>';
-  MK.forEach(([k,mc])=>{ TR.forEach((tr,i)=>{ const code='C12-'+mc+'-'+({'回收':'01','燃燒':'02','掩埋':'03'})[tr];   /* 係數庫頁讀不到登錄頁模組的 C12_TCODE */
-    h+='<tr>'+(i===0?'':'')+'<td style="text-align:left;white-space:nowrap">'+code+'</td><td style="text-align:left">'+(i===0?'<b>'+facEsc(KN[k].name)+'</b> <span class="fmini">'+KN[k].en+'</span>':'')+'</td><td style="text-align:left">'+tr+'</td>'
-      +yrs.map(y=>{ const f=fl.find(x=>x.esg_code===code&&x.valid_from<=y&&(x.valid_to==null||x.valid_to>=y)); const on=D[y+'|'+k]&&D[y+'|'+k].treat===tr; return '<td style="text-align:right;'+(on?'background:#dff0e8;font-weight:700':'')+'" title="'+facEsc(f?(f.factor_id+'｜'+(f.review_status||'')):'係數庫沒有這一格')+'">'+(f?nf2(c12FacVal(f).v):'<span style="color:#c3cfc9">—</span>')+(on?' <span style="font-size:10px;color:var(--d)">預設</span>':'')+'</td>'; }).join('')
-      +'<td style="text-align:left;font-size:11px">kgCO₂e／公噸</td></tr>'; }); });
+  const H=window.FC12HIST||{HY:[],K:{},srcs:[],n:0,f5:nf2}; const HY=H.HY, NY=yrs, ALLY=HY.concat(NY); const num=v=>+String(v).replace(/,/g,'');
+  const tipI='一列＝一個材質的一種處理方式（賣出去的產品壞了之後怎麼處理，取最常見三種：回收、燃燒、掩埋）。'+(HY.length?HY[0]+'–'+HY[HY.length-1]+'＝各廠當年清冊用的係數，從係數值反推處理方式：8.88386＝掩埋（紙是堆肥）、紙 1,164.39015＝掩埋、6.41061＝回收或燃燒（UK 表這兩種同一個值，分不出，所以合成跨兩列的一格）。':'')+(NY.length?NY[0]+' 起＝ESG C12 收集表附表（UK Conversion Factors 2024）：回收＝Open-loop（紙＝Closed-loop）、燃燒＝Combustion、掩埋＝Landfill；其他＝玻璃與電子電器廢棄物同一組（附表 Glass 列）。綠底「預設」＝那一年 ESG 定的處理方式，各廠 C12 頁自動用那一格。':'')+'來源：'+(H.srcs.join('／')||'—');
+  let h='<div style="margin:0 0 4px;font-size:15px;font-weight:800;color:var(--d)">'+facEsc(ncText('C12'))+' <span style="font-weight:400;font-size:12px;color:#a9b8b0">C12</span>　<span style="font-weight:600;font-size:13px">材質 × 處理方式 × 年度（kgCO₂e／公噸）· '+H.n+' 條</span><span title="'+facEsc(tipI)+'" style="cursor:help;color:var(--p);font-size:13px;margin-left:6px">ⓘ</span></div>'
+    +'<div style="font-size:11.5px;color:var(--g);margin-bottom:6px">'+(HY.length?HY[0]+'–'+HY[HY.length-1]+'＝各廠清冊用的係數（回收、燃燒同一個值，合成一格）；':'')+(NY.length?NY[0]+' 起＝ESG 定的係數，<span style="background:#dff0e8;padding:0 4px">綠底 預設</span>＝各廠自動用的那一格；':'')+'<span style="background:#fde2e2;padding:0 4px">淡紅底</span>＝同一格有不同的值，待 ESG 指定；<span style="color:#b8860b">清冊用 …</span>＝清冊實際用、係數庫那一年沒有；各廠用哪種看下面「各廠歷年處理方式」。</div>';
+  const SEP='border-left:2px solid #8fb8a3;';
+  h+='<table class="fsm" style="width:100%;min-width:760px;table-layout:fixed;font-size:12.5px;margin-bottom:6px"><colgroup><col style="width:84px"><col style="width:92px"><col style="width:66px">'+ALLY.map(()=>'<col>').join('')+'<col style="width:92px"></colgroup><thead><tr><th style="text-align:left">代號</th><th style="text-align:left">材質</th><th style="text-align:left">處理方式</th>'+ALLY.map((y,i)=>'<th style="text-align:right;'+(i===HY.length&&HY.length?SEP:'')+'">'+y+'</th>').join('')+'<th style="text-align:left">單位</th></tr></thead><tbody>';
+  const hc=(k,y,yi,t,rs,first)=>{ const kh=H.K[k]; const o=kh&&kh.Y[y]; const sty='text-align:right;white-space:normal;font-variant-numeric:tabular-nums;vertical-align:top';   /* 跨兩列的格數字靠上，跟回收那一列同一水平（使用者 261022） */
+    if(!o)return '<td'+(rs>1?' rowspan="'+rs+'"':'')+' style="'+sty+'"><span style="color:#c3cfc9">—</span></td>';
+    const isT=v=>c12TreatOf(k,num(v))===t; const vals=o.libV.filter(isT), oth=o.other.filter(isT), hit=o.hit.filter(f=>isT(H.f5(c12FacVal(f).v)));
+    const pv=yi>0?kh.Y[HY[yi-1]].libV.filter(isT):[]; const chg=vals.length===1&&pv.length===1&&pv[0]!==vals[0];
+    const tip='C12·'+y+'·'+t+String.fromCharCode(10)+(hit.map(f=>f.factor_id+'＝'+H.f5(c12FacVal(f).v)+' '+c12FacVal(f).u+'（'+(c12FacName(f)||'')+'）').join(String.fromCharCode(10))||'係數庫這一年沒有這種處理方式的條目');
+    let body=vals.length?(vals.length>1?vals.map(v=>'<div>'+v+facChg(false)+'</div>').join('')+'<div style="font-size:10px;color:#c0392b">⚠ '+vals.length+' 個值</div>':(vals[0]+facChg(chg))):(oth.length?'':'<span style="color:#c3cfc9">—</span>');
+    if(oth.length)body+=oth.map(v=>'<div style="font-size:10px;color:#b8860b;white-space:normal;line-height:1.2;margin-top:2px">清冊用 '+v+'</div>').join('');
+    if(o.stale&&first)body+='<div style="font-size:10px;color:#b8860b">⚠ 未維護</div>';
+    return '<td data-y="'+y+'"'+(rs>1?' rowspan="'+rs+'"':'')+(chg?' class="chg"':'')+' style="'+sty+(vals.length>1?';background:#fde2e2':'')+'" title="'+facEsc(tip)+'">'+body+'</td>'; };
+  const nc=(k,code,y,i)=>{ const f=code?fl.find(x=>x.esg_code===code&&x.valid_from<=y&&(x.valid_to==null||x.valid_to>=y)):null; const on=!!code&&D[y+'|'+k]&&D[y+'|'+k].treat===({'01':'回收','02':'燃燒','03':'掩埋'})[code.slice(-2)];
+    return '<td data-y="'+y+'" style="text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;'+(i===0&&HY.length?SEP:'')+(on?'background:#dff0e8;font-weight:700':'')+'" title="'+facEsc(f?(f.factor_id+'｜'+(f.review_status||'')):'係數庫沒有這一格')+'">'+(f?nf2(c12FacVal(f).v):'<span style="color:#c3cfc9">—</span>')+'<span style="display:inline-block;width:30px;margin-left:4px;text-align:left;font-size:10px;font-weight:400;color:var(--d)">'+(on?'預設':'')+'</span></td>'; };   /* 每格都留同寬的標籤位，數字才對齊（使用者 261022） */
+  const UNIT='<td style="text-align:left;font-size:11px">kgCO₂e／公噸</td>';
+  MK.forEach(([k,mc])=>{ const kh=H.K[k]||{Y:{},AL:[]}; const ex=[]; HY.forEach(y=>{ const o=kh.Y[y]; if(o)o.libV.concat(o.other).forEach(v=>{ const t=c12TreatOf(k,num(v)); if(t!=='回收／燃燒'&&t!=='掩埋'&&ex.indexOf(t)<0)ex.push(t); }); });
+    const n=3+ex.length; const RW=[['01','回收','回收／燃燒',2],['02','燃燒',null,0],['03','掩埋','掩埋',1]].concat(ex.map(t=>[null,t,t,1]));
+    RW.forEach(([tc,lab,ht,rs],i)=>{ const code=tc?'C12-'+mc+'-'+tc:null;
+      h+='<tr data-mat="'+k+'" data-treat="'+facEsc(lab)+'"'+(i===0?' style="border-top:2px solid #b8d2c4"':'')+'><td style="text-align:left;white-space:nowrap">'+(code||'<span style="color:#c3cfc9">—</span>')+'</td>'
+        +(i===0?'<td rowspan="'+n+'" style="text-align:left;vertical-align:top"><b style="color:var(--d)">'+facEsc(KN[k].name)+'</b><div style="font-size:10.5px;color:#8a9c93">'+KN[k].en+'</div><div style="font-size:10.5px;color:#a9b8b0">'+KN[k].code+'</div></td>':'')
+        +'<td style="text-align:left;white-space:nowrap">'+facEsc(lab)+'</td>'
+        +(ht?HY.map((y,yi)=>hc(k,y,yi,ht,rs,i===0)).join(''):'')
+        +NY.map((y,yi)=>nc(k,code,y,yi)).join('')+UNIT+'</tr>'; });
+    h+='<tr><td></td><td colspan="'+(ALLY.length+3)+'" style="text-align:left;font-size:10.5px;color:#8a9c93;white-space:normal;line-height:1.4;padding-top:0">清冊寫法：'+facEsc(kh.AL.join('、')||'—')+'</td></tr>'; });
   h+='</tbody></table>';
+  if(FC12TD.err){ box.innerHTML=h+errH; return; }
   const ne=Object.keys(FC12TD.edit).length; const ys2=yrs.length?yrs:[2026];
   h+='<div style="margin:6px 0 4px;font-weight:700;color:var(--d)">每年預設處理方式（ESG 定，一年一次）<span class="fmini" style="font-weight:400;margin-left:6px">改這裡＝那一年所有廠的 C12 都換成新的處理方式；已鎖定的年度只能看；還沒開帳的年度可以先設'+(can?'':'·唯讀')+'</span></div>';
   h+='<table class="fsm" style="width:auto;font-size:12.5px"><thead><tr><th style="text-align:left">年度</th>'+MK.map(([k])=>'<th style="text-align:left">'+facEsc(KN[k].name)+'</th>').join('')+'<th style="text-align:left">最後修改</th></tr></thead><tbody>';
@@ -5258,7 +5279,7 @@ async function loadCompare(){
       const subs=(SUBDEF[k]||[]).filter(([rc])=>rc==='S2-L'?(nz(rc)&&YEARS.some(y=>Math.abs(((S['S2-L']||{})[y]||0)-((S['S2-M']||{})[y]||0))>=0.00005)):nz(rc));
       const hasD=!SUBERR&&subs.length>0;
       const dq=y=>`style="cursor:pointer" title="到查詢頁看 ${facEsc(p.name||'')} ${k} ${y} 的明細" onclick="event.stopPropagation();drillQuery('${p.c}','${k}',${y})"`;
-      h+=`<tr class="cmp-${gi}" style="display:none;background:#fafdfb${hasD?';cursor:pointer':''}" ${hasD?`onclick="tgDtl(${gi},${ci})"`:''}><td style="text-align:left;padding-left:28px;color:var(--m)">${hasD?`<span id="dga${gi}-${ci}">▸</span> `:'　'}${k}　${CATNAME[k]||''}</td>${YEARS.map(y=>`<td ${dq(y)}>${fmt2(cv[y]||0)}</td>`).join('')}<td style="${cc.a.col}">${cc.a.chs}</td><td style="${cc.b.col}">${cc.b.chs}</td></tr>`;
+      h+=`<tr class="cmp-${gi}" data-gcat="${k}" style="display:none;background:#fafdfb${hasD?';cursor:pointer':''}" ${hasD?`onclick="tgDtl(${gi},${ci})"`:''}><td style="text-align:left;padding-left:28px;color:var(--m)">${hasD?`<span id="dga${gi}-${ci}">▸</span> `:'　'}${k}　${CATNAME[k]||''}</td>${YEARS.map(y=>`<td ${dq(y)}>${fmt2(cv[y]||0)}</td>`).join('')}<td style="${cc.a.col}">${cc.a.chs}</td><td style="${cc.b.col}">${cc.b.chs}</td></tr>`;
       if(hasD) subs.forEach(([rc,lab])=>{ const sv=S[rc]||{}, dc=ch2(y=>sv[y]||0);
         h+=`<tr class="dtl-${gi}-${ci}" style="display:none;background:#f3f8f5"><td style="text-align:left;padding-left:48px;color:var(--d);font-size:11.5px${rc==='S2-L'?';font-style:italic':''}">└ ${facEsc(lab)}</td>${YEARS.map(y=>`<td style="font-size:11.5px" ${dq(y)}>${fmt2(sv[y]||0)}</td>`).join('')}<td style="font-size:11px;${dc.a.col}">${dc.a.chs}</td><td style="font-size:11px;${dc.b.col}">${dc.b.chs}</td></tr>`; });
     });
@@ -6995,7 +7016,7 @@ function matT(r){ const q=+r.quantity||0; return /^(公斤|kg)$/i.test(String(r.
 let M80=null, MBASIS=null, MBSRC=null;   /* V129-45：過去年度的 C1 全部類別（批266） */
 function mat80(){ const rows=matRows().filter(r=>!MRET[r.record_id]); const tot=rows.reduce((a,r)=>a+matT(r),0); const out={map:{},tot:tot,n:0,cov:0,on:mat80On(),groups:[]};   /* V129-46：同一材質（原生＋再生）合起來排名 */
   const G=matGroups(rows).map(g=>({g:g,t:g.rows.reduce((a,r)=>a+matT(r),0)})).sort((a,b)=>b.t-a.t||String(a.g.mat).localeCompare(String(b.g.mat),'zh-Hant')); let cum=0; const order=[];
-  G.forEach((x,i)=>{ const sh=tot>0?x.t/tot:0; const inn=!out.on||(x.t>0&&cum<0.8-1e-12); cum+=sh; const m={rank:i+1,sh:sh,cum:cum,in:inn,gt:x.t}; x.m=m; x.g.rows.sort((a,b)=>(matCondOf(a)==='再生料'?1:0)-(matCondOf(b)==='再生料'?1:0)); x.g.rows.forEach(r=>{ out.map[r.record_id]=m; order.push(r); }); if(inn&&out.on){ out.n++; out.cov=cum; } });
+  G.forEach((x,i)=>{ const sh=tot>0?x.t/tot:0; const inn=!out.on||(x.t>0&&cum<0.8-1e-12); cum+=sh; const m={rank:i+1,sh:sh,cum:cum,in:inn,gt:x.t}; x.m=m; x.g.rows.sort((a,b)=>(matKindOf(x.g,a).k==='R'?1:0)-(matKindOf(x.g,b).k==='R'?1:0));   /* V129-57-1：沒寫料況的列也照依係數推定排（原生料在前） */ x.g.rows.forEach(r=>{ out.map[r.record_id]=m; order.push(r); }); if(inn&&out.on){ out.n++; out.cov=cum; } });
   out.order=order; out.groups=G; M80=out; return out; }
 function mat80In(r){ if(!mat80On())return true; const m=(M80||mat80()).map[r.record_id]; return !m||m.in; }
 function matCo2e(r){ if(!mat80In(r))return 0; const E=matEf(r); if(!E)return null; const k=matUnitK(r.quantity_unit,E.unit); if(k==null)return null; return (+r.quantity||0)*E.ef*k;}
@@ -7008,15 +7029,22 @@ function matRatioHTML(r){   /* V129-48-6：這一列包含哪些再生比例（e
   if(Array.isArray(D)&&D.length){ const isR=x=>{ const t=String(x.r==null?'':x.r).trim(), v=parseFloat(t); return !/PLM/i.test(t)&&isFinite(v)&&v>0; };
     const L=D.filter(x=>rec?isR(x):!isR(x)); if(!L.length)return '';
     return '<div class="fmini" style="line-height:1.5;margin-top:2px;color:#4a5d53">'+L.map(x=>{ const t=String(x.r==null?'':x.r).trim(), v=parseFloat(t), lab=(/^[\d.]+%?$/.test(t)&&isFinite(v))?(v+'%'):t; return '<div style="white-space:nowrap">'+esc(lab)+(x.n?'・'+x.n+' 筆':'')+'・'+nf(+x.q||0,4)+' t</div>'; }).join('')+'</div>'; }
-  if(!r._new&&F.year<=2025)return '<div class="fmini" style="color:#a9b6af" title="2025 以前是從各廠清冊收進來的，清冊沒有再生比例；2026 起匯入「再生料用量樞紐」會帶">清冊沒有再生比例</div>';
+  if(!r._new&&F.year<=2025){ const g=matGroups(matRows().filter(x=>!MRET[x.record_id])).find(x=>x.rows.indexOf(r)>=0); if(!g||matKindOf(g,r).k!=='R')return '';   /* V129-57-1：只在再生料列標（使用者 261022 要的是這一筆用的再生比例；過去年度資料庫沒存） */
+    const rv=(r.extra||{})['再生比例']; if(rv!=null&&rv!=='')return '<div class="fmini" style="color:#4a5d53">再生比例 '+esc(String(rv).replace(/%$/,''))+'%</div>';
+    return '<div class="fmini" style="color:#a9b6af" title="2025 以前是從各廠清冊收進來的，清冊沒有每一筆的再生比例（各廠原始檔裡有）">清冊沒有逐列比例</div>'; }
   return ''; }
-function matKindOf(g,r){ const c=((r.extra||{})['料況']||''); if(c==='再生料')return {k:'R',inf:false}; if(c)return {k:'V',inf:false};   /* 沒寫料況（過去年度收割列）：同一材質有不同係數時，比最大值小的那幾列＝再生料（依係數推定） */
+function matInfCdHTML(r){   /* V129-57：資料庫沒寫料況（過去年度清冊收割列）＝照上表同一套依係數推定（使用者 261022 選方向 1） */
+  const g=matGroups(matRows()).find(x=>x.rows.indexOf(r)>=0); if(!g)return ''; const kd=matKindOf(g,r);
+  return kd.k==='R'?'再生料<div class="fmini" style="color:#8a9a91" title="清冊沒有寫料況：照這一列連的係數庫條目判斷（條目是再生料係數＝再生料）；沒連條目才比同材質係數大小">依係數推定</div>':'原生料'+(g.rows.length>1?'<div class="fmini" style="color:#8a9a91">清冊沒寫料況</div>':''); }
+function matKindOf(g,r){ const c=((r.extra||{})['料況']||''); if(c==='再生料')return {k:'R',inf:false}; if(c)return {k:'V',inf:false};
+  { const fid=r.factor_id||((matEf(r)||{}).fid); const L=fid?matLibOf(fid):null; if(L)return L.cond==='再生料'?{k:'R',inf:true}:{k:'V',inf:false}; }   /* V129-57-1：連到係數庫條目就照條目的料況（越南清冊材質寫大類，同一列混了不同材質，比係數大小會誤判） */   /* 沒寫料況（過去年度收割列）：同一材質有不同係數時，比最大值小的那幾列＝再生料（依係數推定） */
   const E=matEf(r); const efs=[...new Set(g.rows.map(x=>{ const e2=matEf(x); return e2?e2.ef.toFixed(8):null; }).filter(Boolean))]; if(efs.length>1&&E){ const mx=Math.max(...efs.map(Number)); if(E.ef<mx-1e-9)return {k:'R',inf:true}; } return {k:'V',inf:false}; }
 function matTopHTML(G,canEdit,M8){   /* 上表：80% 以上，一種材質一列 */
   { const gt=g=>g.rows.reduce((a,r)=>a+(MRET[r.record_id]?0:matT(r)),0); G=G.slice().sort((a,b)=>gt(b)-gt(a)); }   /* V129-47-3：照採購總重量由大到小，跟下表同順序 */
   const lib=matLib(); let h='<div style="margin:6px 12px 4px;font-weight:800;color:var(--d)">上表：80% 以上（一種材質一列，原生料／再生料分開算碳排）'+(M8&&M8.on&&M8.n?'<span class="fmini" style="font-weight:400;margin-left:8px">'+M8.n+' 類，涵蓋 '+(M8.cov*100).toFixed(2)+'%</span>':'')+'</div>';
   if(!G.length)return h+'<div class="msg" style="margin:4px 12px">還沒有 80% 以上的類別。</div>';
-  h+='<table class="mtbl" style="width:100%;table-layout:fixed;margin:0 0 4px"><colgroup><col style="width:3%"><col style="width:13%"><col style="width:8%"><col style="width:9%"><col style="width:7%"><col style="width:12%"><col style="width:8%"><col style="width:12%"><col style="width:8%"><col style="width:8%"><col style="width:12%"></colgroup><thead><tr class="cols" style="background:#fafcfb"><th class="tl">#</th><th class="tl">材質（中文／英文）</th><th class="R">採購總重量 t</th><th class="R">再生料 t（比例）</th><th class="R">原生料 t</th><th class="tl sep">原生料係數 kgCO₂e/kg</th><th class="R">原生碳排 t</th><th class="tl sep">再生料係數 kgCO₂e/kg</th><th class="R">再生碳排 t</th><th class="R">總碳排 t</th><th class="R sep" title="假設這一材質全部用原生料：採購總重量 × 原生料係數（推算，只算不存）">全用原生料碳排 t<div class="fmini" style="font-weight:400">使用再生料減碳</div></th></tr></thead><tbody>';
+  h+='<style>.mtop>tbody>tr>td{vertical-align:top}</style>';   /* V129-57：逐列明細也套用 */   /* V129-56：每格靠上，同一列數字同一水平（使用者 261022） */
+  h+='<table class="mtbl mtop" style="width:100%;table-layout:fixed;margin:0 0 4px"><colgroup><col style="width:3%"><col style="width:12%"><col style="width:8%"><col style="width:8%"><col style="width:8%"><col style="width:6%"><col style="width:11%"><col style="width:8%"><col style="width:11%"><col style="width:8%"><col style="width:8%"><col style="width:9%"></colgroup><thead><tr class="cols" style="background:#fafcfb"><th class="tl">#</th><th class="tl">材質（中文／英文）</th><th class="R">採購總重量 t</th><th class="R">原生料 t</th><th class="R">再生料 t</th><th class="R" title="再生比例＝再生料重量 ÷ 採購總重量">再生比例</th><th class="tl sep">原生料係數 kgCO₂e/kg</th><th class="R">原生碳排 t</th><th class="tl sep">再生料係數 kgCO₂e/kg</th><th class="R">再生碳排 t</th><th class="R">總碳排 t</th><th class="R sep" title="假設這一材質全部用原生料：採購總重量 × 原生料係數（推算，只算不存）">全用原生料碳排 t<div class="fmini" style="font-weight:400">使用再生料減碳</div></th></tr></thead><tbody>';
   let TQ=0,TR=0,TV=0,TTV=0,TTR=0,bad=false,TAV=0,TAT=0,nAvBad=0;   /* V129-48-6：TAV＝全用原生料碳排、TAT＝同一批材質實際碳排 */
   const fcell=(rs,cond)=>{ if(!rs.length)return '<td class="tl sep" style="color:#c3cfc9">—</td>'; const Es=rs.map(matEf); const fids=[...new Set(rs.map(r=>r.factor_id||''))]; const vals=[...new Set(Es.filter(Boolean).map(E=>nf(E.ef,10)))];
     if(canEdit){ const cur=fids.length===1?fids[0]:''; const opts=['<option value="">'+(fids.length>1?'（多條，選一條套用全部）':'— 請選 —')+'</option>'].concat(lib.filter(x=>!x.cond||x.cond===cond||x.fid===cur).map(x=>'<option value="'+esc(x.fid)+'"'+(x.fid===cur?' selected':'')+'>'+(x.esg?esc(x.esg)+' ':'')+esc(x.name)+'　'+nf(x.val,4)+'</option>'));
@@ -7028,9 +7056,9 @@ function matTopHTML(G,canEdit,M8){   /* 上表：80% 以上，一種材質一列
     const qV=V.reduce((a,r)=>a+matT(r),0), qR=RR.reduce((a,r)=>a+matT(r),0), q=qV+qR; const tv=sumT(V), tr=sumT(RR); TQ+=q; TR+=qR; TV+=qV; TTV+=tv.s; TTR+=tr.s; if(tv.nul||tr.nul)bad=true;
     const efVs=[...new Set(V.map(matEf).filter(Boolean).map(E=>E.ef))], efV=(qV>0&&!tv.nul)?(efVs.length===1?efVs[0]:tv.s/qV):null, av=(efV!=null&&!tr.nul)?(qR>0?Math.round(q*efV*1e4)/1e4:tv.s):null, act=tv.s+tr.s; if(av==null)nAvBad++; else { TAV+=av; TAT+=act; }   /* V129-48-6：全用原生料＝採購總重量×原生料係數（同 ESG 表：完整重量 × 係數，結果四捨五入到第 4 位；沒用再生料的材質＝原本的碳排，避免尾差） */
     const plm=g.rows.reduce((a,r)=>a+(+((r.extra||{})['PLM未輸入t'])||0),0);
-    h+='<tr><td class="tl">'+(i+1)+'</td><td class="tl" style="white-space:normal"><b>'+esc(g.mat||'')+'</b>'+(g.en?'<div class="fmini">'+esc(g.en)+'</div>':'')+(g.cls?'<div class="fmini">'+esc(g.cls)+'</div>':'')+'</td><td>'+nf(q,4)+'</td><td>'+(qR>0?nf(qR,4)+'<div class="fmini" title="再生料用量＝再生料重量 ÷ 採購總重量">再生料用量 '+(q>0?(qR/q*100).toFixed(2):'0')+'%'+(inf?'·依係數推定':'')+'</div>':'<span style="color:#c3cfc9">0</span>')+(plm>0?'<div class="fmini" style="color:#b8860b" title="再生比例寫「PLM未輸入」的那幾筆，照原生料算">PLM未輸入 '+nf(plm,4)+'</div>':'')+'</td><td>'+nf(qV,4)+'</td>'
+    h+='<tr><td class="tl">'+(i+1)+'</td><td class="tl" style="white-space:normal"><b>'+esc(g.mat||'')+'</b>'+(g.en?'<div class="fmini">'+esc(g.en)+'</div>':'')+(g.cls?'<div class="fmini">'+esc(g.cls)+'</div>':'')+'</td><td>'+nf(q,4)+'</td><td>'+nf(qV,4)+'</td><td>'+(qR>0?nf(qR,4):'<span style="color:#c3cfc9">0</span>')+(plm>0?'<div class="fmini" style="color:#b8860b" title="再生比例寫「PLM未輸入」的那幾筆，照原生料算">PLM未輸入 '+nf(plm,4)+'</div>':'')+'</td><td title="再生比例＝再生料重量 ÷ 採購總重量">'+(qR>0&&q>0?(qR/q*100).toFixed(2)+'%'+(inf?'<div class="fmini" style="color:#8a9a91" title="過去年度清冊沒有寫料況：照連的係數庫條目判斷（條目是再生料係數＝再生料）；沒連條目才比同材質係數大小">依係數推定</div>':''):'<span style="color:#c3cfc9">—</span>')+'</td>'
       +fcell(V,'原生料')+'<td>'+(V.length?(tv.nul?'<span style="color:#c0392b">—</span>':nf(tv.s,4)):'')+'</td>'+fcell(RR,'再生料')+'<td>'+(RR.length?(tr.nul?'<span style="color:#c0392b">—</span>':nf(tr.s,4)):'')+'</td><td><b>'+((tv.nul||tr.nul)?'<span style="color:#c0392b">—</span>':nf(tv.s+tr.s,4))+'</b></td>'+'<td class="sep">'+(av==null?'<span style="color:#c3cfc9" title="沒有原生料係數可比（或有列未選係數）">—</span>':nf(av,4)+((av-act)>0.00005?'<div class="fmini" style="color:#14603F">減 '+nf(av-act,4)+'（'+((av-act)/av*100).toFixed(2)+'%）</div>':'<div class="fmini" style="color:#a9b6af">沒用再生料</div>'))+'</td></tr>'; });
-  return h+'<tr class="tot"><td class="tl" colspan="2">合計 '+G.length+' 類</td><td>'+nf(TQ,4)+'</td><td>'+nf(TR,4)+'</td><td>'+nf(TV,4)+'</td><td class="sep"></td><td>'+nf(TTV,4)+'</td><td class="sep"></td><td>'+nf(TTR,4)+'</td><td><b>'+nf(TTV+TTR,4)+'</b>'+(bad?'<div class="fmini" style="color:#c0392b">有列未選係數</div>':'')+'</td><td class="sep"><b>'+(TAV>0?nf(TAV,4):'—')+'</b>'+(TAV>0&&TAV-TAT>0.00005?'<div class="fmini" style="color:#14603F">減 '+nf(TAV-TAT,4)+'（'+((TAV-TAT)/TAV*100).toFixed(2)+'%）</div>':'')+'</td></tr></tbody></table>'
+  return h+'<tr class="tot"><td class="tl" colspan="2">合計 '+G.length+' 類</td><td>'+nf(TQ,4)+'</td><td>'+nf(TV,4)+'</td><td>'+nf(TR,4)+'</td><td>'+(TR>0&&TQ>0?(TR/TQ*100).toFixed(2)+'%':'<span style="color:#c3cfc9">—</span>')+'</td><td class="sep"></td><td>'+nf(TTV,4)+'</td><td class="sep"></td><td>'+nf(TTR,4)+'</td><td><b>'+nf(TTV+TTR,4)+'</b>'+(bad?'<div class="fmini" style="color:#c0392b">有列未選係數</div>':'')+'</td><td class="sep"><b>'+(TAV>0?nf(TAV,4):'—')+'</b>'+(TAV>0&&TAV-TAT>0.00005?'<div class="fmini" style="color:#14603F">減 '+nf(TAV-TAT,4)+'（'+((TAV-TAT)/TAV*100).toFixed(2)+'%）</div>':'')+'</td></tr></tbody></table>'
     +((TAV>0&&TR>0)?'<div style="margin:6px 12px 2px;padding:8px 12px;background:#f2f8f4;border:1px solid #cfe3d6;border-radius:8px;font-size:13px;line-height:1.8"><b style="color:var(--d)">使用再生料的減碳效果</b>　全部用原生料（假設）<b>'+nf(TAV,4)+'</b> t　→　使用再生料後 <b>'+nf(TAT,4)+'</b> t　｜　減碳 <b style="color:#14603F">'+nf(TAV-TAT,4)+' t（'+((TAV-TAT)/TAV*100).toFixed(2)+'%）</b>'+(nAvBad?'<span class="fmini" style="color:#b8860b">　（不含 '+nAvBad+' 類沒有原生料係數可比的材質）</span>':'')+'<div class="fmini" style="color:#5f7268">推算：全部用原生料＝採購總重量 × 原生料係數（假設這些材質都沒用再生料）。只在畫面上算，不存資料庫，不影響申報碳排。</div></div>':''); }
 function matAllHTML(M8,canEdit){   /* V129-45：下表＝全部類別（100%） */
   const zh=n=>{ const c=c12MapCls(n); if(c.st==='ok')return '<span style="color:#14603F">'+({M:'金屬',P:'塑膠',R:'紙',O:'其他'})[c.k]+'</span>'; if(c.st==='none')return '<span style="color:#c3cfc9">—</span>'; return '<span style="color:#D42B3A" title="係數庫「C12 材質對照」還沒有這個材質的大類">待 ESG 歸類</span>'; };
@@ -7051,7 +7079,7 @@ function matAllHTML(M8,canEdit){   /* V129-45：下表＝全部類別（100%） 
   return h+'<tr class="tot"><td class="tl" colspan="2">合計 '+L.length+' 類</td><td>'+nf(tot,4)+'</td><td>100%</td><td></td><td></td><td></td></tr></tbody></table>'; }
 function matRender(){
   const box=document.getElementById('src_form'); const C=mcfg(); const canEdit=editable(); const lk=(typeof yearLocked==='function')&&yearLocked(F.year);
-  const M8=mat80(); const rows0=matRows(); const rows=M8.on?M8.order.concat(rows0.filter(r=>MRET[r.record_id])):rows0;   /* V129-46：逐列明細放全部列（依材質分組、由大到小） */ const lib=matLib();   /* V129-29：還沒定案的年度照重量由大到小 */
+  const M8=mat80(); const rows0=matRows(); const rows=M8.order.concat(rows0.filter(r=>MRET[r.record_id]));   /* V129-57-1：已鎖年度也照上表順序（使用者 261022） */   /* V129-46：逐列明細放全部列（依材質分組、由大到小） */ const lib=matLib();   /* V129-29：還沒定案的年度照重量由大到小 */
   const dupK={}; rows.forEach((r,i)=>{ const FL=mfld(r); const k=mnorm(FL.mat||FL.nm)+'|'+matCondOf(r); if(!k||k[0]==='|')return; (dupK[k]=dupK[k]||[]).push({i:i+1,raw:String(FL.mat||FL.nm)}); });
   let chip='';
   if(lk)chip='<span style="background:#fff3cd;color:#856404;border:1px solid #ffe69c;border-radius:999px;padding:3px 12px;font-size:12px;font-weight:700">🔒 '+F.year+' 已鎖定·唯讀</span>';
@@ -7066,7 +7094,7 @@ function matRender(){
       +'<a href="javascript:void(0)" onclick="facTrace(&#39;'+F.cat+'&#39;,&#39;ALL&#39;,'+facY(F.year)+',&#39;'+F.site+'&#39;)" style="background:var(--t);color:var(--d);border-radius:999px;padding:3px 12px;font-size:12px;font-weight:700;text-decoration:none;cursor:pointer" title="係數庫 C01-01 直接物料（重量法）的條目清單（依材質）">📐 係數庫 '+lib.length+' 條</a>'
       +chip,
     btns:tplBtn(F.cat,F.site,F.year)+'<button class="sec" '+(canEdit?'':'disabled')+' onclick="matAdd()" title="新增一列物料；儲存時才寫入">＋ 新增物料</button>'
-      +'<button class="sec" '+(canEdit?'':'disabled')+' onclick="matImpPick()" title="匯入各廠 C1 採購物料檔的 80% 分類表（先預覽、選版本，按儲存才寫入）">⬆ 匯入</button>'
+      +'<button class="sec" '+(canEdit?'':'disabled')+' onclick="matImpPick()" title="匯入各廠 C1 採購物料檔：原始明細（材質＋再生比例＋重量，系統自己加總）、整理過的三欄表或 80% 分類表都可以（先預覽、選版本，按儲存才寫入）">⬆ 匯入</button>'
       +'<button class="'+(canEdit?'':'sec')+'" '+(canEdit?'':'disabled')+' onclick="matAsk()">💾 儲存</button>'});
   h+=entryNoteHTML(F.mtNote);   /* V129-20 */
   h+='<div id="s101wrap"><div class="s101zone" style="overflow-x:hidden">';
@@ -7081,13 +7109,14 @@ function matRender(){
       h+=dl('mat_dl_cls',[...MHIST.cls])+dl('mat_dl_nm',[...MHIST.nm])+dl('mat_dl_mat',matStdNames()||[...MHIST.mat].concat(lib.flatMap(x=>x.alRaw||[]))); }   /* V129-50：只列標準寫法（各廠不同寫法匯入時由材質對照認） */
     { const GT=M8.on?(M8.groups||[]).filter(x=>x.m.in).map(x=>x.g):matGroups(rows0);   /* V129-46：上表一種材質一列；原本的逐列表收進「逐列明細」 */
       h+=matTopHTML(GT,canEdit,M8)+'<details id="matdet"'+(MDET?' open':'')+' style="margin:8px 0 2px"><summary style="cursor:pointer;font-size:12.5px;color:var(--p);margin:0 12px">逐列明細（原生料／再生料分列，'+rows.length+' 列；'+(canEdit?'改材質、重量、料況、新增物料都在這裡':'清冊原始列')+'）</summary>'; }
-    h+='<style>#s101wrap table.mtbl thead th{white-space:normal;line-height:1.25;vertical-align:bottom}#s101wrap table.mtbl td.tl{white-space:normal;overflow-wrap:anywhere}</style><table class="mtbl" style="width:100%;table-layout:fixed"><colgroup><col style="width:3%"><col style="width:12%"><col style="width:15%"><col style="width:10%"><col style="width:14%"><col style="width:11%"><col style="width:'+(canEdit?'19':'21')+'%"><col style="width:6%"><col style="width:8%">'+(canEdit?'<col style="width:2%">':'')+'</colgroup><thead><tr class="cols" style="background:#fafcfb"><th class="tl">#</th><th class="tl">物料類別</th><th class="tl">品名／英文材質</th><th class="tl">中文材質</th><th class="tl">料況／再生比例</th><th class="R">採購重量 t</th><th class="tl sep">係數（係數庫）</th><th class="R">kgCO₂e/kg＊</th><th class="R">碳排 t＊</th>'+(canEdit?'<th></th>':'')+'</tr></thead><tbody>';   /* V85-2：固定欄寬、整頁看全、無橫向捲軸；供應商欄移除（80% 表沒有，資料仍留 extra） */
+    const noCls=!canEdit&&rows.every(r=>!mfld(r).cls), noEn=!canEdit&&rows.every(r=>{ const FL=mfld(r); return !FL.nm||mnorm(FL.nm)===mnorm(FL.mat); }), xw=(noCls?6:0)+(noEn?6:0); let PGK=null;   /* V129-57-1：唯讀時整欄都沒有就不顯示（使用者 261022） */
+    h+='<style>#s101wrap table.mtbl thead th{white-space:normal;line-height:1.25;vertical-align:bottom}#s101wrap table.mtbl td.tl{white-space:normal;overflow-wrap:anywhere}#s101wrap table.mtbl tr[data-g]>td{border-top:2px solid #9fc4b1}</style><table class="mtbl mtop" style="width:100%;table-layout:fixed"><colgroup><col style="width:3%">'+(noCls?'':'<col style="width:12%">')+(noEn?'':'<col style="width:12%">')+'<col style="width:'+(10+xw)+'%"><col style="width:'+(13+xw)+'%"><col style="width:11%"><col style="width:'+(canEdit?'18':'20')+'%"><col style="width:10%"><col style="width:9%">'+(canEdit?'<col style="width:2%">':'')+'</colgroup><thead><tr class="cols" style="background:#fafcfb"><th class="tl">#</th>'+(noCls?'':'<th class="tl">物料類別</th>')+(noEn?'':'<th class="tl">品名／英文材質</th>')+'<th class="tl">中文材質</th><th class="tl">料況／再生比例</th><th class="R">採購重量 t</th><th class="tl sep">係數（係數庫）</th><th class="R">kgCO₂e/kg＊</th><th class="R">碳排 t＊</th>'+(canEdit?'<th></th>':'')+'</tr></thead><tbody>';   /* V85-2：固定欄寬、整頁看全、無橫向捲軸；供應商欄移除（80% 表沒有，資料仍留 extra） */
     const chgOf=r=>{const o0=MORIG[r.record_id]?JSON.parse(MORIG[r.record_id]):null,n0=mpick(r); return f=>r._new||(!!o0&&String(o0[f])!==String(n0[f]));};
     const ip=(r,f,val,chg,w,ph,dl)=>canEdit?'<td class="edit'+(chg(f)?' chgd':'')+'"><input class="tl" data-rid="'+r.record_id+'" data-f="'+f+'" value="'+esc(val==null?'':val)+'" placeholder="'+esc(ph||'')+'"'+(dl?' list="'+dl+'" autocomplete="off"':'')+' style="text-align:left;width:100%;min-width:0;box-sizing:border-box"></td>':'<td class="tl" style="overflow:hidden;text-overflow:ellipsis" title="'+esc(val==null?'':val)+'">'+esc(val==null?'':val)+'</td>';
     let m80line=false;
-    rows.forEach((r,i)=>{ const e=r.extra||{}; const FL=mfld(r); const chg=chgOf(r); const ret=!!MRET[r.record_id]; const E=matEf(r); const t=matCo2e(r); const q=+r.quantity||0;
+    rows.forEach((r,i)=>{ const e=r.extra||{}; const FL=mfld(r); const gk=mnorm(FL.mat||FL.nm), sepG=i>0&&gk!==PGK; PGK=gk;   /* V129-57-1：換材質畫分隔線 */ const chg=chgOf(r); const ret=!!MRET[r.record_id]; const E=matEf(r); const t=matCo2e(r); const q=+r.quantity||0;
       const m8=M8.on&&!ret&&!(r._new&&!q)?M8.map[r.record_id]:null; const out8=!!(m8&&!m8.in);
-      if(m8&&out8&&!m80line){ m80line=true; h+='<tr class="m80"><td colspan="'+(canEdit?10:9)+'" style="background:#f6f9f7;color:#14603F;font-size:12px;font-weight:600;padding:4px 10px;border-top:2px solid #1B8A60">▲ 以上 '+M8.n+' 類累計 '+(M8.cov*100).toFixed(2)+'%，計入碳排　｜　▼ 以下 '+(rows0.length-M8.n)+' 類 '+((1-M8.cov)*100).toFixed(2)+'%，80% 以外不計（不用選係數）</td></tr>'; }
+      if(m8&&out8&&!m80line){ m80line=true; h+='<tr class="m80"><td colspan="'+((canEdit?10:9)-(noCls?1:0)-(noEn?1:0))+'" style="background:#f6f9f7;color:#14603F;font-size:12px;font-weight:600;padding:4px 10px;border-top:2px solid #1B8A60">▲ 以上 '+M8.n+' 類累計 '+(M8.cov*100).toFixed(2)+'%，計入碳排　｜　▼ 以下 '+(rows0.length-M8.n)+' 類 '+((1-M8.cov)*100).toFixed(2)+'%，80% 以外不計（不用選係數）</td></tr>'; }
       const dk=mnorm(FL.mat||FL.nm)+'|'+matCondOf(r), dd=(dupK[dk]||[]).filter(x=>x.i!==i+1&&x.raw!==String(FL.mat||FL.nm));
       const dupTxt=dd.length?'<div class="fmini" style="color:#b8860b;cursor:help" title="寫法不同，但看起來是同一種材質；係數會對到同一條。要合併請在樞紐表統一寫法">≈ 疑似同一材質：第 '+dd.map(x=>x.i).join('、')+' 列</div>':'';
       const sn=ret?null:matStdNote(r); if(sn){ SN++; SA+=(+r.co2e_draft||0); SB+=sn.tStd; }
@@ -7101,16 +7130,16 @@ function matRender(){
       }else fcell='<td class="tl sep" style="white-space:normal">'+(E?esc(E.name||E.src||'')+(E.rec?' <span class="fmini">（記錄）</span>':'')+matCodeLink(E):'<span style="color:#c0392b">未選係數</span>')+(why?'<div>'+why+'</div>':'')+'</td>';
       if(sn)fcell=fcell.replace(/<\/td>$/,sn.html+'</td>');
       if(out8&&!E)fcell='<td class="tl sep" style="white-space:normal;color:#8a9a91">（80% 以外，不用選係數）'+(canEdit?'<div style="margin-top:2px">'+fcell.replace(/^<td[^>]*>/,'').replace(/<\/td>$/,'')+'</div>':'')+'</td>';
-      h+='<tr'+(ret?' style="opacity:.45;text-decoration:line-through"':(out8?' class="m80out" style="background:#fafbfa"':''))+'><td class="tl">'+(i+1)+(r._new?' <span style="color:#b8860b;font-size:10px">新</span>':'')+'</td>'
-        +ip(r,'a1',FL.cls,chg,110,'例 五金金屬件','mat_dl_cls')+ip(r,'nm',FL.nm,chg,150,'例 ADC12／鋁合金(ADC12)','mat_dl_nm')+ip(r,'m2',FL.mat,chg,120,'例 鋁合金','mat_dl_mat')
-        +(canEdit?'<td class="edit'+(chg('cd')?' chgd':'')+'"><select data-rid="'+r.record_id+'" data-f="cd" style="width:auto;padding:2px 4px;font:inherit;font-size:12px">'+C.conds.map(c=>'<option'+(c===(e['料況']||'原生料')?' selected':'')+'>'+c+'</option>').join('')+'</select>'+matRatioHTML(r)+'</td>':'<td class="tl">'+esc(e['料況']||'')+matRatioHTML(r)+'</td>')
+      h+='<tr'+(sepG?' data-g="1"':'')+(ret?' style="opacity:.45;text-decoration:line-through"':(out8?' class="m80out" style="background:#fafbfa"':''))+'><td class="tl">'+(i+1)+(r._new?' <span style="color:#b8860b;font-size:10px">新</span>':'')+'</td>'
+        +(noCls?'':ip(r,'a1',FL.cls,chg,110,'例 五金金屬件','mat_dl_cls'))+(noEn?'':ip(r,'nm',(!canEdit&&mnorm(FL.nm)===mnorm(FL.mat))?'':FL.nm,chg,150,'例 ADC12／鋁合金(ADC12)','mat_dl_nm'))+ip(r,'m2',FL.mat,chg,120,'例 鋁合金','mat_dl_mat')
+        +(canEdit?'<td class="edit'+(chg('cd')?' chgd':'')+'"><select data-rid="'+r.record_id+'" data-f="cd" style="width:auto;padding:2px 4px;font:inherit;font-size:12px">'+C.conds.map(c=>'<option'+(c===(e['料況']||'原生料')?' selected':'')+'>'+c+'</option>').join('')+'</select>'+matRatioHTML(r)+'</td>':'<td class="tl">'+(e['料況']?esc(e['料況']):matInfCdHTML(r))+matRatioHTML(r)+'</td>')
         +(canEdit?'<td class="edit'+(chg('q')?' chgd':'')+'"><input data-rid="'+r.record_id+'" data-f="q" value="'+((r._new&&!(+r.quantity))?'':(+r.quantity||0).toFixed(4))+'" placeholder="採購重量（公噸）" title="採購重量（公噸）；完整值 '+esc(r.quantity==null?'':r.quantity)+'（畫面顯示 4 位；只有改了這格才會寫回新值）" style="width:100%;min-width:0;box-sizing:border-box">'+(m8?'<div class="fmini" style="text-align:right;color:'+(out8?'#8a9a91':'#14603F')+'">占 '+(m8.sh*100).toFixed(2)+'%｜累計 '+(m8.cum*100).toFixed(2)+'%</div>':'')+dupTxt+'</td>':'<td>'+nf(q,4)+(m8?'<div class="fmini" style="color:'+(out8?'#8a9a91':'#14603F')+'">占 '+(m8.sh*100).toFixed(2)+'%｜累計 '+(m8.cum*100).toFixed(2)+'%</div>':'')+dupTxt+'</td>')
         +fcell
         +'<td class="ro">'+(E?nf(E.ef,10):'<span style="color:#c0392b">—</span>')+'</td>'
         +'<td class="ro"><b>'+(out8?'<span style="color:#8a9a91;font-weight:400" title="80% 以外的類別不算碳排（ESG 做法：由大到小累加到超過 80% 的類別才算）">不計</span>':(t==null?'<span style="color:#c0392b" title="沒有係數或單位不相容">—</span>':nf(t,4)))+'</b></td>'
         +(canEdit?'<td>'+((r._new||ret||entryCanDel(F.site,F.year))?'<a href="javascript:void(0)" onclick="matDrop('+r.record_id+')" title="'+(r._new?'移除這列（尚未儲存）':(ret?'取消移除':'移除此列（已儲存的列不刪，改歸零留痕）'))+'" style="color:#a33;text-decoration:none;font-size:12px">'+(ret?'↶':'✕')+'</a>':'')+'</td>':'')+'</tr>';   /* V129-49：已鎖／已申報年度已存列不出 ✕ */
     });
-    h+='<tr class="tot"><td class="tl" colspan="5">合計　<span class="fmini" style="font-weight:400">'+rows.length+' 列'+(M8.on&&M8.n?'　<b style="color:#14603F">計入 '+M8.n+' 類·涵蓋 '+(M8.cov*100).toFixed(2)+'%</b>':'')+(nNew?'（新 '+nNew+'）':'')+(nUnl?'　<span style="color:#b8860b">未連結係數庫 '+nUnl+' 列</span>':'')+'</span></td><td>'+nf(TQ,4)+'</td><td class="sep"></td><td></td><td><b>'+nf(TC,4)+'</b></td>'+(canEdit?'<td></td>':'')+'</tr></tbody></table></details>';
+    h+='<tr class="tot"><td class="tl" colspan="'+(5-(noCls?1:0)-(noEn?1:0))+'">合計　<span class="fmini" style="font-weight:400">'+rows.length+' 列'+(M8.on&&M8.n?'　<b style="color:#14603F">計入 '+M8.n+' 類·涵蓋 '+(M8.cov*100).toFixed(2)+'%</b>':'')+(nNew?'（新 '+nNew+'）':'')+(nUnl?'　<span style="color:#b8860b">未連結係數庫 '+nUnl+' 列</span>':'')+'</span></td><td>'+nf(TQ,4)+'</td><td class="sep"></td><td></td><td><b>'+nf(TC,4)+'</b></td>'+(canEdit?'<td></td>':'')+'</tr></tbody></table></details>';
   }
   if(F.cat==='C01-M')h+=matAllHTML(M8,canEdit);   /* V129-45 */
   if(SN)h+='<div class="msg" style="margin:6px 12px;background:#fff8e6;border:1px solid #f0d9a0;color:#7a5a00;font-size:12px">⚠ 本頁 '+SN+' 列用了跟系統材質標準不同的係數（Ecoinvent v3.12）：記 '+nf(SA,4)+' t；照系統材質標準算 '+nf(SB,4)+' t（多 '+nf(SB-SA,4)+' t）。'+F.year+' 已申報，照原資料不改（前年度疑點 #26）；2026 起用哪一個待 ESG 回覆（待問清單 J1）。</div>';   /* V104 */
@@ -7181,11 +7210,55 @@ window.matImpDryRun=function(buf){ const res=matImpDetect(XLSX.read(buf,{type:'a
 function matTplCode(row,lib){ const nz=v=>String(v==null?'':v).split(/[ 　]+/).join(''), c=nz(row&&row.code); if(!c)return null; const rc=row.cd||'原生料';
   let ex=lib.filter(x=>x.esg&&nz(x.esg+x.name)===c); if(!ex.length){ const m=c.match(/C01-01-[A-Z][0-9]+/i); if(m)ex=lib.filter(x=>String(x.esg).toUpperCase()===m[0].toUpperCase()); if(ex.some(x=>x.name!==ex[0].name))ex=[]; }   /* 只寫代號、而這個代號底下有兩種名稱＝分不出來，不猜 */
   if(!ex.length)return null; const e1=ex.find(x=>x.cond===rc)||ex.find(x=>!x.cond)||ex[0], alt=matByCond(e1.fid,rc); return {fid:(alt||e1).fid,why:'照檔案選的係數代號'}; }   /* V126：系統樣板的「係數代號」欄＝代號＋名稱（原收集表沒有這一欄）；同代號有分料況的照這一列的料況 */
-function matImpParse(file){const go=function(buf){let res; try{ const wb=XLSX.read(buf,{type:'array'}); const g=tplCheck(wb,F.cat,F.site,F.year); if(g){ dlg('❌ 無法匯入',g,'<button class="sec" onclick="fuelClose()">關閉</button>'); return; } res=matImpDetect(wb);}catch(err){dlg('❌ 檔案解析失敗','<div class="item" style="color:#a33">'+esc(err.message||err)+'</div>','<button class="sec" onclick="fuelClose()">關閉</button>');return;} if(!res.blocks.length){dlg('❌ 找不到 80% 分類表','<div class="item">檔案裡沒有含「中文材質／主要材料」＋「採購重量」表頭的分頁。分頁：'+esc(res.sheets.join('、'))+'</div>','<button class="sec" onclick="fuelClose()">關閉</button>');return;} matImpPreview(res,file.name);}; if(file._buf){ go(file._buf); return; } const rd=new FileReader(); rd.onload=function(e){ go(e.target.result); }; rd.readAsArrayBuffer(file);}
+function matImpParse(file){const go=function(buf){let res; try{ const wb=XLSX.read(buf,{type:'array'}); const g=tplCheck(wb,F.cat,F.site,F.year); if(g){ dlg('❌ 無法匯入',g,'<button class="sec" onclick="fuelClose()">關閉</button>'); return; } res=matImpDetect(wb);}catch(err){dlg('❌ 檔案解析失敗','<div class="item" style="color:#a33">'+esc(err.message||err)+'</div>','<button class="sec" onclick="fuelClose()">關閉</button>');return;} if(!res.blocks.length){dlg('❌ 找不到可以讀的資料','<div class="item">檔案裡沒有可以讀的分頁。可以讀的有三種：①原始明細（每列一筆，有料號或品名，加上材質、再生比例〔再生料比例／回收料比例〕、採購總重量）②整理過的三欄表（材質｜再生比例｜重量）③80% 分類表（中文材質＋採購重量＋係數）。分頁：'+esc(res.sheets.join('、'))+'</div>','<button class="sec" onclick="fuelClose()">關閉</button>');return;} matImpPreview(res,file.name);}; if(file._buf){ go(file._buf); return; } const rd=new FileReader(); rd.onload=function(e){ go(e.target.result); }; rd.readAsArrayBuffer(file);}
 const mcell=v=>v==null?'':String(v).replace(/\s+/g,'');
+/* V129-57：原始明細（每列一筆收料：材質＋再生比例＋重量）→ 系統按「材質×再生比例」加總，資料庫只存加總結果（使用者 261022）。
+   欄位名稱照各廠 2025 查證檔實際寫法：信鋐／中山／福州／重慶／敬得太倉／陸和蘇州／協和泰國（Oracle 整理清單）、敬得觀音／陸合台中／信錦泰國（PKM）、蘇州／冠皇（整理後那一頁） */
+const MRAW_ID=/^(料號|料号|品名|mtr'?lp\/n|description|收料單號|收料单号|交易單號|交易单号|驗收單號)$/i;
+function mrawH(v){ return mcell(v).replace(/（/g,'(').replace(/）/g,')'); }
+function matRawCols(aa,r,hdr){
+  const has=c=>{ for(let k=r+1;k<Math.min(aa.length,r+400);k++){ const v=(aa[k]||[])[c]; if(v!=null&&String(v).trim()!=='')return true; } return false; };
+  const qsum=c=>{ let t=0; for(let k=r+1;k<aa.length;k++){ const v=+((aa[k]||[])[c]); if(isFinite(v))t+=Math.abs(v); } return t; };
+  let zh=-1, zhf=-1; const cFix=hdr.findIndex(h=>/^(中文材質|中文材质)\(修正\)$/.test(h)), cZh=hdr.findIndex(h=>/^(中文材質|中文材质)$/.test(h));
+  if(cFix>=0&&has(cFix)){ zh=cFix; if(cZh>=0)zhf=cZh; } else if(cZh>=0&&has(cZh))zh=cZh;   /* 修正欄有填用修正值、沒填退回中文材質（陸和蘇州） */
+  if(zh<0){ const L=hdr.map((h,c)=>/^(材質|材质)$/.test(h)?c:-1).filter(c=>c>=0&&has(c)); if(L.length)zh=L[L.length-1]; }
+  if(zh<0){ const c=hdr.findIndex(h=>/^主要材料/.test(h)); if(c>=0&&has(c))zh=c; }
+  const rr=hdr.findIndex(h=>/^(再生料比例|再生比例|回收料比例|再生料占比|回收料占比)(\(%\)|%)?$/.test(h));
+  let q=-1, unit=1; const qp=[[/^(採購總重量|采购总重量)(\(ton\)|\(噸\)|\(吨\)|\(t\))?$/i,1],[/^(採購總重量|采购总重量)\(kg\)$/i,1000],[/^(入庫重量|入库重量)\(kg\)$/i,1000],[/^重量(\(ton\)|\(t\))?$/i,1],[/^重量\(kg\)$/i,1000]];
+  for(const [p,u] of qp){ const c=hdr.findIndex(h=>p.test(h)); if(c>=0&&qsum(c)>0){ q=c; unit=u; break; } }
+  const en=hdr.findIndex(h=>/^(英文材質|英文材质)$/.test(h));
+  return {zh:zh,zhf:zhf,rr:rr,q:q,unit:unit,en:en}; }
+function matRawAgg(aa,r,hdr,cols,unit,n){
+  let nIn=0,nNoMat=0,nNoQ=0; const nums=[];
+  if(cols.rr>=0)for(let k=r+1;k<aa.length;k++){ const t=String(((aa[k]||[])[cols.rr])==null?'':(aa[k]||[])[cols.rr]).replace('%','').trim(); const v=parseFloat(t); if(t&&isFinite(v))nums.push(v); }
+  const frac=nums.length>0&&nums.every(v=>v>=0&&v<=1)&&nums.some(v=>v>0&&v<1);   /* 比例寫成 0.3＝30% */
+  const G=[], idx={};
+  for(let k=r+1;k<aa.length;k++){ const x=aa[k]||[]; if(!x.some(v=>v!=null&&String(v).trim()!==''))continue; nIn++;
+    let m=String(x[cols.zh]==null?'':x[cols.zh]).trim(); if(!m&&cols.zhf>=0)m=String(x[cols.zhf]==null?'':x[cols.zhf]).trim(); if(!m||/^(合計|合计|總計|总计|小計|小计)$/.test(mcell(m))){ nNoMat++; continue; }
+    const q=num(x[cols.q]); if(q==null||!isFinite(q)||q===0){ nNoQ++; continue; } const qt=q/unit;
+    const rs=cols.rr>=0?String(x[cols.rr]==null?'':x[cols.rr]).trim():''; const v=parseFloat(rs.replace('%',''));
+    const lab=cols.rr<0?'（檔案沒有比例欄）':(!rs?'（空白）':(isFinite(v)&&/^[\d.]+%?$/.test(rs)?String(Math.round((frac?v*100:v)*1e4)/1e4):rs));
+    let g=idx[m]; if(!g){ g=idx[m]={zh:m,en:'',q:0,qr:0,plm:0,D:{}}; G.push(g); } if(!g.en&&cols.en>=0){ const e=String(x[cols.en]==null?'':x[cols.en]).trim(); if(e)g.en=e; }
+    g.q+=qt; const lv=parseFloat(lab); if(isFinite(lv)&&lv>0)g.qr+=qt; else if(/PLM/i.test(lab))g.plm+=qt;
+    const d=g.D[lab]||(g.D[lab]={r:lab,q:0,n:0}); d.q+=qt; d.n++; }
+  const items=G.filter(g=>Math.abs(g.q)>1e-9).map((g,i)=>{ const det=Object.values(g.D).map(d=>({r:d.r,q:Math.round(d.q*1e6)/1e6,n:d.n})).sort((a,b)=>(parseFloat(a.r)||0)-(parseFloat(b.r)||0));
+    return {code:'',code2:'',no:i+1,cls:'',en:g.en,zh:g.zh,q:g.q,qv:Math.max(0,g.q-g.qr),qr:g.qr,ef:null,efr:null,rr:null,rec:'',em:null,tot:null,det:det,plm:Math.round(g.plm*1e6)/1e6}; });
+  if(!items.length)return null;
+  return {sheet:n,row:r+1,label:'原始明細（'+nIn+' 筆 → '+items.length+' 種材質；系統按材質×再生比例加總，只存加總結果）',hi:{pivot:true},pivot:true,rec:true,items:items,sumQ:items.reduce((a,x)=>a+(x.q||0),0),sumT:0,
+    raw:{hdr:hdr,cols:{zh:cols.zh,zhf:(cols.zhf==null?-1:cols.zhf),rr:cols.rr,q:cols.q,en:cols.en},unit:unit,nIn:nIn,nNoMat:nNoMat,nNoQ:nNoQ,frac:frac},_aa:aa}; }
+function matRawBlock(aa,n){
+  for(let r=0;r<Math.min(aa.length,15);r++){ const hdr=(aa[r]||[]).map(mrawH); if(hdr.filter(Boolean).length<5||!hdr.some(h=>MRAW_ID.test(h)))continue;
+    const c=matRawCols(aa,r,hdr); if(c.zh<0||c.rr<0||c.q<0)continue;   /* 三欄缺一＝不是可以直接加總的原始明細 */
+    return matRawAgg(aa,r,hdr,c,c.unit,n); }
+  return null; }
+window.matRawRemap=function(i,f,v){ if(!MIMP)return; const b=MIMP.res.blocks[i]; if(!b||!b.raw)return; const R=b.raw; const cols=Object.assign({},R.cols); let unit=R.unit;
+  if(f==='unit')unit=+v; else { cols[f]=+v; if(f==='zh')cols.zhf=-1; }   /* 手動選材質欄＝不再退回 */
+  const nb=matRawAgg(b._aa,b.row-1,R.hdr,cols,unit,b.sheet); if(!nb){ alert('用這幾欄整理不出任何材質（材質欄或重量欄可能選錯）'); return; }
+  MIMP.res.blocks[i]=nb; MIMP.res._selObj=nb; matImpPreview(MIMP.res,MIMP.fname); };
 function matImpDetect(wb){
   const blocks=[]; const sheets=wb.SheetNames.slice();
   wb.SheetNames.forEach(n=>{ const {aa}=sheet2(wb,n);
+    { const rw=matRawBlock(aa,n); if(rw){ blocks.push(rw); return; } }   /* V129-57：原始明細（有料號／品名＋材質＋再生比例＋重量）→ 系統加總 */
     { const pr=matRecPivotBlock(aa,n); if(pr){ blocks.push(pr); return; } }   /* V129-46：再生料樞紐（材質｜再生比例｜重量）優先 */
     { const pv=matPivotBlock(aa,n); if(pv){ blocks.push(pv); return; } }   /* V129-29：樞紐表（類別｜加總重量）＝全部類別 */
     if(/ERP|進料明細|进料明细|佐證|樞紐|枢纽|C12|服務|GZA|填表|範例/i.test(n)&&!/80|匯總|彙總|汇总|量化|梳理/i.test(n))return;   /* 明細分頁不看 */
@@ -7211,7 +7284,7 @@ function matImpDetect(wb){
   return {blocks:blocks,sheets:sheets};
 }
 function matRecCounts(wb,blocks){   /* V129-48-6：同一檔有原始明細頁（材質｜再生比例｜採購總重量）→ 按材質×比例數筆數，重量對得上才記 n；不收料號 */
-  const B=blocks.filter(b=>b.pivot&&b.rec); if(!B.length)return;
+  const B=blocks.filter(b=>b.pivot&&b.rec&&!b.raw); if(!B.length)return;   /* V129-57：原始明細自己就有筆數 */
   const rk=v=>{ const t=String(v==null?'':v).trim(); if(!t)return '（空白）'; const x=+t; return isFinite(x)?String(x):t; };
   for(const n of wb.SheetNames){ const {aa}=sheet2(wb,n);
     for(let r=0;r<Math.min(aa.length,10);r++){ const row=aa[r]||[]; let cM=-1,cR=-1,cQ=-1;
@@ -7226,13 +7299,16 @@ function matRecPivotBlock(aa,n){
   for(let r=0;r<Math.min(aa.length,15);r++){ const row=aa[r]||[]; let cL=-1,cR=-1,cQ=-1;
     row.forEach((v,c)=>{ const s=mcell(v); if(cL<0&&/^(列標籤|行標籤|行标签|列标签|材質|材质|中文材質|中文材质)$/.test(s))cL=c; else if(cR<0&&/再生(料)?比例/.test(s))cR=c; else if(cQ<0&&/重量/.test(s)&&!/再生|數量|数量|單顆|单颗/.test(s))cQ=c; });
     if(cL<0||cR<0||cQ<0||!(cL<cR&&cR<cQ))continue;   /* 欄位順序要是 材質→再生比例→重量（原始明細頁不算） */
-    const kg=/kg|公斤/i.test(mcell(row[cQ])); const G=[], idx={}; let cur=null;
+    const kg=/kg|公斤/i.test(mcell(row[cQ])); const G=[], idx={}; let cur=null, rpHdrEnd=-1;
     const get=m=>{ let g=idx[m]; if(!g){ g=idx[m]={zh:m,q:0,qr:0,plm:0,det:[]}; G.push(g); } return g; };
     for(let k=r+1;k<aa.length;k++){ const x=aa[k]||[]; const a=String(x[cL]==null?'':x[cL]).trim(); const rs=String(x[cR]==null?'':x[cR]).trim(); const q0=x[cQ];
       if(/^(總計|总计|grandtotal|總和)$/i.test(mcell(a)))break;
       const mt=a.match(/^(.*?)\s*(合計|合计|汇总|匯總)$/);
       if(mt){ const g=get(mt[1].trim()); if(!g.det.length&&q0!=null&&q0!==''&&!isNaN(+q0)){ g.q=+q0/(kg?1000:1); g.det.push({r:'（未展開）',q:g.q}); } cur=null; continue; }
-      if(a)cur=a;
+      if(a&&!rs&&q0!=null&&q0!==''&&!isNaN(+q0)){ let s2=0,j=k+1,nC=0; for(;j<aa.length;j++){ const y=aa[j]||[]; const r2=String(y[cR]==null?'':y[cR]).trim(), q2=y[cQ]; if(!r2||q2==null||q2===''||isNaN(+q2))break; s2+=+q2; nC++; }
+        if(nC&&Math.abs(s2-(+q0))<=Math.max(1e-6,Math.abs(+q0)*1e-6)){ cur=a; rpHdrEnd=j; continue; } }   /* V129-57：兩層樞紐（越南）：小計列＝材質名稱，重量只算底下各比例列 */
+      if(!a&&!rs&&q0!=null&&q0!==''&&!isNaN(+q0))break;   /* V129-57：材質、比例都空白只有數字＝總計列（重慶 2.採購商品表-物料 原本被加進最後一種材質→合計兩倍） */
+      if(a&&!(k<rpHdrEnd))cur=a;   /* V129-57：小計列底下的英文材質列不改材質名稱 */
       if(!cur||q0==null||q0===''||isNaN(+q0))continue;
       const q=+q0/(kg?1000:1); const g=get(cur); g.q+=q; const rv=parseFloat(rs);
       if(!rs||/PLM/i.test(rs))g.plm+=q; else if(isFinite(rv)&&rv>0)g.qr+=q;
@@ -7247,9 +7323,11 @@ function matPivotBlock(aa,n){
     row.forEach((v,c)=>{ const s=mcell(v); if(cL<0&&/^(列標籤|行標籤|行标签|列标签|材質|材质|類別|类别|主要材料|物料類別|物料类别)$/.test(s))cL=c; });
     if(cL<0)continue; for(let c=cL+1;c<Math.min(row.length,cL+4);c++){ const s=mcell(row[c]); if(/加總|加总|求和|總重|总重|重量/.test(s)){cQ=c;break;} } if(cQ<0)continue;
     if(row.some(v=>/係數|系数|碳排/.test(mcell(v))))continue;   /* 有係數欄的是 80% 表，不是樞紐表 */
-    const kg=/kg|公斤/i.test(mcell(row[cQ])); const items=[];
+    const kg=/kg|公斤/i.test(mcell(row[cQ])); const items=[]; let pvSkip=-1;
     for(let k=r+1;k<aa.length;k++){ const x=aa[k]||[]; const nm=String(x[cL]==null?'':x[cL]).trim(); if(!nm){ if(items.length)break; else continue; }
       if(/^(總計|总计|合計|合计|grandtotal|總和)$/i.test(mcell(nm)))break; const q0=x[cQ]; if(q0==null||q0===''||isNaN(+q0))continue; const q=+q0/(kg?1000:1);
+      if(k<pvSkip)continue; if(/^\((空白|blank)\)$/i.test(mcell(nm)))continue;   /* V129-57 */
+      { let s2=0,j=k+1,nC=0; for(;j<aa.length;j++){ const y=aa[j]||[]; const n2=String(y[cL]==null?'':y[cL]).trim(), q2=y[cQ]; if(q2==null||q2==='')continue; if(!/^-?[\d.]+%?$/.test(n2)||isNaN(+q2))break; s2+=+q2; nC++; }   /* 沒有重量的列（三層樞紐的英文材質列）跳過往下看（重慶 工作表3） */ if(nC&&Math.abs(s2-(+q0))<=Math.max(1e-6,Math.abs(+q0)*1e-6))pvSkip=j; }   /* V129-57：底下比例小列加起來＝這一列 → 小列跳過（重慶 工作表3） */
       items.push({code:'',code2:'',no:items.length+1,cls:'',en:'',zh:nm,q:q,qv:null,qr:null,ef:null,efr:null,rr:null,rec:'',em:null,tot:null}); }
     if(items.length>=3)return {sheet:n,row:r+1,label:'樞紐表（全部類別，系統挑 80%）',hi:{pivot:true},pivot:true,items:items,sumQ:items.reduce((a,x)=>a+(x.q||0),0),sumT:0};
   }
@@ -7273,6 +7351,8 @@ function matImpPreview(res,fname){
   /* 預設區塊：碳排合計＝目前登錄值的那塊優先（ESG 各廠採用版本不同）；否則有碳排、分頁名像 80%／匯總／梳理 的；再否則第一個有重量的 */
   const p80=mat80On(); const score=b=>(p80&&b.pivot?16:0)+(p80&&b.rec?4:0)+((cur.length&&Math.abs(b.sumT-curT)<=Math.max(0.5,curT*0.001))?8:0)+(b.sumT>0?2:0)+(/80|匯總|彙總|汇总|量化|梳理/i.test(b.sheet)?1:0);   /* V129-29：還沒定案的年度樞紐表優先 */
   let sel=0; blocks.forEach((b,i)=>{ if(score(b)>score(blocks[sel]))sel=i; }); if(!blocks[sel].sumQ&&blocks.some(b=>b.sumQ>0))sel=blocks.findIndex(b=>b.sumQ>0);
+  { let bi=-1; blocks.forEach((b,i)=>{ if(b.raw&&(bi<0||b.raw.nIn>blocks[bi].raw.nIn))bi=i; }); if(bi>=0)sel=bi; }   /* V129-57：有原始明細＝預設選它（多份選筆數最多的，例 協和泰國 1~12 月匯總） */
+  if(res._selObj){ const k=blocks.indexOf(res._selObj); if(k>=0)sel=k; }   /* V129-57：改欄位重算後停在同一個區塊 */
   const SITE_ALIAS=IMP_SITE_ALIAS;   /* V85-6：檔名像別廠的檔 → 警告（使用者 9/17 把蘇州富鴻齊的檔開在敬得(太倉)頁） */
   const hits=Object.keys(SITE_ALIAS).filter(s=>SITE_ALIAS[s].some(a=>String(fname||'').indexOf(a)>=0)); const wrong=hits.length&&hits.indexOf(F.site)<0;
   let h=(wrong?'<div style="margin:0 0 8px;padding:8px 12px;border:2px solid #c0392b;background:#fdecea;color:#7a1f14;border-radius:8px;font-size:13px;font-weight:700">⚠ 檔名看起來是 '+esc(hits.map(s=>{const st=(FAC_SITES||[]).find(z=>z.site_id===s)||{}; return (F.pno?F.pno(s):'')+' '+s+' '+(st.site_name||'');}).join('／'))+' 的檔案，目前畫面是 '+esc((F.pno?F.pno(F.site):'')+' '+F.site+' '+(((FAC_SITES||[]).find(z=>z.site_id===F.site)||{}).site_name||''))+'。除非你確定檔案內容是本廠的，請按「取消」重選。</div>':'')
@@ -7282,12 +7362,17 @@ function matImpPreview(res,fname){
     h+='<label class="item" style="display:block;cursor:pointer"><input type="radio" name="matblk" value="'+i+'"'+(i===sel?' checked':'')+' onchange="matImpSel('+i+')"> <b>'+esc(b.sheet)+'</b> 第 '+b.row+' 列起'+(b.label?'　「'+esc(b.label)+'」':'')+'　'+b.items.length+' 項（→ '+rows.length+' 列'+(nR?'，含再生料 '+nR+' 列':'')+'）　重量合計 <b>'+nf(b.sumQ,4)+' t</b>　檔案碳排合計 '+nf(b.sumT,4)+' t'+(same?' <span style="color:#14603F;font-weight:700">＝目前登錄值</span>':'')+'</label>'; });
   if(cur.length)h+='<label class="item" style="display:block;cursor:pointer;background:#fff8e1"><input type="checkbox" id="matrep" checked> <b>取代</b>：帶入時把目前畫面既有列中「物料類別＋中文材質＋料況」對不到檔案的列一併移除（儲存時歸零留痕），避免新舊兩套並存重複計算；不勾則只更新對得到的、其餘新增</label>';
   h+='<div id="matblkdet"></div>';
-  MIMP={res:res,sel:sel};
+  MIMP={res:res,sel:sel,fname:fname};
   dlg('匯入預覽（只帶入表格，尚未寫入資料庫）',h,'<button class="sec" onclick="fuelClose()">取消</button><button onclick="matImpApply()">⬆ 帶入表格</button>');
   matImpSel(sel);
 }
 window.matImpSel=function(i){ if(!MIMP)return; MIMP.sel=i; const b=MIMP.res.blocks[i]; const rows=matImpRows(b); const det=document.getElementById('matblkdet'); if(!det)return;
-  let h='<table style="width:100%;font-size:12px;border-collapse:collapse;margin-top:6px;table-layout:fixed;word-break:break-all"><tr style="background:#eef4f0"><th style="text-align:left;padding:2px 6px">物料類別</th><th style="text-align:left;padding:2px 6px">品名／英文材質</th><th style="text-align:left;padding:2px 6px">中文材質</th><th style="text-align:left;padding:2px 6px">料況</th><th style="text-align:right;padding:2px 6px">重量 t</th><th style="text-align:right;padding:2px 6px">檔案係數</th><th style="text-align:left;padding:2px 6px">係數庫對應</th></tr>';
+  let h='';
+  if(b.raw){ const R=b.raw; const op=(f,cur)=>'<select onchange="matRawRemap('+i+',\''+f+'\',this.value)" style="width:auto;font-size:12px;padding:1px 4px">'+(f==='rr'?'<option value="-1"'+(cur<0?' selected':'')+'>（沒有，全部當原生料）</option>':'')+R.hdr.map((hh,c)=>hh?'<option value="'+c+'"'+(c===cur?' selected':'')+'>'+esc(hh)+'</option>':'').join('')+'</select>';   /* V129-57 */
+    h+='<div style="margin-top:6px;padding:8px 10px;background:#f2f8f4;border:1px solid #cfe3d6;border-radius:8px;font-size:12.5px;line-height:2">原始明細：讀 <b>'+R.nIn+'</b> 筆 → 整理成 <b>'+b.items.length+'</b> 種材質（資料庫只存整理後的結果，原始那 '+R.nIn+' 筆不存）'
+      +'<br>材質欄 '+op('zh',R.cols.zh)+'　再生比例欄 '+op('rr',R.cols.rr)+'　重量欄 '+op('q',R.cols.q)+' 單位 <select onchange="matRawRemap('+i+',\'unit\',this.value)" style="width:auto;font-size:12px;padding:1px 4px"><option value="1"'+(R.unit===1?' selected':'')+'>噸</option><option value="1000"'+(R.unit===1000?' selected':'')+'>公斤</option></select>'
+      +((R.nNoMat||R.nNoQ)?'<br><span style="color:#b8860b">跳過：'+(R.nNoMat?'沒有材質 '+R.nNoMat+' 筆':'')+(R.nNoMat&&R.nNoQ?'、':'')+(R.nNoQ?'重量空白或 0 '+R.nNoQ+' 筆':'')+'</span>':'')+(R.frac?'<br><span class="fmini">比例寫成小數（例 0.3），已換成百分比（30%）</span>':'')+'</div>'; }
+  h+='<table style="width:100%;font-size:12px;border-collapse:collapse;margin-top:6px;table-layout:fixed;word-break:break-all"><tr style="background:#eef4f0"><th style="text-align:left;padding:2px 6px">物料類別</th><th style="text-align:left;padding:2px 6px">品名／英文材質</th><th style="text-align:left;padding:2px 6px">中文材質</th><th style="text-align:left;padding:2px 6px">料況</th><th style="text-align:right;padding:2px 6px">重量 t</th><th style="text-align:right;padding:2px 6px">檔案係數</th><th style="text-align:left;padding:2px 6px">係數庫對應</th></tr>';
   let ok=0; rows.forEach(x=>{ const m=matImpMatch(x); if(m.fid)ok++; const L=m.fid?matLibOf(m.fid):null;
     h+='<tr><td style="padding:2px 6px">'+esc(x.cls)+'</td><td style="padding:2px 6px">'+esc(x.nm)+'</td><td style="padding:2px 6px">'+esc(x.zh)+'</td><td style="padding:2px 6px">'+esc(x.cd)+'</td><td style="text-align:right;padding:2px 6px">'+nf(x.q,4)+'</td><td style="text-align:right;padding:2px 6px">'+(x.ef!=null?nf(x.ef,10):'—')+'</td><td style="padding:2px 6px;color:'+(m.fid?'#14603F':'#b8860b')+'">'+(L?esc(L.name.indexOf(L.cls||'—')===0?L.name:((L.cls?L.cls+'-':'')+L.name))+' '+nf(L.val,10):'⚠ 未對到係數庫（保留檔案值，請帶入後自行選）')+(m.why?' <span class="fmini">'+esc(m.why)+'</span>':'')+'</td></tr>'; });
   h+='</table><div style="font-size:12px;color:#3f544a;padding:6px 2px">係數庫對到 '+ok+'／'+rows.length+' 列；帶入後同「物料類別＋中文材質＋料況」的既有列會被覆蓋更新，其餘新增。</div>';
@@ -11600,7 +11685,7 @@ async function facOpenView(){
   frevRender();
 }
 function frevRender(){
-  const box=document.getElementById('f_result'); if(!box||FAC_MODE!=='open')return;
+  const box=document.getElementById('f_result'); if(!box||FAC_MODE!=='open'){ if(typeof FAC_CUR!=='undefined'&&FAC_CUR&&document.querySelector('#fsrcpane table.fsm'))facPickSrc(FAC_CUR); return; }   /* V129-57-1：在係數矩陣按確認／修改，存完重畫矩陣 */
   const all=frevList(), can=frevCan(FREV.y), ys=frevYears();
   const nC=all.filter(f=>f.review_status==='已確認').length, nP=all.length-nC, nK=all.filter(f=>f.review_note&&f.review_status!=='已確認').length;
   /* 篩選連動：每個選單的選項＝其他條件都套上後還剩的；選了但已不存在就自動清掉 */
@@ -11792,6 +11877,14 @@ async function frevSave(fid){
 async function frevPendLoad(){ try{ if(typeof sb==='undefined'||!sb)return; const {data,error}=await sb.from('ghg_emission_factors').select('factor_year').eq('review_status','待確認').limit(5000); if(error){FPEND={};return;} const m={}; (data||[]).forEach(r=>{m[+r.factor_year]=(m[+r.factor_year]||0)+1;}); FPEND=m; }catch(e){FPEND={};} }
 function facPendChip(y){ y=+y; if(!FPEND||!FPEND[y])return ''; return ' <span title="ESG 正在確認 '+y+' 年的係數：待確認的係數照樣拿來算，確認後數字可能會變（係數庫 → ✅ 開帳確認）" style="display:inline-block;white-space:nowrap;background:#fff8e1;color:#8a6d00;border:1px solid #f0d58c;border-radius:999px;padding:3px 12px;font-size:12px;font-weight:700">🟡 '+y+' 係數待確認 '+FPEND[y]+' 條</span>'; }
 setTimeout(frevPendLoad,1500);
+/* V129-57-1：係數矩陣開帳年度的合成當量格直接確認／修改（同開帳確認頁的 frevConfirm／frevOpen；使用者 261022） */
+function frevCellAct(b,y){ try{ if(!(+y>declMaxY())||(typeof trialY==='function'&&trialY(y)))return '';
+  const ids=[...new Set(Object.values(b.cells[y]||{}).flatMap(x=>[x.fid].concat((x.alts||[]).map(a=>a.fid))).filter(Boolean))];
+  const fs=ids.map(id=>(FACALL||[]).find(z=>z.factor_id===id)).filter(f=>f&&f.review_status&&+f.factor_year===+y); if(!fs.length)return '';
+  const can=frevCan(y), A=(fn,fid,t,b2)=>'<a href="javascript:void(0)" onclick="event.stopPropagation();'+fn+'(&#39;'+facEsc(fid)+'&#39;)" style="'+(b2?'font-weight:700;':'')+'margin-left:6px">'+t+'</a>';
+  return '<div onclick="event.stopPropagation()" style="font-size:11px;font-weight:400;margin-top:2px;white-space:nowrap;cursor:default">'+fs.map(f=>{ const done=f.review_status==='已確認';
+    const st=done?'<span style="color:#1e6b43" title="'+facEsc((f.reviewed_by||'')+' '+String(f.reviewed_at||'').slice(0,16).replace('T',' '))+'">✓ 已確認</span>':'<span style="color:#856404">待確認</span>';
+    return (fs.length>1?'<span style="color:var(--g)">'+facEsc(f.factor_id)+'</span> ':'')+st+(can?(done?'':A('frevConfirm',f.factor_id,'確認',1))+A('frevOpen',f.factor_id,'修改'):A('frevOpen',f.factor_id,'看')); }).join('<br>')+'</div>'; }catch(e){ return ''; } }
 /* 係數矩陣：已開帳的年度欄標「開帳·待確認 n／已確認」 */
 function frevHdr(m,y){ try{ if(!(+y>declMaxY())||(typeof trialY==='function'&&trialY(y)))return ''; const L=(m.facs||[]).filter(f=>f.review_status&&+f.factor_year===+y); if(!L.length)return ''; const p=L.filter(f=>f.review_status!=='已確認').length;
   return '<br><span style="font-size:10px;font-weight:400;color:'+(p?'#ffe69c':'#bfe3cd')+'">'+(p?'開帳·待確認 '+p:'開帳·已確認')+'</span>'; }catch(e){ return ''; } }
@@ -12055,7 +12148,7 @@ async function fpRender(){
   const cnt=k=>sites.filter(s=>R[s].st===k).length;
   const pill=(t,bg,fg,bd)=>'<span style="display:inline-block;white-space:nowrap;background:'+bg+';color:'+fg+';border:1px solid '+bd+';border-radius:999px;padding:1px 10px;font-size:11.5px;font-weight:700">'+t+'</span>';
   let h=ehead({title:'📊 填報進度',legend:'auto',siteSel:siteSel,yearSel:yearSel,
-    x:pill('已填完 '+cnt('已填完')+' 廠','#e3f4ea','#1e6b43','#bfe3cd')+' '+pill('填寫中 '+cnt('填寫中')+' 廠','#fff3cd','#856404','#ffe69c')+' '+pill('還沒開始 '+cnt('還沒開始')+' 廠','#f3f5f4','#5b6b63','#d7dfdb')});
+    x:pill('已填完 '+cnt('已填完')+' 廠','var(--st-done-bg)','var(--st-done-fg)','var(--st-done-bd)')+' '+pill('填寫中 '+cnt('填寫中')+' 廠','var(--st-fill-bg)','var(--st-fill-fg)','var(--st-fill-bd)')+' '+pill('還沒開始 '+cnt('還沒開始')+' 廠','#f3f5f4','#5b6b63','#d7dfdb')});
   h+='<div class="fmini ehdesc" style="margin:0 2px 4px;line-height:1.4">應填＝'+PY+' 年這個廠有資料的類別（整類都是 0 的不算；扣掉系統自動算的 C03、不適用的 C11／C14）；「差一半以上」＝碳排跟 '+PY+' 年相差 50% 以上，請確認有沒有漏填或單位填錯　<span title="只讀明細資料，不會改任何東西。進度是照資料庫目前的內容即時算的；某一類去年有、今年確定沒有，會一直顯示還沒填（之後可以加「本年沒有」的勾選）。" style="cursor:help;color:var(--p);font-weight:700;white-space:nowrap">ⓘ 怎麼算</span></div>';
   h+='<div id="s101wrap">';
   if(!FP.site){
@@ -13836,11 +13929,11 @@ body.ghgfocus #src_form .ehead>.fxfocus{background:#1B8A60;border-color:#1B8A60;
     const tm=t=>t?String(t).slice(0,16).replace('T',' '):'';
     const p=(t,bg,fg,bd,ti)=>'<span class="eschip" style="background:'+bg+';color:'+fg+';border-color:'+bd+'" title="'+esc(ti)+'">'+t+'</span>';
     const nd=r&&r.no_data?'（本年沒有：'+esc(r.no_data_reason||'')+'）':'';
-    if(!r||(r.status==='draft'&&!r.no_data))return p('✏️ 填寫中','#f3f5f4','#5b6b63','#d7dfdb','這一類還沒送出。填好了按「📤 送出審核」，ESG 確認後就算通過');
+    if(!r||(r.status==='draft'&&!r.no_data))return p('✏️ 填寫中','var(--st-fill-bg)','var(--st-fill-fg)','var(--st-fill-bd)','這一類還沒送出。填好了按「📤 送出審核」，ESG 確認後就算通過');
     if(r.status==='draft')return p('⊘ 本年沒有'+(r.no_data_reason?'：'+esc(r.no_data_reason):''),'#f1f1f1','#666','#d5d5d5','勾的人：'+who(r.updated_by)+' '+tm(r.updated_at)+'。還沒送出，確定了請按「📤 送出審核」');
-    if(r.status==='submitted')return p('📤 已送出，等 ESG 確認'+nd,'#e8f1fb','#1f4e79','#bcd4ee','送出：'+who(r.submitted_by)+' '+tm(r.submitted_at)+'。等 ESG 確認期間這一頁不能改；要改請 ESG 退回');
-    if(r.status==='approved')return p('✅ 通過'+nd,'#e3f4ea','#1e6b43','#bfe3cd','送出：'+who(r.submitted_by)+' '+tm(r.submitted_at)+'；ESG 確認：'+who(r.reviewed_by)+' '+tm(r.reviewed_at)+(r.review_note?'；備註：'+r.review_note:''));
-    if(r.status==='returned'){ const rn=String(r.review_note||''); return p('↩ 退回：'+esc(rn.length>28?rn.slice(0,28)+'…':rn)+nd,'#fff5f5','#a33','#e3b5b0','ESG 退回：'+who(r.reviewed_by)+' '+tm(r.reviewed_at)+'；原因：'+rn+'；改好後再按「📤 送出審核」'); }   /* 退回原因放膠囊（全畫面模式會收起表頭下的說明框） */
+    if(r.status==='submitted')return p('📤 已送出，等 ESG 確認'+nd,'var(--st-wait-bg)','var(--st-wait-fg)','var(--st-wait-bd)','送出：'+who(r.submitted_by)+' '+tm(r.submitted_at)+'。等 ESG 確認期間這一頁不能改；要改請 ESG 退回');
+    if(r.status==='approved')return p('✅ 通過'+nd,'var(--st-done-bg)','var(--st-done-fg)','var(--st-done-bd)','送出：'+who(r.submitted_by)+' '+tm(r.submitted_at)+'；ESG 確認：'+who(r.reviewed_by)+' '+tm(r.reviewed_at)+(r.review_note?'；備註：'+r.review_note:''));
+    if(r.status==='returned'){ const rn=String(r.review_note||''); return p('↩ 退回：'+esc(rn.length>28?rn.slice(0,28)+'…':rn)+nd,'var(--st-back-bg)','var(--st-back-fg)','var(--st-back-bd)','ESG 退回：'+who(r.reviewed_by)+' '+tm(r.reviewed_at)+'；原因：'+rn+'；改好後再按「📤 送出審核」'); }   /* 退回原因放膠囊（全畫面模式會收起表頭下的說明框） */
     return ''; }
   function btns(s,y,c,r){
     if(!canAct(s,y))return '';
@@ -13922,14 +14015,14 @@ body.ghgfocus #src_form .ehead>.fxfocus{background:#1B8A60;border-color:#1B8A60;
 #prog table.pgt th.grp{font-size:11px}
 #prog table.pgt td.s{text-align:left;padding:2px 6px;font-weight:700}
 #prog .c{display:inline-block;width:22px;height:20px;line-height:20px;border-radius:4px;font-size:12px;font-weight:700;cursor:pointer}
-#prog .c.ok{background:#d7f0e1;color:#1e6b43}#prog .c.wt{background:#dbe9f8;color:#1f4e79}#prog .c.rt{background:#fbe0de;color:#a33}
-#prog .c.ed{background:#fff3cd;color:#856404}#prog .c.no{background:#fff;color:#8a9a92;border:1px dashed #b9c6c0}#prog .c.nd{background:#eeeeee;color:#888}
+#prog .c.ok{background:var(--st-done-bg);color:var(--st-done-fg)}#prog .c.wt{background:var(--st-wait-bg);color:var(--st-wait-fg)}#prog .c.rt{background:var(--st-back-bg);color:var(--st-back-fg)}
+#prog .c.ed{background:var(--st-fill-bg);color:var(--st-fill-fg)}#prog .c.no{background:#fff;color:#8a9a92;border:1px dashed #b9c6c0}#prog .c.nd{background:#eeeeee;color:#888}
 #prog .c.dc{background:#e6eef9;color:#1f4e79}
 #prog .c.dim{opacity:.18}
 #prog tr.allok td{background:#eef8f2}
 #prog .pg-all{display:inline-block;white-space:nowrap;font-size:11px;font-weight:700;color:#1e6b43}
 #prog .pg-rall{display:inline-block;white-space:nowrap;font-size:10.5px;font-weight:600;color:#a33;cursor:pointer;margin-left:4px}
-#prog .pg-list{margin-top:10px;font-size:12px}
+#prog .pg-list{margin-top:10px;font-size:12px;background:var(--zone-att-bg);border:1px solid var(--zone-att-bd);border-radius:12px;padding:10px 14px}   /* V129-58：要處理區＝淡杏 */
 #prog .pg-list table{border-collapse:collapse}#prog .pg-list td,#prog .pg-list th{border-bottom:1px solid #eef3f0;padding:3px 10px;text-align:left;white-space:nowrap}
 </style>
 <script>
@@ -13979,7 +14072,7 @@ body.ghgfocus #src_form .ehead>.fxfocus{background:#1B8A60;border-color:#1B8A60;
       +'<span class="fpair"><span class="ehlab">年度</span><select onchange="PG.year=+this.value;progRender()">'+yearOpts(ys,Y)+'</select></span>'
       +(DC?'<span class="fmini" style="color:#1f4e79">'+Y+' 年已申報（定案），不用送出審核，只看不改</span>':[['all','全部'],['wt','等 ESG 確認'],['rt','退回'],['todo','還沒送出']].map(([k,t])=>'<button class="pg-f'+(PG.f===k?' on':'')+'" onclick="PG.f=&#39;'+k+'&#39;;progRender()">'+t+'</button>').join(''))
       +'<span style="flex:1"></span>'
-      +(DC?[['dc','#e6eef9','#1f4e79']]:[['ok','#d7f0e1','#1e6b43'],['wt','#dbe9f8','#1f4e79'],['rt','#fbe0de','#a33'],['ed','#fff3cd','#856404'],['no','#fff','#5b6b63'],['nd','#eeeeee','#666']]).map(([k,bg,fg])=>'<span class="pg-pill" style="background:'+bg+';color:'+fg+';border-color:'+fg+'33">'+SYM[k]+' '+LAB[k]+' '+tot[k]+'</span>').join(' ')
+      +(DC?[['dc','#e6eef9','#1f4e79']]:[['ok','var(--st-done-bg)','var(--st-done-fg)'],['wt','var(--st-wait-bg)','var(--st-wait-fg)'],['rt','var(--st-back-bg)','var(--st-back-fg)'],['ed','var(--st-fill-bg)','var(--st-fill-fg)'],['no','#fff','#5b6b63'],['nd','#eeeeee','#666']]).map(([k,bg,fg])=>'<span class="pg-pill" style="background:'+bg+';color:'+fg+';border-color:'+(/^var/.test(fg)?fg.replace('-fg)','-bd)'):fg+'33')+'">'+SYM[k]+' '+LAB[k]+' '+tot[k]+'</span>').join(' ')
       +'</div>'
       +'<div class="fmini" style="margin:0 2px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">一格＝一廠一類，點格子到那一頁　<span style="cursor:help;color:var(--p);font-weight:700" title="✓ 通過＝ESG 已確認；⏳ 已送出，等 ESG 確認；↩ 退回（滑鼠看原因）；✎ 有資料，還沒送出；○ '+PY+' 年有資料、'+Y+' 年還沒資料；⊘ 本年沒有（滑鼠看原因）；空白＝這廠不適用（去年今年都沒資料）">ⓘ 符號說明</span></div>';
     // 表頭：範疇分組＋類別代號
