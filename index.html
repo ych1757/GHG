@@ -292,7 +292,7 @@ function facChg(on){ return '<span class="fchg'+(on?'':' off')+'">🟡</span>'; 
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-52</b> · 2026/10/21</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-54</b> · 2026/10/22</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -524,6 +524,22 @@ let READONLY = true;   // V51:未登入=true;登入後依角色動態設定(lgAp
 let sb = null;
 const configured = !SUPABASE_URL.includes("你的") && !SUPABASE_ANON_KEY.includes("你的");
 /* V107：安全收緊第一步——寫入帶「目前登入者自己的」登入憑證（ghg_jwt）；讀取／rpc 照舊用公開金鑰 */
+/* V129-54：登入憑證換新——同一時間只送一次換新（首頁一開就同時發幾十個讀取，各自拿同一張換新票去換會互相作廢） */
+let _ghgRefP=null;
+function ghgRefreshTok(){
+  if(_ghgRefP)return _ghgRefP;
+  _ghgRefP=(async()=>{
+    try{
+      const rt=sessionStorage.getItem('ghg_rt')||''; if(!rt)return '';
+      const r=await fetch(AUTH_URL+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{apikey:AUTH_KEY,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:rt})});
+      const j=await r.json(); if(r.ok&&j.access_token){ sessionStorage.setItem('ghg_jwt',j.access_token); if(j.refresh_token)sessionStorage.setItem('ghg_rt',j.refresh_token); return j.access_token; }
+    }catch(e){}
+    return '';
+  })();
+  _ghgRefP.then(()=>{ _ghgRefP=null; },()=>{ _ghgRefP=null; });
+  return _ghgRefP;
+}
+window.ghgRefreshTok=ghgRefreshTok;
 async function ghgJwtW(){
   try{
     if(typeof curGhgUser==='undefined'||!curGhgUser||curGhgUser.ext)return '';
@@ -531,9 +547,7 @@ async function ghgJwtW(){
     if((sessionStorage.getItem('ghg_jwt_emp')||'')!==String(curGhgUser.emp_id))return '';   /* 同分頁換人／舊憑證 → 不用 */
     let exp=0; try{ exp=JSON.parse(decodeURIComponent(escape(atob(t.split('.')[1].replace(/-/g,'+').replace(/_/g,'/'))))).exp||0; }catch(e){}
     if(exp*1000>Date.now()+60000)return t;
-    const rt=sessionStorage.getItem('ghg_rt')||''; if(!rt)return '';
-    const r=await fetch(AUTH_URL+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{apikey:AUTH_KEY,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:rt})});
-    const j=await r.json(); if(r.ok&&j.access_token){ sessionStorage.setItem('ghg_jwt',j.access_token); if(j.refresh_token)sessionStorage.setItem('ghg_rt',j.refresh_token); return j.access_token; }
+    return await ghgRefreshTok();   /* V129-54：同時多筆讀取只換一次 */
   }catch(e){}
   return '';
 }
@@ -545,9 +559,7 @@ async function ghgJwtAny(){
     const t=sessionStorage.getItem('ghg_jwt')||''; if(!t)return '';
     let exp=0; try{ exp=JSON.parse(decodeURIComponent(escape(atob(t.split('.')[1].replace(/-/g,'+').replace(/_/g,'/'))))).exp||0; }catch(e){}
     if(exp*1000>Date.now()+60000)return t;
-    const rt=sessionStorage.getItem('ghg_rt')||''; if(!rt)return '';
-    const r=await fetch(AUTH_URL+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{apikey:AUTH_KEY,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:rt})});
-    const j=await r.json(); if(r.ok&&j.access_token){ sessionStorage.setItem('ghg_jwt',j.access_token); if(j.refresh_token)sessionStorage.setItem('ghg_rt',j.refresh_token); return j.access_token; }
+    return await ghgRefreshTok();   /* V129-54：同時多筆讀取只換一次 */
   }catch(e){}
   return '';
 }
@@ -572,8 +584,9 @@ const ghgFetch=async(input,init)=>{
     if(!tk){ const msg='沒有登入憑證（登入逾時，或這個分頁的登入已失效），這次的送查證／退回／定稿沒有送出——請登出後用工號＋密碼重新登入。';
       ghgWriteWarn(msg); return new Response(JSON.stringify({code:'GHG401',message:msg,details:null,hint:null}),{status:401,headers:{'Content-Type':'application/json'}}); }
     init=Object.assign({},init||{}); const h=new Headers(init.headers||((input&&typeof input!=='string')?input.headers:undefined)||{}); h.set('Authorization','Bearer '+tk); init.headers=h; }
-  if(!isW&&(m==='GET'||m==='HEAD')&&url.indexOf(SUPABASE_URL+'/rest/v1/ghg_user_roles')===0){   /* V129-41-2：讀權限名單帶登入憑證（批262 後公開金鑰讀不到） */
-    const tk=await ghgJwtAny(); if(tk){ init=Object.assign({},init||{}); const h=new Headers(init.headers||((input&&typeof input!=='string')?input.headers:undefined)||{}); h.set('Authorization','Bearer '+tk); init.headers=h; } }
+  const isR=!isW&&(m==='GET'||m==='HEAD')&&url.indexOf(SUPABASE_URL+'/rest/v1/')===0&&/^(ghg_|v_ghg_|rpc\/ghg_)/.test(url.slice((SUPABASE_URL+'/rest/v1/').length));   /* V129-54：讀 GHG 資料（表、檢視、資料庫函式）一律帶登入憑證（資料保護第二段；V129-41-2 起權限名單已經這樣） */
+  let rTk='';
+  if(isR){ rTk=await ghgJwtAny(); if(rTk){ init=Object.assign({},init||{}); const h=new Headers(init.headers||((input&&typeof input!=='string')?input.headers:undefined)||{}); h.set('Authorization','Bearer '+rTk); init.headers=h; } }
   if(isW){ init=Object.assign({},init||{}); const h=new Headers(init.headers||((input&&typeof input!=='string')?input.headers:undefined)||{});
     const tk=await ghgJwtW(); if(tk)h.set('Authorization','Bearer '+tk);
     else{   /* V107-2：拿不到登入者自己的憑證 → 不送出（收緊後不帶身分的刪除會被默默略過，畫面會像刪好了） */
@@ -583,6 +596,10 @@ const ghgFetch=async(input,init)=>{
     if(m==='PATCH'){ const p=h.get('Prefer')||''; if(!/count=/.test(p))h.set('Prefer',(p?p+',':'')+'count=exact'); }
     init.headers=h; }
   const res=await ghgFetch0(input,init);
+  if(isR&&res&&(res.status===401||res.status===403)){   /* V129-54：讀取被擋 */
+    if(!rTk){ if(url.indexOf(SUPABASE_URL+'/rest/v1/ghg_user_roles')<0)window._ghgAnonDenied=true; }   /* 還沒登入＝登入成功後重新整理一次 */
+    else if(typeof curGhgUser!=='undefined'&&curGhgUser)ghgWriteWarn('讀不到資料（'+res.status+'）：登入逾時，或這個分頁的登入已失效——畫面上的數字可能不完整，請登出後用工號＋密碼重新登入。');
+  }
   if(isW&&res&&typeof res.status==='number'){
     if(res.status===401||res.status===403)ghgWriteWarn('存檔被資料庫擋下（'+res.status+'）：沒有這個廠／年度的修改權限、年度已鎖，或登入逾時——請重新登入後再試；這次的修改沒有存進去。');
     else if(m==='PATCH'&&res.ok&&/\/0$/.test(res.headers.get('Content-Range')||''))ghgWriteWarn('這次修改沒有寫進資料庫（0 筆）：可能沒有權限、年度已鎖，或資料已被別人改過——請重新整理後確認。');
@@ -625,7 +642,7 @@ const SRC=[
  {c:'S1-13',sc:'範疇一',mid:'1.4 人為系統釋放之直接暫時性排放(逸散)',name:'噴式潤滑劑/推進劑',unit:'瓶/L',qty:'使用數量',f:['類型','日期','單位','密度(kg/L)','單重(L)','二氧化碳含量(kgCO2e)','負責部門','資料來源','備註']},
  {c:'S2-01',sc:'範疇二',mid:'2.1 來自輸入電力的間接排放',name:'外購電力',unit:'度(kWh)',qty:'總用電量(kWh)',f:['計費期間-起','計費期間-迄','計費天數','廠區用電量','宿舍用電量','平均每天用電','費用','幣別','備註','資料來源']},
  {c:'S2-02',sc:'範疇二',mid:'2.2 來自輸入能源的間接排放',name:'外購蒸汽/能源',unit:'GJ',qty:'使用量',na:'不適用',naWhy:'集團沒有使用外購蒸汽（使用者 2026/10/21）；2022–2025 各廠也都沒有這一類的資料',f:[]},   /* V129-52 */
- {c:'S1-LU',sc:'範疇一',mid:'1.5 土地使用、土地使用變更及林業',name:'土地使用變更與林業(如適用)',unit:'-',qty:'排放/移除量',f:['說明','資料來源']},
+ {c:'S1-LU',sc:'範疇一',mid:'1.5 土地使用、土地使用變更及林業',name:'土地使用變更與林業(如適用)',unit:'-',qty:'排放/移除量',na:'不適用',naWhy:'比照外購蒸汽改成不適用（使用者 2026/10/22）；系統裡沒有這一類的資料（2022–2025 都沒有）',f:[]},
  {c:'C01-M',sc:'範疇三',mid:'C01 採購商品與服務',name:'直接物料(重量法)',unit:'公噸',qty:'採購重量(噸)',a1:'物料',f:[{l:'大類',col:'attr2'},{l:'部件/零組件',k:'細類',alt:['服務項目/材料別']},{l:'材質',k:'微類',alt:['細項/材質']},{l:'是否回收',k:'是否回收'},{l:'採購佔比(%)',k:'佔比',t:'text'},'量化係數',{l:'資料來源',k:'資料來源'}]},
  {c:'C01-S',sc:'範疇三',mid:'C01 採購商品與服務',name:'非直接物料(服務·金額法)',unit:'USD',qty:'支付金額(USD)',a1:'服務',f:[{l:'費用項目',src:true,t:'text'},{l:'量化係數依據',k:'係數品名',t:'text'},'量化係數',{l:'資料來源',k:'資料來源'}]},
  {c:'C01-W',sc:'範疇三',mid:'C01 採購商品與服務',name:'自來水',unit:'m³',qty:'用水度數(m³)',a1:'自來水',f:['計費期間-起','計費期間-迄','計費天數','平均每天用水','費用','幣別','佐證資料來源']},
@@ -2475,6 +2492,7 @@ async function lgLogin(p,silent){
   if(!r){ if(!silent)lgErr(sessionStorage.getItem('ghg_jwt')?'密碼正確，但此帳號尚未指派 GHG 角色（無權限）——請洽系統管理於權限頁指派角色':'登入逾時，請重新用工號＋密碼登入'); sessionStorage.removeItem(LGKEY); return; }   // V55-2fix:lg_msg(V51殘留)→lgErr
   curGhgUser={emp_id:p.emp_id,name:p.name,factory_code:p.factory_code,role:r.role,scope:r.scope||[p.factory_code].filter(Boolean),roleName:(GHGROLES[r.role]||{}).n||r.role};
   sessionStorage.setItem(LGKEY,p.emp_id);
+  if(window._ghgAnonDenied&&!silent){ location.reload(); return; }   /* V129-54：登入前的讀取被擋（資料保護第二段後一定會）→ 重新整理一次，這次全部帶登入憑證；同分頁登入會保留 */
   document.getElementById('loginov').style.display='none';
   lgApply();
 }
