@@ -292,7 +292,7 @@ function facChg(on){ return '<span class="fchg'+(on?'':' off')+'">🟡</span>'; 
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-54</b> · 2026/10/22</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-55</b> · 2026/10/22</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -2362,9 +2362,9 @@ function extValid(x){ if(!x||x.active===false)return false; if(x.expires_at && (
 async function resolveIdentity(key){
   key=String(key||'').trim(); if(!key)return null; const kl=key.toLowerCase();
   const ku=key.toUpperCase(); let p=(window._lgAll||[]).find(p=>String(p.emp_id||'').toUpperCase()===ku || String(p.email||'').toLowerCase()===kl) || null;   /* V103-15：工號不分大小寫（OMS 存大寫，打小寫也要認得） */
-  if(!p){   // 不在 OMS 名單 → 查 GHG 自建名單(外部查核)
-    await loadExtUsers(); const x=(window._extUsers||[]).find(u=>String(u.email||'').toLowerCase()===kl);
-    if(x && extValid(x)) return {emp_id:'EXT:'+x.email.toLowerCase(),name:x.name,email:x.email,factory_code:x.org||'外部',dept:x.org||'',title:'外部查核',ext:true,extScope:x.scope||['*'],hasOms:false,authEmail:x.email};
+  if(!p){   // 不在 OMS 名單 → 可能是 GHG 自建名單(外部查核)
+    /* V129-55：登入前不讀外部名單（批280 後只有本人與管理員讀得到）；輸入的是 Email 就先當外部候選人，密碼驗過後再讀自己那一列確認 */
+    if(/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(kl)) return {emp_id:'EXT:'+kl,name:kl,email:kl,factory_code:'外部',dept:'',title:'外部查核',ext:true,extPending:true,extScope:null,hasOms:false,authEmail:kl};
     return null;
   }
   await loadOmsRoster(); const o=omsAcctOf(p.emp_id);
@@ -2399,6 +2399,7 @@ async function lgIdHint(final){
   if(!el)return; if(!v){el.textContent='';return;}
   if(!lgListOk()){ if(final){ el.style.color='#b7791f'; el.textContent='⚠ 授權名單還沒讀到（連線問題），請重新整理頁面再試'; } else el.textContent=''; return; }   /* V129-47-2：沒讀到不說「不在名單」 */
   const p=await resolveIdentity(v);
+  if(p&&p.extPending){ el.style.color='#6b46c1'; el.textContent='外部查核帳號（'+p.email+'）——按登入後驗證密碼與名單'; return; }   /* V129-55 */
   if(p){const _na=!p.ext&&!p.hasOms; el.style.color=_na?'#b7791f':'#1f8a65';   /* V124：內部同仁沒有 SyncHub 帳號＝橘色提醒 */
     el.textContent=(_na?'⚠ ':'✓ ')+(p.name||'')+(p.email?('　·　'+p.email):'')+(p.ext?'':(p.hasOms?'　·　SyncHub 帳號（同一組密碼）':(p.rosterErr?'　·　暫時讀不到 SyncHub 帳號名冊，請稍後再試':'　·　SyncHub 帳號尚未開通，請洽 DTO'))); return;}
   // 未完整命中:輸入中不噴紅(還在打),只在離開欄位/按登入時才判「不在名單」
@@ -2413,11 +2414,25 @@ function lgTrySso(){
     return (window._lgAll||[]).find(x=>String(x.emp_id||'').toUpperCase()===String(emp).toUpperCase())||null;   /* V103-15 */
   }catch(e){return null;}
 }
+/* V129-55：外部查核人員——用自己的登入憑證讀 GHG 自建名單裡自己那一列，檢查啟用／到期；回傳補好資料的 p，或錯誤訊息 */
+async function extVerify(p){
+  try{
+    const {data,error}=await sb.from('ghg_ext_users').select('*').eq('email',String(p.authEmail||p.email||'').toLowerCase());
+    if(error)return {err:'讀不到外部查核名單（'+error.message+'）——請稍後再試，一直這樣請洽 DTO'};
+    const x=(data||[])[0];
+    if(!x)return {err:'此帳號不在 GHG 外部查核名單，請洽 DTO'};
+    if(!extValid(x))return {err:x.active===false?'此外部查核帳號已停用，請洽 DTO':'此外部查核帳號已到期（'+x.expires_at+'），請洽 DTO'};
+    return {p:Object.assign({},p,{name:x.name||p.email,factory_code:x.org||'外部',dept:x.org||'',extScope:(x.scope&&x.scope.length)?x.scope:['*'],extPending:false})};
+  }catch(e){ return {err:'讀不到外部查核名單（'+(e.message||e)+'）'}; }
+}
+function lgClearTok(){ try{['ghg_jwt','ghg_rt','ghg_jwt_emp'].forEach(k=>sessionStorage.removeItem(k));}catch(e){} }
 async function lgLoginPwd(){
-  const id=(document.getElementById('lg_id')||{}).value||'', pwd=(document.getElementById('lg_pwd')||{}).value||'';
+  return lgLoginCore((document.getElementById('lg_id')||{}).value||'', (document.getElementById('lg_pwd')||{}).value||'');
+}
+async function lgLoginCore(id,pwd){   /* V129-55：一般登入與「外部查核登入」共用 */
   if(!id||!pwd){lgErr('請輸入工號/Email 與密碼');return;}
   lgErr(''); if(!lgListOk()){ lgErr('正在重新讀取授權名單，請稍候…'); await lgLoadList(); lgErr(''); if(!lgListOk()){ lgIdHint(true); lgErr(LG_NET_MSG); return; } }   /* V129-47-2：名單沒讀到先再讀一次 */
-  const p=await resolveIdentity(id);
+  let p=await resolveIdentity(id);
   if(!p){lgIdHint(true); lgErr('查無此工號/Email，或尚未於 OMS 授權 GHG');return;}
   if(!p.authEmail){lgErr(p.rosterErr?'暫時讀不到 SyncHub 帳號名冊，請稍後再試（一直這樣請洽 DTO）':'帳號尚未開通，請洽 DTO 在 SyncHub 授權頁開通');return;}   /* V124 */
   try{
@@ -2425,6 +2440,7 @@ async function lgLoginPwd(){
     const j=await r.json();
     if(!r.ok||!j.access_token){lgErr('帳號或密碼錯誤'+(p.hasOms?'（此帳號為 SyncHub 帳號，請用 SyncHub/OMS 同一組密碼）':''));return;}
     try{sessionStorage.setItem('ghg_jwt',j.access_token);sessionStorage.setItem('ghg_rt',j.refresh_token||'');sessionStorage.setItem('ghg_jwt_emp',String(p.emp_id));}catch(e){}   // V55:保留JWT供EF驗身分；V103：記憑證主人＋換新憑證（看員工個資用，只給本人）
+    if(p.ext){ const v=await extVerify(p); if(v.err){ lgClearTok(); lgErr(v.err); return; } p=v.p; }   /* V129-55：外部查核＝密碼對了還要在名單上、沒停用、沒到期 */
     if(lgNeedChange(j)){window._lgPending=p; lgShowChange(); return;}   // V55-3:初始密碼→先改密碼
     await lgLogin(p,false);
   }catch(e){lgErr('驗證失敗：'+e);}
@@ -2447,21 +2463,10 @@ async function lgAdminEnter(){
 }
 // 外部查核訪客(方案B):GHG自有 ghg_guest_auth(不污染OMS);唯讀·到期/停用檢查
 async function _sha256(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');}
-async function lgGuestEnter(){
+async function lgGuestEnter(){   /* V129-55：原本讀 ghg_guest_auth（10/02 批208 起收回、登不進去）→ 改走跟一般登入同一套：登入系統驗密碼＋外部查核名單 */
   const email=((document.getElementById('lgg_email')||{}).value||'').trim().toLowerCase(), pwd=(document.getElementById('lgg_pwd')||{}).value||'';
   if(!email||!pwd){lgErr('請輸入 Email 與密碼');return;}
-  lgErr('');
-  try{
-    const {data,error}=await sb.from('ghg_guest_auth').select('*').eq('email',email);
-    if(error){lgErr('訪客帳號表未建——請先跑 60_SQL');return;}
-    const g=(data||[])[0];
-    if(!g||g.active===false){lgErr('帳號不存在或已停用');return;}
-    if(g.expires_at && (''+g.expires_at) < new Date().toISOString().slice(0,10)){lgErr('帳號已過期（'+g.expires_at+'）');return;}
-    if(await _sha256(pwd)!==g.pwd_hash){lgErr('密碼錯誤');return;}
-    curGhgUser={emp_id:'GUEST:'+email, name:g.name||'外部查核', factory_code:'', role:'view', scope:g.scope||['*'], roleName:'外部查核(訪客·唯讀)', guest:true};
-    document.getElementById('loginov').style.display='none';
-    lgApply();
-  }catch(e){lgErr('登入失敗：'+e);}
+  return lgLoginCore(email,pwd);
 }
 const LG_NET_MSG='連線失敗：授權名單沒有讀到，請重新整理頁面再試（一直這樣請洽 DTO）';   /* V129-47-2：沒讀到≠不在名單 */
 function lgListOk(){ return !!(window._lgAll&&window._lgAll.length&&!window._lgLoadErr); }
@@ -2478,12 +2483,16 @@ async function lgInit(){
     if(!(await lgLoadList())){ lgErr(LG_NET_MSG+(window._lgLoadErr?'（'+window._lgLoadErr+'）':'')); return; }   /* V129-47-2 */
     const sso=lgTrySso(); if(sso){await lgLogin(sso,true); if(curGhgUser)return;}   // V54:SyncHub同分頁身分→免打
     const saved=sessionStorage.getItem(LGKEY);   // 同分頁 session 記住(關分頁重登)
-    if(saved){const p=window._lgAll.find(x=>x.emp_id===saved); if(p){await lgLogin(p,true);return;}}
+    if(saved){const p=window._lgAll.find(x=>x.emp_id===saved); if(p){await lgLogin(p,true);return;}
+      if(/^EXT:/.test(saved)&&sessionStorage.getItem('ghg_jwt')&&(sessionStorage.getItem('ghg_jwt_emp')||'')===saved){ const em=saved.slice(4); await lgLogin({emp_id:saved,name:em,email:em,authEmail:em,ext:true,extPending:true,hasOms:false},true); if(curGhgUser)return; } }   /* V129-55：還原外部查核登入（帶憑證重讀自己那一列） */
   }catch(e){lgErr('初始化失敗:'+e);}
 }
 async function lgLogin(p,silent){
   if(p&&p.ext){   // V56:GHG 自建(外部查核)=固定「查看」唯讀,範圍依 ext scope
+    if(p.extPending){ const v=await extVerify(p); if(v.err){ if(!silent)lgErr(v.err); lgClearTok(); sessionStorage.removeItem(LGKEY); return; } p=v.p; }   /* V129-55：沒驗過名單不讓進 */
     curGhgUser={emp_id:p.emp_id,name:p.name,factory_code:'',role:'view',scope:p.extScope||['*'],roleName:'外部查核(查看·唯讀)',ext:true};
+    sessionStorage.setItem(LGKEY,p.emp_id);   /* V129-55：同分頁重新整理不用重登 */
+    if(window._ghgAnonDenied&&!silent){ location.reload(); return; }   /* V129-55：同內部（V129-54） */
     document.getElementById('loginov').style.display='none'; lgApply(); return;
   }
   const {data:rl,error:rlErr}=await sb.from('ghg_user_roles').select('*').eq('emp_id',p.emp_id);
