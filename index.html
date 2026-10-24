@@ -302,7 +302,7 @@ function facChg(on){ return '<span class="fchg'+(on?'':' off')+'">🟡</span>'; 
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-58-6</b> · 2026/10/22</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-59-1</b> · 2026/10/22</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -455,7 +455,7 @@ function facChg(on){ return '<span class="fchg'+(on?'':' off')+'">🟡</span>'; 
       <div class="nav" id="srcnav"></div>
       <div class="pane">
         <div class="ftitle" id="src_title">← 請從左側選一個排放源</div>
-        <div id="src_form"></div>
+        <div id="esgqEntry"></div><div id="src_form"></div>
         <div id="src_records" style="margin-top:16px"></div>
       </div>
     </div>
@@ -478,7 +478,7 @@ function facChg(on){ return '<span class="fchg'+(on?'':' off')+'">🟡</span>'; 
   </div>
 
   <!-- ===== V48 權限 ===== -->
-  <div id="prog" class="card hide"></div>
+  <div id="progSub" class="hide"></div><div id="prog" class="card hide"></div><div id="esgq" class="card hide"></div>   <!-- V129-59：待 ESG 確認 -->
   <div id="perm" class="card hide"><div class="mobnote">📱 <b>這一頁要輸入或上傳資料，請用電腦開啟。</b><br>手機上建議看「查詢」「全集團」「係數庫」。<br><button class="sec" onclick="document.body.classList.add('mobforce');window.scrollTo(0,0)">仍要用手機開啟</button></div>
     <div class="ftitle" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:4px"><span>🔐 權限管理</span>
     <details style="margin:0;display:inline-block;font-weight:400">
@@ -3008,7 +3008,8 @@ document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
   if(t.dataset.t==='fac'&&!window._facLoaded){window._facLoaded=true;loadFactors();}
   if(t.dataset.t==='perm')loadPerm();   // V48:權限頁每次進入重載(指派結果即時)
   if(t.dataset.t==='home')homeEnter();   /* V125 */
-  if(t.dataset.t==='prog'&&typeof progEnter==='function')progEnter();   /* V129-36 */
+  if(typeof esgqTab==='function')esgqTab(t.dataset.t);   /* V129-59：子分頁顯示 */
+  if(t.dataset.t==='prog'){ if(window.ESGQ&&ESGQ.sub==='q'){ if(typeof esgqShow==='function')esgqShow(); } else if(typeof progEnter==='function')progEnter(); }   /* V129-36／V129-59 */
   if(t.dataset.t!=='home'&&typeof hmTipHide==='function')hmTipHide();
 });
 
@@ -14508,5 +14509,247 @@ body.ghgfocus #src_form .ehead>.fxfocus{background:#1B8A60;border-color:#1B8A60;
   (function wrapX(k){ if(window.XLSX&&XLSX.writeFile&&!XLSX.writeFile._u){ const f=XLSX.writeFile; XLSX.writeFile=function(wb,fn,o){ if(!/樣板/.test(String(fn||'')))ghgUnitWb(wb); return f.apply(this,arguments); }; XLSX.writeFile._u=1; return; } if((k||0)<120)setTimeout(()=>wrapX((k||0)+1),500); })();
 })();
 </script>
+<style id="esgqcss">
+/* ══ V129-59：審核進度 → ❓ 待 ESG 確認（批286 ghg_esg_questions）。畫面照 GHG_ESG待確認回覆頁示意_261024.html ══ */
+#progSub{display:flex;gap:6px;margin:0 0 8px}
+#progSub.hide{display:none}
+#progSub .eqst{border:1px solid #dcebe2;background:#fff;border-radius:8px;padding:5px 14px;cursor:pointer;color:#5A5A5A;font-size:13px;font-family:inherit}
+#progSub .eqst.on{background:#EAF4EE;border-color:#8DC4A8;color:#0A7051;font-weight:700}
+#esgq{font-size:13px}
+#esgq .eq-ctl{display:flex;flex-wrap:wrap;gap:6px;row-gap:4px;align-items:center;margin-bottom:8px}
+#esgq .eq-chips{display:inline-flex;flex-wrap:wrap;gap:6px;max-width:100%}
+#esgq .eq-chip{border:1px solid #dcebe2;background:#fff;border-radius:999px;padding:2px 10px;cursor:pointer;font-size:12px;white-space:nowrap}
+#esgq .eq-chip.on{background:#1B8A60;border-color:#1B8A60;color:#fff}
+#esgq .eq-chip b{margin-left:3px}
+#esgq .eq-sep{width:1px;height:20px;background:#dcebe2;margin:0 4px}
+#esgq .eq-ctl select{border:1px solid #dcebe2;border-radius:6px;padding:3px 6px;font-size:12.5px;font-family:inherit;width:auto;max-width:240px;display:inline-block;margin:0}
+#esgq .eq-clr{border:none;background:none;color:#31926B;cursor:pointer;font-size:12px;text-decoration:underline;font-family:inherit}
+#esgq .eq-main{display:grid;grid-template-columns:minmax(0,1fr) clamp(340px,28vw,430px);gap:10px;align-items:start}
+#esgq .eq-list{border:1px solid #dcebe2;border-radius:10px;max-height:calc(100vh - 260px);overflow:auto}
+#esgq table.eqt{width:100%;border-collapse:collapse;table-layout:fixed;font-size:12.5px}
+#esgq table.eqt th{background:#EAF4EE;color:#0A7051;font-size:11px;text-align:left;padding:6px;position:sticky;top:0;z-index:1;border-bottom:1px solid #dcebe2}
+#esgq table.eqt td{padding:5px 6px;border-bottom:1px solid #eef3f0;vertical-align:top;overflow:hidden;text-overflow:ellipsis;text-align:left}
+#esgq .num{text-align:right !important;font-variant-numeric:tabular-nums}
+#esgq tr.eqr{cursor:pointer}
+#esgq tr.eqr:hover td{background:#f3faf6}
+#esgq tr.eqr.sel td{background:#dff0e8}
+#esgq tr.eqg td{background:#f6faf8;color:#0A7051;font-weight:700;font-size:12px;border-top:2px solid #dcebe2}
+#esgq .one{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#esgq .sm{font-size:11px;color:#5A5A5A}
+#esgq .d-mid{background:#FFF3CD}
+#esgq .d-high{background:#FBE0E0;color:#D42B3A}
+#esgq .eqs{display:inline-block;border-radius:999px;padding:0 8px;font-size:11px;white-space:nowrap}
+#esgq .eqs-open{background:#FBE0E0;color:#D42B3A}
+#esgq .eqs-answered{background:#FFF3CD;color:#7a5a00}
+#esgq .eqs-closed{background:#dff0e8;color:#0A7051}
+#esgq .eq-pane{border:1px solid #dcebe2;border-radius:10px;padding:12px 14px;position:sticky;top:8px;background:#fff}
+#esgq .eq-pane h3{margin:0 0 4px;font-size:15px;color:#0A7051}
+#esgq .eq-kv{display:grid;grid-template-columns:96px 1fr;gap:3px 8px;font-size:12.5px;margin:8px 0}
+#esgq .eq-kv>div:nth-child(odd){color:#5A5A5A}
+#esgq .eq-cmp{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin:8px 0}
+#esgq .eq-cmp>div{background:#EAF4EE;border-radius:8px;padding:6px 8px}
+#esgq .eq-cmp b{display:block;font-size:15px}
+#esgq .eq-ask{background:#fffbe6;border:1px solid #f0d98a;border-radius:8px;padding:7px 9px;margin:8px 0}
+#esgq .eq-opt{display:block;border:1px solid #dcebe2;border-radius:8px;padding:6px 9px;margin:5px 0;cursor:pointer}
+#esgq .eq-opt.on{border-color:#1B8A60;background:#f0f8f4}
+#esgq .eq-opt input[type=radio]{margin-right:6px}
+#esgq .eq-f{display:grid;grid-template-columns:86px 1fr;gap:5px 8px;align-items:center;margin:6px 0 0 22px}
+#esgq .eq-f input,#esgq .eq-f select,#esgq textarea{border:1px solid #dcebe2;border-radius:6px;padding:4px 7px;font-size:12.5px;font-family:inherit;width:100%;box-sizing:border-box}
+#esgq textarea{height:56px;resize:vertical}
+#esgq .eq-btns{display:flex;gap:8px;margin-top:10px;align-items:center;flex-wrap:wrap}
+#esgq .eq-btn{background:#1B8A60;color:#fff;border:none;border-radius:8px;padding:8px 18px;font-weight:700;cursor:pointer;font-family:inherit}
+#esgq .eq-btn:disabled{background:#b9d8c8;cursor:not-allowed}
+#esgq .eq-btn.sec{background:#fff;color:#0A7051;border:1px solid #dcebe2}
+#esgq .eq-why{font-size:12px;color:#D42B3A;margin-top:4px}
+#esgq .eq-hist{border-top:1px dashed #dcebe2;margin-top:10px;padding-top:6px;font-size:12px;color:#5A5A5A;line-height:1.6}
+#esgqEntry .eqe{margin:0 0 8px;padding:6px 10px;border:1px solid #f0d98a;background:#fffbe6;border-radius:8px;font-size:12.5px;color:#5c4400}
+#esgqEntry .eqe a{color:#0A7051;font-weight:700;cursor:pointer;margin-left:6px}
+@media (max-width:1100px){#esgq .eq-main{grid-template-columns:1fr}#esgq .eq-pane{position:static}}
+</style>
+<script>
+/* ══ V129-59：❓ 待 ESG 確認（使用者 261024「照這個示意做成正式功能」）
+   資料：ghg_esg_questions（批286）。ESG 小組回覆／撤回；系統管理結案／重開；廠區輸入、查看只能看。
+   寫入一律加「目前狀態」條件（別人先改了就不會蓋掉），資料庫守門員再檢查一次角色。過去年度申報數不因回覆而改。
+   資料登錄頁：有題目的那一格，表頭上方出現「❓ 這一格有 N 題問 ESG」小條（每 1.5 秒比對目前廠區／年度／類別，只讀快取）。 ══ */
+(function(){
+  const Q={sub:'p',rows:null,err:null,at:0,F:{st:null,g:null,site:'',y:''},sel:null,busy:false}; window.ESGQ=Q;
+  const esc=t=>String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const GN={A:'A 請確認系統認的品項',B:'B 係數庫沒有／認不出',C:'C 個別問題',D:'D 清冊疑似算錯'};
+  const STL={open:'未回覆',answered:'已回覆·待 DTO 處理',closed:'已結案'};
+  const STO=['open','answered','closed'];
+  // [存的答案, 畫面文字, 附加欄位 0無／1類別條目／2係數, 說明必填]
+  const OPTS={
+    A:[['系統認的對','系統依品名認的類別／係數是對的',0,false],['清冊對','清冊用的係數才對（請說明原因）',0,true],['兩個都不對','兩個都不對，正確的是：',1,false]],
+    B:[['提供係數','提供係數',2,false],['歸到別的類別','歸到別的類別（填類別或條目）',1,false],['不計入','這一項不計入（請說明原因）',0,true]],
+    C:[['回答','直接回答',0,true]],
+    D:[['清冊確實算錯','清冊確實算錯，系統算的對',0,false],['清冊沒錯','清冊沒錯（請說明原因）',0,true],['要再查','要回廠端再查',0,false]]};
+  const me=()=>(typeof curGhgUser!=='undefined'&&curGhgUser)?curGhgUser:null;   /* curGhgUser 是 let，不在 window 上 */
+  const role=()=>(me()&&me().role)||'';
+  const canReply=()=>role()==='esg'||role()==='admin';
+  const isAdm=()=>role()==='admin';
+  const f4=v=>(v==null||v==='')?'—':Number(v).toLocaleString('en-US',{minimumFractionDigits:4,maximumFractionDigits:4});
+  const s4=v=>(v==null||v==='')?'—':(Number(v)>0?'+':'')+f4(v);
+  const site=s=>(typeof fpSiteName==='function'?fpSiteName(s):s)+'（'+s+'）';
+  const cat=c=>(typeof ncText==='function'?ncText(c):c);
+  const who=e=>String(e||'').replace(/@.*/,'');
+  const tm=t=>{ if(!t)return ''; const d=new Date(t); if(isNaN(d))return String(t).slice(0,16).replace('T',' '); const z=n=>String(n).padStart(2,'0'); return d.getFullYear()+'-'+z(d.getMonth()+1)+'-'+z(d.getDate())+' '+z(d.getHours())+':'+z(d.getMinutes()); };   /* V129-59-1：資料庫存 UTC，顯示當地時間 */
+  function dcls(r){ const d=r.diff_t==null?null:+r.diff_t, b=r.ledger_t==null?null:+r.ledger_t;
+    if(d==null)return ''; if(!b)return Math.abs(d)>=1?'d-high':''; const x=Math.abs(d)/Math.abs(b); return x>0.10?'d-high':(x>0.02?'d-mid':''); }
+
+  async function load(force){
+    if(Q.rows&&!force&&Date.now()-Q.at<60000)return Q.rows;
+    const r=await sbAll(()=>sb.from('ghg_esg_questions').select('*').order('q_id'));
+    if(r.error){ const m=String(r.error.message||r.error);
+      Q.err=/ghg_esg_questions/.test(m)&&/does not exist|could not find|schema cache/i.test(m)?'資料表還沒建（要先跑批286 的 SQL）':('讀不到「待 ESG 確認」：'+m);
+      Q.rows=null; return null; }
+    Q.err=null; Q.rows=(r.data||[]).slice().sort((a,b)=>a.grp.localeCompare(b.grp)||(parseInt(a.q_no.slice(1))-parseInt(b.q_no.slice(1)))||a.q_id.localeCompare(b.q_id));
+    Q.at=Date.now(); return Q.rows; }
+  const openN=()=>Q.rows?Q.rows.filter(r=>r.status==='open').length:null;
+
+  function subBar(){
+    const b=document.getElementById('progSub'); if(!b)return; const n=openN();
+    b.innerHTML='<button class="eqst'+(Q.sub==='p'?' on':'')+'" onclick="esgqSub(\'p\')">各廠審核進度</button>'+
+      '<button class="eqst'+(Q.sub==='q'?' on':'')+'" onclick="esgqSub(\'q\')" title="系統算跟清冊不同、係數庫沒有的項目，請 ESG 在這裡回覆">❓ 待 ESG 確認'+(n==null?'':' <b>'+n+'</b>')+'</button>'; }
+  window.esgqTab=function(t){   /* 上方分頁切換後呼叫：只有在審核進度才顯示子分頁 */
+    const b=document.getElementById('progSub'), q=document.getElementById('esgq'), p=document.getElementById('prog');
+    if(t!=='prog'){ if(b)b.classList.add('hide'); if(q)q.classList.add('hide'); return; }
+    if(b)b.classList.remove('hide');
+    if(Q.sub==='q'){ if(p)p.classList.add('hide'); if(q)q.classList.remove('hide'); }
+    else { if(q)q.classList.add('hide'); if(p)p.classList.remove('hide'); }
+    subBar(); load().then(subBar).catch(()=>{}); };
+  window.esgqSub=function(s){ Q.sub=s; esgqTab('prog'); if(s==='q')esgqShow(); else if(typeof progEnter==='function')progEnter(); };
+  window.esgqOpen=function(qid){ Q.sub='q'; Q.sel=qid; Q.F={st:null,g:null,site:'',y:''}; const t=document.querySelector('.tab[data-t="prog"]'); if(t)t.click(); };
+
+  window.esgqShow=async function(force){
+    const box=document.getElementById('esgq'); if(!box)return;
+    if(!Q.rows||force)box.innerHTML='<div class="msg">讀取「待 ESG 確認」中…</div>';
+    try{ await load(force); }catch(e){ Q.err='讀不到「待 ESG 確認」：'+(e.message||e); }
+    subBar();
+    if(Q.err){ box.innerHTML='<div class="msg err">'+esc(Q.err)+'</div>'; return; }
+    render(); };
+
+  function pass(x,skip){ const F=Q.F; return (skip==='st'||!F.st||x.status===F.st)&&(skip==='g'||!F.g||x.grp===F.g)&&(skip==='site'||!F.site||x.site_id===F.site)&&(skip==='y'||!F.y||String(x.data_year)===String(F.y)); }
+  function render(){
+    const box=document.getElementById('esgq'); const R=Q.rows||[]; const F=Q.F;
+    const chip=(k,v,lab,n)=>'<span class="eq-chip'+(F[k]===v?' on':'')+'" onclick="esgqF(\''+k+'\','+(v==null?'null':'\''+v+'\'')+')">'+esc(lab)+'<b>'+n+'</b></span>';
+    let h='<div class="eq-ctl"><span class="sm">狀態</span><span class="eq-chips">'+chip('st',null,'全部',R.filter(x=>pass(x,'st')).length)+
+      STO.map(s=>chip('st',s,STL[s],R.filter(x=>pass(x,'st')&&x.status===s).length)).join('')+'</span>'+
+      '<span class="eq-sep"></span><span class="sm">分組</span><span class="eq-chips">'+chip('g',null,'全部',R.filter(x=>pass(x,'g')).length)+
+      Object.keys(GN).map(g=>chip('g',g,GN[g],R.filter(x=>pass(x,'g')&&x.grp===g).length)).join('')+'</span>'+
+      '<span class="eq-sep"></span><span class="sm">廠區</span><select onchange="esgqF(\'site\',this.value)"><option value="">全部</option>';
+    const sv=[...new Set(R.filter(x=>pass(x,'site')).map(x=>x.site_id))]; if(F.site&&sv.indexOf(F.site)<0)sv.push(F.site);
+    sv.sort((a,b)=>(typeof fpPno==='function'?String(fpPno(a)).localeCompare(String(fpPno(b))):a.localeCompare(b)));
+    h+=sv.map(s=>'<option value="'+esc(s)+'"'+(s===F.site?' selected':'')+'>'+esc(site(s))+'</option>').join('')+'</select>';
+    const yv=[...new Set(R.filter(x=>pass(x,'y')).map(x=>String(x.data_year)))]; if(F.y&&yv.indexOf(String(F.y))<0)yv.push(String(F.y)); yv.sort();
+    h+='<span class="sm">年度</span><select onchange="esgqF(\'y\',this.value)"><option value="">全部</option>'+yv.map(y=>'<option'+(String(F.y)===y?' selected':'')+'>'+y+'</option>').join('')+'</select>'+
+      '<button class="eq-clr" onclick="esgqClr()">清除篩選</button>'+
+      '<button class="eq-clr" onclick="esgqShow(true)" title="重新從資料庫讀">↻ 重新讀取</button>'+
+      '<span class="sm" style="margin-left:auto">顯示 '+R.filter(x=>pass(x)).length+' / '+R.length+' 項'+(canReply()?'':'　｜　你的角色只能看，回覆要 ESG 小組')+'</span></div>';
+    const L=R.filter(x=>pass(x)); if(Q.sel&&!L.some(x=>x.q_id===Q.sel))Q.sel=null; if(!Q.sel&&L.length)Q.sel=L[0].q_id;
+    h+='<div class="eq-main"><div class="eq-list"><table class="eqt"><colgroup><col style="width:40px"><col style="width:112px"><col style="width:42px"><col style="width:118px"><col style="min-width:120px"><col style="width:78px"><col style="width:78px"><col style="width:80px"><col style="width:92px"></colgroup>'+
+      '<thead><tr><th>編號</th><th>廠區</th><th>年度</th><th>類別</th><th>品項／要問的事</th><th class="num">② 清冊 t</th><th class="num">① 系統 t</th><th class="num">差 t</th><th>狀態</th></tr></thead><tbody>';
+    let lg='';
+    L.forEach(x=>{ if(x.grp!==lg){ lg=x.grp; h+='<tr class="eqg"><td colspan="9">'+esc(GN[x.grp]||x.grp)+'</td></tr>'; }
+      h+='<tr class="eqr'+(x.q_id===Q.sel?' sel':'')+'" onclick="esgqSel(\''+esc(x.q_id)+'\')"><td>'+esc(x.q_no)+'</td><td class="one" title="'+esc(site(x.site_id))+'">'+esc(site(x.site_id))+'</td><td>'+x.data_year+'</td>'+
+        '<td class="one" title="'+esc(cat(x.category_id))+'">'+esc(cat(x.category_id))+'</td>'+
+        '<td><div class="one" title="'+esc(x.item)+'">'+esc(x.item)+'</div><div class="one sm" title="'+esc(x.question)+'">❓ '+esc(x.question)+'</div></td>'+
+        '<td class="num">'+f4(x.ledger_t)+'</td><td class="num">'+f4(x.system_t)+'</td><td class="num '+dcls(x)+'">'+s4(x.diff_t)+'</td>'+
+        '<td><span class="eqs eqs-'+x.status+'">'+STL[x.status]+'</span></td></tr>'; });
+    if(!L.length)h+='<tr><td colspan="9" class="sm" style="text-align:center;padding:20px">沒有符合的項目</td></tr>';
+    h+='</tbody></table></div><div class="eq-pane" id="eqPane"></div></div>';
+    box.innerHTML=h; pane(); }
+  window.esgqF=function(k,v){ Q.F[k]=(v===''?(k==='st'||k==='g'?null:''):v); render(); };
+  window.esgqClr=function(){ Q.F={st:null,g:null,site:'',y:''}; render(); };
+  window.esgqSel=function(id){ Q.sel=id; render(); };
+
+  function pane(){
+    const p=document.getElementById('eqPane'); if(!p)return; const x=(Q.rows||[]).find(r=>r.q_id===Q.sel);
+    if(!x){ p.innerHTML='<div class="sm">點左邊一列看細節與回覆</div>'; return; }
+    let h='<h3>'+esc(x.q_no)+'　'+esc(site(x.site_id))+'　'+x.data_year+'</h3><div class="sm">'+esc(cat(x.category_id))+'　<a href="javascript:void(0)" onclick="esgqGo()">到資料登錄頁看這一格 →</a></div>'+
+      '<div class="eq-kv"><div>品項／列</div><div>'+esc(x.item)+'</div><div>清冊用的係數</div><div>'+esc(x.ledger_factor||'—')+'</div><div>系統用的係數</div><div>'+esc(x.system_factor||'—')+'</div></div>'+
+      '<div class="eq-cmp"><div><span class="sm">② 清冊</span><b>'+f4(x.ledger_t)+'</b></div><div><span class="sm">① 系統算</span><b>'+f4(x.system_t)+'</b></div><div class="'+dcls(x)+'"><span class="sm">差（①－②）</span><b>'+s4(x.diff_t)+'</b></div></div>'+
+      '<div class="eq-ask">❓ <b>要問的事</b>：'+esc(x.question)+'</div>';
+    if(x.status!=='open'){
+      h+='<div class="eq-kv"><div>回覆</div><div><b>'+esc(x.reply_pick||'')+'</b>'+(x.reply_value?'：'+esc(x.reply_value)+' '+esc(x.reply_unit||''):'')+(x.reply_source?'（出處：'+esc(x.reply_source)+'）':'')+(x.reply_text?'<br>'+esc(x.reply_text):'')+'</div>'+
+        '<div>回覆人</div><div>'+esc(who(x.replied_by))+'　'+esc(tm(x.replied_at))+'</div>'+
+        (x.status==='closed'?'<div>DTO 處理</div><div>'+esc(x.dto_note||'')+'<br><span class="sm">'+esc(who(x.closed_by))+'　'+esc(tm(x.closed_at))+'</span></div>':'')+'</div>';
+      if(x.status==='answered'){
+        h+='<div class="eq-btns">'+(canReply()?'<button class="eq-btn sec" onclick="esgqDo(\'withdraw\')">撤回修改</button>':'')+'<span class="sm">'+(canReply()?'DTO 處理前可以撤回':'等 DTO 處理')+'</span></div>';
+        if(isAdm())h+='<div style="margin-top:10px" class="sm">DTO 處理結果（結案要寫）</div><textarea id="eqDto" placeholder="例：已照回覆登記差異原因（資料登錄頁）"></textarea><div class="eq-btns"><button class="eq-btn" onclick="esgqDo(\'close\')">結案</button></div>';
+      }
+      if(x.status==='closed'&&isAdm())h+='<div class="eq-btns"><button class="eq-btn sec" onclick="esgqDo(\'reopen\')">重新打開</button><span class="sm">回到「已回覆·待 DTO 處理」</span></div>';
+    } else if(canReply()){
+      const O=OPTS[x.grp]||OPTS.C;
+      h+='<div>'+O.map((o,i)=>'<label class="eq-opt" data-i="'+i+'"><input type="radio" name="eqpk" value="'+i+'"'+(O.length===1?' checked':'')+'>'+esc(o[1])+
+        (o[2]===1?'<div class="eq-f"><span class="sm">類別／條目</span><input id="eqCat" placeholder="例：C01-02-31 其他支援服務"></div>':'')+
+        (o[2]===2?'<div class="eq-f"><span class="sm">係數值</span><input id="eqVal" inputmode="decimal"><span class="sm">單位</span><select id="eqUnit"><option>kgCO2e/t</option><option>kgCO2e/USD</option><option>kgCO2e/kg</option><option>kgCO2e/tkm</option><option>kgCO2e/kWh</option><option>其他（寫在說明）</option></select><span class="sm">適用年度</span><input id="eqYr" value="'+x.data_year+'"><span class="sm">出處</span><input id="eqSrc" placeholder="資料庫名稱、版本、表格"></div>':'')+
+        '</label>').join('')+'</div>'+
+        '<div style="margin-top:6px" class="sm">說明</div><textarea id="eqTxt" placeholder="'+(x.grp==='C'?'請直接回答':'補充說明（選「清冊對」「不計入」「清冊沒錯」時必填）')+'"></textarea>'+
+        '<div class="eq-btns"><button class="eq-btn" id="eqSend" disabled onclick="esgqDo(\'reply\')">送出回覆</button><button class="eq-btn sec" onclick="esgqSel(\''+esc(x.q_id)+'\')">清空</button></div><div class="eq-why" id="eqWhy"></div>';
+    } else h+='<div class="sm">還沒回覆。（回覆要 ESG 小組帳號）</div>';
+    h+='<div class="eq-hist" id="eqHist">紀錄讀取中…</div>';
+    p.innerHTML=h;
+    if(x.status==='open'&&canReply()){ p.querySelectorAll('input,select,textarea').forEach(e=>{ e.addEventListener('input',chk); e.addEventListener('change',chk); }); chk(); }
+    hist(x.q_id); }
+  function pick(){ const x=(Q.rows||[]).find(r=>r.q_id===Q.sel); const i=document.querySelector('#eqPane input[name=eqpk]:checked'); return (x&&i)?(OPTS[x.grp]||OPTS.C)[+i.value]:null; }
+  const val=id=>{ const e=document.getElementById(id); return e?String(e.value||'').trim():''; };
+  function chk(){
+    document.querySelectorAll('#eqPane .eq-opt').forEach(l=>l.classList.toggle('on',l.querySelector('input').checked));
+    const o=pick(); let m='';
+    if(!o)m='請先選一個回覆';
+    else if(o[2]===2&&!(val('eqVal')&&val('eqSrc')))m='請填係數值與出處';
+    else if(o[2]===2&&!isFinite(+val('eqVal')))m='係數值要是數字';
+    else if(o[2]===1&&!val('eqCat'))m='請填正確的類別或條目';
+    else if(o[3]&&!val('eqTxt'))m='請寫說明';
+    const b=document.getElementById('eqSend'), w=document.getElementById('eqWhy'); if(b)b.disabled=!!m; if(w)w.textContent=m; return !m; }
+  async function hist(id){
+    const e=document.getElementById('eqHist'); if(!e)return;
+    const r=await sb.from('ghg_esg_questions_log').select('action,by_email,at').eq('q_id',id).order('id');
+    if(Q.sel!==id)return;
+    if(r.error){ e.textContent='紀錄讀不到：'+(r.error.message||r.error); return; }
+    e.innerHTML='紀錄：'+((r.data||[]).map(z=>esc(tm(z.at))+' '+esc(who(z.by_email))+' '+esc(z.action)).join(' → ')||'（沒有）'); }
+
+  window.esgqDo=async function(act){
+    if(Q.busy)return; const x=(Q.rows||[]).find(r=>r.q_id===Q.sel); if(!x)return;
+    let body=null, from=x.status, msg='';
+    if(act==='reply'){ if(!chk())return; const o=pick();
+      body={status:'answered',reply_pick:o[0],reply_text:val('eqTxt')||null,reply_value:null,reply_unit:null,reply_source:null};
+      if(o[2]===2){ body.reply_value=val('eqVal'); body.reply_unit=document.getElementById('eqUnit').value; body.reply_source=val('eqSrc')+(val('eqYr')&&val('eqYr')!==String(x.data_year)?'（適用 '+val('eqYr')+' 年）':''); }
+      if(o[2]===1) body.reply_text=('正確：'+val('eqCat')+(body.reply_text?'。'+body.reply_text:''));
+      msg='已送出回覆'; }
+    else if(act==='withdraw'){ if(!confirm('確定撤回 '+x.q_no+' 的回覆？撤回後要重新填。'))return; body={status:'open'}; msg='已撤回'; }
+    else if(act==='close'){ const t=val('eqDto'); if(!t){ alert('結案要寫處理結果'); return; } if(!confirm('確定把 '+x.q_no+' 結案？'))return; body={status:'closed',dto_note:t}; msg='已結案'; }
+    else if(act==='reopen'){ if(!confirm('確定重新打開 '+x.q_no+'？'))return; body={status:x.reply_pick?'answered':'open',dto_note:null}; msg='已重新打開'; }
+    if(!body)return;
+    Q.busy=true;
+    try{
+      const {data,error}=await sb.from('ghg_esg_questions').update(body).eq('q_id',x.q_id).eq('status',from).select('*');
+      if(error)throw error;
+      if(!data||!data.length)throw new Error('沒有更新到（可能別人剛改過，或你的帳號沒有權限）；已重新讀取');
+      Object.assign(x,data[0]); Q.at=Date.now(); eqToast(msg); render();
+    }catch(e){ alert('沒有存到：'+(e.message||e)); await load(true); render(); }
+    finally{ Q.busy=false; subBar(); } };
+  function eqToast(t){ let e=document.getElementById('eqToast'); if(!e){ e=document.createElement('div'); e.id='eqToast'; e.style.cssText='position:fixed;right:20px;bottom:20px;background:#0A7051;color:#fff;padding:8px 14px;border-radius:8px;z-index:9999;font-size:13px'; document.body.appendChild(e); }
+    e.textContent=t; e.style.display='block'; clearTimeout(eqToast._t); eqToast._t=setTimeout(()=>{ e.style.display='none'; },2200); }
+  window.esgqGo=function(){ const x=(Q.rows||[]).find(r=>r.q_id===Q.sel); if(!x||typeof progGo!=='function')return;
+    progGo(x.site_id,/^C03/.test(x.category_id)?'C03-F':x.category_id,x.data_year); };
+
+  /* 資料登錄頁：這一格有沒有題目（只讀快取；每 1.5 秒比對一次目前廠區／年度／類別） */
+  let lastKey='';
+  function entryTick(){
+    const box=document.getElementById('esgqEntry'); const inp=document.getElementById('input');
+    if(!box||!inp||inp.classList.contains('hide')){ lastKey=''; return; }
+    const s=window.entryCur&&entryCur.site, y=window.entryCur&&entryCur.year, c=(typeof curSrc==='number'&&SRC[curSrc])?SRC[curSrc].c:'';
+    const key=s+'|'+y+'|'+c+'|'+(Q.rows?Q.at:0);
+    if(key===lastKey)return; lastKey=key;
+    if(!Q.rows){ box.innerHTML=''; if(!Q.err&&me())load().then(()=>{ lastKey=''; }).catch(()=>{}); return; }
+    const same=r=>r.site_id===s&&String(r.data_year)===String(y)&&(r.category_id===c||(/^C03/.test(r.category_id)&&/^C03/.test(c)));
+    const L=Q.rows.filter(same);
+    box.innerHTML=L.length?'<div class="eqe">❓ 這一格有 '+L.length+' 題問 ESG：'+L.map(r=>esc(r.q_no)+' '+STL[r.status]).join('、')+
+      '<a onclick="esgqOpen(\''+esc(L[0].q_id)+'\')">到「審核進度 → 待 ESG 確認」看 →</a></div>':''; }
+  setInterval(entryTick,1500);
+})();
+</script>
+
 </body>
 </html>
