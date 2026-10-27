@@ -302,7 +302,7 @@ function facChg(on){ return '<span class="fchg'+(on?'':' off')+'">🟡</span>'; 
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-62-1</b> · 2026/10/27</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-62-2</b> · 2026/10/27</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -437,7 +437,7 @@ function facChg(on){ return '<span class="fchg'+(on?'':' off')+'">🟡</span>'; 
     <div class="row">
       <div class="fld" style="flex:0;align-self:end"><button id="g_invmenu" class="sec" onclick="ghgFocus(!document.body.classList.contains('ghgfocus'))" title="全畫面：收起上方標題和分頁；按「☰ 選單」或 Esc 回原畫面">☰ 選單</button></div>
       <div class="fld" style="max-width:130px"><label>年度（單年）</label><select id="g_year"><option value="2025">2025</option><option value="2024">2024</option><option value="2023">2023</option><option value="2022">2022</option></select></div>
-      <div class="fld" style="max-width:200px"><label>廠區</label><select id="g_plant" onchange="loadGroup()"><option value="">全部廠區</option></select></div>
+      <div class="fld" style="max-width:200px"><label>廠區</label><select id="g_plant" onchange="loadGroup()" onfocus="try{gPlantOpts()}catch(e){}"><option value="">全部廠區</option></select></div>
       <div class="fld" style="max-width:180px"><label>類別（快速對比）</label><select id="g_catg" onchange="loadGroup()"><option value="">全部（各廠展開樹）</option><option value="範疇一">範疇一 直接排放</option><option value="範疇二">範疇二 能源間接</option><option value="範疇三">範疇三 價值鏈C1-15</option><option value="C01">C01 採購商品與服務</option><option value="C02">C02 資本商品</option><option value="C03">C03 燃料與能源活動</option><option value="C04">C04 上游運輸</option><option value="C05">C05 營運廢棄物</option><option value="C06">C06 商務旅行</option><option value="C07">C07 員工通勤</option><option value="C08">C08 上游租賃</option><option value="C09">C09 下游運輸</option><option value="C10">C10 售出產品加工</option><option value="C12">C12 產品終端處置</option><option value="C13">C13 下游租賃</option><option value="C15">C15 投資</option></select></div>
       <div class="fld" style="flex:0;align-self:end"><button id="g_btn" aria-pressed="true" onclick="loadGroup()">查詢全集團</button></div>
       <div class="fld" style="flex:0;align-self:end"><button id="g_cmpbtn" class="sec" aria-pressed="false" onclick="loadCompare()">📊 跨年對比</button></div>
@@ -3020,6 +3020,7 @@ document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
   if(t.dataset.t==='fac'&&!window._facLoaded){window._facLoaded=true;loadFactors();}
   if(t.dataset.t==='perm')loadPerm();   // V48:權限頁每次進入重載(指派結果即時)
   if(t.dataset.t==='home')homeEnter();   /* V125 */
+  if(t.dataset.t==='group'&&typeof gPlantOpts==='function'){ try{ gPlantOpts(); }catch(e){} }   /* V129-62-2：進全集團頁就建廠區清單 */
   if(typeof esgqTab==='function')esgqTab(t.dataset.t);   /* V129-59：子分頁顯示 */
   if(t.dataset.t==='prog'){ if(window.ESGQ&&ESGQ.sub==='q'){ if(typeof esgqShow==='function')esgqShow(); } else if(typeof progEnter==='function')progEnter(); }   /* V129-36／V129-59 */
   if(t.dataset.t!=='home'&&typeof hmTipHide==='function')hmTipHide();
