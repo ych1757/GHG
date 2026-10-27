@@ -302,7 +302,7 @@ function facChg(on){ return '<span class="fchg'+(on?'':' off')+'">🟡</span>'; 
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-62-2</b> · 2026/10/27</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-62-3</b> · 2026/10/27</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -10850,7 +10850,8 @@ function rlflags(r,c){
     out.push(['係數≠','#b8860b',(e['係數說明']||('收集表係數 '+c.efX))+'；系統用 '+facCodeYr(c.lib.fid)+' '+rlf(c.efS,10)]);
   if(!man&&!c.e01&&!c.noamt&&c.usdX>0&&c.usdS!=null&&Math.abs(c.usdS/c.usdX-1)>0.001)
     out.push(['匯率≠','#b8860b','收集表 1 美金＝'+rlf(c.a.v/c.usdX,c.a.v/c.usdX>=100?2:4)+' '+(RL_CURZH[c.a.cur]||c.a.cur)+'；系統匯率表 '+(c.R?rlf(c.R.rate,c.R.rate>=100?2:4)+'（'+c.R.y+' 年'+(c.R.type==='C15前年版'?'，C15 前年版':'')+'）':'—')+(e['匯率說明']?'。'+e['匯率說明']:'')]);
-  if(!man&&!c.e01&&!c.excl&&c.efX!=null&&c.usdX!=null&&Math.abs(c.usdX*c.efX/1000-c.coX)>0.0005)
+  if(e['清冊沒有這一列'])out.push(['清冊沒有','#b8860b',e['清冊沒有這一列']+((!c.e01&&c.efX!=null&&c.usdX!=null)?'。收集表算：美金 '+rlf(c.usdX,4)+' × 係數 '+rlf(c.efX,10)+' ÷ 1000 ＝ '+rlf(c.usdX*c.efX/1000,4)+' t':'')]);   /* V129-62-3：收集表有、清冊沒有的列 */
+  if(!man&&!c.e01&&!c.excl&&!e['清冊沒有這一列']&&c.efX!=null&&c.usdX!=null&&Math.abs(c.usdX*c.efX/1000-c.coX)>0.0005)
     out.push(['算式≠','#b8860b',e['與收集表算式不符']||('收集表碳排 '+rlf(c.coX,4)+' t ≠ 美金 × 收集表係數 '+rlf(c.usdX*c.efX/1000,4)+' t')]);
   if(c.e01&&e['與收集表算式不符'])out.push(['算式≠','#b8860b',e['與收集表算式不符']]);
   if(!c.e01&&c.noamt&&!r._new&&String(r.input_method||'')!==RL_MANUAL)out.push(['美金照收集表','#7a8f84','收集表沒有原幣金額，美金照收集表那一格']);
@@ -10922,7 +10923,7 @@ function rlSum(){
   W8.recs.forEach(r=>{ const c=rlrow(r); if(W8.del[r.record_id])return; if(c.excl){ ex.push([r,c]); return; } (by[c.code]=by[c.code]||[]).push([r,c]); });
   const order=C.codes.map(x=>x[0]).filter(k=>by[k]).concat(Object.keys(by).filter(k=>!C.codes.some(x=>x[0]===k)).sort());
   const S=order.map(k=>{ const L=by[k]; const o={code:k,n:L.length,e01:k==='C15-E01',efXs:[]};
-    o.coS=L.reduce((s,[r,c])=>s+c.coS,0); o.coX=L.reduce((s,[r,c])=>s+c.coX,0);
+    o.coS=L.reduce((s,[r,c])=>s+c.coS,0); o.coX=L.reduce((s,[r,c])=>s+((rle(r)['清冊沒有這一列']&&!c.e01&&c.usdX!=null&&c.efX!=null)?c.usdX*c.efX/1000:c.coX),0);   /* V129-62-3 */
     if(o.e01){ o.tot=L.reduce((s,[r,c])=>s+(c.tot||0),0); return o; }
     o.usdS=L.reduce((s,[r,c])=>s+(c.usdS||0),0); o.usdX=L.reduce((s,[r,c])=>s+(c.usdX||0),0);
     o.lib=rllib(k,W8.year); o.efS=o.lib?o.lib.v:null;
@@ -10938,9 +10939,10 @@ function rldeclPanel(S,ex){
     +'<b title="過去年度照原資料，不改數字；差異只在這裡標示" style="cursor:help">'+W8.year+' 已申報，只看不改。</b>　<span class="nwrap" title="原幣 ÷ 系統匯率 × 係數庫 '+facY(W8.year)+' 年標準" style="cursor:help">① 系統算 <b>'+rlf(q1,4)+' t</b></span>';
   if(q2==null){ h+='　｜　<span class="nwrap">② 申報 <b>—</b></span> <span class="fmini">（集團清冊沒有這一格）</span>'; }
   else{ const d=+(q1-q2).toFixed(4); h+='　｜　<span class="nwrap">② 申報 <b>'+rlf(q2,4)+' t</b></span>'+(Math.abs(d)<=0.00015?'　✓ 一致':'　｜　<b style="color:#b8860b">差 '+(d>0?'+':'')+rlf(d,4)+' t</b>');
-    const G={fx:{d:0,L:[]},ef:{d:0,L:[]},calc:{d:0,L:[]},nof:{d:0,L:[]},rnd:{d:0,L:[]}}; let omit=0, nOmit=0;
+    const G={fx:{d:0,L:[]},ef:{d:0,L:[]},calc:{d:0,L:[]},nof:{d:0,L:[]},rnd:{d:0,L:[]},nol:{d:0,L:[]}}; let omit=0, nOmit=0;
     W8.recs.forEach(r=>{ if(W8.del[r.record_id])return; const c=rlrow(r), e=rle(r), nm=String(r.source_name||'');
       if(e['收集表合計沒加到']){ omit+=c.coX; nOmit++; }
+      if(e['清冊沒有這一列']&&!c.excl&&!c.e01){ const v=c.coS-c.coX; if(Math.abs(v)>0.00005){ G.nol.d+=v; G.nol.L.push({t:nm,d:v,tip:e['清冊沒有這一列']}); } return; }   /* V129-62-3 */
       if(c.excl||c.e01){ if(c.e01&&Math.abs(c.coS-c.coX)>0.00005){ G.calc.d+=c.coS-c.coX; G.calc.L.push({t:nm,d:c.coS-c.coX,tip:e['與收集表算式不符']||''}); } return; }
       if(c.efS==null||c.usdX==null)return;
       let fx=(!c.noamt&&c.usdS!=null)?(c.usdS-c.usdX)*c.efS/1000:0;
@@ -10960,6 +10962,7 @@ function rldeclPanel(S,ex){
     if(Math.abs(G.nof.d)>0.00015){ why.push(G.nof.L.length+' 筆收集表沒填係數、記 0；系統照係數庫算 → '+sg(G.nof.d)+'。例：'+ex3(G.nof.L)); left-=G.nof.d; }
     if(Math.abs(G.calc.d)>0.00015){ why.push(G.calc.L.length+' 筆收集表碳排跟「美金 × 係數」對不上（照收集表那一格存）→ '+sg(G.calc.d)+'。例：'+ex3(G.calc.L)); left-=G.calc.d; }
     if(Math.abs(G.rnd.d)>0.00015){ why.push(G.rnd.L.length+' 筆只是四捨五入的尾差（收集表係數只取到小數點後幾位、美金換算取位；系統用完整值）→ '+sg(G.rnd.d)+'。例：'+ex3(G.rnd.L)); left-=G.rnd.d; }
+    if(Math.abs(G.nol.d)>0.00015){ why.push(G.nol.L.length+' 筆收集表有、清冊沒有（明細記 0、清冊數字不變；系統照收集表算）→ '+sg(G.nol.d)+'。例：'+ex3(G.nol.L)); left-=G.nol.d; }   /* V129-62-3 */
     if(nOmit&&Math.abs(omit)>0.00015){ why.push(nOmit+' 筆收集表合計沒加到（申報沒算；9/22 規矩照資料算進來）→ '+sg(omit)); left-=omit; }
     left=+left.toFixed(4);
     if(Math.abs(left)>0.00015)why.push('其餘 '+sg(left)+'：'+(W8.note?'系統已登記的原因——'+rlesc(W8.note):'收集表合計跟申報數不同（見差異統計表）'));
@@ -11052,7 +11055,7 @@ function rlRender(){
     const ES=rs.filter(r=>!W8.del[r.record_id]).map(rlrow); const sm=k=>ES.reduce((s,c)=>s+(c[k]||0),0);
     h+='<tr class="s101blk" style="background:#eef6f1"><td class="tl" colspan="2"><b>合計</b> <span class="fmini">'+ES.length+' 家</span></td><td class="R"><b>'+rlf(sm('s1'),4)+'</b></td><td class="R"><b>'+rlf(sm('s2'),4)+'</b></td><td class="R"><b>'+rlf(sm('tot'),4)+'</b></td><td></td><td'+(ed?' colspan="2"':'')+'></td></tr>';
     h+='</tbody></table></div>'; }
-  h+='<div class="s101legend">彙總區＝系統算（每個代號：筆數、美金合計、係數、碳排、係數代號）｜逐筆輸入區＝收集表一筆一列（美金＊＝原幣 ÷ 系統匯率表'+(C.inv?'，C15 用前一年底匯率':'')+'）｜係數＝一年一代號（'+rlesc(C.codes.filter(x=>x[0]!=='C15-E01').map(x=>rlShow(x[0])+' '+x[1]).join('、'))+'），依年度自動帶｜徽章：ESG 不計／隱藏列＝收集表不算、系統也不算；清未加＝收集表合計沒加到；係數≠＝收集表係數跟本年標準不同；匯率≠＝收集表換美金的匯率跟系統匯率表不同；算式≠＝收集表碳排跟美金×係數對不上；美金照收集表＝收集表沒有原幣金額</div>';
+  h+='<div class="s101legend">彙總區＝系統算（每個代號：筆數、美金合計、係數、碳排、係數代號）｜逐筆輸入區＝收集表一筆一列（美金＊＝原幣 ÷ 系統匯率表'+(C.inv?'，C15 用前一年底匯率':'')+'）｜係數＝一年一代號（'+rlesc(C.codes.filter(x=>x[0]!=='C15-E01').map(x=>rlShow(x[0])+' '+x[1]).join('、'))+'），依年度自動帶｜徽章：ESG 不計／隱藏列＝收集表不算、系統也不算；清未加＝收集表合計沒加到；係數≠＝收集表係數跟本年標準不同；匯率≠＝收集表換美金的匯率跟系統匯率表不同；算式≠＝收集表碳排跟美金×係數對不上；清冊沒有＝收集表有、清冊沒有（明細記 0、清冊數字不變；系統照收集表算）；美金照收集表＝收集表沒有原幣金額</div>';
   h+='</div>'; box.innerHTML=h; rlBind();
 }
 function rlTr(r,ed,no){
