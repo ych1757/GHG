@@ -302,7 +302,7 @@ function facChg(on){ return '<span class="fchg'+(on?'':' off')+'">🟡</span>'; 
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-63</b> · 2026/10/27</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-64</b> · 2026/10/28</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -2536,7 +2536,7 @@ function lgLogout(){sessionStorage.removeItem(LGKEY);try{['ghg_jwt','ghg_rt','gh
 function lgScopeAll(){return !!(curGhgUser&&curGhgUser.scope&&curGhgUser.scope.length===1&&curGhgUser.scope[0]==='*');}
 function lgCanSite(s){return lgScopeAll()||(curGhgUser&&(curGhgUser.scope||[]).indexOf(s)>=0);}
 /* V129-63：廠區輸入、查看只讀得到自己廠區權限內的廠（資料庫批306）——原本「查看（唯讀）看全部廠」的下拉例外 17 處全部拿掉；沒有全部廠區的畫面標出範圍 */
-function lgScopeTag(){ if(!curGhgUser||lgScopeAll())return ''; return '<span class="fmini" style="display:inline-block;white-space:nowrap;background:var(--t);border-radius:8px;padding:1px 8px;margin:0 6px" title="資料庫只給你廠區權限內的資料">📍 只列你有權限的廠區：<b>'+facEsc((curGhgUser.scope||[]).join('、'))+'</b></span>'; }
+function lgScopeTag(){ if(!curGhgUser||lgScopeAll())return ''; return '<span class="fmini" data-mv="keep" style="display:inline-block;white-space:nowrap;background:var(--t);border-radius:8px;padding:1px 8px;margin:0 6px" title="資料庫只給你廠區權限內的資料">📍 只列你有權限的廠區：<b>'+facEsc((curGhgUser.scope||[]).join('、'))+'</b></span>'; }
 function lgCanNote(){return !!(curGhgUser&&(curGhgUser.role==='esg'||curGhgUser.role==='admin'));}
 function lgFillBy(){const b=document.getElementById('e_by'); if(b&&curGhgUser){b.value=curGhgUser.emp_id+' '+curGhgUser.name; b.readOnly=true; b.style.background='#eef6f1'; b.title='登入自動帶入';}}
 function lgApply(){
@@ -13730,7 +13730,7 @@ window.xpProtoSheets=function(o){
     put('L48',num('ROUND(SUM(E48:K48),4)',+tot.toFixed(4)),'bNumB'); put('M48',num('D16',0),'bNum');
     put('C49','氣體別占比\n(％)','bHdr'); put('D49','','bHdr'); const T4=+tot.toFixed(4); TC.forEach((c,i)=>put(c+'49',pct('IF($L$48=0,0,'+c+'48/$L$48)',T4?gv[i]/T4:0),'bPct'));
     put('L49',pct('IF($L$48=0,0,L48/$L$48)',T4?1:0),'bPct'); put('M49','-','bTxt');
-    put('A51','註：數字＝GHG 系統明細加總（'+ver+' 於 '+nowTxt+' 匯出），顯示到小數 4 位；本頁每一格都是公式——'+(grp?'集團頁＝後面各廠「總表」同一格相加。':'氣體欄加總「逐筆明細」（分氣體的數字在逐筆明細最右邊幾欄），CO2e 總量＝各氣體相加。'),'note');
+    put('A51','註：數字＝GHG 系統明細加總（'+ver+' 於 '+nowTxt+' 匯出），顯示到小數 4 位；本頁每一格都是公式——'+(grp?(lgScopeAll()?'集團頁＝後面各廠「總表」同一格相加。':'本頁＝後面各廠「總表」同一格相加（只含你權限內的廠）。'):'氣體欄加總「逐筆明細」（分氣體的數字在逐筆明細最右邊幾欄），CO2e 總量＝各氣體相加。'),'note');
     put('A52','　　範疇二、範疇三的排放當量計入 CO2（比照 ESG 盤查清冊）；「直接與間接排放合計」的範疇二用 Market-based；灰底斜線＝不適用。','note');
     /* ── 組成分頁 ── */
     const ws={}; Object.keys(C).forEach(ad=>{ const v=C[ad][0]; ws[ad]=(v&&typeof v==='object')?v:(typeof v==='number'?{t:'n',v:v}:{t:'s',v:String(v==null?'':v)}); });
