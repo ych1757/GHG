@@ -302,7 +302,7 @@ function facChg(on){ return '<span class="fchg'+(on?'':' off')+'">🟡</span>'; 
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-65</b> · 2026/10/29</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-65-1</b> · 2026/10/29</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -6319,7 +6319,7 @@ function fuelRender0(){
       if(!open&&(gi===0||F.open[BL[gi-1].name]))h+=HDR;   /* V129-1：收合的塊，表頭放摘要列上方（連續收合只放一次） */
       if(!open)h+='<tr style="background:#eef4f0;cursor:pointer;font-weight:700" title="點一下展開／收合" onclick="fuelTg('+gi+')"><td class="tl" style="white-space:normal"><span style="display:inline-block;width:14px">'+(open?'▾':'▸')+'</span>'+bLabel(b.name)+' <span class="fmini" style="font-weight:400">'+MODE_NAME[b.mode]+(e0['設備備註']?' · '+esc(e0['設備備註']):'')+'</span>'+(isNew?' <span style="color:#b8860b;font-size:10px">新</span>':'')+((!isNew&&tq===0)?' <span class="fmini" style="background:#ececec;color:#666;padding:0 6px;border-radius:8px" title="清冊列了這台設備但當年用量 0，照源檔揭露">零活動</span>':'')+'</td><td colspan="'+(NC-1)+'"></td></tr>';   /* V106-2：摘要列只留標題，小計移到這一塊最後 */
       const sumCells=(C.conv?'<td>'+(tb?nf(tb,2):'')+'</td><td>'+((cvOp==='+'&&tb2)?nf(tb2,2):'')+'</td>':'')+'<td>'+(needDens?(nL?(nf(tL,2)+' <span class="fmini" style="font-weight:400">公升</span>'):'<span class="fmini" style="color:#9aa">（無公升）</span>'):(nf(tq,4)+' <span class="fmini" style="font-weight:400">'+esc(normU(unit))+'</span>'))+'</td>'+(C.info?'<td class="ro">'+(ti.n?nf(ti.s/ti.n,1)+' <span class="fmini" style="font-weight:400">平均</span>':'')+'</td>':'')+(C.period?'<td class="tl"><span class="fmini" style="font-weight:400">'+(b.mode==='m'&&b.mon.length!==12?b.mon.length+' 筆帳單':'')+'</span></td>':'')+(FEE?'<td>'+(tc?nf(tc,2):'')+'</td>':'')+(needDens?'<td class="ro">'+nf(tton,4)+'</td>':'')+(FEE?'<td class="ro">'+((tc&&R)?nf(tc/R.rate,2):'')+'</td>':'')+GC.map((gas,k)=>'<td class="ro'+(k===0?' sep':'')+'"'+(gmap[gas]?'':' style="color:#bbb"')+'>'+(gmap[gas]?nf(tg[gas],4):'—')+'</td>').join('')+'<td class="ro'+SEPE+'">'+nf(tt,4)+'</td>'+(showLoc?'<td class="ro">'+nf(tloc,4)+'</td>':'');
-      const subRow=BL.length>1?'<tr class="fsub"><td class="tl fsl">小計　'+bLabel(b.name)+'</td>'+sumCells+'</tr>':'';   /* V106-2：小計放在這一塊最後（比照 V104-2；只有一塊時看最下面合計） */
+      const subRow=(BL.length>1&&!(open&&rowsD.length===1))?'<tr class="fsub"><td class="tl fsl">小計　'+bLabel(b.name)+'</td>'+sumCells+'</tr>':'';   /* V129-65-1：展開且只有 1 筆不出小計 */   /* V106-2：小計放在這一塊最後（比照 V104-2；只有一塊時看最下面合計） */
       if(!open){ h+=subRow; return; }
       // 設定列（可換行，不撐寬）
       const modeBtn=(canEdit?['m','y','c'].map(k=>'<button class="sec" style="padding:1px 9px;font-size:11px;border-radius:999px'+(b.mode===k?';background:var(--p);color:#fff;border-color:var(--p)':'')+'" onclick="event.stopPropagation();fuelMode('+gi+',&#39;'+k+'&#39;)">'+MODE_NAME[k]+'</button>').join(''):('<b>'+MODE_NAME[b.mode]+'</b>'))+(canEdit&&entryCanDel(F.site,F.year)?' <button class="sec" onclick="event.stopPropagation();fuelDropBlk('+gi+')" title="這一年還沒正式：刪掉這個設備（電號）這一年的全部資料；按「💾 儲存」才真的刪，儲存前可在上方「↩ 取消」" style="color:#a33;border-color:#e3b5b0;padding:1px 9px;font-size:11px;white-space:nowrap">🗑 刪除這個設備</button>':'');   /* V129-22 */
@@ -6673,7 +6673,7 @@ function wTable(BL,gs,gmap,R,canEdit,lk){   /* 自來水表格：水號塊（摘
     if(!open&&(gi===0||F.open[BL[gi-1].name]))h+=HDR;   /* V129-1 */ if(!open)h+='<tr style="background:#eef4f0;cursor:pointer;font-weight:700" title="點一下展開／收合" onclick="fuelTg('+gi+')"><td class="tl" style="white-space:normal"><span style="display:inline-block;width:14px">'+(open?'▾':'▸')+'</span>'+wNoLbl(b)+(e0['地點']?' <span class="fmini" style="font-weight:400">'+esc(e0['地點'])+'</span>':'')+' <span class="fmini" style="font-weight:400">'+(b.mode==='m'?(rowsD.length+' 張帳單'):'年量')+(e0['設備備註']?' · '+esc(e0['設備備註']):'')+'</span>'+(isNew?' <span style="color:#b8860b;font-size:10px">新</span>':'')+((!isNew&&tq===0)?' <span class="fmini" style="background:#ececec;color:#666;padding:0 6px;border-radius:8px" title="有列但用量 0">零活動</span>':'')+'</td><td colspan="'+(NC-1)+'"></td></tr>';   /* V106-2：摘要列只留標題，小計移到這一塊最後 */
     const sumCells='<td>'+(nb?nf(tA,2):'')+'</td><td></td><td></td><td class="ro">'+nf(tq,4)+'</td><td>'+(tc?nf(tc,2):'')+'</td><td class="ro">'+((tc&&R)?nf(tc/R.rate,2):'')+'</td>'
       +GASES.map((gas,k)=>'<td class="ro'+(k===0?' sep':'')+'">'+(tBad?'—':nf(tt,4))+'</td>').join('')+'<td class="ro'+SEP+'">'+(tBad?'—':nf(tt,4))+'</td>';
-    const subRow=BL.length>1?'<tr class="fsub"><td class="tl fsl">小計　'+wNoLbl(b)+'</td>'+sumCells+'</tr>':'';   /* V106-2 */
+    const subRow=(BL.length>1&&!(open&&D.length===1))?'<tr class="fsub"><td class="tl fsl">小計　'+wNoLbl(b)+'</td>'+sumCells+'</tr>':'';   /* V129-65-1 */   /* V106-2 */
     if(!open){ h+=subRow; return; }
     const fld=(lab,html)=>'<span style="white-space:nowrap"><span class="fmini">'+lab+'</span> '+html+'</span>';
     const inp=(f,val,w,ph)=>canEdit?'<input data-eqg="'+gi+'" data-f="'+f+'" value="'+esc(val||'')+'" placeholder="'+esc(ph||'')+'" style="width:'+w+'px;padding:3px 6px;font:inherit">':'<b>'+esc(val||'')+'</b>';
@@ -8943,7 +8943,7 @@ function trnRender(){
         :'<td>'+(canEdit&&!rt.ro?'<a href="javascript:void(0)" onclick="trnDrop(&#39;'+rt.rid+'&#39;)" title="'+(rt._new?'移除這條（尚未儲存）':(ret?'取消移除':'移除這條路線（已儲存的列不刪，改歸零留痕）'))+'" style="color:#a33;text-decoration:none;font-size:12px">'+(ret?'↶':'✕')+'</a>':'')+'</td>';
       h+='<tr data-i="'+i+'"'+(ret?' style="opacity:.45;text-decoration:line-through"':(rt.ro?' style="opacity:.8"':''))+'>'+numCell+nmCell+pathCell+wCell+legCells+tCell+noteCell+'</tr>';
       if(TEXP[rt.rid])h+=trnExpRow(rt,ed,i);
-      if(_grp&&!rt.ro){ const nx=_ord[oi+1]; if(!nx||nx[0].ro||(nx[0].cls||'—')!==_k)h+=_subRow(_k); } });   /* V129-62-1：每區結尾接小計 */
+      if(_grp&&!rt.ro){ const nx=_ord[oi+1]; if((!nx||nx[0].ro||(nx[0].cls||'—')!==_k)&&(CN[_k]||0)>1)h+=_subRow(_k); }   /* V129-65-1：只有 1 條不出小計 */ });   /* V129-62-1：每區結尾接小計 */
     if(!_grp){ const ks=Object.keys(CN).sort(); if(ks.length>1)ks.forEach(k=>{ h+='<tr style="background:#f6f9f7"><td class="tl" colspan="'+(decl?4:3)+'" style="font-weight:600">小計　'+esc(k)+(k==='C4-2'?' <span class="fmini" style="font-weight:400">（下游運輸收集表的 C4-2，併入上游）</span>':'')+' <span class="fmini" style="font-weight:400">'+CN[k]+' 條</span></td>'+TLEGS.map((x,i)=>'<td class="'+(i===0?'sep':'')+'"></td>').join('')+'<td class="ro sep"><b>'+nf(CT1[k],4)+'</b></td>'+(decl?'<td><b>'+nf(CT2[k],4)+'</b></td><td></td>':'<td></td>')+'</tr>'; }); }   /* V129-61：分類小計列 */
     h+='<tr class="tot"><td class="tl" colspan="'+(decl?4:3)+'">合計　<span class="fmini" style="font-weight:400">'+rows.length+' 條'+(nNew?'（新 '+nNew+'）':'')+(nNoF?'　<span style="color:#a33">缺重量／車種 '+nNoF+' 條</span>':'')+'</span></td>'
       +TLEGS.map((k,i)=>'<td class="'+(i===0?'sep':'')+'" style="font-size:11.5px">'+(LT[k]?nf(LT[k],4):'')+'</td>').join('')
@@ -9499,7 +9499,7 @@ function wstRender(){
         +'<td class="R sysv">'+(DC?w5two(l.w?c.wCalc:null,l.w?c.wc:null):(w5f(c.wc,4)+(ew['與收集表算式不符']?'<br><span class="fmini" style="color:#b8860b">算 '+w5f(c.wCalc,4)+'</span>':'')))+'</td>'
         +'<td class="R sysv">'+(DC?w5two(w5sysTot(l,c),c.tot,1):'<b>'+w5f(c.tot,4)+'</b>')+'</td></tr>';
     });
-    if(Object.keys(blocks).length>1)h+='<tr><td class="tl fmini" colspan="2" style="text-align:right;color:#4a5f55">小計　'+w5esc(w5short(bk))+'　'+ls.length+' 筆</td><td class="R" style="border-top:1px solid #cfdcd5"><b>'+w5f(BW,2)+'</b></td><td colspan="7"></td><td class="R" style="border-top:1px solid #cfdcd5">'+(DC?w5two(BS,BT,1):'<b>'+w5f(BT,4)+'</b>')+'</td></tr>';   /* V106-1：小計放在這一塊最後（比照 V104-2） */
+    if(Object.keys(blocks).length>1&&ls.length>1)h+='<tr><td class="tl fmini" colspan="2" style="text-align:right;color:#4a5f55">小計　'+w5esc(w5short(bk))+'　'+ls.length+' 筆</td><td class="R" style="border-top:1px solid #cfdcd5"><b>'+w5f(BW,2)+'</b></td><td colspan="7"></td><td class="R" style="border-top:1px solid #cfdcd5">'+(DC?w5two(BS,BT,1):'<b>'+w5f(BT,4)+'</b>')+'</td></tr>';   /* V106-1：小計放在這一塊最後（比照 V104-2） */
   });
   h+='<tr class="s101blk" style="background:#eef6f1"><td class="tl" colspan="2"><b>合計</b> <span class="fmini">'+Object.keys(blocks).length+' 個分類 '+GN+' 筆清運</span></td>'
     +'<td class="R"><b>'+w5f(GW,2)+'</b></td><td colspan="7"></td><td class="R">'+(DC?w5two(GS,GT,1):'<b>'+w5f(GT,4)+'</b>')+'</td></tr>';
@@ -9850,7 +9850,7 @@ function btRender(){
     let BK=0,BKn=0; const efs={}; trips.forEach(r=>{ const c=btrow(r); if(c.pkm!=null){BK+=c.pkm;BKn++;} if(!BT_DIRECT[bk]&&!BT_LAND[bk]&&c.ef!=null)efs[c.ef]=1; }); if(BT_LAND[bk])aggs.forEach(r=>{ const c=btrow(r); if(c.ef!=null)efs[c.ef]=1; }); GK+=BK; GKn+=BKn;   /* V129-40-7：小計補延人公里（只加逐趟列，車種彙總列＝同一批延人公里，不重複加）；係數整塊同一個值才顯示（陸運看車種彙總列的係數） */
     const bk2=v=>Number(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});   /* 延人公里小計／合計固定 2 位小數 */
     const efk=Object.keys(efs), bt='border-top:1px solid #cfdcd5';
-    if(order.length>1)h+='<tr><td class="tl fmini" colspan="4" style="text-align:right;color:#4a5f55">小計　'+btesc(bk)+'　'+trips.length+' 趟'+(aggs.length?'＋'+aggs.length+' 列車種彙總':'')+'</td>'
+    if(order.length>1&&trips.length+aggs.length>1)h+='<tr><td class="tl fmini" colspan="4" style="text-align:right;color:#4a5f55">小計　'+btesc(bk)+'　'+trips.length+' 趟'+(aggs.length?'＋'+aggs.length+' 列車種彙總':'')+'</td>'
       +'<td class="R" style="'+bt+'"><b>'+(BKn?bk2(BK):'—')+'</b></td>'
       +'<td class="R fmini" style="'+bt+';color:#4a5f55" title="'+(efk.length>1?'這一塊有 '+efk.length+' 種係數（不同車種／區域），展開看各列':'')+'">'+(efk.length===1?btf(+efk[0],10):(efk.length>1?'（'+efk.length+' 種）':'—'))+'</td>'
       +'<td class="R" style="'+bt+'"><b>'+btf(BC,4)+'</b></td><td></td></tr>';   /* V106：小計放在這一塊最後（比照 V104-2）；V129-40-7：補延人公里／係數 */   /* V106：小計放在這一塊最後（比照 V104-2） */
@@ -10349,7 +10349,7 @@ function cmRender(){
       +'<td class="tl" colspan="3"><b>'+(op?'▾ ':'▸ ')+cmesc(bk)+'</b> <span class="fmini">'+ppl.length+' 人'+(zero?'・零排放':'')+(op?'':'（點開展開）')+'</span></td>'
       +'<td class="tl" colspan="5">'+(ed?'<a href="javascript:void(0)" onclick="event.stopPropagation();cmAdd('+JSON.stringify(bk).replace(/"/g,'&quot;')+')" class="fmini">＋ 這個交通工具再加一人</a>':'')+'</td></tr>'; if(op){ h+=HDR; _hN=true; }   /* V129-3 */
     if(op)ppl.forEach((r,i)=>{ h+=cmTr(r,ed,i+1); });
-    if(order.length>1)h+='<tr><td class="tl fmini" colspan="6" style="text-align:right;color:#4a5f55">小計　'+cmesc(bk)+'　'+ppl.length+' 人</td><td class="R" style="border-top:1px solid #cfdcd5"><b>'+(BS&&!BP?'—':cmf(BP,1))+'</b>'+(BS?'<div class="fmini" style="color:#1f4e79">站間 '+cmf(BS.co*1000,0)+' kg</div>':'')+'</td><td></td></tr>';   /* V106：小計放在這一塊最後（比照 V104-2） */
+    if(order.length>1&&ppl.length>1)h+='<tr><td class="tl fmini" colspan="6" style="text-align:right;color:#4a5f55">小計　'+cmesc(bk)+'　'+ppl.length+' 人</td><td class="R" style="border-top:1px solid #cfdcd5"><b>'+(BS&&!BP?'—':cmf(BP,1))+'</b>'+(BS?'<div class="fmini" style="color:#1f4e79">站間 '+cmf(BS.co*1000,0)+' kg</div>':'')+'</td><td></td></tr>';   /* V106：小計放在這一塊最後（比照 V104-2） */
   });
   h+='<tr class="s101blk" style="background:#eef6f1"><td class="tl" colspan="6"><b>合計</b> <span class="fmini">'+GN+' 人</span></td><td class="R"><b>'+cmf(GP,1)+'</b></td><td></td></tr>';
   h+='</tbody></table></div>';
@@ -11061,7 +11061,7 @@ function rlRender(){
         +'</tr>'; if(op){ h+=HDR; _hN=true; }   /* V129-3 */
       if(op)rs.forEach((r,i)=>{ h+=rlTr(r,ed,i+1); });
       GU+=bu; GN+=rs.length;
-      if(mainKeys.length>1)h+='<tr><td class="tl fmini" colspan="'+(ncol-(ed?3:2))+'" style="text-align:right;color:#4a5f55">小計　'+rlesc(rlcodeNm(k))+'　'+rs.length+' 筆</td><td class="R" style="border-top:1px solid #cfdcd5" title="這一類美金小計（不含不計入）"><b>'+rlfa(bu)+'</b></td><td'+(ed?' colspan="2"':'')+'></td></tr>';   /* V104-2：小計放在這一塊最後 */
+      if(mainKeys.length>1&&rs.length>1)h+='<tr><td class="tl fmini" colspan="'+(ncol-(ed?3:2))+'" style="text-align:right;color:#4a5f55">小計　'+rlesc(rlcodeNm(k))+'　'+rs.length+' 筆</td><td class="R" style="border-top:1px solid #cfdcd5" title="這一類美金小計（不含不計入）"><b>'+rlfa(bu)+'</b></td><td'+(ed?' colspan="2"':'')+'></td></tr>';   /* V104-2：小計放在這一塊最後 */
     });
     h+='<tr class="s101blk" style="background:#eef6f1"><td class="tl" colspan="'+(ncol-(ed?3:2))+'"><b>合計</b> <span class="fmini">'+GN+' 筆（不含不計入的美金）</span></td><td class="R"><b>'+rlfa(GU)+'</b></td><td'+(ed?' colspan="2"':'')+'></td></tr>';
     h+='</tbody></table></div>';
@@ -11614,7 +11614,7 @@ function feRender(){
       +(ed&&t?'　<a href="javascript:void(0)" onclick="event.stopPropagation();feAdd('+feJ(k)+')" class="fmini">＋ 這一類再加一種</a>':'')+'</td></tr>'; if(op){ h+=HDR; _hN=true; }   /* V129-3 */
     if(op)rs.forEach((r,i)=>{ h+=feTr(r,ed,i+1); });
     GK+=kg; GN+=rs.length;
-    if(order.length>1)h+='<tr><td class="tl fmini" colspan="5" style="text-align:right;color:#4a5f55">小計　'+feesc(t?t[2]:k)+'　'+rs.length+' 列</td><td class="R" style="border-top:1px solid #cfdcd5"><b>'+fefk(+kg.toFixed(6))+'</b></td><td'+(ed?' colspan="2"':'')+'></td></tr>'; });   /* V104-2：小計放在這一塊最後 */
+    if(order.length>1&&rs.length>1)h+='<tr><td class="tl fmini" colspan="5" style="text-align:right;color:#4a5f55">小計　'+feesc(t?t[2]:k)+'　'+rs.length+' 列</td><td class="R" style="border-top:1px solid #cfdcd5"><b>'+fefk(+kg.toFixed(6))+'</b></td><td'+(ed?' colspan="2"':'')+'></td></tr>'; });   /* V104-2：小計放在這一塊最後 */
   h+='<tr class="s101blk" style="background:#eef6f1"><td class="tl" colspan="5"><b>合計</b> <span class="fmini">'+GN+' 列</span></td><td class="R"><b>'+fefk(+GK.toFixed(6))+'</b></td><td'+(ed?' colspan="2"':'')+'></td></tr>';
   h+='</tbody></table></div>';
   h+='<div class="s101legend">彙總區＝系統算（每種類型：列數、充填量合計、係數、碳排、係數代號）｜逐筆輸入區＝一種滅火器一列（名稱規格、數量、單隻填充量、當年是否充填、充填量）｜係數＝A04-02 一年一代號（01 二氧化碳 1、02 乾粉 0、03 泡沫 0、04 水基型 0），依年度自動帶｜名稱下小字＝收集表明細分頁同類型各規格（支數×單隻，游標停著看全部）｜徽章：係數≠＝收集表的係數跟本年標準不同；明細有充填＝收集表明細寫當年有充填、總表記 0；隱藏列＝收集表篩選隱藏、系統也不算；公噸→公斤＝收集表單位是公噸，系統換成公斤</div>';
