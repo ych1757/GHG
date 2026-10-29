@@ -302,7 +302,7 @@ function facChg(on){ return '<span class="fchg'+(on?'':' off')+'">🟡</span>'; 
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-66-1</b> · 2026/10/29</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-67-1</b> · 2026/10/29</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -9353,6 +9353,34 @@ async function entryGrpCell(site,yr,code,cids){
   }
   return {g:g,hv:hv,n:(v.data||[]).length};
 }
+/* V129-67：已申報年度頁首共用（照 C05 V129-66 樣式）：① 系統算 對 ② 收割數字（全集團頁那一格）；差異原因逐項帶金額，最後「合計＝差額」。
+   o={yr,q1,q1tip,grp(entryGrpCell 結果),S(本頁存的數合計),items:[[說明,金額]],hint(最後一項括號補充),note(有登錄頁差異說明),foot(框底小字 html)}
+   不到 0.00005 t 的項目合併成一項「小數位」，不出現「0 列」；各項加起來＝差額（各項四捨五入到小數 4 位）。 */
+function entryDeclBox(o){
+  const f=(v,d)=>Number(v).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:(d<4?4:d)});
+  const es=v=>String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const G=o.grp||{}, ok=!G.err&&G.g!=null, q1=o.q1, q2=ok?G.g:null;
+  let h='<div style="margin:0 0 6px;padding:4px 10px;border:1px solid #cfe0d6;background:#f6fbf8;border-radius:8px;font-size:12.5px;line-height:1.5">'
+    +'<b title="過去年度照原資料，不改數字；差異只在這裡標示" style="cursor:help">'+es(o.yr)+' 已申報，只看不改。</b>　<span class="nwrap" title="'+es(o.q1tip||'')+'" style="cursor:help">① 系統算 <b>'+f(q1,4)+' t</b></span>'
+    +'　｜　<span class="nwrap" title="'+(ok&&G.hv!=null?'全集團頁這一格＝當初收割的數字（收割原值）':'全集團頁這一格＝明細加總（這一格沒有另存收割原值）')+'" style="cursor:help">② 收割數字（全集團頁） <b>'+(ok?f(q2,4)+' t':'—')+'</b></span>';
+  if(!ok) return h+'<div class="msg err" style="margin:3px 0 0">② 讀不到：'+es(G.err||'沒有讀取結果')+'。先不比對，免得拿 0 當收割數字。</div>'+(o.foot||'')+'</div>';
+  const d=q1-q2;
+  h+=(Math.abs(d)<0.00005?'　✓ 一致':'　｜　<b style="color:#b8860b">差 '+(d>0?'+':'')+f(d,4)+' t</b>');
+  const it=[]; let rd=0, nrd=0;
+  (o.items||[]).forEach(x=>{ if(Math.abs(x[1])<0.00005){ if(x[1]!==0){ rd+=x[1]; nrd++; } } else it.push(x); });
+  const C=o.S-q2; if(Math.abs(C)>=0.00005) it.push(['本頁存的數合計 '+f(o.S,4)+' t 跟'+(G.hv!=null?'收割原值':'全集團頁')+' '+f(q2,4)+' t 不同'+(o.hint?'（'+o.hint+'）':'')+(o.note?'；原因說明點頁首「⚠ 差異說明」看':''),C]);
+  else if(C!==0){ rd+=C; nrd++; }
+  if(Math.abs(rd)>=0.00005) it.push([nrd+' 項各差不到 0.00005 t（小數位）',rd]);
+  /* 畫面上的各項（四捨五入到 4 位）加起來要剛好＝差額：四捨五入的尾差併進金額最大的那一項 */
+  const r4=v=>Math.round(v*1e4)/1e4+0, D4=r4(d); let s4=0; it.forEach(x=>{ x[2]=r4(x[1]); s4+=x[2]; });
+  if(it.length){ const res=r4(D4-s4); if(res!==0){ let k=0; it.forEach((x,i)=>{ if(Math.abs(x[1])>Math.abs(it[k][1]))k=i; }); it[k][2]=r4(it[k][2]+res); } }
+  const sg=v=>(v>0?'+':'')+f(v,4)+' t', td='border:0;background:none;vertical-align:top;';
+  if(it.length&&D4!==0) h+='<div style="margin-top:1px"><b>差異原因</b>（金額＝系統算減掉存的數，加起來＝差額；各項四捨五入到小數 4 位）<table class="edwhy" style="width:auto;border-collapse:collapse;margin:1px 0 0;font-size:12.5px">'
+    +it.map(x=>'<tr><td style="'+td+'padding:0 12px 0 0;text-align:left;white-space:normal">・'+es(x[0])+'</td><td class="R" style="'+td+'padding:0;white-space:nowrap">'+sg(x[2])+'</td></tr>').join('')
+    +'<tr><td style="'+td+'padding:1px 12px 0 0;text-align:right;border-top:1px solid #cfdcd5">合計＝差額</td><td class="R" style="'+td+'padding:1px 0 0;border-top:1px solid #cfdcd5;white-space:nowrap"><b>'+sg(D4)+'</b></td></tr></table></div>';
+  return h+(o.foot||'')+'</div>';
+}
+async function entryGrpLoad(site,yr,code,cids){ try{ return await entryGrpCell(site,yr,code,cids); }catch(e){ return {err:String((e&&e.message)||e)}; } }
 async function wstLoad(){
   const {data,error}=await sb.from('ghg_activity_data').select('*').eq('category_id','C05').eq('site_id',W5.site).eq('data_year',W5.year).order('record_id');
   if(error){document.getElementById('src_form').innerHTML='<div class="msg err">'+w5esc(error.message)+'</div>';return;}
@@ -9453,9 +9481,11 @@ function w5declPanel(){
   const sg=v=>(v>0?'+':'')+w5f(v,4)+' t', it=[];
   ['pc','pn','pf','t0','tc','tn','tf','rd'].forEach(k=>{ const o=A[k]; if(o&&o.n&&(k!=='rd'||Math.abs(o.t)>=0.00005)) it.push([o.n+' '+T[k],o.t]); });
   const C=S-q2; if(Math.abs(C)>=0.00005) it.push(['本頁存的數合計 '+w5f(S,4)+' t 跟'+(G.hv!=null?'收割原值':'全集團頁')+' '+w5f(q2,4)+' t 不同'+(n4?'（本頁 '+n4+' 列有「標」「E」徽章＝照標準／ESG 更正重算過）':'')+(W5.note?'；原因說明點頁首「⚠ 差異說明」看':''),C]);
+  const r4=v=>Math.round(v*1e4)/1e4+0, D4=r4(d); let s4=0; it.forEach(x=>{ x[2]=r4(x[1]); s4+=x[2]; });   /* V129-67：四捨五入的尾差併進金額最大的那一項 */
+  if(it.length){ const res=r4(D4-s4); if(res!==0){ let k=0; it.forEach((x,i)=>{ if(Math.abs(x[1])>Math.abs(it[k][1]))k=i; }); it[k][2]=r4(it[k][2]+res); } }
   if(it.length) h+='<div style="margin-top:1px"><b>差異原因</b>（金額＝系統算減掉存的數，加起來＝差額；各項四捨五入到小數 4 位）<table class="w5why" style="width:auto;border-collapse:collapse;margin:1px 0 0;font-size:12.5px">'
-    +it.map(x=>'<tr><td style="padding:0 12px 0 0">・'+w5esc(x[0])+'</td><td class="R" style="padding:0;white-space:nowrap">'+sg(x[1])+'</td></tr>').join('')
-    +'<tr><td style="padding:1px 12px 0 0;text-align:right;border-top:1px solid #cfdcd5">合計＝差額</td><td class="R" style="padding:1px 0 0;border-top:1px solid #cfdcd5;white-space:nowrap"><b>'+sg(d)+'</b></td></tr></table></div>';
+    +it.map(x=>'<tr><td style="padding:0 12px 0 0">・'+w5esc(x[0])+'</td><td class="R" style="padding:0;white-space:nowrap">'+sg(x[2])+'</td></tr>').join('')
+    +'<tr><td style="padding:1px 12px 0 0;text-align:right;border-top:1px solid #cfdcd5">合計＝差額</td><td class="R" style="padding:1px 0 0;border-top:1px solid #cfdcd5;white-space:nowrap"><b>'+sg(D4)+'</b></td></tr></table></div>';
   if(n0) h+='<div class="fmini" style="color:#7a8f84">另有 '+n0+' 段沒有係數算不出，系統算照存的數（格子下面標「照存的數」）。</div>';
   h+='</div>';
   return h;
@@ -9758,6 +9788,8 @@ async function btLoad(){
   const {data,error}=await sbAll(()=>sb.from('ghg_activity_data').select('*').eq('category_id','C06').eq('site_id',W6.site).eq('data_year',W6.year).order('record_id'));
   if(error){box.innerHTML='<div class="msg err">'+btesc(error.message)+'</div>';return;}
   W6.recs=(data||[]).map(r=>{r._new=false;return r;});
+  W6.note=await entryNote(W6.pno(W6.site),W6.year,'C06');   /* V129-67：登錄頁差異說明（C06@登錄） */
+  W6.grp=btdecl()?await entryGrpLoad(W6.site,W6.year,'C06',['C06']):null;   /* V129-67：② 收割數字＝全集團頁那一格 */
   btRender();
 }
 /* ── 一列的呈現值 ── */
@@ -9791,38 +9823,37 @@ function btcss(){ if(document.getElementById('btcss'))return; const st=document.
    +'#s101wrap table.c6t .cl2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.3}'
    +'#s101wrap table.c6t td input{font-size:12px;width:100%;box-sizing:border-box}'
    +'#s101wrap table.c6t tr.agg td{background:#f2f6f4}'; document.head.appendChild(st); }
-/* ── 已申報年度面板：①系統自己算／②清冊／差異原因 ── */
+/* ── V129-67：已申報年度一列的「系統算」（頁首 ①、表格每列、小計、合計同一個數）；規則同原本的 ① ── */
+function btsys(r){ const e=bte(r), c=btrow(r), rule=String(e['規則']||''), bk2=btblk(r);
+  if(/清冊合計沒加到/.test(rule))return btn2(e['清冊合計沒加到(系統算)'])||0;
+  if(/清冊沒有這一列/.test(rule))return btn2(e['清冊沒有這一列(系統算)'])||0;
+  if(bk2==='照舊年筆'||BT_DIRECT[bk2])return c.co;   /* 照舊年筆：抽不到逐趟明細；直查型：逐趟值就是方法本身 */
+  if(btIsAgg(r))return c.calc!=null?c.calc:c.co;
+  if(c.calc!=null&&!BT_LAND[bk2])return c.calc;
+  return c.co; }   /* 陸運逐趟（碳排在彙總列）／算不出：照存的數 */
+/* ── 已申報年度面板（V129-67）：① 系統算 對 ② 收割數字（全集團頁那一格）；差異原因逐項帶金額 ── */
 function btdeclPanel(){
   if(!btdecl())return '';
-  let q1=0,q2=0,nz1=0,sz1=0,nz2=0,sz2=0,nh=0,sh=0,nc=0,sc=0;
-  W6.recs.forEach(r=>{
-    const e=bte(r), c=btrow(r), rule=String(e['規則']||'');
-    q2+=c.co;
-    if(/清冊合計沒加到/.test(rule)){ nz1++; const v=btn2(e['清冊合計沒加到(系統算)'])||0; sz1+=v; q1+=v; return; }
-    if(/清冊沒有這一列/.test(rule)){ nz2++; const v=btn2(e['清冊沒有這一列(系統算)'])||0; sz2+=v; q1+=v; return; }
-    const bk2=btblk(r);
-    if(bk2==='照舊年筆'){ nc++; sc+=c.co; q1+=c.co; return; }
-    if(BT_DIRECT[bk2]){ q1+=c.co; return; }   /* 直查型：逐趟值就是方法本身（陸和樣板把每趟 kg 填在係數欄，不能拿來乘 pkm） */
-    if(c.calc!=null&&!btIsAgg(r)&&!BT_LAND[bk2]){ q1+=c.calc; if(Math.abs(c.calc-c.co)>0.00005&&c.efd==null){nh++; sh+=(c.calc-c.co);} return; }   /* V129-58-5：係數不同的另列一句，不重算 */
-    if(btIsAgg(r)){ q1+=(c.calc!=null?c.calc:c.co); return; }
-    q1+=c.co;   /* 直查型／陸運逐趟(0)：照存值 */
+  const A={}, add=(k,v)=>{ const o=A[k]=A[k]||{n:0,t:0}; o.t+=v; o.n++; };
+  let q1=0,S=0,nc=0,ng=0,nn=0;
+  W6.recs.forEach(r=>{ const e=bte(r), c=btrow(r), rule=String(e['規則']||''), sv=btsys(r), d=sv-c.co;
+    q1+=sv; S+=c.co;
+    if(btblk(r)==='照舊年筆')nc++; if(c.efx!=null)ng++; if(c.efNo)nn++;
+    if(Math.abs(d)<0.00005){ if(d!==0)add('rd',d); return; }
+    if(/清冊合計沒加到/.test(rule)){ add('z1',d); return; }
+    if(/清冊沒有這一列/.test(rule)){ add('z2',d); return; }
+    if(btIsAgg(r)){ add('ag',d); return; }
+    const p=(c.efd!=null&&c.pkm!=null)?c.pkm*(c.ef-c.efd)/1000:null;   /* 係數不同的那一塊 */
+    if(p==null||Math.abs(p)<0.00005)add('cf',d); else if(Math.abs(d-p)<0.00005)add('ef',d); else { add('ef',p); add('cf',d-p); }
   });
-  const d=+(q1-q2).toFixed(4);
-  let h='<div style="margin:0 0 6px;padding:4px 10px;border:1px solid #cfe0d6;background:#f6fbf8;border-radius:8px;font-size:12.5px;line-height:1.5">'
-    +'<b title="過去年度照原資料，不改數字；差異只在這裡標示（批187 重整：71 廠年逐廠年合計與清冊一分不差）" style="cursor:help">'+W6.year+' 已申報，只看不改。</b>　<span class="nwrap" title="軌道／陸運彙總：延人公里 × 係數；航空／台灣高鐵／客船：逐趟直查值；記0列用系統算回來的值" style="cursor:help">① 系統自己算 <b>'+btf(q1,4)+' t</b></span>'
-    +'　｜　<span class="nwrap">② 清冊 <b>'+btf(q2,4)+' t</b></span>';
-  h+=(Math.abs(d)<=0.01?'　✓ 一致':'　｜　<b style="color:#b8860b">差 '+(d>0?'+':'')+btf(d,4)+' t</b>');
-  const why=[];
-  if(nz1)why.push(nz1+' 趟清冊合計格沒加到（照清冊記 0，系統算合計 '+btf(sz1,4)+' t）');
-  if(nz2)why.push(nz2+' 列清冊沒算這個車種（照批165 記 0，系統算合計 '+btf(sz2,4)+' t）');
-  if(nc)why.push(nc+' 列年筆照舊保留（收集表抽不到逐趟明細，合計 '+btf(sc,4)+' t）');
-  { const ng=W6.recs.filter(r=>btrow(r).efx!=null).length; if(ng)why.push(ng+' 趟收集表係數填公克（例 '+btf(W6.recs.map(r=>btrow(r).efx).find(x=>x!=null),0)+'），系統改用係數庫的公斤值算'); }   /* V129-40-8 */
-  { const dd=W6.recs.filter(r=>btrow(r).efd!=null); if(dd.length){ const s0=dd.reduce((a,r)=>{ const c=btrow(r); return a+((c.calc||0)-c.co); },0); why.push(dd.length+' 趟收集表係數跟係數庫該年值不同（系統用係數庫值，例 '+btf(btrow(dd[0]).efd,6)+' → '+btf(btrow(dd[0]).ef,6)+'），合計差 '+(s0>0?'+':'')+btf(s0,4)+' t'); } }   /* V129-58-5 */
-  { const nn=W6.recs.filter(r=>btrow(r).efNo).length; if(nn)why.push(nn+' 趟係數庫沒有這一年這一種的條目，照收集表係數算（待 ESG 提供）'); }
-  if(nh)why.push(nh+' 趟「延人公里×係數」跟存的碳排差 '+btf(sh,4)+' t（照收集表原值存）');
-  if(why.length)h+='<div style="margin-top:1px"><b>差異原因</b><br>'+why.map(x=>'・'+btesc(x)).join('<br>')+'</div>';
-  h+='</div>';
-  return h;
+  const T={z1:'趟清冊合計格沒把這一趟加進去（存的數記 0，系統照資料算）',z2:'列清冊沒算這個車種（存的數記 0，系統照資料算）',
+    ag:'列車種彙總列「延人公里合計 × 係數」跟存的數對不上（存的數照收集表）',ef:'趟收集表係數跟係數庫該年值不同（系統用係數庫值）',
+    cf:'趟收集表「延人公里 × 係數」跟存的碳排對不上（存的數照收集表）',rd:'趟各差不到 0.00005 t（小數位）'};
+  const items=[]; ['z1','z2','ag','ef','cf','rd'].forEach(k=>{ const o=A[k]; if(o&&o.n)items.push([o.n+' '+T[k],o.t]); });
+  const ft=[]; if(nc)ft.push(nc+' 列年筆照舊保留（收集表抽不到逐趟明細，系統算照存的數）'); if(ng)ft.push(ng+' 趟收集表係數填公克，系統改用係數庫的公斤值算'); if(nn)ft.push(nn+' 趟係數庫沒有這一年這一種的條目，照收集表係數算（待 ESG 提供）');
+  return entryDeclBox({yr:W6.year,q1:q1,S:S,grp:W6.grp,items:items,note:!!W6.note,
+    q1tip:'軌道：延人公里 × 係數庫該年值；陸運：車種彙總列＝延人公里合計 × 係數；航空／台灣高鐵／客船：逐趟直查值；清冊記 0 的列用系統照資料算的值',
+    foot:ft.length?'<div class="fmini" style="color:#7a8f84">另有 '+ft.map(btesc).join('；')+'。</div>':''});
 }
 /* ── 畫面 ── */
 function btsortKey(r){ const e=bte(r); return [String(e['收集表分頁']||'～登錄頁'), +(e['收集表列']||9e9), +r.record_id||9e9]; }
@@ -9838,7 +9869,7 @@ function btRender(){
       +((typeof trialY==='function'&&trialY(W6.year))?trialChip():'')+((typeof facPendChip==='function')?facPendChip(W6.year):''),
     btns:tplBtn('C06',W6.site,W6.year)+(ed?'<button onclick="btAdd()">＋ 新增一趟</button> <button class="sec" onclick="btImportPick()" title="上傳 ESG 的 C6 商務旅行收集表（各交通模式分頁），先預覽、確認才寫入">📥 匯入收集表</button> <button class="pri" onclick="btSave()">💾 儲存</button>':'')});
   h+='<div class="fmini ehdesc" style="margin:0 2px 4px;line-height:1.4">陸運、軌道＝延人公里 × 係數；航空、台灣高鐵、客船＝逐趟直查　<span title="陸運的碳排記在「車種彙總列」＝該車種逐趟延人公里加總 × 係數（一物一號，依區域 × 年度自動帶）；軌道（台鐵／捷運／海外鐵路）＝逐趟延人公里 × 係數；航空＝ICAO 逐趟查、台灣高鐵＝站距對照表、客船＝請款單，逐趟直接填當量。" style="cursor:help;color:var(--p);font-weight:700;white-space:nowrap">ⓘ 怎麼算</span></div>';   /* V106：說明收成一行（比照 V104-2 新四頁） */
-  h+='<div id="s101wrap">';
+  h+='<div id="s101wrap">'+entryNoteHTML(W6.note);   /* V129-67 */
   h+=btdeclPanel();
   if(!W6.recs.length){
     h+='<div class="msg" style="margin:10px 12px">此廠此年尚無資料。'+(ed?'按「＋ 新增一趟」開始登錄。':'')+'</div></div>';
@@ -9863,7 +9894,7 @@ function btRender(){
   order.forEach(bk=>{
     const rs=blocks[bk].slice().sort((a,b)=>{const ka=btsortKey(a),kb=btsortKey(b); return ka[0]<kb[0]?-1:ka[0]>kb[0]?1:(ka[1]-kb[1])||(ka[2]-kb[2]);});
     const trips=rs.filter(r=>!btIsAgg(r)), aggs=rs.filter(btIsAgg);
-    let BC=0; rs.forEach(r=>BC+=(+r.co2e_draft||0));
+    const D6=btdecl(); let BC=0; rs.forEach(r=>BC+=(D6?btsys(r):(+r.co2e_draft||0)));   /* V129-67：已申報年度小計／合計＝系統算 */
     GN+=rs.length; GC+=BC;
     const op=W6.open[bk]!==undefined?W6.open[bk]:btDefOpen();   /* V129-40-7：整頁超過 30 列＝各塊預設收合、先看小計 */
     if(!op&&_hN){ h+=HDR; _hN=false; }   /* V129-3：收合的組，表頭放分組列上方（連續收合只放一次） */
@@ -9902,9 +9933,10 @@ function btTr(r,bk,ed){
   const veh=direct?(e['艙等']||''):(e['車輛(收集表)']||r.attr2||'');
   const who=(e['出差人員']||'')+(e['廠房']?'<span class="fmini">·'+btesc(e['廠房'])+'</span>':'');
   const src=(e['收集表分頁']?btesc(String(e['收集表分頁']))+'<span style="color:#a9b8b0"> r'+btesc(e['收集表列']||'')+'</span>':'<span style="color:#1B8A60">登錄頁</span>');
+  const sv=btdecl()?btsys(r):c.co;   /* V129-67：已申報年度每列只顯示系統算 */
   const coCell=direct
-    ?(canRow?tin('c',c.co||'', '直查值 t',1):btf(c.co,4))
-    :(land?'<span class="sysv" style="background:none">0<span class="fmini" title="碳排記在下方車種彙總列">（彙總）</span></span>':btf(c.co,4));
+    ?(canRow?tin('c',c.co||'', '直查值 t',1):btf(sv,4))
+    :((land&&Math.abs(sv)<1e-12)?'<span class="sysv" style="background:none">0<span class="fmini" title="碳排記在下方車種彙總列">（彙總）</span></span>':btf(sv,4));
   return '<tr'+(fl.some(f=>f[0]==='清0')?' style="background:#fffdf5"':'')+'>'
     +(()=>{ const dv=String(e['出差日期']||''), isD=dv===''||/^\d{4}[-\/.]\d{1,2}[-\/.]\d{1,2}/.test(dv)&&dv.length<=24; return '<td class="tl fmini'+(isD||canRow?' nw':'')+'">'+(canRow?tin('d',dv,'YYYY-MM-DD'):(isD?btesc(dv):'<div class="cl2" title="'+btesc(dv)+'">'+btesc(dv)+'</div>'))+'</td>'; })()   /* V119-3：日期欄放的是說明文字時換行（最多兩行），不蓋到出差人欄 */
     +'<td class="tl">'+(canRow?tin('p',e['出差人員']||'','姓名'):who)+fl.map(btbadge).join('')+(ed&&entryCanDel(W6.site,W6.year)?entryDelX('btDelTg',r.record_id,r._del):'')+'</td>'
@@ -9928,7 +9960,7 @@ function btTrAgg(r,ed,cnt){
     +'<td class="tl fmini">'+btesc(btVehNm(r))+'</td>'
     +'<td class="R sysv">'+(c.pkm==null?'—':btf(c.pkm,1))+'</td>'
     +'<td class="R sysv" title="'+btesc(lib?('係數庫 '+facCodeYr(lib.fid)+'＝'+lib.parts):'')+'">'+(c.ef==null?'—':fvA((lib&&lib.fid)||c.fid,btf(c.ef,10)))+'</td>'
-    +'<td class="R sysv"><b>'+btf(c.co,4)+'</b></td>'
+    +'<td class="R sysv"><b>'+btf(btdecl()?btsys(r):c.co,4)+'</b></td>'
     +'<td class="tl fmini">'+(r.factor_id?btesc(facCodeYr(r.factor_id)):'')+'</td></tr>';
 }
 function btDefOpen(){ return W6.recs.length<=30; }   /* V129-40-7：資料多（超過 30 列）先只看各塊小計，點開才看明細 */
@@ -10169,9 +10201,8 @@ async function cmLoad(){
   const {data,error}=await sbAll(()=>sb.from('ghg_activity_data').select('*').eq('category_id','C07').eq('site_id',W7.site).eq('data_year',W7.year).order('record_id'));
   if(error){box.innerHTML='<div class="msg err">讀取失敗：'+cmesc(error.message)+'</div>';return;}
   W7.recs=(data||[]).map(r=>{r._new=false;return r;});
-  W7.pii={}; W7.piiState=''; W7.off=null;
-  try{ const o=await sb.from('ghg_inventory_summary').select('co2e_ton,category_code').eq('plant_code',W7.pno(W7.site)).eq('data_year',W7.year).in('category_code',['C7','C07']);
-    if(!o.error&&(o.data||[]).length)W7.off=(o.data||[]).reduce((s,x)=>s+(+x.co2e_ton||0),0); }catch(e){}
+  W7.pii={}; W7.piiState='';
+  W7.grp=cmdecl()?await entryGrpLoad(W7.site,W7.year,'C07',['C07']):null;   /* V129-67：② 收割數字＝全集團頁那一格（原本讀官方總表） */
   W7.note=await entryNote(W7.pno(W7.site),W7.year,'C07');   /* V129-16 */
   await cmLoadPii();
   cmRender();
@@ -10282,42 +10313,36 @@ function cmSumRows(blocks,order,byRow){
   return out;
 }
 function cmHsr(o){ return /高鐵/.test(o.bk||'')&&o.efX===1; }   /* V106：收集表把高鐵站間碳足跡（每趟公斤數）填在距離欄、係數 1（台北總公司 2025；ESG 260930 說明一直以來用各站間碳排） */
-/* ── 已申報年度面板：① 系統算（係數庫）／② 申報／差異原因 ── */
+/* ── 已申報年度面板（V129-67）：① 系統算 對 ② 收割數字（全集團頁那一格）；差異原因逐項（每種交通工具）帶金額 ── */
 function cmdeclPanel(S){
   if(!cmdecl())return '';
-  let q1=0,nb=0,sb2=0,ne=0,se=0;
-  S.forEach(o=>{ q1+=o.coS; });
-  W7.recs.forEach(r=>{ const e=cme(r), co=+(r.co2e_draft||0);
-    if(/清冊合計沒加到/.test(String(e['規則']||''))){ nb++; sb2+=co; }
+  const sg=v=>(v>0?'+':'')+cmf(v,4)+' t', items=[];
+  let q1=0,X=0,St=0,nb=0,nf=0,ne=0,se=0;
+  W7.recs.forEach(r=>{ const e=cme(r), co=+(r.co2e_draft||0); St+=co;
+    if(/清冊合計沒加到/.test(String(e['規則']||'')))nb++;
+    if(e['批201']||e['批202'])nf++;
     if(cmIsAgg(r)&&e['推估']){ ne++; se+=co; } });
-  q1=+q1.toFixed(10);
-  const q2=W7.off;
-  let h='<div style="margin:0 0 6px;padding:4px 10px;border:1px solid #cfe0d6;background:#f6fbf8;border-radius:8px;font-size:12.5px;line-height:1.5">'
-    +'<b title="過去年度照原資料，不改數字；差異只在這裡標示" style="cursor:help">'+W7.year+' 已申報，只看不改。</b>　<span class="nwrap" title="延人公里 × 係數庫" style="cursor:help">① 系統算 <b>'+cmf(q1,4)+' t</b></span>';
-  if(q2==null){ h+='　｜　<span class="nwrap">② 申報 <b>—</b></span> <span class="fmini">（集團清冊沒有這一格）</span>'; }
-  else{ const d=+(q1-q2).toFixed(4); h+='　｜　<span class="nwrap">② 申報 <b>'+cmf(q2,4)+' t</b></span>'+(Math.abs(d)<=0.00015?'　✓ 一致':'　｜　<b style="color:#b8860b">差 '+(d>0?'+':'')+cmf(d,4)+' t</b>');
-    const why=[]; let left=d; const sg=v=>(v>0?'+':'')+cmf(v,4)+' t';
-    S.forEach(o=>{ if(o.zero)return;
-      if(o.noLib){ why.push(o.bk+'：係數庫沒有 '+W7.year+' 年這個交通工具的條目，照收集表係數算'); return; }
-      if(o.efS==null)return;
-      const fp=(o.efX!=null&&o.pkX!=null)?+(o.pkX*(o.efS-o.efX)/1000).toFixed(4):0;
-      const pp=(o.pk!=null&&o.pkX!=null)?+((o.pk-o.pkX)*o.efS/1000).toFixed(4):0;
-      if(Math.abs(fp)>0.00015){ why.push(cmHsr(o)?o.bk+'：收集表用高鐵「站間碳足跡」——每趟的公斤數填在距離欄、係數填 1（ESG 260930：一直以來都用高鐵各站間的碳排）；系統照係數庫 '+facCodeYr(o.fid)+' 每延人公里 '+cmf(o.efS,3)+' kg 算 → '+sg(fp):o.bk+'：收集表係數用 '+cmf(o.efX,10)+(o.fidX?'（收集表連到 '+facCodeYr(o.fidX)+'）':'')+'，係數庫 '+facCodeYr(o.fid)+' 為 '+cmf(o.efS,10)+' → '+sg(fp)); left=+(left-fp).toFixed(4); }
-      if(Math.abs(pp)>0.00015){ why.push(o.bk+'：收集表右表延人公里 '+cmf(o.pkX,1)+'，下方逐人加總 '+cmf(o.pk,1)+' → '+sg(pp)); left=+(left-pp).toFixed(4); }
-      const rest=+(o.coS-o.coX-fp-pp).toFixed(4);
-      if(Math.abs(rest)>0.00015){
-        if(o.efX==null&&!o.coX)why.push(o.bk+'：收集表沒填係數、這一項記 0；系統用係數庫 '+o.fid+'（'+cmf(o.efS,10)+'）算 → '+sg(rest));
-        else if(o.efX!=null&&o.pkX!=null)why.push(o.bk+'：收集表碳排寫 '+cmf(o.coX,4)+' t，但延人公里 '+cmf(o.pkX,1)+' × 收集表自己的係數 '+cmf(o.efX,10)+' 應為 '+cmf(o.pkX*o.efX/1000,4)+' t（收集表小計算錯）→ '+sg(rest));
-        else why.push(o.bk+'：收集表碳排跟「延人公里 × 係數」對不上 → '+sg(rest));
-        left=+(left-rest).toFixed(4); } });
-    S.forEach(o=>{ if(!o.fix||o.fix.co==null)return; const dd=+(o.coX-o.fix.co).toFixed(4); if(Math.abs(dd)<=0.00015)return;   /* V104：ESG 更正（批201／202）＝申報時用舊係數 */
-      why.push(o.bk+'：ESG 260930 更正係數 '+cmf(o.fix.ef,3)+' → '+cmf(o.efX,3)+'（台灣自用車輛柴油；申報時用 '+cmf(o.fix.ef,3)+'）→ '+sg(dd)); left=+(left-dd).toFixed(4); });
-    if(nb){ why.push(nb+' 列收集表 WTW 總計欄空白、申報合計沒加到（系統照資料算進來）→ '+sg(sb2)); left=+(left-sb2).toFixed(4); }
-    if(Math.abs(left)>0.00015)why.push('其餘 '+sg(left)+'：收集表合計跟申報數不同（已列差異統計表）');
-    if(why.length)h+='<div style="margin-top:1px"><b>差異原因</b><br>'+why.map(x=>'・'+cmesc(x)).join('<br>')+'</div>'; }
-  if(ne)h+='<div class="fmini" style="margin-top:1px">本年含「名單外員工以平均值推估」彙總 '+ne+' 列（收集表 '+cmf(se,4)+' t），收集表第二塊、末列 TTL＝申報。</div>';
-  h+='</div>';
-  return h;
+  S.forEach(o=>{ q1+=o.coS; X+=(o.coX||0);
+    const r=o.coS-(o.coX||0); if(Math.abs(r)<0.00005){ if(r!==0)items.push([o.bk+'：小數位',r]); return; }
+    if(o.zero){ items.push([o.bk+'：零排放交通工具，系統記 0（存的數不是 0）',r]); return; }
+    if(o.efS==null){ items.push([o.bk+'：系統算跟存的數不同（係數庫沒有這一年條目）',r]); return; }
+    let fp=(o.efX!=null&&o.pkX!=null)?o.pkX*(o.efS-o.efX)/1000:0, pp=(o.pk!=null&&o.pkX!=null)?(o.pk-o.pkX)*o.efS/1000:0;
+    if(Math.abs(fp)<0.00005)fp=0; if(Math.abs(pp)<0.00005)pp=0;
+    const rest=r-fp-pp;
+    if(fp)items.push([cmHsr(o)?o.bk+'：收集表用高鐵「站間碳足跡」——每趟的公斤數填在距離欄、係數填 1（ESG 260930：一直以來都用高鐵各站間的碳排）；系統照係數庫 '+facCodeYr(o.fid)+' 每延人公里 '+cmf(o.efS,3)+' kg 算'
+      :o.bk+'：收集表係數用 '+cmf(o.efX,10)+(o.fidX?'（收集表連到 '+facCodeYr(o.fidX)+'）':'')+'，係數庫 '+facCodeYr(o.fid)+' 為 '+cmf(o.efS,10),fp]);
+    if(pp)items.push([o.bk+'：收集表右表延人公里 '+cmf(o.pkX,1)+'，下方逐人加總 '+cmf(o.pk,1),pp]);
+    if(Math.abs(rest)>=0.00005){
+      if(o.efX==null&&!o.coX)items.push([o.bk+'：收集表沒填係數、這一項記 0；系統用係數庫 '+facCodeYr(o.fid)+'（'+cmf(o.efS,10)+'）算',rest]);
+      else if(o.efX!=null&&o.pkX!=null)items.push([o.bk+'：收集表碳排寫 '+cmf(o.coX,4)+' t，但延人公里 '+cmf(o.pkX,1)+' × 收集表自己的係數 '+cmf(o.efX,10)+' 應為 '+cmf(o.pkX*o.efX/1000,4)+' t（收集表小計算錯）',rest]);
+      else items.push([o.bk+'：收集表碳排跟「延人公里 × 係數」對不上',rest]); }
+    else if(rest!==0) items.push([o.bk+'：小數位',rest]);
+  });
+  if(Math.abs(X-St)>=0.00005)items.push(['各交通工具彙總列加總 '+cmf(X,4)+' t 跟本頁存的數合計 '+cmf(St,4)+' t 不同（逐人列另存了碳排）',X-St]);
+  const hint=[]; if(nf)hint.push('本頁 '+nf+' 列有「ESG更正」徽章＝ESG 260930 更正係數後重算過'); if(nb)hint.push(nb+' 列有「清未加」徽章＝收集表 WTW 總計欄空白、申報合計沒加到，本頁照資料算進來');
+  return entryDeclBox({yr:W7.year,q1:q1,S:St,grp:W7.grp,items:items,hint:hint.join('；'),note:!!W7.note,
+    q1tip:'每種交通工具：延人公里合計 × 係數庫該年值（係數庫沒有這一年條目的照收集表）',
+    foot:ne?'<div class="fmini" style="margin-top:1px">本年含「名單外員工以平均值推估」彙總 '+ne+' 列（收集表 '+cmf(se,4)+' t），收集表第二塊、末列 TTL＝申報。</div>':''});
 }
 /* ── 畫面：上＝彙總區（系統算，照收集表右表）／下＝逐人輸入區（照收集表左表） ── */
 function cmblk(r){ return r.equipment_name||'（未填交通工具）'; }
@@ -10337,7 +10362,7 @@ function cmRender(){
   if(!W7.recs.length){ h+='<div class="msg" style="margin:10px 12px">此廠此年尚無資料。'+(ed?'可以按「📥 匯入收集表」直接上傳 ESG 的 C7 Excel，或「＋ 新增一人」逐筆登錄。':'')+'</div></div>'; box.innerHTML=h; cmBind(); return; }
   /* ══ 彙總區 ══ */
   let SN=0,SP=0,SC=0;
-  h+='<div class="c7sec">▍彙總（系統算）<span class="fmini">每種交通工具：延人公里合計 × 係數庫係數 ＝ 碳排；全部灰底＝系統算；收集表當年用的值不同時，格下以小字「收集表 …」標示</span></div>';
+  h+='<div class="c7sec">▍彙總（系統算）<span class="fmini">每種交通工具：延人公里合計 × 係數庫係數 ＝ 碳排；全部灰底＝系統算；收集表當年用的值不同時，格下以小字「收集表 …」標示'+(cmdecl()?'（碳排只有系統算，跟收割數字的比對在上方）':'')+'</span></div>';
   h+='<div class="s101zone"><table class="wtbl c7t c7s" style="width:100%;table-layout:fixed"><colgroup>'+[14,5,10,12,12,12,11,24].map(w=>'<col style="width:'+w+'%">').join('')+'</colgroup>'
     +'<thead><tr class="cols" style="background:#fafcfb"><th class="tl">交通工具</th><th>人數</th><th>延人公里＊</th><th>下游係數＊<br><span class="fmini" style="font-weight:400">TTW kgCO2e/pkm</span></th><th>上游係數＊<br><span class="fmini" style="font-weight:400">WTT kgCO2e/pkm</span></th>'
     +'<th>合計係數＊<br><span class="fmini" style="font-weight:400">kgCO2e/pkm</span></th><th>碳排＊<br><span class="fmini" style="font-weight:400">① 系統算 tCO2e</span></th><th class="tl">係數代號／說明</th></tr></thead><tbody>';
@@ -10357,7 +10382,7 @@ function cmRender(){
       +'<td class="R sysv">'+(o.stOnly?'—':(ttw==null?'—':cmf(ttw,10))+(o.lib?xv(o.ttwS,o.ttwX,10,1e-9):''))+'</td>'
       +'<td class="R sysv">'+(o.stOnly?'—':(wtt==null?'—':cmf(wtt,10))+(o.lib?xv(o.wttS,o.wttX,10,1e-9):''))+'</td>'
       +'<td class="R sysv">'+(o.stOnly?'<span class="fmini" title="'+cmesc(CM_STN_TIP)+'">每趟 '+(o.st.same?'':'平均 ')+(o.st.kg==null?'—':cmf(o.st.kg,0))+' kg</span>':(ef==null?'—':fvA(o.fid,cmf(ef,10)))+(o.lib?xv(o.efS,o.efX,10,1e-9):'')+(o.fix?xv(ef,o.fix.ef,10,1e-9,'申報時'):''))+'</td>'
-      +'<td class="R sysv"><b>'+cmf(o.coS,4)+'</b>'+xv(o.coS,o.coX,4,0.00005)+(o.fix?xv(o.coS,o.fix.co,4,0.00005,'申報時'):'')+'</td>'
+      +'<td class="R sysv"><b>'+cmf(o.coS,4)+'</b>'+(cmdecl()?'':xv(o.coS,o.coX,4,0.00005)+(o.fix?xv(o.coS,o.fix.co,4,0.00005,'申報時'):''))+'</td>'   /* V129-67：已申報年度碳排只留系統算 */
       +'<td class="tl fmini" title="'+cmesc(o.src||(o.lib?o.lib.src:''))+'"><b>'+cmesc(o.stOnly?'高鐵站間碳足跡':(o.fid?facCodeYr(o.fid):(o.zero?'零排放不需係數':'—')))+'</b>'+((o.src||(o.lib&&o.lib.src))?'<div class="cl1" style="color:#7a8f84">'+cmesc(o.src||o.lib.src)+'</div>':(o.coX?'':'<div class="cl1" style="color:#7a8f84">收集表右表沒有這一列</div>'))+'</td></tr>';
   });
   h+='<tr class="s101blk" style="background:#eef6f1"><td class="tl"><b>合計</b></td><td class="R"><b>'+cmf(SN,0)+'</b></td><td class="R"><b>'+cmf(SP,1)+'</b></td><td></td><td></td><td></td><td class="R"><b>'+cmf(SC,4)+' t</b></td><td></td></tr>';
@@ -10877,8 +10902,9 @@ function rlrow(r){
   const lib=rllib(code,W8.year), efS=lib?lib.v:null;
   let efX=rln(e['係數(收集表)']); if(efX==null&&!r._new)efX=rln(r.ef_value);
   const excl=!!(e['不計入']||e['收集表隱藏列']);
-  const coS=excl?0:((efS!=null&&usdS!=null)?+(usdS*efS/1000).toFixed(10):(lib||r._new||imp?0:coX));
-  return {code:code,a:a,R:R,usdS:usdS,usdX:usdX,noamt:noamt,lib:lib,efS:efS,efX:efX,excl:excl,coS:coS,coX:coX,noLib:!lib&&!excl}; }
+  const fb=!excl&&!r._new&&!(efS!=null&&usdS!=null)&&rldecl();   /* V129-67：已申報年度算不出（沒係數或沒美金）＝照存的數（同 C05） */
+  const coS=excl?0:((efS!=null&&usdS!=null)?+(usdS*efS/1000).toFixed(10):(fb?+(r.co2e_draft||0):(lib||r._new||imp?0:coX)));
+  return {code:code,a:a,R:R,usdS:usdS,usdX:usdX,noamt:noamt,lib:lib,efS:efS,efX:efX,excl:excl,coS:coS,coX:coX,noLib:!lib&&!excl,fb:fb}; }
 function rlkind(r){ const e=rle(r);
   if(rlcfg().inv)return {t:e['種類']||'',g:false};
   if(e['資產類型'])return {t:e['資產類型'],g:false};
@@ -10956,11 +10982,9 @@ async function rlLoad(){
   box.innerHTML='<div class="msg">載入中…（這一廠年的明細）</div>';
   const {data,error}=await sbAll(()=>sb.from('ghg_activity_data').select('*').eq('category_id',W8.cat).eq('site_id',W8.site).eq('data_year',W8.year).order('record_id'));
   if(error){ box.innerHTML='<div class="msg err">讀取失敗：'+rlesc(error.message)+'</div>'; return; }
-  W8.recs=(data||[]).map(r=>{ r._new=false; return r; }); W8.del={}; W8.off=null; W8.note='';
-  try{ const n=await sb.from('ghg_diff_notes').select('note').eq('site_id',W8.pno(W8.site)).eq('data_year',W8.year).in('category_id',rlcfg().sum);   /* 系統已登記的差異原因（差異統計表同一份） */
-    if(!n.error&&(n.data||[]).length)W8.note=(n.data||[]).map(x=>x.note).filter(Boolean).join('；'); }catch(e){}
-  try{ const o=await sb.from('ghg_inventory_summary').select('co2e_ton,category_code').eq('plant_code',W8.pno(W8.site)).eq('data_year',W8.year).in('category_code',rlcfg().sum);
-    if(!o.error&&(o.data||[]).length)W8.off=(o.data||[]).reduce((s,x)=>s+(+x.co2e_ton||0),0); }catch(e){}
+  W8.recs=(data||[]).map(r=>{ r._new=false; return r; }); W8.del={};
+  W8.note=await entryNote(W8.pno(W8.site),W8.year,W8.cat);   /* V129-67：登錄頁差異說明（類別@登錄；原本讀全集團頁的鍵） */
+  W8.grp=rldecl()?await entryGrpLoad(W8.site,W8.year,W8.cat,[W8.cat]):null;   /* V129-67：② 收割數字＝全集團頁那一格（原本讀官方總表） */
   rlRender();
 }
 
@@ -10970,53 +10994,46 @@ function rlSum(){
   W8.recs.forEach(r=>{ const c=rlrow(r); if(W8.del[r.record_id])return; if(c.excl){ ex.push([r,c]); return; } (by[c.code]=by[c.code]||[]).push([r,c]); });
   const order=C.codes.map(x=>x[0]).filter(k=>by[k]).concat(Object.keys(by).filter(k=>!C.codes.some(x=>x[0]===k)).sort());
   const S=order.map(k=>{ const L=by[k]; const o={code:k,n:L.length,e01:k==='C15-E01',efXs:[]};
-    o.coS=L.reduce((s,[r,c])=>s+c.coS,0); o.coX=L.reduce((s,[r,c])=>s+((rle(r)['清冊沒有這一列']&&!c.e01&&c.usdX!=null&&c.efX!=null)?c.usdX*c.efX/1000:c.coX),0);   /* V129-62-3 */
+    o.coS=L.reduce((s,[r,c])=>s+c.coS,0); o.nFb=L.filter(([r,c])=>c.fb).length;   /* V129-67 */ o.coX=L.reduce((s,[r,c])=>s+((rle(r)['清冊沒有這一列']&&!c.e01&&c.usdX!=null&&c.efX!=null)?c.usdX*c.efX/1000:c.coX),0);   /* V129-62-3 */
     if(o.e01){ o.tot=L.reduce((s,[r,c])=>s+(c.tot||0),0); return o; }
     o.usdS=L.reduce((s,[r,c])=>s+(c.usdS||0),0); o.usdX=L.reduce((s,[r,c])=>s+(c.usdX||0),0);
     o.lib=rllib(k,W8.year); o.efS=o.lib?o.lib.v:null;
     const xs=[...new Set(L.map(([r,c])=>c.efX).filter(v=>v!=null).map(v=>+(+v).toPrecision(10)))]; o.efXs=xs;
     o.noLib=!o.lib&&k!=='C15-E01'; return o; });
   return {S:S,ex:ex}; }
-/* ── 已申報年度面板：① 系統算／② 申報／差異原因 ── */
+/* ── 已申報年度面板（V129-67）：① 系統算 對 ② 收割數字（全集團頁那一格）；每筆「系統算−存的數」拆成匯率／係數／收集表算式…，逐項帶金額 ── */
 function rldeclPanel(S,ex){
   if(!rldecl())return '';
-  const sg=v=>(v>0?'+':'')+rlf(v,4)+' t';
-  const q1=+S.reduce((s,o)=>s+o.coS,0).toFixed(10), q2=W8.off;
-  let h='<div style="margin:0 0 6px;padding:4px 10px;border:1px solid #cfe0d6;background:#f6fbf8;border-radius:8px;font-size:12.5px;line-height:1.5">'
-    +'<b title="過去年度照原資料，不改數字；差異只在這裡標示" style="cursor:help">'+W8.year+' 已申報，只看不改。</b>　<span class="nwrap" title="原幣 ÷ 系統匯率 × 係數庫 '+facY(W8.year)+' 年標準" style="cursor:help">① 系統算 <b>'+rlf(q1,4)+' t</b></span>';
-  if(q2==null){ h+='　｜　<span class="nwrap">② 申報 <b>—</b></span> <span class="fmini">（集團清冊沒有這一格）</span>'; }
-  else{ const d=+(q1-q2).toFixed(4); h+='　｜　<span class="nwrap">② 申報 <b>'+rlf(q2,4)+' t</b></span>'+(Math.abs(d)<=0.00015?'　✓ 一致':'　｜　<b style="color:#b8860b">差 '+(d>0?'+':'')+rlf(d,4)+' t</b>');
-    const G={fx:{d:0,L:[]},ef:{d:0,L:[]},calc:{d:0,L:[]},nof:{d:0,L:[]},rnd:{d:0,L:[]},nol:{d:0,L:[]}}; let omit=0, nOmit=0;
-    W8.recs.forEach(r=>{ if(W8.del[r.record_id])return; const c=rlrow(r), e=rle(r), nm=String(r.source_name||'');
-      if(e['收集表合計沒加到']){ omit+=c.coX; nOmit++; }
-      if(e['清冊沒有這一列']&&!c.excl&&!c.e01){ const v=c.coS-c.coX; if(Math.abs(v)>0.00005){ G.nol.d+=v; G.nol.L.push({t:nm,d:v,tip:e['清冊沒有這一列']}); } return; }   /* V129-62-3 */
-      if(c.excl||c.e01){ if(c.e01&&Math.abs(c.coS-c.coX)>0.00005){ G.calc.d+=c.coS-c.coX; G.calc.L.push({t:nm,d:c.coS-c.coX,tip:e['與收集表算式不符']||''}); } return; }
-      if(c.efS==null||c.usdX==null)return;
-      let fx=(!c.noamt&&c.usdS!=null)?(c.usdS-c.usdX)*c.efS/1000:0;
-      if(fx&&c.usdX>0&&Math.abs(c.usdS/c.usdX-1)<0.0005){ G.rnd.d+=fx; if(Math.abs(fx)>=0.00005)G.rnd.L.push({t:nm+'（美金取位）',d:fx}); fx=0; }   /* 匯率取位的尾差 */
-      if(c.efX==null){ const v=c.usdX*c.efS/1000-c.coX; if(Math.abs(v)>0.00005){ G.nof.d+=v; G.nof.L.push({t:nm,d:v}); } }
-      else{ const ef=c.usdX*(c.efS-c.efX)/1000, ca=c.usdX*c.efX/1000-c.coX;
-        if(Math.abs(ef)>0.00005&&rlround(c.efX,c.efS)){ G.rnd.d+=ef; G.rnd.L.push({t:nm+'（'+c.efX+' → '+rlf(c.efS,6)+'）',d:ef}); }   /* 收集表係數只取到小數點後幾位 */
-        else if(Math.abs(ef)>0.00005){ G.ef.d+=ef; G.ef.L.push({t:nm+'（'+rlf(c.efX,6)+' → '+rlf(c.efS,6)+'）',d:ef,tip:e['係數說明']||''}); }
-        if(Math.abs(ca)>0.00005){ G.calc.d+=ca; G.calc.L.push({t:nm,d:ca,tip:e['與收集表算式不符']||''}); } }
-      if(Math.abs(fx)>0.00005){ G.fx.d+=fx; G.fx.L.push({t:nm+'（收集表 1 美金＝'+rlf(c.a.v/c.usdX,c.a.v/c.usdX>=100?2:4)+'，系統 '+(c.R?rlf(c.R.rate,c.R.rate>=100?2:4):'—')+'）',d:fx,tip:e['匯率說明']||''}); }
-    });
-    const ex3=L=>{ const m={}; L.forEach(x=>{ const k=x.t; const o=(m[k]=m[k]||{t:k,n:0,d:0,tip:x.tip||''}); o.n++; o.d+=x.d; }); const A=Object.values(m).sort((a,b)=>Math.abs(b.d)-Math.abs(a.d));
-      return A.slice(0,3).map(x=>'<span title="'+rlesc(x.tip)+'">'+rlesc(x.t)+(x.n>1?' ×'+x.n:'')+' '+sg(x.d)+'</span>').join('；')+(A.length>3?'；…等 '+A.length+' 種':''); };
-    const why=[]; let left=d;
-    if(Math.abs(G.fx.d)>0.00015){ why.push(G.fx.L.length+' 筆匯率不同（收集表換美金用的匯率跟系統匯率表不同）→ '+sg(G.fx.d)+'。例：'+ex3(G.fx.L)); left-=G.fx.d; }
-    if(Math.abs(G.ef.d)>0.00015){ why.push(G.ef.L.length+' 筆收集表係數跟係數庫本年標準不同 → '+sg(G.ef.d)+'。例：'+ex3(G.ef.L)); left-=G.ef.d; }
-    if(Math.abs(G.nof.d)>0.00015){ why.push(G.nof.L.length+' 筆收集表沒填係數、記 0；系統照係數庫算 → '+sg(G.nof.d)+'。例：'+ex3(G.nof.L)); left-=G.nof.d; }
-    if(Math.abs(G.calc.d)>0.00015){ why.push(G.calc.L.length+' 筆收集表碳排跟「美金 × 係數」對不上（照收集表那一格存）→ '+sg(G.calc.d)+'。例：'+ex3(G.calc.L)); left-=G.calc.d; }
-    if(Math.abs(G.rnd.d)>0.00015){ why.push(G.rnd.L.length+' 筆只是四捨五入的尾差（收集表係數只取到小數點後幾位、美金換算取位；系統用完整值）→ '+sg(G.rnd.d)+'。例：'+ex3(G.rnd.L)); left-=G.rnd.d; }
-    if(Math.abs(G.nol.d)>0.00015){ why.push(G.nol.L.length+' 筆收集表有、清冊沒有（明細記 0、清冊數字不變；系統照收集表算）→ '+sg(G.nol.d)+'。例：'+ex3(G.nol.L)); left-=G.nol.d; }   /* V129-62-3 */
-    if(nOmit&&Math.abs(omit)>0.00015){ why.push(nOmit+' 筆收集表合計沒加到（申報沒算；9/22 規矩照資料算進來）→ '+sg(omit)); left-=omit; }
-    left=+left.toFixed(4);
-    if(Math.abs(left)>0.00015)why.push('其餘 '+sg(left)+'：'+(W8.note?'系統已登記的原因——'+rlesc(W8.note):'收集表合計跟申報數不同（見差異統計表）'));
-    if(why.length)h+='<div style="margin-top:1px"><b>差異原因</b>（系統算－申報）<br>'+why.map(x=>'・'+x).join('<br>')+'</div>'; }
-  if(ex.length)h+='<div class="fmini" style="margin-top:1px">'+ex.length+' 筆收集表不計入／篩選隱藏（'+rlesc([...new Set(ex.map(([r])=>rle(r)['不計入']||rle(r)['收集表隱藏列']))].join('；'))+'），系統也不算。</div>';
-  h+='</div>';
-  return h; }
+  const A={}, add=(k,v,t)=>{ const o=A[k]=A[k]||{n:0,t:0,L:[]}; o.t+=v; o.n++; if(t)o.L.push({t:t,d:v}); };
+  let q1=0,St=0,nFb=0,nOmit=0;
+  W8.recs.forEach(r=>{ if(W8.del[r.record_id])return; const c=rlrow(r), e=rle(r), nm=String(r.source_name||''), st=+(r.co2e_draft||0);
+    q1+=c.coS; St+=st; if(c.fb)nFb++; if(e['收集表合計沒加到'])nOmit++;
+    const tot=c.coS-st; if(Math.abs(tot)<0.00005){ if(tot!==0)add('rd',tot); return; }
+    if(c.excl){ add('ex',tot,nm); return; }
+    if(e['清冊沒有這一列']&&!c.e01){ add('nol',tot,nm); return; }
+    const P=[['xs',c.coX-st,nm]];
+    if(c.e01) P.push(['e1',c.coS-c.coX,nm]);
+    else if(c.efS==null||c.usdX==null) P.push(['oth',c.coS-c.coX,nm]);
+    else { const fx=(!c.noamt&&c.usdS!=null)?(c.usdS-c.usdX)*c.efS/1000:0;
+      P.push([(fx&&c.usdX>0&&Math.abs(c.usdS/c.usdX-1)<0.0005)?'fxr':'fx',fx,nm+((c.a&&c.a.v!=null&&c.usdX)?'（收集表 1 美金＝'+rlf(c.a.v/c.usdX,c.a.v/c.usdX>=100?2:4)+'，系統 '+(c.R?rlf(c.R.rate,c.R.rate>=100?2:4):'—')+'）':'')]);
+      if(c.efX==null) P.push(['nof',c.usdX*c.efS/1000-c.coX,nm]);
+      else { P.push([rlround(c.efX,c.efS)?'r4':'ef',c.usdX*(c.efS-c.efX)/1000,nm+'（'+rlf(c.efX,6)+' → '+rlf(c.efS,6)+'）']); P.push(['calc',c.usdX*c.efX/1000-c.coX,nm]); } }
+    let sm=0; P.forEach(p=>{ sm+=p[1]; }); P.push(['rd',tot-sm]);   /* 各塊加起來剛好＝這一筆的「系統算−存的數」 */
+    P.forEach(p=>{ if(Math.abs(p[1])<0.00005){ if(p[1]!==0)add('rd',p[1]); } else add(p[0],p[1],p[2]); });
+  });
+  const ex3=L=>{ const m={}; L.forEach(x=>{ const o=(m[x.t]=m[x.t]||{t:x.t,n:0,d:0}); o.n++; o.d+=x.d; }); const Z=Object.values(m).sort((a,b)=>Math.abs(b.d)-Math.abs(a.d));
+    return Z.slice(0,3).map(x=>x.t+(x.n>1?' ×'+x.n:'')+' '+(x.d>0?'+':'')+rlf(x.d,4)+' t').join('；')+(Z.length>3?'；…等 '+Z.length+' 種':''); };
+  const T={xs:'筆收集表填的碳排跟本頁存的數不同（存的數照清冊）',ex:'筆收集表不計入／篩選隱藏、系統不算，但存的數不是 0',nol:'筆收集表有、清冊沒有（存的數記 0，系統照收集表算）',
+    e1:'筆持股比例法：對方範疇一＋二 × 持股比率，跟收集表碳排不同',oth:'筆沒有美金，系統算跟收集表碳排不同',fx:'筆匯率不同（收集表換美金用的匯率跟系統匯率表不同）',fxr:'筆美金換算取位的尾差',
+    ef:'筆收集表係數跟係數庫本年標準不同（系統用係數庫值）',r4:'筆收集表係數只取到小數點後幾位（系統用完整值）',nof:'筆收集表沒填係數、記 0（系統照係數庫算）',calc:'筆收集表碳排跟「美金 × 係數」對不上（存的數照收集表）',rd:'項各差不到 0.00005 t（小數位）'};
+  const items=[]; ['xs','ex','nol','e1','oth','fx','fxr','ef','r4','nof','calc','rd'].forEach(k=>{ const o=A[k]; if(o&&o.n)items.push([o.n+' '+T[k]+(o.L.length&&k!=='rd'?'。例：'+ex3(o.L):''),o.t]); });
+  const ft=[]; if(nFb)ft.push(nFb+' 筆沒有係數或美金算不出，系統算照存的數（格子下面標「照存的數」）');
+  if(ex.length)ft.push(ex.length+' 筆收集表不計入／篩選隱藏（'+[...new Set(ex.map(([r])=>rle(r)['不計入']||rle(r)['收集表隱藏列']))].join('；')+'），系統也不算');
+  return entryDeclBox({yr:W8.year,q1:+q1.toFixed(10),S:St,grp:W8.grp,items:items,note:!!W8.note,
+    hint:nOmit?'本頁 '+nOmit+' 筆有「清未加」徽章＝收集表合計沒加到（申報沒算；9/22 規矩照資料算進來）':'',
+    q1tip:'原幣 ÷ 系統匯率 × 係數庫 '+facY(W8.year)+' 年標準；持股比例法＝對方範疇一＋二 × 持股比率；算不出的照存的數',
+    foot:ft.length?'<div class="fmini" style="margin-top:1px;color:#7a8f84">另有 '+rlesc(ft.join('；'))+'。</div>':''});
+}
 
 /* ── 畫面：上＝彙總區（系統算）／下＝逐筆輸入區 ── */
 function rlRender(){
@@ -11040,31 +11057,31 @@ function rlRender(){
   const howTip='上方「彙總」＝系統依代號加總美金 × 係數（一年一代號，依年度自動帶）算碳排；下方「逐筆輸入」＝每一筆'+(C.inv?'投資的帳面金額':'租約的租金')+'（美金＊＝原幣 ÷ 系統匯率表）。'+(C.desc||'');
   h+='<div class="fmini ehdesc" style="margin:0 2px 4px;line-height:1.4">匯率 '+rateTxt+'　<span title="'+rlesc(howTip)+'" style="cursor:help;color:var(--p);font-weight:700;white-space:nowrap">ⓘ 怎麼算</span></div>';   /* V104-2：說明收成一行，完整說明放游標提示 */
   const Z=rlSum();
-  h+='<div id="s101wrap" data-k="'+rlesc(W8.cat+'|'+W8.site+'|'+W8.year)+'">'+rldeclPanel(Z.S,Z.ex);
+  h+='<div id="s101wrap" data-k="'+rlesc(W8.cat+'|'+W8.site+'|'+W8.year)+'">'+entryNoteHTML(W8.note)+rldeclPanel(Z.S,Z.ex);   /* V129-67：登錄頁差異說明 */
   if(!W8.recs.length){ h+='<div class="msg" style="margin:10px 12px">此廠此年尚無資料。'+(ed?'可以按「📥 匯入收集表」上傳 ESG 收集表，或「＋ 新增一筆」逐筆登錄。':(lk&&!decl?'這個年度還沒開放登錄。':''))+'</div></div>'; box.innerHTML=h; rlBind(); return; }
   /* ══ 彙總區 ══ */
   const xv=(s,x,d,tol,lb)=>(s!=null&&x!=null&&Math.abs(s-x)>tol)?'<div class="fmini" style="color:#b8860b;font-weight:400" title="收集表當年的值（過去年度照原資料，只比對）">'+(lb||'收集表')+' '+rlf(x,d)+'</div>':'';
   let TN=0,TU=0,TC=0;
-  h+='<div class="rlsec">▍彙總（系統算）<span class="fmini">每個代號：美金合計 × 係數庫係數 ＝ 碳排；全部灰底＝系統算'+(decl?'；收集表當年的值不同時，格下以小字「收集表 …」標示':'')+'</span></div>';
+  h+='<div class="rlsec">▍彙總（系統算）<span class="fmini">每個代號：美金合計 × 係數庫係數 ＝ 碳排；全部灰底＝系統算'+(decl?'；收集表當年的美金、係數不同時，格下以小字「收集表 …」標示（碳排只有系統算，跟收割數字的比對在上方）':'')+'</span></div>';
   h+='<div class="s101zone"><table class="wtbl rlt" style="width:100%;table-layout:fixed"><colgroup>'+[22,6,15,14,13,30].map(w=>'<col style="width:'+w+'%">').join('')+'</colgroup>'
     +'<thead><tr class="cols" style="background:#fafcfb"><th class="tl">代號・類別</th><th>筆數</th><th>美金合計＊<br><span class="fmini" style="font-weight:400">USD</span></th><th>係數＊<br><span class="fmini" style="font-weight:400">kgCO2e/美金</span></th>'
     +'<th>碳排＊<br><span class="fmini" style="font-weight:400">① 系統算 tCO2e</span></th><th class="tl">係數代號／出處</th></tr></thead><tbody>';
   Z.S.forEach(o=>{
     TN+=o.n; TC+=o.coS; if(!o.e01)TU+=o.usdS||0;
-    const fl=[]; if(o.noLib)fl.push(['係數庫無此年','#a33','係數庫沒有 '+facY(W8.year)+' 年「'+rlcodeNm(o.code)+'」的條目'+(decl?'，這一類照收集表算':'，碳排先記 0；請 ESG 年度開帳補係數')]);
+    const fl=[]; if(o.noLib)fl.push(['係數庫無此年','#a33','係數庫沒有 '+facY(W8.year)+' 年「'+rlcodeNm(o.code)+'」的條目'+(decl?'，系統算不出、照存的數':'，碳排先記 0；請 ESG 年度開帳補係數')]);
     if(o.lib&&o.lib.doubt)fl.push(['⚠有疑點','#b8860b',o.lib.doubt]);
     const efx=o.efXs.length===1?o.efXs[0]:null;
     h+='<tr><td class="tl"><b><span class="ncode" style="min-width:0">'+rlesc(rlShow(o.code))+'</span> '+rlesc(rlcodeNm(o.code))+'</b>'+fl.map(rlbadge).join('')+'</td>'
       +'<td class="R sysv">'+rlf(o.n,0)+'</td>';
     if(o.e01){ h+='<td class="R sysv" title="持股比例法不用美金"><span class="dash">—</span></td><td class="R sysv"><span class="fmini">依各家持股比率</span></td>'   /* V104-3：美金欄只放美金（使用者 261001「上面是美金 但持股法是碳排?」） */
-      +'<td class="R sysv"><b>'+rlf(o.coS,4)+'</b>'+(decl?xv(o.coS,o.coX,4,0.00005):'')+'</td><td class="tl fmini"><b>持股比例法</b>（不用係數庫）<div class="cl2" style="color:#7a8f84">投資對象範疇一＋二合計 '+rlf(o.tot,4)+' t × 各家持股比率（見下方持股比例法表）</div></td></tr>'; return; }
+      +'<td class="R sysv"><b>'+rlf(o.coS,4)+'</b></td><td class="tl fmini"><b>持股比例法</b>（不用係數庫）<div class="cl2" style="color:#7a8f84">投資對象範疇一＋二合計 '+rlf(o.tot,4)+' t × 各家持股比率（見下方持股比例法表）</div></td></tr>'; return; }
     h+='<td class="R sysv">'+rlfa(o.usdS)+(decl?xv(o.usdS,o.usdX,2,Math.max(0.5,Math.abs(o.usdX)*0.0005)):'')+'</td>'
       +'<td class="R sysv">'+(o.efS==null?'—':fvA(o.lib&&o.lib.fid,rlf(o.efS,10)))+(decl&&o.efS!=null&&o.efXs.length&&!(efx!=null&&(Math.abs(efx-o.efS)<1e-12||rlround(efx,o.efS)))?'<div class="fmini" style="color:#b8860b;font-weight:400" title="收集表當年用的係數（過去年度照原資料，只比對）">收集表 '+(efx!=null?rlf(efx,10):o.efXs.length+' 種')+'</div>':'')+'</td>'
-      +'<td class="R sysv"><b>'+rlf(o.coS,4)+'</b>'+(decl?xv(o.coS,o.coX,4,0.00005):'')+'</td>'
+      +'<td class="R sysv"><b>'+rlf(o.coS,4)+'</b>'+(decl&&o.nFb?'<div class="fmini" style="color:#7a8f84" title="沒有係數或美金算不出，照資料庫存的數">'+(o.nFb<o.n?o.nFb+' 筆':'')+'照存的數</div>':'')+'</td>'
       +'<td class="tl fmini" title="'+rlesc(o.lib?(o.lib.src+(o.lib.from?'；'+o.lib.from:'')):'')+'"><b>'+rlesc(o.lib?facCodeYr(o.lib.fid):(o.code+'·ALL·'+facY(W8.year)+'（沒有條目）'))+'</b>'+(o.lib?'<div class="cl1" style="color:#7a8f84">'+rlesc(o.lib.from||o.lib.src)+'</div>':'')+'</td></tr>';
   });
   if(Z.ex.length){ const cx=Z.ex.reduce((s,[r,c])=>s+c.coX,0);
-    h+='<tr><td class="tl"><b style="color:#7a8f84">不計入</b> <span class="fmini">收集表不計／篩選隱藏</span></td><td class="R sysv">'+Z.ex.length+'</td><td class="R sysv">'+rlfa(Z.ex.reduce((s,[r,c])=>s+(c.usdS||0),0))+'</td><td class="R sysv">—</td><td class="R sysv"><b>0.0000</b>'+(decl?xv(0,cx,4,0.00005):'')+'</td><td class="tl fmini"><div class="cl2" style="color:#7a8f84" title="'+rlesc(Z.ex.map(([r])=>r.source_name+'：'+(rle(r)['不計入']||rle(r)['收集表隱藏列'])).join('\n'))+'">'+rlesc(Z.ex.map(([r])=>rle(r)['不計入']||rle(r)['收集表隱藏列']).filter((v,i,a)=>a.indexOf(v)===i).join('；'))+'</div></td></tr>'; TN+=Z.ex.length; }
+    h+='<tr><td class="tl"><b style="color:#7a8f84">不計入</b> <span class="fmini">收集表不計／篩選隱藏</span></td><td class="R sysv">'+Z.ex.length+'</td><td class="R sysv">'+rlfa(Z.ex.reduce((s,[r,c])=>s+(c.usdS||0),0))+'</td><td class="R sysv">—</td><td class="R sysv"><b>0.0000</b></td><td class="tl fmini"><div class="cl2" style="color:#7a8f84" title="'+rlesc(Z.ex.map(([r])=>r.source_name+'：'+(rle(r)['不計入']||rle(r)['收集表隱藏列'])).join('\n'))+'">'+rlesc(Z.ex.map(([r])=>rle(r)['不計入']||rle(r)['收集表隱藏列']).filter((v,i,a)=>a.indexOf(v)===i).join('；'))+'</div></td></tr>'; TN+=Z.ex.length; }
   h+='<tr class="s101blk" style="background:#eef6f1"><td class="tl"><b>合計</b></td><td class="R"><b>'+rlf(TN,0)+'</b></td><td class="R"><b>'+rlfa(TU)+'</b></td><td></td><td class="R"><b>'+rlf(TC,4)+' t</b></td><td></td></tr>';
   h+='</tbody></table></div>';
   /* ══ 逐筆輸入區 ══ */
