@@ -302,7 +302,7 @@ function facChg(on){ return '<span class="fchg'+(on?'':' off')+'">🟡</span>'; 
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-64</b> · 2026/10/28</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-65</b> · 2026/10/29</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -9385,6 +9385,13 @@ function w5flags(l){
   if(ew['單位說明'])out.push(['kg','#7a8f84',ew['單位說明']]);
   return out;   /* 「出處待 ESG 確認」不逐列標（會太吵），改在表格下方統計一句 */
 }
+/* V129-65：已申報年度一格兩行（系統算／明細）；係數去尾 0 */
+function w5g6(v){ if(v==null||v==='')return ''; const x=+v; if(!isFinite(x))return String(v); return String(+x.toFixed(8)); }
+function w5sysTot(l,c){ return (l.t&&c.tCalc!=null?c.tCalc:0)+(l.w&&c.wCalc!=null?c.wCalc:0); }
+function w5two(sys,rec,bold){ if(sys==null&&rec==null)return '—';
+  const df=sys!=null&&rec!=null&&Math.abs(sys-rec)>=0.00005;
+  return '<div style="white-space:nowrap" title="系統算＝照表頭算式算（處理係數用係數庫該年主值、運輸係數用共用運輸係數表）">系統算 '+(bold?'<b>':'')+(sys==null?'—':w5f(sys,4))+(bold?'</b>':'')+'</div>'
+    +'<div class="fmini" style="white-space:nowrap;color:'+(df?'#b8860b':'#7a8f84')+'" title="明細＝資料庫存的數（已申報年度照收集表收；有「標」「E」徽章的列照係數庫標準或 ESG 更正重算過）">明細 '+(rec==null?'—':w5f(rec,4))+(df?' ≠':'')+'</div>'; }
 function w5badge(f){ return '<span title="'+w5esc(f[2])+'" style="display:inline-block;margin-left:3px;padding:0 4px;border:1px solid '+f[1]+'55;background:'+f[1]+'12;color:'+f[1]+';border-radius:999px;font-size:9.5px;line-height:14px;vertical-align:1px">'+w5esc(f[0])+'</span>'; }
 function w5short(t){ const x=String(t||'').replace(/[（(][^）)]*[）)]/g,'').replace(/\s+/g,' ').trim(); return x||String(t||''); }
 function w5css(){ if(document.getElementById('w5css'))return; const st=document.createElement('style'); st.id='w5css';
@@ -9448,29 +9455,30 @@ function wstRender(){
   }
   const blocks={};
   W5.lines.forEach(l=>{const k=w5blk(l); (blocks[k]=blocks[k]||[]).push(l);});
-  let GW=0,GT=0,GN=0;
+  let GW=0,GT=0,GS=0,GN=0; const DC=w5decl();
   h+='<div class="s101zone"><table class="wtbl c5t" style="width:100%;table-layout:fixed">'
-    +'<colgroup>'+[8,14,8,14,13,8,8,12,8,7].map(w=>'<col style="width:'+w+'%">').join('')+'</colgroup>'
+    +'<colgroup>'+[7,12,7,10,10,7,8,9,9,9,12].map(w=>'<col style="width:'+w+'%">').join('')+'</colgroup>'
     +'<thead><tr class="cols" style="background:#fafcfb">'
     +'<th class="tl">清運日期</th>'
     +'<th class="tl">廢棄物名稱</th>'
     +'<th>重量<br><span class="fmini" style="font-weight:400">公噸</span></th>'
     +'<th class="tl">處理地點</th>'
     +'<th class="tl">運輸工具／距離<span class="fmini" style="font-weight:400"> km</span></th>'
-    +'<th>延噸公里＊</th>'
-    +'<th>運輸排放＊<br><span class="fmini" style="font-weight:400">tCO2e</span></th>'
-    +'<th>處理係數＊<br><span class="fmini" style="font-weight:400">kgCO2e/t</span></th>'
-    +'<th>處理排放＊<br><span class="fmini" style="font-weight:400">tCO2e</span></th>'
-    +'<th>總排放＊<br><span class="fmini" style="font-weight:400">tCO2e</span></th>'
+    +'<th>延噸公里＊<br><span class="fmini" style="font-weight:400">＝重量×距離</span></th>'
+    +'<th>運輸係數＊<br><span class="fmini" style="font-weight:400">kgCO2e／延噸公里</span></th>'
+    +'<th>運輸排放＊<br><span class="fmini" style="font-weight:400">tCO2e＝延噸公里×運輸係數÷1000</span></th>'
+    +'<th>處理係數＊<br><span class="fmini" style="font-weight:400">kgCO2e／公噸</span></th>'
+    +'<th>處理排放＊<br><span class="fmini" style="font-weight:400">tCO2e＝重量×處理係數÷1000</span></th>'
+    +'<th>總排放＊<br><span class="fmini" style="font-weight:400">tCO2e＝運輸＋處理</span></th>'
     +'</tr></thead><tbody>';
   Object.keys(blocks).sort().forEach(bk=>{
-    const ls=blocks[bk]; let BW=0,BT=0;
-    ls.forEach(l=>{const c=w5line(l); BW+=c.wt; BT+=c.tot;});
-    GW+=BW; GT+=BT; GN+=ls.length;
+    const ls=blocks[bk]; let BW=0,BT=0,BS=0;
+    ls.forEach(l=>{const c=w5line(l); BW+=c.wt; BT+=c.tot; BS+=w5sysTot(l,c);});
+    GW+=BW; GT+=BT; GS+=BS; GN+=ls.length;
     const op=W5.open[bk]!==false;
     h+='<tr class="s101blk" style="background:#eef6f1;cursor:pointer" onclick="wstToggle('+JSON.stringify(bk).replace(/"/g,'&quot;')+')">'
       +'<td class="tl" colspan="2" title="'+w5esc(bk)+'"><b>'+(op?'▾':'▸')+w5esc(w5short(bk))+'</b> <span class="fmini">'+ls.length+' 筆</span></td>'
-      +'<td class="tl" colspan="8">'+(ed?'<a href="javascript:void(0)" onclick="event.stopPropagation();wstAddSame('+JSON.stringify(bk).replace(/"/g,'&quot;')+')" class="fmini">＋ 這一塊再加一筆</a>':'')+'</td></tr>';
+      +'<td class="tl" colspan="9">'+(ed?'<a href="javascript:void(0)" onclick="event.stopPropagation();wstAddSame('+JSON.stringify(bk).replace(/"/g,'&quot;')+')" class="fmini">＋ 這一塊再加一筆</a>':'')+'</td></tr>';
     if(op)ls.forEach(l=>{
       const c=w5line(l), ew=w5e(l.w||{}), et=w5e(l.t||{});
       const fl=w5flags(l), id=l.k;
@@ -9484,19 +9492,21 @@ function wstRender(){
         +'<td class="tl fmini"><span class="cl2" title="'+w5esc(vh)+'">'+(ed?w5vehSel(id,vh):w5esc(w5short(vh)))+'</span>'
         +(ed?'<span class="fmini">／'+tin('km',c.km,'km')+'</span>':(c.km==null?'':'<span class="fmini" style="color:#7a8f84">／'+w5f(c.km,2)+' km</span>'))+'</td>'
         +'<td class="R sysv">'+(c.tkm==null?'—':w5f(c.tkm,2))+'</td>'
-        +'<td class="R sysv" title="'+(c.tef==null?'':'運輸係數 '+w5f(c.tef,10)+' kgCO2e/tkm'+(c.tM?'（'+w5esc(c.tM.veh)+'）':'')+(c.tefD!=null?'；收集表 '+w5f(c.tefD,10):''))+'">'+(l.t?w5f(c.tc,4):'—')+((et['收集表沒算這段運輸']||et['與收集表算式不符'])?'<br><span class="fmini" style="color:#b8860b">算 '+w5f(c.tCalc,4)+'</span>':'')+'</td>'
-        +'<td class="R sysv">'+(c.ef==null?'<span class="fmini">未填</span>':fvA((c.lib&&c.lib.fid)||(l.w&&l.w.factor_id),w5f(c.ef,10)))+(c.efD!=null?'<br><span class="fmini" style="color:#b8860b" title="收集表填的處理係數；① 系統算用係數庫主值">收集表 '+w5f(c.efD,10)+'</span>':'')+(!c.lib&&c.efL!=null?'<br><span class="fmini" style="color:#a33" title="係數庫沒有這一年這一種的主值，照收集表">係數庫沒有</span>':'')+'</td>'
-        +'<td class="R sysv">'+w5f(c.wc,4)+(ew['與收集表算式不符']?'<br><span class="fmini" style="color:#b8860b">算 '+w5f(c.wCalc,4)+'</span>':'')+'</td>'
-        +'<td class="R sysv"><b>'+w5f(c.tot,4)+'</b></td></tr>';
+        +'<td class="R sysv"'+(c.tM?' title="'+w5esc(c.tM.veh)+'：下游 TTW '+w5g6(c.tM.ttw)+'＋上游 WTT '+w5g6(c.tM.wtt)+'"':'')+'>'+(c.tef==null?(l.t?'<span class="fmini">未帶</span>':'—'):fvA(c.tM&&c.tM.f&&c.tM.f.factor_id,w5g6(c.tef)))
+          +(c.tefD!=null?'<div class="fmini" style="color:#b8860b" title="收集表填的運輸係數（WTT＋TTW）；系統算用共用運輸係數表">收集表 '+w5g6(c.tefD)+'</div>':'')+'</td>'
+        +'<td class="R sysv">'+(DC?w5two(l.t?c.tCalc:null,l.t?c.tc:null):((l.t?w5f(c.tc,4):'—')+((et['收集表沒算這段運輸']||et['與收集表算式不符'])?'<br><span class="fmini" style="color:#b8860b">算 '+w5f(c.tCalc,4)+'</span>':'')))+'</td>'
+        +'<td class="R sysv">'+(c.ef==null?'<span class="fmini">未填</span>':fvA((c.lib&&c.lib.fid)||(l.w&&l.w.factor_id),w5g6(c.ef)))+(c.efD!=null?'<div class="fmini" style="color:#b8860b" title="收集表填的處理係數；系統算用係數庫主值">收集表 '+w5g6(c.efD)+'</div>':'')+(!c.lib&&c.efL!=null?'<div class="fmini" style="color:#a33" title="係數庫沒有這一年這一種的主值，照收集表">係數庫沒有</div>':'')+'</td>'
+        +'<td class="R sysv">'+(DC?w5two(l.w?c.wCalc:null,l.w?c.wc:null):(w5f(c.wc,4)+(ew['與收集表算式不符']?'<br><span class="fmini" style="color:#b8860b">算 '+w5f(c.wCalc,4)+'</span>':'')))+'</td>'
+        +'<td class="R sysv">'+(DC?w5two(w5sysTot(l,c),c.tot,1):'<b>'+w5f(c.tot,4)+'</b>')+'</td></tr>';
     });
-    if(Object.keys(blocks).length>1)h+='<tr><td class="tl fmini" colspan="2" style="text-align:right;color:#4a5f55">小計　'+w5esc(w5short(bk))+'　'+ls.length+' 筆</td><td class="R" style="border-top:1px solid #cfdcd5"><b>'+w5f(BW,2)+'</b></td><td colspan="6"></td><td class="R" style="border-top:1px solid #cfdcd5"><b>'+w5f(BT,4)+'</b></td></tr>';   /* V106-1：小計放在這一塊最後（比照 V104-2） */
+    if(Object.keys(blocks).length>1)h+='<tr><td class="tl fmini" colspan="2" style="text-align:right;color:#4a5f55">小計　'+w5esc(w5short(bk))+'　'+ls.length+' 筆</td><td class="R" style="border-top:1px solid #cfdcd5"><b>'+w5f(BW,2)+'</b></td><td colspan="7"></td><td class="R" style="border-top:1px solid #cfdcd5">'+(DC?w5two(BS,BT,1):'<b>'+w5f(BT,4)+'</b>')+'</td></tr>';   /* V106-1：小計放在這一塊最後（比照 V104-2） */
   });
   h+='<tr class="s101blk" style="background:#eef6f1"><td class="tl" colspan="2"><b>合計</b> <span class="fmini">'+Object.keys(blocks).length+' 個分類 '+GN+' 筆清運</span></td>'
-    +'<td class="R"><b>'+w5f(GW,2)+'</b></td><td colspan="6"></td><td class="R"><b>'+w5f(GT,4)+'</b></td></tr>';
+    +'<td class="R"><b>'+w5f(GW,2)+'</b></td><td colspan="7"></td><td class="R">'+(DC?w5two(GS,GT,1):'<b>'+w5f(GT,4)+'</b>')+'</td></tr>';
   h+='</tbody></table></div>';
   let nAu=0; W5.lines.forEach(l=>{ const c=w5line(l); const au=String(w5e(l.w||{})['係數出處']||''); if(l.w&&l.w.ef_value!=null&&/待 ESG/.test(au))nAu++; });
   if(nAu)h+='<div class="msg" style="background:#fff8e6;border:1px solid #f0d9a0;color:#7a5a00;margin:6px 12px">本頁有 '+nAu+' 列的處理係數查不到文獻出處（各廠收集表沿用值），數字照原資料、待 ESG 確認；查得到出處的已在係數庫標明（CPCD 參考表／環境部碳足跡庫／ESG 回覆）。</div>';
-  h+='<div class="s101legend">一列＝一筆清運（資料庫存成「處理」與「運輸」兩列，畫面併成一行）　｜　延噸公里＊＝重量 × 運輸距離　｜　運輸排放＊＝延噸公里 × 運輸係數 ÷ 1000　｜　處理排放＊＝重量 × 處理係數 ÷ 1000　｜　總排放＊＝兩段相加　｜　＊灰底＝系統算　｜　處理係數來自係數庫代號 C05-＜大類＞＜處理方式＞（大類 A 生活／B 事業工業／C 有害危險／D 有價／E 汙水廢水／F 汙泥；處理 01 焚化／02 焚化飛灰／03 掩埋／04 回收／05 熱處理／06 物理／07 汙水處理／08 混合垃圾平均／09 工業廢水平均／10 金屬酸洗／11 收集貯存）　｜　運輸係數＝C04／C09 共用運輸係數表，照「運輸工具」選的車種帶（ESG 261014「C4/C5/C9 的運輸係數共用來源」）；已申報年度照原資料　｜　黃底列＝有疑點，徽章滑過去看說明</div></div>';
+  h+='<div class="s101legend">一列＝一筆清運（資料庫存成「處理」與「運輸」兩列，畫面併成一行）　｜　運輸排放用延噸公里（＝重量 × 運輸距離）× 運輸係數（kgCO2e／延噸公里）÷ 1000；處理排放用重量 × 處理係數（kgCO2e／公噸）÷ 1000；總排放＝兩段相加　｜　已申報年度每格兩行：「系統算」照表頭算式，「明細」是資料庫存的數（照收集表收），兩行不同標 ≠　｜　＊灰底＝系統算　｜　處理係數來自係數庫代號 C05-＜大類＞＜處理方式＞（大類 A 生活／B 事業工業／C 有害危險／D 有價／E 汙水廢水／F 汙泥；處理 01 焚化／02 焚化飛灰／03 掩埋／04 回收／05 熱處理／06 物理／07 汙水處理／08 混合垃圾平均／09 工業廢水平均／10 金屬酸洗／11 收集貯存）　｜　運輸係數＝C04／C09 共用運輸係數表，照「運輸工具」選的車種帶（ESG 261014「C4/C5/C9 的運輸係數共用來源」）；已申報年度照原資料　｜　黃底列＝有疑點，徽章滑過去看說明</div></div>';
   box.innerHTML=h; wstBind();
 }
 function wstAddSame(bk){
@@ -14708,7 +14718,7 @@ body.ghgfocus #src_form .ehead>.fxfocus{background:#1B8A60;border-color:#1B8A60;
       '<thead><tr><th>編號</th><th>廠區</th><th>年度</th><th>類別</th><th>品項／要問的事</th><th class="num">② 清冊 t</th><th class="num">① 系統 t</th><th class="num">差 t</th><th>狀態</th></tr></thead><tbody>';
     let lg='';
     L.forEach(x=>{ if(x.grp!==lg){ lg=x.grp; h+='<tr class="eqg"><td colspan="9">'+esc(GN[x.grp]||x.grp)+'</td></tr>'; }
-      h+='<tr class="eqr'+(x.q_id===Q.sel?' sel':'')+'" onclick="esgqSel(\''+esc(x.q_id)+'\')"><td>'+esc(x.q_no)+'</td><td class="one" title="'+esc(site(x.site_id))+'">'+esc(site(x.site_id))+'</td><td>'+x.data_year+'</td>'+
+      h+='<tr class="eqr'+(x.q_id===Q.sel?' sel':'')+'" data-q="'+esc(x.q_id)+'" onclick="esgqSel(\''+esc(x.q_id)+'\')"><td>'+esc(x.q_no)+'</td><td class="one" title="'+esc(site(x.site_id))+'">'+esc(site(x.site_id))+'</td><td>'+x.data_year+'</td>'+
         '<td class="one" title="'+esc(cat(x.category_id))+'">'+esc(cat(x.category_id))+'</td>'+
         '<td><div class="one" title="'+esc(x.item)+'">'+esc(x.item)+'</div><div class="one sm" title="'+esc(x.question)+'">❓ '+esc(x.question)+'</div></td>'+
         '<td class="num">'+f4(x.ledger_t)+'</td><td class="num">'+f4(x.system_t)+'</td><td class="num '+dcls(x)+'">'+s4(x.diff_t)+'</td>'+
@@ -14718,7 +14728,10 @@ body.ghgfocus #src_form .ehead>.fxfocus{background:#1B8A60;border-color:#1B8A60;
     box.innerHTML=h; pane(); }
   window.esgqF=function(k,v){ Q.F[k]=(v===''?(k==='st'||k==='g'?null:''):v); render(); };
   window.esgqClr=function(){ Q.F={st:null,g:null,site:'',y:''}; render(); };
-  window.esgqSel=function(id){ Q.sel=id; render(); };
+  window.esgqSel=function(id){ Q.sel=id;   /* V129-65：只換反白＋右邊，不重畫清單（左邊捲動位置不動） */
+    const box=document.getElementById('esgq'), rows=box?box.querySelectorAll('tr.eqr[data-q]'):[];
+    if(!rows.length||!document.getElementById('eqPane')){ render(); return; }
+    rows.forEach(tr=>tr.classList.toggle('sel',tr.dataset.q===String(id))); pane(); };
 
   function pane(){
     const p=document.getElementById('eqPane'); if(!p)return; const x=(Q.rows||[]).find(r=>r.q_id===Q.sel);
