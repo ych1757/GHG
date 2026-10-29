@@ -302,7 +302,7 @@ function facChg(on){ return '<span class="fchg'+(on?'':' off')+'">🟡</span>'; 
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-67-1</b> · 2026/10/29</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-68</b> · 2026/10/29</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -8126,6 +8126,36 @@ function svcWhy(rows){   /* 已申報年度：逐列原因歸類成幾句白話�
     else if(k==='none')out.push(g.n+' 項品項認不出（品名對不到同年條目）、係數庫也找不到清冊用的係數值，系統算不出（待 ESG 提供）'+(g.ex.length?'：'+exj(g,true):'')+'，清冊合計 '+nf(-g.d,4)+' t');
     else out.push(g.n+' 項其他差異，'+sg(g.d)+(g.ex.length?'（'+exj(g,false)+'）':'')); });
   return out; }
+/* V129-68：已申報年度頁首（共用 entryDeclBox）。每列「系統算−存的數」照 svcRowWhy 拆成匯率／係數版本／位數…，剩下的尾差歸「小數位」；算不出的列照存的數、不算差異 */
+function svcSys(r,c){ return c.t!=null?c.t:(+r.co2e_draft||0); }
+function svcDeclPanel(rows){
+  const A={}, add=(k,v,p)=>{ const o=A[k]=A[k]||{n:0,t:0,ex:[],rm:new Set(),rs:null,cur:''}; o.t+=v; o.n++; if(p){ if(p.ex)o.ex.push({t:p.ex,d:v}); if(p.rm)o.rm.add(g6r(p.rm)); if(p.rs)o.rs=p.rs; if(p.cur)o.cur=p.cur; } };
+  let q1=0,S=0; const FB={};
+  rows.forEach(r=>{ if(SRET[r.record_id])return; const c=svcCalc(r), t2=+r.co2e_draft||0, sv=svcSys(r,c); q1+=sv; S+=t2;
+    if(c.t==null){ const m=r._m||{}; const k=m.unit?'unit':(m.noamt?'noamt':'none'); FB[k]=(FB[k]||0)+1; return; }
+    const D=sv-t2; let sm=0;
+    svcRowWhy(r,c).forEach(p=>{ if(Math.abs(p.d)<0.00005){ if(p.d)add('rd',p.d); } else add(p.k,p.d,p); sm+=p.d; });
+    const rem=D-sm; if(rem!==0&&Math.abs(rem)<1e-12)return; if(rem!==0)add('rd',rem); });
+  const sg=d=>(d>0?'+':'')+nf(d,4)+' t';
+  const exj=g=>{ const m={}; g.ex.forEach(e=>{ const x=(m[e.t]=m[e.t]||{t:e.t,n:0,d:0}); x.n++; x.d+=e.d; }); const L=Object.values(m).sort((a,b)=>Math.abs(b.d)-Math.abs(a.d));
+    return L.length?'。例：'+L.slice(0,3).map(x=>x.t+(x.n>1?' ×'+x.n:'')+' '+sg(x.d)).join('；')+(L.length>3?'；…等 '+L.length+' 種':''):''; };
+  const items=[];
+  Object.keys(A).sort((a,b)=>(a==='miss'?-1:b==='miss'?1:a==='rd'?1:b==='rd'?-1:a<b?-1:1)).forEach(k=>{ const g=A[k];
+    if(k==='miss')items.push([g.n+' 項清冊沒有這一列（收集表有、清冊沒算，存的數記 0，系統照收集表算）'+exj(g),g.t]);
+    else if(k.indexOf('ver:')===0)items.push([g.n+' 項清冊用了 '+k.slice(4)+' 年版係數（系統用 '+F.year+' 年版）'+exj(g),g.t]);
+    else if(k==='fx'){ const rs=[...g.rm].map(Number).filter(v=>isFinite(v)&&v>0).sort((a,b)=>a-b); const lo=rs[0], hi=rs[rs.length-1], mid=(lo+hi)/2;
+      const rt=!rs.length?'—':((rs.length===1||hi/lo-1<5e-4)?((rs.length>1?'約 ':'')+nf(mid,mid>=100?0:4)):(rs.slice(0,3).map(v=>nf(v,v>=100?0:4)).join('／')+(rs.length>3?'…等 '+rs.length+' 個':'')));
+      items.push([g.n+' 項匯率不同：清冊的美金金額倒算回去是 1 美金＝'+rt+' '+(CURZH[g.cur]||g.cur)+'，系統匯率表是 '+(g.rs?nf(g.rs,g.rs>=100?0:4):'—'),g.t]); }
+    else if(k==='k1000')items.push([g.n+' 項清冊碳排只有系統算的千分之一（收集表「碳排 kg」欄填的其實是公噸，清冊又除了 1000）'+exj(g),g.t]);
+    else if(k==='r4')items.push([g.n+' 項清冊係數只取到小數點後 2～4 位（系統用完整係數）',g.t]);
+    else if(k==='name')items.push([g.n+' 項清冊係數在係數庫找不到，依品名對到同年條目重算'+exj(g),g.t]);
+    else if(k==='oth')items.push([g.n+' 項清冊係數是別的品項的值，依品名（收集表 Commodity）對到同年條目重算'+exj(g),g.t]);
+    else if(k==='rd')items.push([g.n+' 項各差不到 0.00005 t（小數位）',g.t]);
+    else items.push([g.n+' 項其他差異'+exj(g),g.t]); });
+  const fb=[['unit','單位不是金額'],['noamt','清冊只有碳排、沒有金額'],['none','品項認不出、係數庫也找不到清冊用的係數']].filter(x=>FB[x[0]]).map(x=>x[1]+' '+FB[x[0]]+' 項');
+  return entryDeclBox({yr:F.year,q1:q1,S:S,grp:F.svGrp,items:items,note:!!F.svNote,
+    q1tip:'原始輸入（當地幣）÷ 系統匯率表 × 係數庫 '+F.year+' 年版；沒有當地幣金額的舊列用記錄的美金；算不出的列照存的數',
+    foot:fb.length?'<div class="fmini" style="color:#7a8f84">另有 '+esc(fb.join('、'))+'，系統算不出，照存的數（格子下面標「照存的數」）。</div>':''}); }
 function svcEnter(i){
   curSrc=i; if(typeof curEdit!=='undefined')curEdit=null;
   document.querySelectorAll('.navi').forEach(n=>n.classList.toggle('on',n.dataset.i==i));
@@ -8168,6 +8198,7 @@ async function svcLoad(){
     const c=(cnt[k]=cnt[k]||{}); (c[m.code]=c[m.code]||new Set()).add(r.site_id); });
   Object.keys(cnt).forEach(k=>{ const best=Object.keys(cnt[k]).sort((a,b)=>cnt[k][b].size-cnt[k][a].size)[0]; SHIST.any[k]={code:best,sites:[...cnt[k][best]].sort()}; });
   F.svNote=await entryNote(F.pno(F.site),F.year,F.cat);   /* V129-19：與明細檔的差異原因（鍵＝類別@登錄） */
+  F.svGrp=svcDecl(F.year)?(F.cat==='C01-S'?await entryCidLoad(F.site,F.year,['C01-S']):await entryGrpLoad(F.site,F.year,F.cat,[F.cat])):null;   /* V129-68：② 收割數字＝全集團頁那一格（C01-02＝C01 展開的 C01-02 小計） */
   svcRender();
 }
 function svcFitCols(){   /* V94-4：數字欄放不下就加寬（泰銖／越南盾上億的合計會跟隔壁欄黏在一起）；從文字欄勻，不夠才動備註；總寬不變、不會左右捲 */
@@ -8211,25 +8242,25 @@ function svcRender(){
       +'<button class="sec" '+(canEdit?'':'disabled')+' onclick="svcImpPick()" title="匯入 ESG 收集表「'+esc(C.form)+'」（先預覽，按儲存才寫入）">⬆ 匯入</button>'
       +'<button class="'+(canEdit?'':'sec')+'" '+(canEdit?'':'disabled')+' onclick="svcAsk()">💾 儲存</button>')});
   h+=entryNoteHTML(F.svNote);   /* V129-19 */
-  h+='<div id="s101wrap" data-k="'+esc(F.cat+'|'+F.site+'|'+Y)+'"><div class="s101zone" style="overflow-x:hidden">';   /* data-k＝目前畫面是哪類哪廠哪年（測試等畫面重畫完用） */
+  h+='<div id="s101wrap" data-k="'+esc(F.cat+'|'+F.site+'|'+Y)+'">'+(decl?svcDeclPanel(rows):'')+'<div class="s101zone" style="overflow-x:hidden">';   /* V129-68：已申報年度頁首 ① 對 ② */   /* data-k＝目前畫面是哪類哪廠哪年（測試等畫面重畫完用） */
   h+='<div style="padding:8px 12px;font-size:12px;color:var(--d);background:#eef4f0;border-bottom:1px solid #d7e5dd;display:flex;gap:14px 22px;flex-wrap:wrap;align-items:flex-end">'
     +'<div><div class="fmini">匯率</div>'+rateTxt+'</div>'
     +'<div><div class="fmini">美金＊</div>當地幣 ÷ 匯率</div>'
     +'<div><div class="fmini">係數</div>'+(decl?'清冊選的'+esc(C.thing)+'類別；① 用係數庫 '+Y+' 年版重算':'先選第一欄的類別（係數庫 '+esc(C.codeP)+'，'+lib.length+' 種＋不計入）；同名項目系統先帶')+'</div>'
     +'<div><div class="fmini">碳排＊</div>美金 × 係數 kgCO₂e/美金 ÷ 1000 ＝ tCO₂e</div></div>';
-  if(decl)h+='<div style="padding:4px 12px;font-size:12px;color:#1f4e79;background:#f3f8fd;border-bottom:1px solid #dce8f5">這一年已申報，只看不改：每列並排 <b>① 系統算</b> 與 <b>② 清冊</b>，差異原因在表格下面　<span title="① 系統算＝原始輸入 × 系統匯率表 × 係數庫 '+Y+' 年版；② 清冊＝ESG 集團清冊（查詢、全集團用的數字）" style="cursor:help;color:var(--p);font-weight:700;white-space:nowrap">ⓘ</span></div>';   /* V106-1：說明收成一行 */
+  if(decl)h+='<div style="padding:4px 12px;font-size:12px;color:#1f4e79;background:#f3f8fd;border-bottom:1px solid #dce8f5">這一年已申報，只看不改：每列只有 <b>系統算</b>，跟收割數字（全集團頁）的比對與差異原因在上方　<span title="系統算＝原始輸入 × 系統匯率表 × 係數庫 '+Y+' 年版；算不出的列照存的數" style="cursor:help;color:var(--p);font-weight:700;white-space:nowrap">ⓘ</span></div>';   /* V106-1：說明收成一行 */
   if(!rows.length)h+='<div class="msg" style="margin:10px 12px">此廠此年尚無資料。'+(canEdit?'按「＋ 新增項目」開始登錄，或「⬆ 匯入」ESG 收集表「'+esc(C.form)+'」。':'')+'</div>';
   let TA=0,TU=0,T1=0,T2=0,nNew=0,nNoC=0,nD=0,aOk=true;
   if(rows.length){
     const dl=(id,arr)=>'<datalist id="'+id+'">'+[...new Set(arr.map(s=>String(s||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'zh-Hant')).map(v=>'<option value="'+esc(v)+'">').join('')+'</datalist>';
     if(canEdit)h+=dl('svc_dl_nm',[...SHIST.names].concat([...SHIST.all])); if(canEdit&&C.catCol)h+=dl('svc_dl_cat',(C.cats||[]))   /* V119-8：只列標準類別（原本連全集團歷年寫過的字都倒出來：機械設備／機器設備並列、還有整台機器名稱） */;   /* V92：資本財項目候選 */   /* 輸入候選：本廠＋他廠用過的項目名稱 */
-    const W=C.catCol?(decl?[4,21,15,9,9,7,8,8,9,10]:[4,25,16,10,9,7,8,10,9,2]):(decl?[4,25,19,10,10,7,8,8,9]:[4,27,20,11,10,7,8,11,2]);   /* V119-9：類別搬到第一欄 */   /* V92：C02 多一欄資本財項目；序號欄 4%（已申報年度常超過 100 列） */   /* 欄寬百分比；表頭可換行（窄畫面「支付金額（台幣，未稅）」不壓到隔壁欄） */
+    const W=C.catCol?(decl?[4,21,19,9,9,7,8,9,14]:[4,25,16,10,9,7,8,10,9,2]):(decl?[4,25,23,10,10,7,8,13]:[4,27,20,11,10,7,8,11,2]);   /* V129-68：已申報年度拿掉 ② 欄 */   /* V119-9：類別搬到第一欄 */   /* V92：C02 多一欄資本財項目；序號欄 4%（已申報年度常超過 100 列） */   /* 欄寬百分比；表頭可換行（窄畫面「支付金額（台幣，未稅）」不壓到隔壁欄） */
     h+='<style>#s101wrap table.svct thead th{white-space:normal;line-height:1.25;vertical-align:bottom}#s101wrap table.svct .nclamp{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.35}#s101wrap select[data-f="code"] option{color:#000}#s101wrap select[data-f="code"] option[value=""]{color:#a33}</style><table class="svct" style="width:100%;table-layout:fixed"><colgroup>'+W.map(w=>'<col style="width:'+w+'%">').join('')+'</colgroup><thead><tr class="cols" style="background:#fafcfb"><th class="tl">#</th><th class="tl" title="這一列屬於係數庫 '+esc(C.codeP)+' 的哪一種（中英對照）；選了，係數就帶出來">'+esc(C.thing)+'類別<br><span class="fmini" style="font-weight:400">'+(decl?'（對應係數庫 '+esc(C.codeP)+'）':'（係數庫 '+esc(C.codeP)+'，選了就帶出係數）')+'</span></th><th class="tl">'+esc(C.noun)+'</th><th class="R">'+esc(C.amtLabel||'支付金額')+'<br><span class="fmini" style="font-weight:400">（'+esc(curZh)+'，未稅）</span></th><th class="R">美金＊</th><th class="R sep">kgCO₂e<br>/美金＊</th>'
-      +(decl?'<th class="R" title="原始輸入 × 系統匯率表 × 係數庫 '+Y+' 年版">① 系統算 t＊</th><th class="R" title="ESG 集團清冊（收割）的數字，查詢、全集團用這個">② 清冊 t</th>':'<th class="R">碳排 t＊</th>')
+      +(decl?'<th class="R" title="原始輸入 × 系統匯率表 × 係數庫 '+Y+' 年版；算不出的列照存的數">系統算 t＊</th>':'<th class="R">碳排 t＊</th>')
       +(C.catCol?'<th class="tl" title="帳上的類別（ESG 收集表的「資本財項目」欄，例：機器設備、辦公設備）。選填，只是分類用，不影響係數">'+esc(C.catLabel)+(C.catSub&&!decl?'<br><span class="fmini" style="font-weight:400">（'+esc(C.catSub)+'）</span>':'')+'</th>':'')+'<th class="tl">備註</th>'+(decl?'':'<th></th>')+'</tr></thead><tbody>';
     const chgOf=r=>{const o0=SORIG[r.record_id]?JSON.parse(SORIG[r.record_id]):null,n0=spick(r); return f=>r._new||(!!o0&&String(o0[f])!==String(n0[f]));};
     rows.forEach((r,i)=>{ const e=r.extra||{}; const c=svcCalc(r); const chg=chgOf(r); const ret=!!SRET[r.record_id]; const m=r._m||{};
-      if(!ret){ if(c.a.v!=null)TA+=c.a.v; else aOk=false; if(c.usd!=null)TU+=c.usd; if(c.t!=null)T1+=c.t; T2+=(+r.co2e_draft||0); } if(r._new)nNew++; if(!c.code)nNoC++;
+      if(!ret){ if(c.a.v!=null)TA+=c.a.v; else aOk=false; if(c.usd!=null)TU+=c.usd; if(c.t!=null)T1+=c.t; else if(decl)T1+=(+r.co2e_draft||0); T2+=(+r.co2e_draft||0); }   /* V129-68：已申報年度算不出照存的數 */ if(r._new)nNew++; if(!c.code)nNoC++;
       const code=c.code; const L=code&&code!=='0'?lib.find(x=>x.code===code):null; const fz=c.f?svcZh(c.f):(L?L.zh:''); const fen=(()=>{ const x=c.f?svcNm(c.f).en:(L?L.enc:''); return (x&&x!==fz)?x:''; })();   /* V119-9：英文品名 */   /* V92：2025 年版沒有中文翻譯的顯示英文品名 */
       const stale=!!(c.f&&(efF(c.f)||0)<facY(Y));   /* V99：試打年度不標暫用 */
       const link=(code&&code!=='0')?'<a href="javascript:void(0)" tabindex="-1" onclick="event.stopPropagation();facTrace(&#39;'+F.cat+'&#39;,&#39;ALL&#39;,'+facY(Y)+',&#39;'+F.site+'&#39;,&#39;'+code+'&#39;)" title="係數代號＝代號·區域·年度；點 → 係數庫標亮這一格" style="color:var(--p);font-weight:700;text-decoration:none;white-space:nowrap">'+esc(code)+'·ALL·'+facY(Y)+' ↗</a>'+(stale?' <span style="color:#b8860b" title="係數庫還沒有 '+Y+' 年版，暫用 '+efF(c.f)+' 年版（GZA 每年更新，ESG 補上後重存就會換）">⚠ 暫用 '+efF(c.f)+' 年版</span>':''):'';
@@ -8259,16 +8290,12 @@ function svcRender(){
         +amtCell
         +'<td class="ro"'+usdTip+'>'+(c.usd==null?'<span class="dash">—</span>':nf(c.usd,2))+'</td>'
         +'<td class="ro sep" data-sv="ef">'+(c.ef==null?'<span class="dash">—</span>':fvA(c.f&&c.f.factor_id,nf(c.ef,10)))+'</td>'
-        +'<td class="ro" data-sv="t"><b>'+(c.t==null?'<span style="color:#c0392b" title="沒有金額、匯率或係數">—</span>':nf(c.t,4))+'</b></td>'
-        +(decl?'<td'+(diff?' style="background:#fff3cd" title="'+esc(whyTip)+'"':'')+'>'+nf(t2,4)+'</td>':'')
+        +(decl?'<td class="ro" data-sv="t"'+(diff?' title="'+esc('跟存的數 '+nf(t2,4)+' t 不同：'+whyTip)+'"':'')+'><b>'+nf(svcSys(r,c),4)+'</b>'+(c.t==null?'<div class="fmini" style="color:#7a8f84;font-weight:400" title="系統算不出（單位不是金額／沒有金額／品項認不出），照資料庫存的數">照存的數</div>':'')+'</td>':'<td class="ro" data-sv="t"><b>'+(c.t==null?'<span style="color:#c0392b" title="沒有金額、匯率或係數">—</span>':nf(c.t,4))+'</b></td>')
         +(C.catCol?((canEdit&&!ret)?'<td class="edit'+(chg('cat')?' chgd':'')+'"><input class="tl" data-rid="'+r.record_id+'" data-f="cat" value="'+esc(r.attr1||'')+'" placeholder="例 機器設備" list="svc_dl_cat" autocomplete="off" style="text-align:left;width:100%;min-width:0;box-sizing:border-box"></td>':'<td class="tl" style="white-space:normal;overflow-wrap:anywhere;font-size:12px" title="'+esc(r.attr1||'')+'">'+esc(r.attr1||'')+'</td>'):'')   /* V92 */
         +noteCell
         +(decl?'':'<td>'+(canEdit?'<a href="javascript:void(0)" onclick="svcDrop('+r.record_id+')" title="'+(r._new?'移除這列（尚未儲存）':(ret?'取消移除':'移除此列（已儲存的列不刪，改歸零留痕）'))+'" style="color:#a33;text-decoration:none;font-size:12px">'+(ret?'↶':'✕')+'</a>':'')+'</td>')+'</tr>'; });
     h+='<tr class="tot"><td class="tl" colspan="3">合計　<span class="fmini" style="font-weight:400">'+rows.length+' 項'+(nNew?'（新 '+nNew+'）':'')+(nNoC&&!decl?'　<span style="color:#a33">未選係數 '+nNoC+' 項</span>':'')+'</span></td><td>'+(aOk?nf(TA,Math.abs(TA)>=1e7?0:2):'<span class="fmini" title="有幾列沒有記當地幣金額（舊資料只有美金）">—</span>')+'</td><td class="ro">'+nf(TU,2)+'</td><td class="ro sep"></td><td class="ro" data-sv="tt"><b>'+nf(T1,4)+'</b></td>'
-      +(decl?'<td><b>'+nf(T2,4)+'</b></td>':'')+(C.catCol?'<td></td>':'')+(decl?'<td></td>':'<td></td><td></td>')+'</tr></tbody></table>';
-    if(decl){ const why=svcWhy(rows); const d=T1-T2;
-      h+='<div id="svcwhy" style="padding:8px 12px;font-size:12px;line-height:1.7;background:'+(why.length?'#fffdf5;color:#5c4a00':'#f2f9f5;color:#14603F')+';border-top:1px solid #eef3f0">'
-        +(why.length?'<b>差異原因（系統算的－清冊）</b>　① '+nf(T1,4)+' t － ② '+nf(T2,4)+' t ＝ '+(d>0?'+':'')+nf(d,4)+' t<br>'+why.map(x=>'・'+esc(x)).join('<br>'):'✓ ① 系統算 '+nf(T1,4)+' t，② 清冊 '+nf(T2,4)+' t，兩邊一樣'+(Math.abs(d)>=0.00005?'（差 '+nf(d,4)+' t，是每列四捨五入到小數第 4 位的進位差）':''))+'</div>'; }
+      +(C.catCol?'<td></td>':'')+(decl?'<td></td>':'<td></td><td></td>')+'</tr></tbody></table>';
   }
   h+='<div class="s101legend">一列一個'+esc(C.noun)+'；當地幣 ÷ 匯率 ＝ 美金，美金 × 係數 ÷ 1000 ＝ 碳排 tCO₂e　｜　欄名＊、灰底＝系統算，白底＝要輸入'+(decl?'':'　｜　黃底＝尚未儲存的變更'+(C.legendX||''))+'</div>';
   h+='</div></div>';
@@ -9380,6 +9407,16 @@ function entryDeclBox(o){
     +'<tr><td style="'+td+'padding:1px 12px 0 0;text-align:right;border-top:1px solid #cfdcd5">合計＝差額</td><td class="R" style="'+td+'padding:1px 0 0;border-top:1px solid #cfdcd5;white-space:nowrap"><b>'+sg(D4)+'</b></td></tr></table></div>';
   return h+(o.foot||'')+'</div>';
 }
+async function entryCidCell(site,yr,cids){   /* V129-68 */
+  yr=+yr; const r=await sbAll(()=>sb.from('ghg_activity_data').select('record_id,category_id,co2e_draft').eq('site_id',site).eq('data_year',yr).in('category_id',cids).order('record_id'));
+  if(r.error) throw new Error('讀不到明細（ghg_activity_data）：'+r.error.message);
+  const ss={}; (r.data||[]).forEach(x=>{ ss[x.category_id]=(ss[x.category_id]||0)+(Number(x.co2e_draft)||0); });
+  let g=Object.values(ss).reduce((a,v)=>a+v,0), hv=null;
+  if(yr<=HV_LAST){ const h=await sb.from('ghg_group_harvest').select('category_id,co2e_ton').eq('site_id',site).eq('data_year',yr).in('category_id',cids);
+    if(h.error) throw new Error('讀不到收割原值（ghg_group_harvest）：'+h.error.message);
+    if(h.data&&h.data.length){ h.data.forEach(x=>{ const dv=(Number(x.co2e_ton)||0)-(ss[x.category_id]||0); if(Math.abs(dv)>=0.00005) g+=dv; }); hv=h.data.reduce((a,x)=>a+(Number(x.co2e_ton)||0),0); } }
+  return {g:g,hv:hv,n:(r.data||[]).length}; }
+async function entryCidLoad(site,yr,cids){ try{ return await entryCidCell(site,yr,cids); }catch(e){ return {err:String((e&&e.message)||e)}; } }
 async function entryGrpLoad(site,yr,code,cids){ try{ return await entryGrpCell(site,yr,code,cids); }catch(e){ return {err:String((e&&e.message)||e)}; } }
 async function wstLoad(){
   const {data,error}=await sb.from('ghg_activity_data').select('*').eq('category_id','C05').eq('site_id',W5.site).eq('data_year',W5.year).order('record_id');
