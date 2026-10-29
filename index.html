@@ -302,7 +302,7 @@ function facChg(on){ return '<span class="fchg'+(on?'':' off')+'">🟡</span>'; 
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-68</b> · 2026/10/29</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-69</b> · 2026/10/29</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -8630,19 +8630,19 @@ function trnOldLeg(r){   /* 收割的一列 → 一段（有「段」）、清�
   if(q>0&&/tkm|延噸|延吨/i.test(u))return {mix:true,q:q,t2:t2,r:r};
   return {noleg:true,t2:t2,r:r}; }
 function trnOldCalc(rt){
-  if(rt._c)return rt._c; const sct=trnSiteCt(); let t=0, ok=true; const legs={}; const why=[];
+  if(rt._c)return rt._c; const sct=trnSiteCt(); let t=0, ok=true; const legs={}; const why=[]; const FB=trnDecl(F.year), fb=[];   /* V129-69：已申報年度算不出的段照存的數 */
   const linked=(rt.parts||[]).some(p=>!p.noleg&&!p.mix&&p.r&&(p.r.extra||{})['清冊碳排在原列']);   /* V98：批161 清冊那列不動、另補各段（各段碳排記 0）→ ① 用各段算、② 用清冊那列，差異講成一句 */
-  rt.parts.forEach(p=>{ if(p.noleg||p.mix){ if(linked)return; ok=false; why.push({k:p.noleg?'noleg':'mix',d:-p.t2,ex:rt.nm}); return; }
+  rt.parts.forEach(p=>{ if(p.noleg||p.mix){ if(linked)return; ok=false; if(FB){ t+=p.t2; fb.push(p.noleg?'noleg':'mix'); return; } why.push({k:p.noleg?'noleg':'mix',d:-p.t2,ex:rt.nm}); return; }
     const mo=trnLegMode(p.k); let M=trnMatch(mo,p.veh,p.agg?{part:p.part,ef:p.ef,ct:sct,tol:p.tol,byName:true}:{ef:p.ef,ct:sct,tol:p.tol,byName:true});   /* V129-58-4：車種名稱優先 */
     if(p.agg&&M.it&&p.ef!=null){ const o2=p.part==='TTW'?'WTT':'TTW'; const v1=p.part==='TTW'?M.it.ttw:M.it.wtt, v2=o2==='TTW'?M.it.ttw:M.it.wtt; if(!tsame(p.ef,v1)&&tsame(p.ef,v2)){ p.part=o2; p.swap=true; } }   /* 名稱寫 TTW、值其實是 WTT（ESG 打錯）→ 照值換邊 */
     else if(p.agg&&M.how!=='val'&&!M.it){ const o2=p.part==='TTW'?'WTT':'TTW'; const M2=trnMatch(mo,p.veh,{part:o2,ef:p.ef,ct:sct,tol:p.tol}); if(M2.how==='val'){ M=M2; p.part=o2; p.swap=true; } }
-    if(!M.it){ ok=false; why.push({k:'none',d:-p.t2,ex:(p.veh||p.k)+(p.ef!=null?' '+g6(p.ef):'')}); legs[p.k]=Object.assign({},legs[p.k]||{},{km:p.km,veh:p.veh,t2:(legs[p.k]?legs[p.k].t2:0)+p.t2,none:true}); return; }
+    if(!M.it){ ok=false; if(FB){ t+=p.t2; fb.push('none'); } else why.push({k:'none',d:-p.t2,ex:(p.veh||p.k)+(p.ef!=null?' '+g6(p.ef):'')}); legs[p.k]=Object.assign({},legs[p.k]||{},{km:p.km,veh:p.veh,t2:(legs[p.k]?legs[p.k].t2:0)+p.t2,none:true}); return; }
     const ef=p.agg?(p.part==='TTW'?M.it.ttw:M.it.wtt):(M.it.ttw+M.it.wtt); const nc=!!(p.r&&((p.r.extra||{})['收料廠不計']||(p.r.extra||{})['收集表隱藏列'])); const t1=nc?0:p.q*ef/1000; t+=t1;   /* V98-1：批162 集團內公司進貨＝收料廠不計，系統算的也不算 */
     const d=t1-p.t2; if(!linked&&!nc&&Math.abs(d)>=0.00005){ const x0=(p.r&&p.r.extra)||{}; const efImp=(p.q>0)?p.t2*1000/p.q:null; const incons=!p.agg&&!p.tol&&p.ef!=null&&efImp!=null&&Math.abs(p.t2-p.q*p.ef/1000)>Math.max(0.00005,Math.abs(p.t2)*0.01);   /* 收集表這段的碳排格不等於「延噸公里 × 係數」（公式錯） */
     const w=p.agg?'':(x0['清冊沒有這一列']?'清冊沒有這一列（收集表有，碳排記 0；清冊數字不變）':x0['清冊記0']?'清冊這一列記 0（收集表算得出碳排，清冊沒算或四捨五入成 0）':(Math.abs(p.t2)<1e-12||x0['收集表合計沒加這段']||x0['收集表這段沒算碳排'])?'清冊這一段沒算碳排（收集表碳排欄空白、或總排放量沒加這段）':(incons?'收集表這段碳排跟「延噸公里 × 係數」對不起來（收集表公式有誤，清冊照抄）':((p.tol&&p.tol>ef*0.05)?'延噸公里很小，清冊碳排只記到小數第 4 位（看不出清冊用哪個係數）':trnEfWhy(p.ef,M.it,p.tol)))); why.push({k:'ef',d:d,ex:(p.veh||trnItemName(M.it))+(incons?' '+nf(p.q,1)+' 延噸公里 × '+g6(p.ef)+'＝'+nf(p.q*p.ef/1000,4)+' t、清冊記 '+nf(p.t2,4)+' t':' '+(p.tol?(+p.ef).toFixed(4):g6(p.ef))+' → '+g6(ef)),w:w}); }
     const o=legs[p.k]||{t1:0,t2:0}; legs[p.k]={km:(o.km||0)+(p.km||0)||null,veh:p.veh||o.veh,it:M.it,how:M.how,t1:o.t1+t1,t2:o.t2+p.t2,nc:nc||o.nc,ef:p.ef,sys:ef,agg:!!p.agg||o.agg,sum:!!p.sum||o.sum,part:p.part,diff:(o.diff||Math.abs(d)>=0.00005)}; });
   if(linked){ const t2=rt.parts.reduce((a,p)=>a+(+p.t2||0),0); const d=t-t2; if(Math.abs(d)>=0.00005)why.push({k:'ef',d:d,ex:(trnNmParts(rt).party||rt.nm)+'（清冊 '+nf(t2,4)+'、各段合計 '+nf(t,4)+'）',w:'清冊這一列只記碳排，跟收集表這一列各段合計對不起來（照原資料不改；各段另外補進系統）'}); }
-  rt._c={legs:legs,t:ok?t:(t||null),ok:ok,why:why,linked:linked}; return rt._c; }
+  rt._c={legs:legs,t:FB?t:(ok?t:(t||null)),ok:ok,why:why,linked:linked,fb:fb}; return rt._c; }
 function trnFromRows(rows){   /* 列 → 路線（新登錄的列用 extra 還原輸入；收割的列用 parts 顯示） */
   const map={}, seq=[];
   rows.forEach(r=>{ const k=trnRkey(r); if(!map[k]){ map[k]=[]; seq.push(k); } map[k].push(r); });
@@ -8702,6 +8702,7 @@ async function trnLoad(){
   TRT=trnFromRows(TREC).sort((a,b)=>(a.ro-b.ro)||((a.seq||0)-(b.seq||0)));
   TORIG={}; TRET={}; TRT.forEach(rt=>{ if(!rt.old)TORIG[rt.rid]=trnPick(rt); });
   F.trNote=await entryNote(F.pno(F.site),F.year,F.cat); if(tok!==TLTOK)return;   /* V129-18：與明細檔的差異原因（鍵＝類別@登錄） */
+  F.trGrp=trnDecl(F.year)?await entryGrpLoad(F.site,F.year,F.cat,[F.cat]):null; if(tok!==TLTOK)return;   /* V129-69：② 收割數字＝全集團頁那一格 */
   trnRender();
 }
 function trnVehOpts(sel,mode,rt){   /* V122：陸運＝三組（中國貨車／全球／台灣）；空運海運＝全球／台灣兩個選項；台灣廠預設台灣、其他廠預設全球 */
@@ -8880,7 +8881,7 @@ function trnRender(){
       +'<button class="sec" '+(canEdit?'':'disabled')+' onclick="trnImpPick()" title="匯入 ESG 收集表「'+esc(C.form)+'」（先預覽，按儲存才寫入）">⬆ 匯入</button>'
       +'<button class="'+(canEdit?'':'sec')+'" '+(canEdit?'':'disabled')+' onclick="trnAsk()">💾 儲存</button>')});
   h+=entryNoteHTML(F.trNote);   /* V129-18 */
-  h+='<div id="s101wrap" data-k="'+esc(F.cat+'|'+F.site+'|'+Y)+'"><div class="s101zone" style="overflow-x:hidden">';
+  h+='<div id="s101wrap" data-k="'+esc(F.cat+'|'+F.site+'|'+Y)+'">'+(decl?trnDeclPanel(trnRows()):'')+'<div class="s101zone" style="overflow-x:hidden">';   /* V129-69：已申報年度頁首 ① 對 ② */
   if(TFAC)h+=trnFacPanel();
   if(TRTE)h+=trnRoutePanel();
   h+='<div style="padding:8px 12px;font-size:12px;color:var(--d);background:#eef4f0;border-bottom:1px solid #d7e5dd;display:flex;gap:14px 22px;flex-wrap:wrap;align-items:flex-end">'
@@ -8888,9 +8889,9 @@ function trnRender(){
     +'<div><div class="fmini">延噸公里＊</div>重量（'+(F.cat==='C09'?'含包材，':'')+'公噸）× 各段公里數</div>'
     +'<div><div class="fmini">係數＊</div>運輸係數表 下游 TTW＋上游 WTT（陸運照噸數分級、空運／海運照區域：台灣廠用台灣列、其他廠用全球列；上游運輸與下游運輸共用同一套條目，以 C04 為主維護）</div>'
     +'<div><div class="fmini">碳排＊</div>延噸公里 × 係數 ÷ 1000 ＝ tCO₂e</div>'
-    +(F.cat==='C09'?'<div><div class="fmini">分類</div>運費客戶付＝C9；本廠付＝C4-2（碳排併入 C04 上游運輸）</div>':'<div><div class="fmini">分類</div>C4-1＝供應商進貨；C4-2＝本廠出貨、運費本廠付（在 C09 頁登錄）</div>')+'</div>';
+    +(F.cat==='C09'?'<div><div class="fmini">分類</div>運費客戶付＝C9；本廠付＝C4-2'+(decl?'（這一年照清冊：這一頁的 C4-2 路線算在 C09 下游運輸）':'（碳排併入 C04 上游運輸）')+'</div>':'<div><div class="fmini">分類</div>C4-1＝供應商進貨；C4-2＝本廠出貨、運費本廠付（在 C09 頁登錄）</div>')+'</div>';
   const rows=trnRows(); let T1=0,T2=0,nD=0,nNew=0,nNoF=0; const LT={}; const CT={}; const CT1={},CT2={},CN={};   /* V129-61：分類小計（系統算、清冊各一） */
-  if(decl){ h+='<div style="padding:4px 12px;font-size:12px;color:#1f4e79;background:#f3f8fd;border-bottom:1px solid #dce8f5">這一年已申報，只看不改：每條路線並排 <b>① 系統算</b> 與 <b>② 清冊</b>，差異原因在表格下面　<span title="① 系統算＝清冊的延噸公里 × 運輸係數表；② 清冊＝ESG 集團清冊（查詢、全集團用的數字）。每列 ▸ 展開＝這條路線 Excel 收集表的全部欄位。" style="cursor:help;color:var(--p);font-weight:700;white-space:nowrap">ⓘ</span></div>';   /* V106-1：說明收成一行 */
+  if(decl){ h+='<div style="padding:4px 12px;font-size:12px;color:#1f4e79;background:#f3f8fd;border-bottom:1px solid #dce8f5">這一年已申報，只看不改：每條路線只有 <b>系統算</b>，跟收割數字（全集團頁）的比對與差異原因在上方　<span title="系統算＝清冊的延噸公里 × 運輸係數表；算不出的段照存的數。每列 ▸ 展開＝這條路線 Excel 收集表的全部欄位。" style="cursor:help;color:var(--p);font-weight:700;white-space:nowrap">ⓘ</span></div>';   /* V106-1：說明收成一行 */
     const XC={}; rows.forEach(rt=>{ if(rt.old&&rt.xcls&&rt.xcls!==rt.cls&&trnCatOf(rt.xcls)!==(rt.cat||F.cat))XC[rt.xcls]=(XC[rt.xcls]||0)+1; });
     const nNo=rows.filter(rt=>rt.old&&(rt.rows||[]).some(r=>(r.extra||{})['清冊沒有這一列'])); const nNc=nNo.filter(rt=>(rt.rows||[]).some(r=>(r.extra||{})['收料廠不計']||(r.extra||{})['收集表隱藏列']));
     if(nNo.length)h+='<div style="padding:3px 12px;font-size:12px;color:#5c4a00;background:#fffaf0;border-bottom:1px solid #f0e2c4">收集表有、清冊沒有的 '+nNo.length+' 條路線也收進來了'+(nNc.length?'（其中 '+nNc.length+' 條不計）':'')+'　<span title="碳排記 0，清冊數字不變；① 系統算有算進去'+(nNc.length?'。不計＝收集表篩選隱藏（ESG 已移除）或集團內公司進貨收料廠不計，① 也不算':'')+'" style="cursor:help;color:var(--p);font-weight:700;white-space:nowrap">ⓘ</span></div>';   /* V106-1：說明收成一行 */
@@ -8899,7 +8900,7 @@ function trnRender(){
   if(rows.length){
     const dl=(id,arr)=>'<datalist id="'+id+'">'+[...new Set(arr.map(s=>String(s||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'zh-Hant')).map(v=>'<option value="'+esc(v)+'">').join('')+'</datalist>';
     if(canEdit){ const nms=(TALL?TALL.rows:[]).filter(r=>r.site_id===F.site).map(r=>r['客戶']||r['供應商']||String(r.source_name||'').split(' / ')[0]); h+=dl('trn_dl_nm',nms)+dl('trn_dl_tr',['EXW','FOB','CIF','CFR','DAP','DDP','FCA','客户自提']); }
-    const ctC=C.ct; const W=decl?[4,20,14,7,10,7,7,10,8,7,6]   /* V96：#／對象＋產品／路線／重量／四段／①／②／備註 */:[5,28,10,13,10,10,13,8,3];   /* V98：#／對象＋產品＋路線範本／重量／四段／碳排／✕（其他欄在 ▸ 展開） */
+    const ctC=C.ct; const W=decl?[4,22,15,7,10,7,7,10,8,10]   /* V129-69：已申報年度拿掉 ② 欄 */   /* V96：#／對象＋產品／路線／重量／四段／①／②／備註 */:[5,28,10,13,10,10,13,8,3];   /* V98：#／對象＋產品＋路線範本／重量／四段／碳排／✕（其他欄在 ▸ 展開） */
     TCOLS=W.length;
     h+='<style>#s101wrap table.trnt thead th{white-space:normal;line-height:1.25;vertical-align:bottom}#s101wrap table.trnt td{vertical-align:top}#s101wrap table.trnt td.edit input,#s101wrap table.trnt td.edit select{display:block;width:100%;min-width:0;box-sizing:border-box}#s101wrap table.trnt td.edit select{border:0;border-top:1px dashed #e3ece7;background:#fafcfb;font:inherit;font-size:11px;padding:2px 3px;color:#3f544a}#s101wrap table.trnt td.edit input.sub{font-size:11px;color:#3f544a;border-top:1px dashed #e3ece7}#s101wrap table.trnt .lt{font-size:10px;color:#5c7568;text-align:right;padding:1px 6px 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#s101wrap table.trnt .lv{font-size:10.5px;color:#5c7568;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#s101wrap table.trnt .nclamp,#s101wrap table.trnrt .nclamp{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.35}#s101wrap table.trnt tr.rosep td{background:#f6f8f7;color:#5c7568;font-size:11.5px;font-weight:700;text-align:left}'
       +'#s101wrap table.trnt td.edit .trnpp{display:flex;min-width:0}#s101wrap table.trnt td.edit .trnpp input{display:block;min-width:0}#s101wrap table.trnt td.edit .trnpp input:first-child{flex:0 0 36%;border-right:1px dashed #e3ece7}#s101wrap table.trnt td.edit .trnpp input:last-child{flex:1 1 auto}#s101wrap table.trnt td.edit select.tplsel{color:#1b6b4a;font-weight:600}'
@@ -8909,24 +8910,24 @@ function trnRender(){
       +'<th class="tl">'+esc(C.noun)+'<br><span class="fmini" style="font-weight:400">'+(decl?'產品／品名':'產品類別・產品名稱／🛣 路線範本')+'</span></th>'+(decl?'<th class="tl">路線<br><span class="fmini" style="font-weight:400">起點 → 終點</span></th>':'')
       +(decl?'<th class="R">'+esc(C.wLab)+'<br><span class="fmini" style="font-weight:400">公噸</span></th>':(ctC?'<th class="R">出貨總重量<br><span class="fmini" style="font-weight:400">＋包材總重＝含包材＊（公噸）</span></th>':'<th class="R">進貨總重量<br><span class="fmini" style="font-weight:400">含包材（公噸）</span></th>'))
       +TLEGS.map((k,i)=>'<th class="R'+(i===0?' sep':'')+'">'+k+'<br><span class="fmini" style="font-weight:400">km'+(trnLegMode(k)==='L'?'／車種':'／國別')+'</span></th>').join('')
-      +(decl?'<th class="R sep" title="清冊的延噸公里 × 運輸係數表">① 系統算 t＊</th><th class="R" title="ESG 集團清冊（收割）的數字，查詢、全集團用這個">② 清冊 t</th>':'<th class="R sep">碳排 t＊</th>')
+      +(decl?'<th class="R sep" title="清冊的延噸公里 × 運輸係數表；算不出的段照存的數">系統算 t＊</th>':'<th class="R sep">碳排 t＊</th>')
       +(decl?'<th class="tl">備註</th>':'<th></th>')+'</tr></thead><tbody>';
     let roHead=false; const seqIx={}; rows.forEach((r,i)=>{ if(!r.old&&r.seq)seqIx[String(r.seq)]=i+1; });
     const _ks=[...new Set(rows.filter(r=>!r.ro).map(r=>r.cls||'—'))].sort(); const _grp=_ks.length>1;   /* V129-62-1：資料區照分類分區 */
     const _ord=rows.map((rt,i)=>[rt,i]); if(_grp)_ord.sort((a,b)=>((a[0].ro?1:0)-(b[0].ro?1:0))||(_ks.indexOf(a[0].cls||'—')-_ks.indexOf(b[0].cls||'—'))||(a[1]-b[1]));
-    const _clsLab=k=>esc(k)+(k==='C4-2'?' <span class="fmini" style="font-weight:400">（下游運輸收集表的 C4-2，併入上游）</span>':'');
-    const _subRow=k=>'<tr style="background:#f6f9f7"><td class="tl" colspan="'+(decl?4:3)+'" style="font-weight:600">小計　'+_clsLab(k)+' <span class="fmini" style="font-weight:400">'+(CN[k]||0)+' 條</span></td>'+TLEGS.map((x,i)=>'<td class="'+(i===0?'sep':'')+'"></td>').join('')+'<td class="ro sep"><b>'+nf(CT1[k]||0,4)+'</b></td>'+(decl?'<td><b>'+nf(CT2[k]||0,4)+'</b></td><td></td>':'<td></td>')+'</tr>';
+    const _clsLab=k=>esc(k)+(k==='C4-2'?' <span class="fmini" style="font-weight:400">'+((decl&&F.cat==='C09')?'（收集表分類寫 C4-2，清冊算在 C09 下游運輸）':'（下游運輸收集表的 C4-2，併入上游）')+'</span>':'');   /* V129-69：已申報年度 C09 頁的 C4-2 存在 C09 */
+    const _subRow=k=>'<tr style="background:#f6f9f7"><td class="tl" colspan="'+(decl?4:3)+'" style="font-weight:600">小計　'+_clsLab(k)+' <span class="fmini" style="font-weight:400">'+(CN[k]||0)+' 條</span></td>'+TLEGS.map((x,i)=>'<td class="'+(i===0?'sep':'')+'"></td>').join('')+'<td class="ro sep"><b>'+nf(CT1[k]||0,4)+'</b></td><td></td></tr>';
     let _dn=0;
     _ord.forEach(([rt,i],oi)=>{ const _k=rt.cls||'—'; _dn++;
       if(_grp&&!rt.ro&&(oi===0||_ord[oi-1][0].ro||(_ord[oi-1][0].cls||'—')!==_k))h+='<tr class="rosep"><td colspan="'+W.length+'">'+_clsLab(_k)+'</td></tr>';
       const c=trnCalc(rt); const ret=!!TRET[rt.rid]; const ed=canEdit&&!ret&&!rt.old&&!rt.ro; const o0=TORIG[rt.rid];
       let _a=null,_b=null; const chg=f=>{ if(rt._new)return true; if(!o0)return false; if(!_a){ _a=JSON.parse(o0); _b=JSON.parse(trnPick(rt)); } const ix=TPICK[f]; if(ix!=null)return String(_a[ix])!==String(_b[ix]); const li=TLEGS.indexOf(f.split(':')[1]); return String(_a[7][li]||[])!==String(_b[7][li]||[]); };
       if(rt.ro&&!roHead){ roHead=true; h+='<tr class="rosep"><td colspan="'+W.length+'">C4-2（本廠出貨、運費本廠付）在 C09 下游運輸頁登錄，碳排算進這一類；這裡只看</td></tr>'; }
-      const t2=decl?(rt.old?rt.t2:(rt.rows||[]).reduce((a,r)=>a+(+r.co2e_draft||0),0)):0; const t1=c.t;
-      if(!ret){ if(t1!=null)T1+=t1; T2+=t2; const ck=rt.cls||'—'; CT[ck]=(CT[ck]||0)+(decl?t2:(t1||0)); CT1[ck]=(CT1[ck]||0)+(t1||0); CT2[ck]=(CT2[ck]||0)+t2; CN[ck]=(CN[ck]||0)+1; }
+      const t2=decl?(rt.old?rt.t2:(rt.rows||[]).reduce((a,r)=>a+(+r.co2e_draft||0),0)):0; const _z=decl?trnSys(rt):null; const t1=decl?_z.t1:c.t;   /* V129-69：已申報年度算不出照存的數 */
+      if(!ret){ if(t1!=null)T1+=t1; T2+=t2; const ck=rt.cls||'—'; CT[ck]=(CT[ck]||0)+(t1||0); CT1[ck]=(CT1[ck]||0)+(t1||0); CT2[ck]=(CT2[ck]||0)+t2; CN[ck]=(CN[ck]||0)+1; }
       if(rt._new)nNew++;
       const nLeg=Math.max(1,rt.old?(rt.parts||[]).length:Object.keys(c.legs||{}).length); const diff=decl&&(t1==null?Math.abs(t2)>=0.00005:Math.abs(t1-t2)>0.00005*nLeg+1e-9); if(diff)nD++;
-      const bdg=(rt.cls&&C.clsDef&&rt.cls!==C.clsDef)?'<span class="fmini" style="display:inline-block;background:#fdf3e0;color:#8a5a00;border:1px solid #f0dcb4;border-radius:4px;padding:0 4px;margin-right:4px" title="'+esc(rt.cls==='C4-2'?'C4-2：本廠付運費的出貨運輸，碳排算進 C04 上游運輸':String(rt.cls))+'">'+esc(rt.cls)+'</span>':'';
+      const bdg=(rt.cls&&C.clsDef&&rt.cls!==C.clsDef)?'<span class="fmini" style="display:inline-block;background:#fdf3e0;color:#8a5a00;border:1px solid #f0dcb4;border-radius:4px;padding:0 4px;margin-right:4px" title="'+esc(rt.cls==='C4-2'?((decl&&F.cat==='C09')?'C4-2：本廠付運費的出貨運輸；這一年清冊算在 C09 下游運輸':'C4-2：本廠付運費的出貨運輸，碳排算進 C04 上游運輸'):String(rt.cls))+'">'+esc(rt.cls)+'</span>':'';
       /* # */
       const numCell='<td class="tl" style="white-space:nowrap"><a class="tx" href="javascript:void(0)" onclick="trnExp('+i+')" title="展開：這條路線 Excel 的全部欄位">'+(TEXP[rt.rid]?'▾':'▸')+'</a>'+_dn+(rt._new?' <span style="color:#b8860b;font-size:10px">新</span>':'')+(!decl&&bdg?'<div>'+bdg+'</div>':'')+'</td>';
       /* 名稱 */
@@ -8961,7 +8962,7 @@ function trnRender(){
       if(!ret)Object.keys(c.legs||{}).forEach(k=>{ const x=c.legs[k]; const kk=TLEGS.indexOf(k)>=0?k:'陸運-2'; LT[kk]=(LT[kk]||0)+((rt.old?x.t1:x.t)||0); });
       /* 碳排 */
       const whyTip=rt.old?(c.why||[]).map(p=>trnWhyLabel(p)+' '+(p.d>0?'+':'')+nf(p.d,4)+' t').join('；'):'';
-      const tCell=decl?'<td class="ro sep"><b>'+(t1==null?'<span style="color:#c0392b" title="清冊沒有重量／距離／車種，系統算不出">—</span>':nf(t1,4))+'</b></td><td'+(diff?' style="background:#fff3cd" title="'+esc(whyTip)+'"':'')+'>'+nf(t2,4)+'</td>'
+      const tCell=decl?'<td class="ro sep"'+(diff?' title="'+esc('跟存的數 '+nf(t2,4)+' t 不同'+(whyTip?'：'+whyTip:''))+'"':'')+'><b>'+nf(t1,4)+'</b>'+(_z.fb?'<div class="fmini" style="color:#7a8f84;font-weight:400" title="有段系統算不出（清冊只記碳排／只記多段合計／車種認不出），那幾段照資料庫存的數">'+(_z.c.t==null||rt.parts&&_z.fb>=rt.parts.length?'':'含')+'照存的數</div>':'')+'</td>'
         :'<td class="ro sep"><b>'+(t1==null?(c.any?'<span style="color:#c0392b" title="缺重量或車種">—</span>':'<span class="dash">—</span>'):nf(t1,4))+'</b></td>';
       if(!decl&&!rt.ro&&c.any&&t1==null)nNoF++;
       /* 備註（已申報年度；輸入年度的備註在 ▸ 展開） */
@@ -8971,14 +8972,11 @@ function trnRender(){
       h+='<tr data-i="'+i+'"'+(ret?' style="opacity:.45;text-decoration:line-through"':(rt.ro?' style="opacity:.8"':''))+'>'+numCell+nmCell+pathCell+wCell+legCells+tCell+noteCell+'</tr>';
       if(TEXP[rt.rid])h+=trnExpRow(rt,ed,i);
       if(_grp&&!rt.ro){ const nx=_ord[oi+1]; if((!nx||nx[0].ro||(nx[0].cls||'—')!==_k)&&(CN[_k]||0)>1)h+=_subRow(_k); }   /* V129-65-1：只有 1 條不出小計 */ });   /* V129-62-1：每區結尾接小計 */
-    if(!_grp){ const ks=Object.keys(CN).sort(); if(ks.length>1)ks.forEach(k=>{ h+='<tr style="background:#f6f9f7"><td class="tl" colspan="'+(decl?4:3)+'" style="font-weight:600">小計　'+esc(k)+(k==='C4-2'?' <span class="fmini" style="font-weight:400">（下游運輸收集表的 C4-2，併入上游）</span>':'')+' <span class="fmini" style="font-weight:400">'+CN[k]+' 條</span></td>'+TLEGS.map((x,i)=>'<td class="'+(i===0?'sep':'')+'"></td>').join('')+'<td class="ro sep"><b>'+nf(CT1[k],4)+'</b></td>'+(decl?'<td><b>'+nf(CT2[k],4)+'</b></td><td></td>':'<td></td>')+'</tr>'; }); }   /* V129-61：分類小計列 */
+    if(!_grp){ const ks=Object.keys(CN).sort(); if(ks.length>1)ks.forEach(k=>{ h+='<tr style="background:#f6f9f7"><td class="tl" colspan="'+(decl?4:3)+'" style="font-weight:600">小計　'+_clsLab(k)+' <span class="fmini" style="font-weight:400">'+CN[k]+' 條</span></td>'+TLEGS.map((x,i)=>'<td class="'+(i===0?'sep':'')+'"></td>').join('')+'<td class="ro sep"><b>'+nf(CT1[k],4)+'</b></td><td></td></tr>'; }); }   /* V129-61：分類小計列 */
     h+='<tr class="tot"><td class="tl" colspan="'+(decl?4:3)+'">合計　<span class="fmini" style="font-weight:400">'+rows.length+' 條'+(nNew?'（新 '+nNew+'）':'')+(nNoF?'　<span style="color:#a33">缺重量／車種 '+nNoF+' 條</span>':'')+'</span></td>'
       +TLEGS.map((k,i)=>'<td class="'+(i===0?'sep':'')+'" style="font-size:11.5px">'+(LT[k]?nf(LT[k],4):'')+'</td>').join('')
-      +'<td class="ro sep"><b>'+nf(T1,4)+'</b></td>'+(decl?'<td><b>'+nf(T2,4)+'</b></td><td></td>':'<td></td>')+'</tr></tbody></table>';
-    const cks=Object.keys(CT); if(F.cat==='C09'&&(cks.length>1||CT['C4-2']!=null))h+='<div style="padding:6px 12px;font-size:12px;color:#3f544a;background:#fbfcfb;border-top:1px solid #eef3f0">'+cks.sort().map(k=>'<b>'+esc(k)+'</b> '+nf(CT[k],4)+' t'+(k==='C4-2'&&F.cat==='C09'?'（併入 C04 上游運輸）':(/^C9/.test(k)?'（C09 下游運輸）':''))).join('　｜　')+'　<span class="fmini">（'+(decl?'② 清冊':'系統算')+'）</span></div>';
-    if(decl){ const why=trnWhy(rows); const d=T1-T2;
-      h+='<div id="trnwhy" style="padding:8px 12px;font-size:12px;line-height:1.7;background:'+(why.length?'#fffdf5;color:#5c4a00':'#f2f9f5;color:#14603F')+';border-top:1px solid #eef3f0">'
-        +(why.length?'<b>差異原因（系統算的－清冊）</b>　① '+nf(T1,4)+' t － ② '+nf(T2,4)+' t ＝ '+(d>0?'+':'')+nf(d,4)+' t<br>'+why.map(x=>'・'+esc(x)).join('<br>'):'✓ ① 系統算 '+nf(T1,4)+' t，② 清冊 '+nf(T2,4)+' t，兩邊一樣'+(Math.abs(d)>=0.00005?'（差 '+nf(d,4)+' t，是每段四捨五入到小數第 4 位的進位差）':''))+'</div>'; }
+      +'<td class="ro sep"><b>'+nf(T1,4)+'</b></td><td></td></tr></tbody></table>';
+    const cks=Object.keys(CT); if(F.cat==='C09'&&(cks.length>1||CT['C4-2']!=null))h+='<div style="padding:6px 12px;font-size:12px;color:#3f544a;background:#fbfcfb;border-top:1px solid #eef3f0">'+cks.sort().map(k=>'<b>'+esc(k)+'</b> '+nf(CT[k],4)+' t'+(k==='C4-2'&&F.cat==='C09'?(decl?'（清冊算在 C09 下游運輸）':'（併入 C04 上游運輸）'):(/^C9/.test(k)?'（C09 下游運輸）':''))).join('　｜　')+'　<span class="fmini">（系統算）</span></div>';
   }
   h+='<div class="s101legend">一列一條運輸路線；重量 × 公里 ＝ 延噸公里，延噸公里 ×（TTW＋WTT）÷ 1000 ＝ 碳排 tCO₂e　｜　欄名＊、灰底＝系統算，白底＝要輸入　｜　▸ 展開＝這條路線 Excel 收集表的其他欄位'+(decl?'（產品、起訖地址、路徑、各重量欄、各段原值、來源）':'（型號、出貨地、貿易條件、分類、起訖地址、運輸路徑、包材單重、佐證、備註）　｜　🛣 路線範本＝本廠用過的路線，選了帶入各段公里數與車種　｜　黃底＝尚未儲存的變更　｜　同一批貨分兩段付運費（例 FOB：陸運-1 本廠付＝C4-2、海運以後客戶付＝C9）就分兩列')+'</div>';
   h+='</div></div>';
@@ -9028,6 +9026,28 @@ function trnOldNote(rt){   /* 收割列不是一段一段的：說明清冊記�
   if(mix.length)return '清冊只記多段合計 '+nf(mix.reduce((a,p)=>a+p.q,0),2)+' 延噸公里（各段係數在源檔）';
   if(nol.length)return '清冊只記碳排（沒有重量／距離）';
   return ''; }
+/* V129-69：已申報年度頁首（共用 entryDeclBox）。每條路線「系統算−存的數」＝各段原因（trnOldCalc 的 why）＋剩下的尾差；算不出的段照存的數、不算差異 */
+function trnSys(rt){ const c=trnCalc(rt), t2=rt.old?rt.t2:(rt.rows||[]).reduce((a,r)=>a+(+r.co2e_draft||0),0); return {c:c,t2:t2,t1:c.t!=null?c.t:t2,fb:c.t==null?1:((c.fb||[]).length)}; }
+function trnDeclPanel(rows){
+  const A={}, add=(k,v,ex,w)=>{ const o=A[k]=A[k]||{n:0,t:0,w:w||'',ex:{}}; o.t+=v; o.n++; if(ex){ const x=(o.ex[ex]=o.ex[ex]||{n:0,d:0}); x.n++; x.d+=v; } };
+  let q1=0,S=0; const FB={};
+  rows.forEach(rt=>{ if(TRET[rt.rid])return; const z=trnSys(rt); q1+=z.t1; S+=z.t2;
+    if(z.c.t==null)FB.route=(FB.route||0)+1; (z.c.fb||[]).forEach(k=>{ FB[k]=(FB[k]||0)+1; });
+    const D=z.t1-z.t2; let sm=0;
+    if(rt.old)(z.c.why||[]).forEach(p=>{ if(Math.abs(p.d)<(p.w?0.00005:0.0005)){ if(p.d)add('rd',p.d); } else add('ef|'+(p.w||''),p.d,p.ex,p.w); sm+=p.d; });
+    const rem=D-sm; if(Math.abs(rem)<1e-12)return; if(Math.abs(rem)<0.0005)add('rd',rem); else add(rt.old?'oth':'new',rem,trnNmParts(rt).party||rt.nm); });
+  const sg=d=>(d>0?'+':'')+nf(d,4)+' t';
+  const exj=g=>{ const L=Object.entries(g.ex).sort((a,b)=>Math.abs(b[1].d)-Math.abs(a[1].d)); return L.length?'。例：'+L.slice(0,3).map(([t,x])=>t+(x.n>1?' ×'+x.n:'')+' '+sg(x.d)).join('；')+(L.length>3?'；…等 '+L.length+' 種':''):''; };
+  const items=[];
+  Object.keys(A).sort((a,b)=>(a==='rd'?1:b==='rd'?-1:a<b?-1:1)).forEach(k=>{ const g=A[k];
+    if(k==='rd')items.push([g.n+' 項各差不到 0.0005 t（小數位差）',g.t]);
+    else if(k==='oth')items.push([g.n+' 條路線系統算跟存的數不同（各段原因以外）'+exj(g),g.t]);
+    else if(k==='new')items.push([g.n+' 條登錄頁輸入的路線，系統算跟存的數不同'+exj(g),g.t]);
+    else items.push([g.n+(/^清冊這一列只記碳排/.test(g.w)?' 條路線：':' 段')+(g.w||'清冊係數跟運輸係數表不一樣')+exj(g),g.t]); });
+  const fb=[['noleg','段清冊只記碳排（沒有重量／距離／車種）'],['mix','段清冊只記多段合計延噸公里'],['none','段車種認不出（運輸係數表沒有對應）'],['route','條路線算不出']].filter(x=>FB[x[0]]).map(x=>FB[x[0]]+' '+x[1]);
+  return entryDeclBox({yr:F.year,q1:q1,S:S,grp:F.trGrp,items:items,note:!!F.trNote,
+    q1tip:'每一段：延噸公里 ×（TTW＋WTT）÷ 1000，係數用運輸係數表（照車種、國別）；算不出的段照存的數',
+    foot:fb.length?'<div class="fmini" style="color:#7a8f84">另有 '+esc(fb.join('、'))+'，系統算不出，照存的數（格子下面標「照存的數」）。</div>':''}); }
 function trnWhyLabel(p){ return p.k==='noleg'?'清冊只有碳排':(p.k==='mix'?'清冊只記多段合計延噸公里':(p.k==='none'?'車種認不出':(p.w||'清冊係數不同'))); }
 function trnWhy(rows){   /* 已申報年度：各段原因歸類成幾句白話（系統算的－清冊） */
   const G={}; rows.forEach(rt=>{ if(!rt.old)return; (trnCalc(rt).why||[]).forEach(p=>{ const key=p.k==='ef'?('ef|'+(p.w||'')):p.k; const g=(G[key]=G[key]||{k:p.k,w:p.w||'',d:0,n:0,ex:{}}); g.d+=p.d; g.n++; if(p.ex){ const x=(g.ex[p.ex]=g.ex[p.ex]||{n:0,d:0}); x.n++; x.d+=p.d; } }); });
@@ -9400,7 +9420,8 @@ function entryDeclBox(o){
   if(Math.abs(rd)>=0.00005) it.push([nrd+' 項各差不到 0.00005 t（小數位）',rd]);
   /* 畫面上的各項（四捨五入到 4 位）加起來要剛好＝差額：四捨五入的尾差併進金額最大的那一項 */
   const r4=v=>Math.round(v*1e4)/1e4+0, D4=r4(d); let s4=0; it.forEach(x=>{ x[2]=r4(x[1]); s4+=x[2]; });
-  if(it.length){ const res=r4(D4-s4); if(res!==0){ let k=0; it.forEach((x,i)=>{ if(Math.abs(x[1])>Math.abs(it[k][1]))k=i; }); it[k][2]=r4(it[k][2]+res); } }
+  if(it.length){ const res=r4(D4-s4); if(res!==0){ const ord=it.map((x,i)=>i).sort((a,b)=>Math.abs(it[b][1])-Math.abs(it[a][1])); const k=ord.find(i=>r4(it[i][2]+res)!==0);
+      if(k!=null)it[k][2]=r4(it[k][2]+res); else it.push(['四捨五入尾差',res,res]); } }   /* V129-69：併完會變 0 就換下一項 */
   const sg=v=>(v>0?'+':'')+f(v,4)+' t', td='border:0;background:none;vertical-align:top;';
   if(it.length&&D4!==0) h+='<div style="margin-top:1px"><b>差異原因</b>（金額＝系統算減掉存的數，加起來＝差額；各項四捨五入到小數 4 位）<table class="edwhy" style="width:auto;border-collapse:collapse;margin:1px 0 0;font-size:12.5px">'
     +it.map(x=>'<tr><td style="'+td+'padding:0 12px 0 0;text-align:left;white-space:normal">・'+es(x[0])+'</td><td class="R" style="'+td+'padding:0;white-space:nowrap">'+sg(x[2])+'</td></tr>').join('')
@@ -9519,7 +9540,8 @@ function w5declPanel(){
   ['pc','pn','pf','t0','tc','tn','tf','rd'].forEach(k=>{ const o=A[k]; if(o&&o.n&&(k!=='rd'||Math.abs(o.t)>=0.00005)) it.push([o.n+' '+T[k],o.t]); });
   const C=S-q2; if(Math.abs(C)>=0.00005) it.push(['本頁存的數合計 '+w5f(S,4)+' t 跟'+(G.hv!=null?'收割原值':'全集團頁')+' '+w5f(q2,4)+' t 不同'+(n4?'（本頁 '+n4+' 列有「標」「E」徽章＝照標準／ESG 更正重算過）':'')+(W5.note?'；原因說明點頁首「⚠ 差異說明」看':''),C]);
   const r4=v=>Math.round(v*1e4)/1e4+0, D4=r4(d); let s4=0; it.forEach(x=>{ x[2]=r4(x[1]); s4+=x[2]; });   /* V129-67：四捨五入的尾差併進金額最大的那一項 */
-  if(it.length){ const res=r4(D4-s4); if(res!==0){ let k=0; it.forEach((x,i)=>{ if(Math.abs(x[1])>Math.abs(it[k][1]))k=i; }); it[k][2]=r4(it[k][2]+res); } }
+  if(it.length){ const res=r4(D4-s4); if(res!==0){ const ord=it.map((x,i)=>i).sort((a,b)=>Math.abs(it[b][1])-Math.abs(it[a][1])); const k=ord.find(i=>r4(it[i][2]+res)!==0);
+      if(k!=null)it[k][2]=r4(it[k][2]+res); else it.push(['四捨五入尾差',res,res]); } }   /* V129-69：C05 同一套 */
   if(it.length) h+='<div style="margin-top:1px"><b>差異原因</b>（金額＝系統算減掉存的數，加起來＝差額；各項四捨五入到小數 4 位）<table class="w5why" style="width:auto;border-collapse:collapse;margin:1px 0 0;font-size:12.5px">'
     +it.map(x=>'<tr><td style="padding:0 12px 0 0">・'+w5esc(x[0])+'</td><td class="R" style="padding:0;white-space:nowrap">'+sg(x[2])+'</td></tr>').join('')
     +'<tr><td style="padding:1px 12px 0 0;text-align:right;border-top:1px solid #cfdcd5">合計＝差額</td><td class="R" style="padding:1px 0 0;border-top:1px solid #cfdcd5;white-space:nowrap"><b>'+sg(D4)+'</b></td></tr></table></div>';
