@@ -302,7 +302,7 @@ function facChg(on){ return '<span class="fchg'+(on?'':' off')+'">🟡</span>'; 
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-75</b> · 2026/10/31</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-76</b> · 2026/10/31</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -2727,7 +2727,7 @@ function hmRank(plants,T,Y,prevY){   /* 各廠排放量排名：一廠一列，�
   const host=document.getElementById('hm_rank'); if(!host)return; host.textContent=''; const max=plants.length?plants[0].t:0, PB=prevY?(HM.by[prevY]||{}):null;
   const tb=document.createElement('table'); tb.className='hm-rank';
   tb.innerHTML='<colgroup><col class="c-rk" style="width:38px"><col style="width:196px"><col><col style="width:112px"><col style="width:70px"><col class="c-yoy" style="width:104px"></colgroup>'
-    +'<thead><tr><th class="c-rk">#</th><th style="text-align:left">廠區</th><th style="text-align:left">橫條長度＝排放量</th><th>排放量</th><th>占比</th><th class="c-yoy">'+(prevY?('較 '+prevY+' 年'):'較前一年')+'</th></tr></thead>';
+    +'<thead><tr><th class="c-rk">#</th><th style="text-align:left">廠區</th><th style="text-align:left" data-flex>橫條長度＝排放量</th><th>排放量</th><th>占比</th><th class="c-yoy">'+(prevY?('較 '+prevY+' 年'):'較前一年')+'</th></tr></thead>';
   const body=document.createElement('tbody'); tb.appendChild(body);
   plants.forEach((p,i)=>{ const tr=document.createElement('tr'), share=T.t>0?p.t/T.t:0, pv=PB&&PB[p.c]?PB[p.c].t:0, d=prevY?(pv>0?hmDelta(p.t,pv):null):null;
     const td=(cls,html,isText)=>{ const c=document.createElement('td'); if(cls)c.className=cls; if(isText)c.textContent=html; else c.innerHTML=html; tr.appendChild(c); return c; };
@@ -8177,7 +8177,7 @@ function c12Render(){
       const code=(c.tcode&&c.manEf!=null)?c.tcode.split('、')[0].split('／')[0]+'·ALL·2026':((c.pk&&c.pk.treat)?c.pk.f.esg_code:kd.code)+'·ALL·'+facY(F.year);   /* V129-58-5：已申報年度顯示實際用的 C12-材質-處理 */   /* V129-47：2026 起顯示 C12-材質-處理 */ const z=!(c.cw>0);
       h+='<tr'+(z?' style="color:#9aa8a1"':'')+'><td style="text-align:left"><b>'+esc(kd.name)+'</b> <span class="fmini">'+kd.en+'</span></td>'
         +'<td style="text-align:left"><a href="javascript:void(0)" onclick="facTrace(&#39;C12&#39;,&#39;ALL&#39;,'+facY(F.year)+',&#39;'+F.site+'&#39;,&#39;'+kd.code+'&#39;)" title="'+esc((c.tcode&&c.manEf!=null)?('Excel 當年處理方式對到的條目：'+c.tcode+'（UK 2024 表，跟 2026 開帳的 12 條同一組值）'):(c.pk?(c.pk.f.factor_id+'｜'+(c12FacName(c.pk.f)||'')+'｜'+(c.pk.f.factor_source||'')):'係數庫沒有這一格的係數，點了看係數庫 C12 表'))+'" style="color:'+(c.pk?'var(--p)':'#c9821e')+';font-weight:700;font-size:11.5px;text-decoration:none;white-space:nowrap">'+esc(code)+' ↗</a></td>'
-        +'<td style="text-align:left;font-size:11.5px;white-space:normal">'+(c.treat?esc(c.treat)+'<div style="font-size:10px;color:#8a9c93">'+esc(c.tsrc||'清冊係數')+'</div>':'<span style="color:#c3cfc9">—</span>')+'</td>'
+        +'<td style="text-align:left;font-size:11.5px;white-space:normal"'+(c.treat?' title="'+esc(c.tsrc||'清冊係數')+'"':'')+'>'+(c.treat?esc(c.treat)+(c.tunk?'<div style="font-size:10px;color:#b8860b">⚠ '+c.tunk+' 列認不出（待 ESG）</div>':''):'<span style="color:#c3cfc9">—</span>')+'</td>'   /* V129-76：每列重複的來源說明收進游標提示（使用者 261031「欄寬這樣很怪」） */
         +'<td style="text-align:right;white-space:nowrap">'+nf(c.cw,2)+'</td><td style="text-align:right;white-space:nowrap">'+(cc.tot>0?c12pc(c.sh):'—')+'</td>'
         +'<td style="text-align:right;white-space:nowrap">'+(c.q!=null?nf(c.q,4):'—')+'</td>'
         +'<td style="text-align:right;white-space:nowrap">'+(c.pk?(c.manEf==null?fvA(c.pk.f&&c.pk.f.factor_id,nf(c.ef,10)):fvA(c.tfid,nf(c.ef,10))):'—')+'</td><td style="text-align:left;font-size:11px;white-space:normal;word-break:break-word">'+esc(c.efu||'')+'</td>'
@@ -15305,5 +15305,73 @@ body.ghgfocus #src_form .ehead>.fxfocus{background:#1B8A60;border-color:#1B8A60;
 })();
 </script>
 
+<script>
+/* V129-76：表格欄寬自動分配 gfit（使用者 261031「欄寬這樣很怪」「這樣不合理分配的，請全面清查」「你應該瞭解我要的美感」）
+   每張表畫好後量一次；只有量出來不合理（有欄被擠到折行、別欄卻空著／數字欄被折行／表格比外框寬）才重排，本來就好的表不碰。
+   規則：數字欄、不折行的欄一行放得下；文字欄先給到一行，放不下只讓最長的幾欄折；剩的寬度平均分給每欄（表頭 data-flex 的欄全拿）；合計列的長說明可折兩行；
+   上下對照的兩張表（同一區、同 class、同一組原欄寬）一起算、上下對齊。字型比測試機寬約 7%（使用者電腦），量的時候先留餘量。 */
+(function(){
+  const host=document.createElement('div'); host.className='gfitm'; let css=null, timer=null, busy=false;
+  function ready(){ if(!css){ css=document.createElement('style'); css.textContent='.gfitm,.gfitm *{white-space:nowrap!important;max-width:none!important}.gfitm{position:absolute;left:-99999px;top:0;visibility:hidden;pointer-events:none;contain:layout style}.gfitm>div{display:block;width:max-content}'; document.head.appendChild(css); } if(!host.parentNode)document.body.appendChild(host); }
+  function grid(t,max){ const rows=[...t.rows].slice(0,max), G=[]; rows.forEach((tr,ri)=>{ G[ri]=G[ri]||[]; let c=0; [...tr.cells].forEach(td=>{ while(G[ri][c])c++; const cs=td.colSpan||1, rs=Math.max(1,Math.min(td.rowSpan||1,rows.length-ri)); for(let a=0;a<rs;a++)for(let b=0;b<cs;b++){ G[ri+a]=G[ri+a]||[]; G[ri+a][c+b]=(a||b)?1:td; } c+=cs; }); }); return G; }
+  const INP='input:not([type=checkbox]):not([type=radio]):not([type=hidden]),select,textarea,button';
+  function cols(t,max){ const G=grid(t,max); const nc=Math.max(0,...G.map(r=>r.length)); const K=[];
+    for(let c=0;c<nc;c++)K.push({body:0,hdr:0,cur:0,avail:1e9,pad:0,inp:false,num:0,txt:0,nw:0,wrap:0,n:0,flex:false});
+    const L=[];   /* 先一次讀完（只讀不寫，排版一次），再把格子內容一次放進量尺量寬：大表（查詢頁上千列）才不會一格排版一次 */
+    G.forEach(r=>{ const sum=r.some(td=>td&&td!==1&&(td.colSpan||1)>1); r.forEach((td,c)=>{ if(!td||td===1||(td.colSpan||1)>1)return; const cs=getComputedStyle(td), th=td.tagName==='TH';
+      L.push({td:td,c:c,th:th,sum:sum,font:cs.font,ls:cs.letterSpacing,ta:cs.textAlign,ws:cs.whiteSpace,pad:parseFloat(cs.paddingLeft)+parseFloat(cs.paddingRight),cw:td.clientWidth,ow:td.offsetWidth,
+        inp:!th&&!!td.querySelector(INP),txt:!!td.textContent.trim(),br:th&&!!td.querySelector('br'),flex:th&&td.hasAttribute('data-flex')}); }); });
+    const Q=L.filter(x=>x.txt&&!x.inp), fr=document.createDocumentFragment(); Q.forEach(x=>{ const d=document.createElement('div'); d.style.font=x.font; d.style.letterSpacing=x.ls; d.innerHTML=x.td.innerHTML; fr.appendChild(d); x.el=d; });
+    host.replaceChildren(fr); Q.forEach(x=>{ x.n=x.el.offsetWidth+1; x.el=null; }); host.replaceChildren();
+    L.forEach(x=>{ const k=K[x.c]; k.pad=Math.max(k.pad,x.pad); k.cur=Math.max(k.cur,x.ow);
+      if(x.th){ if(x.flex)k.flex=true; if(x.txt)k.hdr=Math.max(k.hdr,x.br?x.n:x.n*0.6); return; }
+      if(x.inp){ k.inp=true; return; } if(!x.txt)return; const right=x.ta==='right'||x.ta==='end'; let n=x.n; const av=x.cw-x.pad;
+      if(x.sum){ if(!right&&x.ws!=='nowrap')n=n*0.5; if(n>k.body)k.body=n; return; }   /* 合計／分組列：長說明可折兩行，不撐整欄 */
+      k.n++; if(n>k.body)k.body=n; if(av<k.avail)k.avail=av; if(n>av+2)k.wrap++;
+      if(right)k.num++; else k.txt++; if(x.ws==='nowrap'||x.ws==='pre')k.nw++; });
+    K.forEach(k=>{ k.isNum=k.num>k.txt; k.fix=k.isNum||(k.n>0&&k.nw===k.n); if(k.avail===1e9)k.avail=k.cur; });
+    return K; }
+  function box(t){ const p=t.parentElement, cs=getComputedStyle(p); return p.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight); }
+  function bad(t,K){ if(t.offsetWidth>box(t)+2)return true;
+    if(K.some(k=>k.isNum&&k.wrap&&!k.inp))return true;
+    const W=K.filter(k=>!k.inp&&k.wrap&&k.body<=k.avail*3.2&&k.body<480), S=K.filter(k=>!k.inp&&(k.n||k.flex)&&(k.avail-Math.max(k.body,k.hdr))>=60);   /* data-flex 欄（橫條）沒有字，也算可讓出的空間 */
+    const want=W.reduce((a,k)=>a+k.body-k.avail,0), have=S.reduce((a,k)=>a+(k.avail-Math.max(k.body,k.hdr))-40,0);
+    return !!(W.length&&S.length&&have>=Math.min(want,60)); }
+  function level(ds,R){ ds=ds.slice().sort((a,b)=>a-b); let acc=0; for(let j=0;j<ds.length;j++){ const lv=(R-acc)/(ds.length-j); if(ds[j]>lv)return lv; acc+=ds[j]; } return Infinity; }
+  function restore(t){ if(!t._gfitOrig)return; const cg=t.querySelector(':scope>colgroup'); if(cg)cg.remove(); if(t._gfitOrig.cg)t.insertAdjacentHTML('afterbegin',t._gfitOrig.cg); t.style.tableLayout=t._gfitOrig.tl; t.style.minWidth=t._gfitOrig.mw; t._gfitOrig=null; }
+  function apply(ts){ const was=ts.map(t=>t.offsetWidth>box(t)+1); let cut=0;
+    for(let k=0;k<3;k++){ if(!apply1(ts,cut)){ ts.forEach(restore); return false; }
+      const over=Math.max(...ts.map(t=>t.offsetWidth-box(t))); if(over<=1)return true; cut+=over+2; }
+    ts.forEach((t,i)=>{ if(!was[i])restore(t); }); return false; }   /* 重排後還比外框寬：本來沒超出的退回原欄寬 */
+  function apply1(ts,cut){ const Ks=ts.map(t=>cols(t,160)), nc=Ks[0].length; if(Ks.some(K=>K.length!==nc))return false;
+    const M=[]; for(let c=0;c<nc;c++){ const ks=Ks.map(K=>K[c]); const k={inp:ks.some(x=>x.inp),flex:ks.some(x=>x.flex),cur:Math.max(...ks.map(x=>x.cur)),pad:Math.max(...ks.map(x=>x.pad)),
+        body:Math.max(...ks.map(x=>x.body)),hdr:Math.max(...ks.map(x=>x.hdr)),fix:ks.some(x=>x.fix&&x.n)&&!ks.some(x=>!x.fix&&x.n)};
+      k.d=k.inp?k.cur:Math.ceil(Math.max(k.body*1.07,k.hdr*1.07,24)+k.pad+2); M.push(k); }
+    if(ts.some(t=>{ const cg=t.querySelector(':scope>colgroup'); return t.querySelector('.colrz')&&(!cg||cg.children.length!==nc||[...cg.children].some(c=>(+c.getAttribute('span')||1)>1)); }))return false;   /* 可拖曳調欄寬的表要沿用原本的 col（拖曳改的就是它），換不了就不碰 */
+    const T=Math.min(...ts.map(box))-cut; let w=M.map(k=>k.d); const sum=w.reduce((a,b)=>a+b,0);
+    if(sum>T){ const fixed=M.reduce((a,k,i)=>a+((k.inp||k.fix)?w[i]:0),0), tx=M.map((k,i)=>(k.inp||k.fix)?-1:i).filter(i=>i>=0); const R=T-fixed;
+      if(!tx.length||R<tx.length*48)return false; const L=level(tx.map(i=>w[i]),R); tx.forEach(i=>{ w[i]=Math.max(48,Math.floor(Math.min(w[i],L))); }); }
+    else{ const fi=M.findIndex(k=>k.flex); if(fi>=0)w[fi]+=Math.floor(T-sum); else{ const ok=M.map((k,i)=>k.inp?-1:i).filter(i=>i>=0); const ex=Math.floor((T-sum)/Math.max(1,ok.length)); ok.forEach(i=>{ w[i]+=ex; }); } }   /* 剩的寬度平均分，欄距一致 */
+    ts.forEach(t=>{ let cg=t.querySelector(':scope>colgroup'); if(!t._gfitOrig)t._gfitOrig={cg:cg?cg.outerHTML:null,tl:t.style.tableLayout,mw:t.style.minWidth};
+      const cs=cg?[...cg.children]:[]; if(!cg||cs.length!==nc||cs.some(c=>(+c.getAttribute('span')||1)>1)){ if(cg)cg.remove(); cg=document.createElement('colgroup'); for(let i=0;i<nc;i++)cg.appendChild(document.createElement('col')); t.insertBefore(cg,t.firstChild); }
+      [...cg.children].forEach((c,i)=>{ c.style.width=w[i]+'px'; }); t.style.tableLayout='fixed'; if(t.style.minWidth)t.style.minWidth=''; });
+    return true; }
+  function sig(t){ return t.rows.length+':'+t.textContent.length+':'+t.childElementCount; }
+  function gkey(t){ const cg=t.querySelector(':scope>colgroup'); if(!cg||!t.className)return null; const area=t.closest('#src_form,section,.card,.panel')||document.body; return {area:area,k:t.className+'|'+cg.innerHTML}; }
+  function run(){ if(busy)return; busy=true; try{ ready();
+    const ts=[...document.querySelectorAll('table')].filter(t=>t.offsetParent&&!t.closest('.gfitm')&&t.rows.length>=2&&t._gfitSig!==sig(t)&&(!t.checkVisibility||t.checkVisibility({contentVisibilityAuto:true,visibilityProperty:true}))&&t.textContent.trim()&&!t.dataset.fy);   /* 係數庫凍結表（V129-11 年度欄固定寬、年度多就左右捲）不碰 */
+    const done=new Set();
+    ts.forEach(t=>{ if(done.has(t))return; let grp=[t]; const g=gkey(t); if(g)grp=[...g.area.querySelectorAll('table')].filter(x=>x.offsetParent&&x.className===t.className&&(gkey(x)||{}).k===g.k);
+      grp.forEach(x=>done.add(x)); const K0=cols(t,60); if(K0.length<3){ grp.forEach(x=>{ x._gfitSig=sig(x); }); return; }
+      if(grp.some(x=>bad(x,x===t?K0:cols(x,60)))){ try{ apply(grp); }catch(e){ console.warn('gfit',e); } }
+      grp.forEach(x=>{ x._gfitSig=sig(x); }); });
+  } finally{ busy=false; } }
+  function later(ms){ clearTimeout(timer); timer=setTimeout(run,ms||120); }
+  window.gfitRun=function(){ document.querySelectorAll('table').forEach(t=>{ t._gfitSig=null; }); run(); };
+  new MutationObserver(ms=>{ if(busy)return; if(ms.some(m=>!(m.target&&m.target.closest&&m.target.closest('.gfitm'))))later(); }).observe(document.body,{childList:true,subtree:true});
+  document.addEventListener('toggle',()=>later(60),true);
+  let rw=0; window.addEventListener('resize',()=>{ if(innerWidth===rw)return; rw=innerWidth; document.querySelectorAll('table').forEach(t=>{ restore(t); t._gfitSig=null; }); later(450); });   /* 等舊的 svcFitCols（250ms）先跑完再排 */
+})();
+</script>
 </body>
 </html>
