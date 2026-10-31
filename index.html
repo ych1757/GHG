@@ -302,7 +302,7 @@ function facChg(on){ return '<span class="fchg'+(on?'':' off')+'">🟡</span>'; 
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-76</b> · 2026/10/31</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-77</b> · 2026/10/31</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -8114,6 +8114,7 @@ async function c12Load(){
     if(!c12Decl(F.year)&&facY(F.year)>=2026){ try{ const {data:td,error:te}=await sb.from('ghg_c12_treat_default').select('mat,treat').eq('data_year',facY(F.year)); if(te)throw te; C12.treat={}; (td||[]).forEach(r=>{ C12.treat[r.mat]=r.treat; }); }catch(e){ C12.treatErr=String(e.message||e); C12.treat=null; } }
     C12.bsrc=null; C12.basis=null;   /* V129-43：已申報年度讀批266 的 C1 全部類別（沒建表或沒這個廠年就照舊寫原因） */
     if(c12Decl(F.year)){ try{ const {data:bs,error:be}=await sb.from('ghg_c12_c1_basis_src').select('*').eq('site_id',F.site).eq('data_year',F.year); if(!be&&bs&&bs.length){ const r2=await sbAll(()=>sb.from('ghg_c12_c1_basis').select('seq,material,weight_t,src_class').eq('site_id',F.site).eq('data_year',F.year).order('seq')); if(!r2.error&&r2.data&&r2.data.length){ C12.bsrc=bs[0]; C12.basis=r2.data; } } }catch(e){ console.error('C12 全部類別',e); } }
+    C12.grp=c12Decl(F.year)?await entryGrpLoad(F.site,F.year,'C12',['C12']):null;   /* V129-77：② 收割數字＝全集團頁 C12 那一格 */
     if(C12.man.length){ c12ManW(); C12.imp=null; }   /* V94-1 */
     else if(C12._keepW){ C12._keepW=false; }
     else{ const a=C12.auto.find(r=>r.extra&&r.extra['出貨總重量']!=null); C12.W=a?+a.extra['出貨總重量']:null; C12.Wsrc=a?String(a.extra['出貨總重量來源']||'C12 頁輸入'):''; C12.imp=null; }
@@ -8123,6 +8124,121 @@ async function c12Load(){
     if(nw.length&&curGhgUser&&!READONLY&&!c12Decl(F.year)&&!trialY(F.year)&&!((typeof yearLocked==='function')&&yearLocked(F.year))){   /* V129-42-1：試打年度不送（練習資料不進 ESG 的對照表） */ const site=F.site, y=F.year; c12MapPendSync(nw,site,y).then(r=>{ if(F.site!==site||F.year!==y)return; C12.sync=r; C12.cc=c12Calc(F.year); c12Render(); }); }
   }catch(e){box.innerHTML='<div class="msg err">載入失敗：'+esc(e.message||e)+'</div>';console.error(e);}
 }
+function c12MatsHtml(cc){   /* V129-77：C1 材質怎麼分四大類（點開看） */
+  if(!(cc.mats.length||cc.bad.length))return ''; const KN={}; C12_KINDS.forEach(k=>{ KN[k.k]=k.name; });
+  return '<details style="margin:6px 0 0"><summary style="cursor:pointer;font-size:12px;color:var(--p)">C1 直接物料 '+cc.mats.length+' 列怎麼分四大類（點開看）'+(cc.mats.some(m=>m.how==='other')?'　<span style="color:#b8860b">有 '+cc.mats.filter(m=>m.how==='other').length+' 列認不出、先歸其他</span>':'')+(cc.mats.some(m=>m.how==='guess')?'　<span style="color:#8a9c93">'+cc.mats.filter(m=>m.how==='guess').length+' 列對照表沒有、依名稱推</span>':'')+'</summary>'
+        +'<table class="fsm" style="width:100%;table-layout:fixed;font-size:12px;margin-top:4px"><colgroup><col style="width:24%"><col style="width:24%"><col><col style="width:14%"><col style="width:13%"></colgroup><thead><tr><th style="text-align:left">物料類別</th><th style="text-align:left">材質</th><th style="text-align:left">品名</th><th style="text-align:right">重量 公噸</th><th style="text-align:left">分到</th></tr></thead><tbody>'
+        +cc.mats.slice().sort((a,b)=>'MPRO'.indexOf(a.k)-'MPRO'.indexOf(b.k)||b.q-a.q).map(m=>'<tr><td style="text-align:left;white-space:normal;word-break:break-word">'+esc(m.cls||'')+'</td><td style="text-align:left;white-space:normal;word-break:break-word">'+esc(m.mat||'')+(m.cd?' <span class="fmini">'+esc(m.cd)+'</span>':'')+((typeof c12StdOf==='function'&&c12StdOf(m.mat)&&c12GKey(c12StdOf(m.mat))!==c12GKey(m.mat))?'<div style="font-size:10.5px;color:#5c7568">標準材質：'+esc(c12StdOf(m.mat))+'</div>':'')+'</td><td style="text-align:left;white-space:normal;word-break:break-word">'+esc(m.nm||'')+'</td><td style="text-align:right">'+nf(m.q,4)+'</td><td style="text-align:left">'+esc(KN[m.k])+(m.how==='map'?' <span class="fmini" style="color:#14603F">對照表</span>':m.how==='src'?' <span class="fmini" style="color:#b8860b">暫依原檔分類</span>':(m.how==='other'?' <span style="color:#b8860b">⚠ 認不出，先歸其他</span>':' <span class="fmini" style="color:#8a9c93">依名稱推</span>'))+'</td></tr>').join('')
+        +(cc.bad.length?'<tr><td colspan="5" style="text-align:left;color:#a33;white-space:normal">⚠ 單位不是重量，沒算進占比：'+esc(cc.bad.join('、'))+'</td></tr>':'')+'</tbody></table></details>'; }
+function c12BsrcNote(){   /* V129-43 已申報年度 C1 全部類別試算來源說明（V129-77 抽成函式；字級 12px，原本沒設字級被撐成 16px） */
+  if(!C12.bsrc)return ''; const B=C12.bsrc, dd=+B.diff||0;   /* V129-43 */
+  return '<div class="fmini" style="margin:2px 0 6px;font-size:12px;line-height:1.6;background:#f6faf8;border:1px solid #dce9e2;border-radius:8px;padding:6px 10px">📋 '+F.year+' 已申報：系統照 <b>C1 全部類別（100%）</b>試算，只拿來跟清冊比對、不寫入。來源：'+esc(B.src_file)+'｜'+esc(B.src_sheet)+'，合計 '+nf(+B.page_total,4)+' 公噸'+(Math.abs(dd)<0.0005?'（＝ESG 當年 C12 收集表用的 C1 合計）':'；<span style="color:#b8860b">跟 ESG 當年 C12 收集表用的 C1 合計 '+nf(+B.esg_c1_total,4)+' 公噸差 '+(dd>0?'+':'')+nf(dd,4)+' 公噸</span>')+'。大類照「C12 材質對照」，對照表還沒定的暫依原檔分類或名稱推（點開下面明細看）。係數照該廠當年清冊（ESG 當年實際用的處理方式），所以跟清冊的差只剩占比與分類。C1 碳排照舊只算 80%，不受影響。</div>'; }
+function c12Hv(k){ return ' data-c12k="'+k+'" onmouseenter="c12Hl(\''+k+'\',1)" onmouseleave="c12Hl(\''+k+'\',0)"'; }   /* V129-77：上下表同一類一起亮 */
+window.c12Hl=function(k,on){ document.querySelectorAll('#src_form tr[data-c12k="'+k+'"]').forEach(tr=>tr.classList.toggle('c12hl',!!on)); };
+function c12DeclView(cc){   /* V129-77：已申報年度（2022–2025）新畫面＝照範疇一二 10 類、冷媒（方案 B-1）：頁首 ① 系統算／② 收割數字（全集團頁）／差額＋差異原因；上表 ① 系統算；下表 ② 收割數字怎麼來（當初清冊的列） */
+  const y=F.year, G=C12.grp||{}, gOK=!G.err&&G.g!=null, W=cc.W;
+  const r4=v=>Math.round(v*1e4)/1e4+0, rd4=v=>+Number(v).toLocaleString('en-US',{minimumFractionDigits:4,maximumFractionDigits:4}).replace(/,/g,'')+0;
+  const sg=v=>(v>0?'+':'')+nf(v,4), g10=v=>nf(v,10), dash='<span style="color:#c3cfc9">—</span>';
+  const man=C12.man.map((r,i)=>({r:r,i:i,k:c12RowCls(r),E:c12ManQE(r),t:+r.co2e_draft||0}));
+  const LS=man.reduce((a,x)=>a+x.t,0), AU=C12.auto.reduce((a,r)=>a+(+r.co2e_draft||0),0);
+  if(!man.length&&!C12.auto.length&&!(cc.tot>0)&&!(gOK&&Math.abs(G.g)>=0.00005))return {box:'',body:'<div class="msg">'+esc(F.site)+' '+esc(y)+' 沒有 C01 直接物料資料，也沒有 C12 清冊或自動列。</div>'};   /* 照舊版同一句 */
+  const why0=!C12.bsrc?(cc.mats.length?('C12 占比要用「C1 採購總重量」（樞紐全部類別）當分母，但資料庫裡 '+F.site+' '+y+' 的 C1 直接物料只有清冊上被選進 80% 的 '+cc.mats.length+' 列'+(cc.tot>0?'（合計 '+nf(cc.tot,4)+' 公噸）':'')+'，原資料也沒有找到做過樞紐統計、合計對得上的 C1 全部類別，所以算不出正確占比。2026 年起廠端匯入全部類別，系統才算。'):('資料庫裡 '+F.site+' '+y+' 沒有 C1 直接物料資料，算不出四大類占比。'))
+    :(!(cc.tot>0)?('C1 全部類別沒有 '+y+' 年資料，算不出四大類占比。'):(!(W>0)?'清冊只有碳排、沒有重量，拿不到出貨總重量，算不出各類重量。':''));
+  const K=C12_KINDS.map((kd,i)=>{ const c=cc.rows.find(x=>x.kd.k===kd.k), ms=man.filter(x=>x.k===kd.k), tM=ms.reduce((a,x)=>a+x.t,0);
+    const ok=!why0&&!!(c&&c.pk&&!c.bad&&c.q!=null), fb=!why0&&!ok&&!!(c&&c.cw>0);
+    const sys=why0?null:(ok?c.t:(fb?tM:0));
+    let sq=0, sqe=0, qM=0; ms.forEach(x=>{ if(x.E.q>0){ qM+=x.E.q; if(x.E.ef!=null&&isFinite(+x.E.ef)){ sq+=x.E.q; sqe+=x.E.q*x.E.ef; } } });
+    const efs=[...new Set(ms.map(x=>x.E.ef).filter(v=>v!=null&&isFinite(+v)).map(v=>(+v).toFixed(10)))];
+    return {kd:kd,i:i,c:c,ms:ms,tM:tM,ok:ok,fb:fb,sys:sys,qM:qM,efM:sq>0?sqe/sq:null,efTxt:efs.length>1?efs.map(v=>g10(+v)).join('／'):(sq>0?g10(sqe/sq):'')}; });
+  const UN=man.filter(x=>!x.k), tU=UN.reduce((a,x)=>a+x.t,0);
+  const q1=why0?null:K.reduce((a,o)=>a+o.sys,0);
+  const foot=[];
+  if(!why0){ const fbn=K.filter(o=>o.fb).map(o=>o.kd.name); if(fbn.length)foot.push(fbn.join('、')+'：系統算不出（'+(K.some(o=>o.fb&&o.c&&o.c.treat==='待 ESG')?'清冊用的係數認不出處理方式，待 ESG':'係數庫沒有條目')+'），照存的數，上表碳排格標「照存的數」。'); }
+  if(C12.mq>0&&W>0&&/收集表/.test(C12.Wsrc||'')&&Math.abs(C12.mq-W)>Math.max(0.01,W*0.0005)){ const src=[...new Set(C12.man.map(r=>(r.extra||{})['收集表重量取自']).filter(Boolean))]; foot.push('清冊各類重量合計 '+nf(C12.mq,2)+' 公噸，跟收集表出貨總重量 '+nf(W,2)+' 公噸不同'+(src.length?'（清冊的重量取自收集表 '+src.join('／')+'）':'')+'，系統照出貨總重量分配。'); }
+  const wx=C12.man.filter(r=>(r.extra||{})['⚠收集表']); if(wx.length)foot.push('收集表本身：'+wx.map(r=>(r.source_name||'')+' '+r.extra['⚠收集表']).join('；'));
+  const fx=man.filter(x=>x.E.note); if(fx.length)foot.push('清冊有 '+fx.length+' 列重量欄跟「換算」的重量不一樣（'+fx.map(x=>(x.r.source_name||'')+' '+nf(c12Q(x.r),4)+'→'+nf(x.E.q,4)).join('、')+'），碳排是照換算的重量算的，比對用換算的重量。');
+  if(!why0&&gOK&&rd4(q1)===rd4(G.g)&&K.some(o=>Math.abs(o.sys-o.tM)>=0.00005))foot.push('總數一致，但各類有差、互相抵掉了：看下表最後一欄「跟上表差」。');
+  const ft=foot.length?'<div class="fmini" style="font-size:12px;color:#7a8f84;line-height:1.5">'+foot.map(x=>'・'+esc(x)).join('<br>')+'</div>':'';
+  let box;
+  if(why0){ const bx=(k,v,bg,bd,c,t)=>'<div title="'+esc(t||'')+'" style="cursor:help;border-radius:8px;padding:3px 8px;text-align:center;background:'+bg+';border:2px solid '+bd+'"><div style="font-size:12px;color:#5f7268">'+k+'</div><div style="font-size:19px;font-weight:700;color:'+c+'">'+v+'</div></div>';
+    box='<div style="margin:0 0 6px;padding:4px 10px;border:1px solid #cfe0d6;background:#f6fbf8;border-radius:8px;font-size:12.5px;line-height:1.5"><b title="過去年度照原資料，不改數字" style="cursor:help">'+esc(y)+' 已申報，只看不改。</b>'
+      +'<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:4px 0 6px">'+bx('① 系統算（係數庫）','算不出','#f1f3f2','#c9d3ce','#7a8f84',why0)+bx('② 收割數字（全集團頁）',gOK?nf(G.g,4)+' t':'—','#eef1f7','#b8c4dc','#2b4a7a','全集團頁「C12 產品終端處置」那一格')+bx('差額 ①－②','—','#f7f7f2','#ddd8c4','#9a8f6a','')+'</div>'
+      +'<div style="color:#5c4a00"><b>① 算不出的原因</b>：'+esc(why0)+'</div>'
+      +(gOK?'':'<div class="msg err" style="margin:3px 0 0">② 讀不到：'+esc(G.err||'沒有讀取結果')+'。</div>')+ft+'</div>'; }
+  else{ const items=[]; let tail=0;
+    K.forEach(o=>{ const kd=o.kd, c=o.c; if(o.fb)return;
+      if(!o.ms.length){ if(Math.abs(o.sys)>1e-12)items.push([kd.name+'：清冊沒有這一類（C1 全部類別有 '+nf(c.cw,4)+' 公噸，占 '+c12pc(c.sh)+'）',o.sys]); return; }
+      if(!(c&&c.cw>0)){ items.push([kd.name+'：C1 全部類別沒有這一類的材質（占比 0）；清冊有 '+(o.qM>0?nf(o.qM,4)+' 公噸':o.ms.length+' 列'),o.sys-o.tM]); return; }
+      if(!(o.qM>0)||o.efM==null){ items.push([kd.name+'：清冊這一類只有碳排、沒有重量，拆不出重量或係數',o.sys-o.tM]); return; }
+      const a=(c.q-o.qM)*o.efM/1000, b=c.q*(c.ef-o.efM)/1000;
+      if(Math.abs(a)>1e-12)items.push([kd.name+' 重量：清冊 '+nf(o.qM,4)+'、系統 '+nf(c.q,4)+' 公噸（占比 清冊 '+c12pc(o.qM/W)+'、系統 '+c12pc(c.sh)+'）',a]);
+      if(Math.abs(b)>1e-12)items.push([kd.name+' 係數：清冊 '+o.efTxt+'、系統 '+g10(c.ef)+(c.treat?'（'+c.treat+'）':''),b]);
+      tail+=(o.sys-o.tM)-a-b; });
+    if(UN.length)items.push(['清冊有 '+UN.length+' 列認不出是哪一類（'+UN.map(x=>x.r.source_name||'').join('、')+'）',-tU]);
+    items.sort((x,z)=>Math.abs(z[1])-Math.abs(x[1]));
+    if(Math.abs(tail)>1e-12)items.push(['清冊每列存到小數 4 位、系統每類算到小數 4 位的尾差',tail]);
+    if(C12.auto.length&&AU!==0)items.push(['資料庫另有 C12 自動列 '+C12.auto.length+' 筆 '+nf(AU,4)+' t（不是清冊的列）',-AU]);
+    box=entryDeclBox({yr:y,q1:+q1.toFixed(10),S:LS+AU,grp:G,items:items,note:false,big:true,cellTip:'全集團頁「C12 產品終端處置」那一格',
+      q1tip:'C1 全部類別依「C12 材質對照」分四大類求占比 × 出貨總重量 × 係數（處理方式照該廠 '+y+' 年記錄，係數取係數庫 C12-材質-處理）',foot:ft}); }
+  // 上下表同一組欄寬
+  const CG='<colgroup><col style="width:7.36em"><col style="width:11em"><col style="width:6.6em"><col style="width:7.68em"><col style="width:5.28em"><col style="width:8.48em"><col style="width:7.4em"><col style="width:6.72em"><col style="width:7.04em"><col></colgroup>';
+  const no=i=>'<span style="display:inline-block;min-width:18px;height:18px;line-height:18px;border-radius:50%;background:var(--p);color:#fff;font-size:11px;text-align:center;margin-right:5px">'+(i+1)+'</span>';
+  const th=t=>'<th style="text-align:right">'+t+'</th>', thl=t=>'<th style="text-align:left">'+t+'</th>';
+  let h='<style>#src_form table.c12t td,#src_form table.c12t th{padding-left:6px;padding-right:6px}#src_form table.c12t th{white-space:normal;line-height:1.25;vertical-align:bottom}#src_form tr.c12hl td{background:#fff3c4!important}#src_form table.c12t td.x{background:#fde7b8;color:#7a4b00;font-weight:700}#src_form .c12h{margin:10px 0 3px;font-size:13.5px;font-weight:700;color:var(--d)}#src_form .c12h span{font-weight:400;font-size:12px;color:#5c7568}</style>';
+  h+=c12BsrcNote();
+  if(!why0||(C12.bsrc&&cc.tot>0)){
+    h+='<div class="c12h">上表　① 系統算 <span>C1 全部類別依「C12 材質對照」分四大類求占比 × 出貨總重量 × 係數（處理方式照該廠 '+esc(y)+' 年記錄，係數取係數庫 C12-材質-處理）</span></div>'
+      +'<table class="fsm c12t" style="width:100%;min-width:70em;table-layout:fixed;font-size:12.5px">'+CG
+      +'<thead><tr>'+thl('種類')+thl('代號')+'<th style="text-align:left" title="照該廠當年清冊用的係數（各廠歷年處理方式記錄；6.41061 回收、燃燒同值分不出）">當年處理方式</th>'+th('C1 重量<br>公噸')+th('占比')+'<th style="text-align:right" title="出貨總重量 × 占比">分配重量<br>公噸</th>'+th('係數')+thl('係數單位')+th('碳排 tCO₂e<br><span class="fmini" style="font-weight:400">系統算</span>')+th('對到下表')+'</tr></thead><tbody>';
+    K.forEach(o=>{ const kd=o.kd, c=o.c||{}; const z=!(c.cw>0);
+      const code=(c.tcode&&c.manEf!=null)?c.tcode.split('、')[0].split('／')[0]+'·ALL·2026':kd.code+'·ALL·'+facY(y);
+      const stt=[]; if(c.pk&&c.bad&&c.treat==='待 ESG'&&c.cw>0)stt.push('<span style="color:#b8860b">待 ESG</span>'); if(!c.pk&&c.cw>0)stt.push('<span style="color:#a33">⚠ 無係數</span>');
+      h+='<tr'+c12Hv(kd.k)+(z?' style="color:#9aa8a1"':'')+'><td style="text-align:left">'+no(o.i)+'<b>'+esc(kd.name)+'</b> <span class="fmini">'+kd.en+'</span></td>'
+        +'<td style="text-align:left"><a href="javascript:void(0)" onclick="facTrace(&#39;C12&#39;,&#39;ALL&#39;,'+facY(y)+',&#39;'+F.site+'&#39;,&#39;'+kd.code+'&#39;)" title="'+esc((c.tcode&&c.manEf!=null)?('該廠當年處理方式對到的條目：'+c.tcode+'（UK 2024 表，跟 2026 開帳的 12 條同一組值）'):'點了看係數庫 C12 表')+'" style="color:var(--p);font-weight:700;font-size:11.5px;text-decoration:none;white-space:nowrap">'+esc(code)+' ↗</a></td>'
+        +'<td style="text-align:left;font-size:11.5px;white-space:normal"'+(c.treat?' title="'+esc(c.tsrc||'')+'"':'')+'>'+(c.treat?esc(c.treat)+(c.tunk?'<div style="font-size:10px;color:#b8860b">⚠ '+c.tunk+' 列認不出（待 ESG）</div>':''):dash)+'</td>'
+        +'<td style="text-align:right;white-space:nowrap">'+nf(c.cw||0,2)+'</td><td style="text-align:right;white-space:nowrap">'+(cc.tot>0?c12pc(c.sh||0):'—')+'</td>'
+        +'<td style="text-align:right;white-space:nowrap">'+(c.q!=null?nf(c.q,4):'—')+'</td>'
+        +'<td style="text-align:right;white-space:nowrap">'+((c.ef!=null&&!c.bad)?(c.manEf==null?fvA(c.pk&&c.pk.f&&c.pk.f.factor_id,g10(c.ef)):fvA(c.tfid,g10(c.ef))):'—')+'</td><td style="text-align:left;font-size:11px;white-space:normal;word-break:break-word">'+esc((c.ef!=null&&!c.bad)?(c.efu||''):'')+'</td>'
+        +'<td style="text-align:right;font-weight:700;white-space:nowrap">'+(why0?'—':(o.fb?nf(o.sys,4)+'<div class="fmini" style="color:#b8860b;font-weight:400">照存的數</div>':nf(o.sys,4)))+'</td>'
+        +'<td style="text-align:right;font-size:11.5px;white-space:normal">'+((o.ms.length||Math.abs(o.sys||0)>=0.00005)?'↓ 下表 '+(o.i+1):'<span style="color:#9aa8a1">清冊也沒有</span>')+(stt.length?'<br>'+stt.join('<br>'):'')+'</td></tr>'; });
+    h+='<tr style="background:#eef4f0;font-weight:700"><td style="text-align:left" colspan="3">合計 ＝ ①</td><td style="text-align:right">'+nf(cc.tot,2)+'</td><td style="text-align:right">'+(cc.tot>0?'100.00%':'—')+'</td><td style="text-align:right">'+(W>0&&cc.tot>0?nf(W,4):'—')+'</td><td></td><td></td><td style="text-align:right">'+(why0?'—':nf(q1,4))+'</td><td></td></tr></tbody></table>';
+    h+=c12MatsHtml(cc);
+    h+='<div class="fmini" style="font-size:12px;margin:3px 0 6px;color:#5f7268">係數點一下看係數代號、點兩下跳到係數庫那一條；代號 ↗ 開係數庫 C12 表。</div>'; }
+  // 下表
+  h+='<div class="c12h">下表　② 收割數字怎麼來 <span>當初清冊收割進來的列（照原資料）'+man.length+' 筆；欄位跟上表對齊</span></div>';
+  if(!man.length&&!(gOK&&Math.abs(G.g)>=0.00005)){ h+='<div class="msg" style="margin:4px 0 8px">'+esc(F.site)+' '+esc(y)+' 沒有 C12 清冊的列。</div>'; return {box:box,body:h}; }
+  h+='<table class="fsm c12t" style="width:100%;min-width:70em;table-layout:fixed;font-size:12.5px">'+CG
+    +'<thead><tr>'+thl('種類')+thl('清冊寫法')+'<th style="text-align:left" title="從清冊用的係數判讀（6.41061 回收、燃燒同值分不出）">處理方式</th>'+th('C1 重量<br>公噸')+th('占比')+th('重量<br>公噸')+th('係數')+thl('係數單位')+th('碳排 tCO₂e<br><span class="fmini" style="font-weight:400">清冊存的數</span>')+th('跟上表差')+'</tr></thead><tbody>';
+  // 每一類「跟上表差」取 4 位；四捨五入剩下的併進金額最大那格，加起來＝上表合計 － ②
+  const adj=gOK?G.g-LS:0, hasAdj=gOK&&Math.abs(adj)>=0.00005;
+  const show=K.filter(o=>o.ms.length||(!why0&&Math.abs(o.sys)>=0.00005));
+  const dg=show.map(o=>why0?0:rd4(o.sys-o.tM)), du=UN.length?rd4(-tU):0, da=hasAdj?rd4(-adj):0;
+  if(!why0&&gOK){ const tgt=r4(rd4(q1)-rd4(G.g)); let res=r4(tgt-dg.reduce((a,v)=>a+v,0)-du-da);
+    if(res){ const ord=dg.map((v,i)=>i).sort((x,z)=>Math.abs(dg[z])-Math.abs(dg[x])); const k=ord.find(i=>r4(dg[i]+res)!==0); if(k!=null)dg[k]=r4(dg[k]+res); } }
+  let mq=0;
+  const dcell=(d,n)=>'<td rowspan="'+n+'" style="text-align:right;vertical-align:middle;white-space:nowrap"'+((!why0&&Math.abs(d)>=0.00005)?' class="x"':'')+'>'+(why0?'—':(Math.abs(d)>=0.00005?sg(d):'0'))+'</td>';
+  show.forEach((o,ii)=>{ const kd=o.kd, d=dg[ii];
+    if(!o.ms.length){ h+='<tr'+c12Hv(kd.k)+'><td style="text-align:left">'+no(o.i)+'<b>'+esc(kd.name)+'</b></td><td style="text-align:left;color:#7a8f84;font-size:11.5px" colspan="7">清冊沒有這一類</td><td style="text-align:right"><b>'+nf(0,4)+'</b></td>'+dcell(d,1)+'</tr>'; return; }
+    const c=o.c||{}, ur=new Set(((c.ef!=null&&!c.bad)?[(+c.ef).toFixed(6)]:[]));
+    const kx=!why0&&!o.fb&&c.q!=null&&Math.abs(o.qM-c.q)>Math.max(0.005,o.qM*0.0005), xc=kx?' class="x"':'';   /* 門檻同 c12Why（取位差不標） */
+    o.ms.forEach((x,j)=>{ const r=x.r, ex=r.extra||{}, E=x.E, q=E.q; if(q>0)mq+=q;
+      const tr=(E.ef!=null&&typeof c12TreatOf==='function')?c12TreatOf(kd.k,E.ef):'';
+      const fxx=!o.fb&&!why0&&E.ef!=null&&ur.size&&!ur.has((+E.ef).toFixed(6));
+      const tip=((r.ef_source||ex['係數來源']||'')+'　'+(r.input_method||'')).trim();
+      h+='<tr'+c12Hv(kd.k)+'><td style="text-align:left">'+(j?'':no(o.i)+'<b>'+esc(kd.name)+'</b>')+'</td>'
+        +'<td style="text-align:left;white-space:normal;word-break:break-word"'+(tip?' title="'+esc('來源：'+tip)+'"':'')+'>'+esc(r.source_name||'')+((ex['材質區分']&&ex['材質區分']!==r.source_name)?' <span class="fmini">'+esc(ex['材質區分'])+'</span>':'')+(ex['⚠收集表']?'<div style="font-size:10px;color:#b8860b;white-space:normal;line-height:1.3">⚠ '+esc(ex['⚠收集表'])+'</div>':'')+'</td>'
+        +'<td style="text-align:left;font-size:11.5px;white-space:normal">'+(tr&&tr!=='—'?esc(tr):dash)+'</td>'
+        +'<td style="text-align:right;color:#c3cfc9">—</td>'
+        +'<td style="text-align:right"'+xc+'>'+((q>0&&W>0)?c12pc(q/W):'—')+'</td>'
+        +'<td style="text-align:right"'+xc+(E.note?' title="'+esc(E.note)+'"':'')+'>'+(q>0?nf(q,4):'—')+(E.note?'<div style="font-size:10px;color:#b8860b;white-space:normal">⚠ 重量欄寫 '+nf(c12Q(r),4)+'</div>':'')+'</td>'
+        +'<td style="text-align:right;white-space:nowrap"'+(fxx?' class="x"':'')+'>'+(E.ef!=null?fvA(r.factor_id,g10(E.ef)):'—')+'</td><td style="text-align:left;font-size:11px">'+(E.ef!=null?'kgCO₂e/t':'')+'</td>'
+        +'<td style="text-align:right"><b>'+nf(x.t,4)+'</b></td>'+(j?'':dcell(d,o.ms.length))+'</tr>'; }); });
+  if(UN.length)UN.forEach((x,j)=>{ const r=x.r; if(x.E.q>0)mq+=x.E.q;
+    h+='<tr><td style="text-align:left">'+(j?'':'<span style="color:#a33">⚠ 認不出</span>')+'</td><td style="text-align:left;white-space:normal;word-break:break-word">'+esc(r.source_name||'')+'</td><td>'+dash+'</td><td style="text-align:right;color:#c3cfc9">—</td><td style="text-align:right">—</td><td style="text-align:right">'+(x.E.q>0?nf(x.E.q,4):'—')+'</td><td style="text-align:right">'+(x.E.ef!=null?fvA(r.factor_id,g10(x.E.ef)):'—')+'</td><td></td><td style="text-align:right"><b>'+nf(x.t,4)+'</b></td>'+(j?'':dcell(du,UN.length))+'</tr>'; });
+  if(hasAdj)h+='<tr style="background:#fff7e3"><td style="text-align:left" colspan="8">'+(G.hv!=null?'換回當初收割的數字：全集團頁用收割原值 '+nf(G.hv,4)+' t':('資料庫另有 C12 自動列 '+C12.auto.length+' 筆（不是清冊的列），全集團頁有算進去'))+'</td><td style="text-align:right" class="x">'+sg(adj)+'</td><td style="text-align:right" class="x">'+(why0?'—':sg(da))+'</td></tr>';
+  h+='<tr style="background:#eef4f0;font-weight:700"><td style="text-align:left" colspan="5">合計 ＝ ②</td><td style="text-align:right">'+(mq>0?nf(mq,4):'—')+'</td><td></td><td></td><td style="text-align:right">'+(gOK?nf(G.g,4):nf(LS,4)+' <span class="fmini">（② 讀不到，這是清冊合計）</span>')+'</td><td style="text-align:right">'+((!why0&&gOK)?(r4(rd4(q1)-rd4(G.g))===0?'0':sg(r4(rd4(q1)-rd4(G.g)))):'—')+'</td></tr></tbody></table>';
+  h+='<div class="fmini" style="font-size:12px;margin:3px 0 6px;color:#5f7268">游標移到任一列，上下表同一類一起亮。橘底＝跟上表不一樣（重量看這一類清冊各列加起來）。'+(why0?'':'「跟上表差」＝上表減下表（每一類一格），加起來＝差額。')+'游標停在清冊寫法上看來源。</div>';
+  return {box:box,body:h}; }
 function c12Render(){
   const box=document.getElementById('src_form'); const canEdit=editable(); const lk=(typeof yearLocked==='function')&&yearLocked(F.year); const dec=c12Decl(F.year); const cc=C12.cc||c12Calc(F.year);
   let chip='';
@@ -8141,7 +8257,8 @@ function c12Render(){
       +chip,
     btns:(canWrite?'<button onclick="c12Ask()" style="padding:6px 14px;font-weight:700">🔁 重算並寫入</button>':(canInp?'<button disabled title="有材質待 ESG 歸類，歸類後才能寫入" style="padding:6px 14px;font-weight:700">🔁 重算並寫入（等 ESG 歸類）</button>':''))
       +((C12.auto.length&&canEdit&&!dec)?'<button class="sec" onclick="c12DropAsk()" style="padding:6px 14px">🗑 刪除自動列</button>':'')});
-  h+='<div class="fmini ehdesc" style="margin-bottom:4px;line-height:1.4">C12 不用逐筆輸入：C01 材質占比 × 出貨總重量 × 係數，系統自動算'+(C12.man.length?'　<span style="color:#a33;font-weight:700" title="正式數字用下表②，上表①只拿來比對、不寫入">已有 ESG 清冊 '+C12.man.length+' 筆：正式數字用下表②</span>':(dec?'　<span style="color:#a33;font-weight:700">'+F.year+' 已申報：只比對、不寫入</span>':''))+'　<span title="C12 不用逐筆輸入：系統拿 C01 直接物料（全部類別）的材質重量，依係數庫「C12 材質對照」分成金屬／塑膠／紙類／其他求占比，出貨總重量按占比分到四類，再 × 係數庫 C12 係數。C01 或出貨總重量改了就按「重算並寫入」。" style="cursor:help;color:var(--p);font-weight:700;white-space:nowrap">ⓘ 怎麼算</span></div>';   /* V106-1：說明收成一行 */
+  h+='<div class="fmini ehdesc" style="margin-bottom:4px;line-height:1.4">C12 不用逐筆輸入：C01 材質占比 × 出貨總重量 × 係數，系統自動算'+((C12.man.length&&!dec)?'　<span style="color:#a33;font-weight:700" title="正式數字用下表②，上表①只拿來比對、不寫入">已有 ESG 清冊 '+C12.man.length+' 筆：正式數字用下表②</span>':'')+'　<span title="C12 不用逐筆輸入：系統拿 C01 直接物料（全部類別）的材質重量，依係數庫「C12 材質對照」分成金屬／塑膠／紙類／其他求占比，出貨總重量按占比分到四類，再 × 係數庫 C12 係數。C01 或出貨總重量改了就按「重算並寫入」。" style="cursor:help;color:var(--p);font-weight:700;white-space:nowrap">ⓘ 怎麼算</span></div>';   /* V106-1：說明收成一行 */
+  const DV=dec?c12DeclView(cc):null; if(DV)h+=DV.box;   /* V129-77：已申報年度頁首 ①／②／差額 */
   /* 兩個輸入：出貨總重量、C1 直接物料 */
   const Wtxt=(C12.W!=null&&isFinite(C12.W))?nf(C12.W,4):'—';
   h+='<div style="display:flex;flex-wrap:wrap;gap:6px 22px;align-items:center;margin:2px 0 8px;font-size:13px;background:#f6faf8;border:1px solid #dce9e2;border-radius:8px;padding:7px 12px">'
@@ -8155,13 +8272,13 @@ function c12Render(){
     h+='<div class="msg" style="background:#fdf3f2;border:1px solid #f3c9c4;color:#8f1d27;margin:2px 0 8px;padding:7px 12px;line-height:1.6">⚠ 有 <b style="color:#D42B3A">'+cc.pend.length+'</b> 個材質還沒有 C12 大類（'+nf(pq,4)+' 公噸）：'+esc(cc.pend.map(p=>p.name).join('、'))+'<br><span style="font-size:12px;color:#5a5a5a">'+(trialY(F.year)?'試打年度不會送到對照表（正式年度遇到才會送 ESG 歸類）。':((C12.sync&&C12.sync.added.length)?'已送到「係數庫 → C12 材質對照」等 ESG 歸類。':'在「係數庫 → C12 材質對照」等 ESG 歸類。'))+'歸類前 '+esc(F.site)+' '+F.year+' 的 C12 先不算、不能寫入；C1 碳排不受影響。下表占比暫時不含這些材質。</span>'
       +'　<a href="javascript:void(0)" onclick="c12GoMap()" style="color:var(--p);font-weight:700;font-size:12px">到 C12 材質對照 ↗</a>'+((C12.sync&&C12.sync.err)?'<div style="font-size:11px;color:#a33">送出時有錯：'+esc(C12.sync.err)+'</div>':'')+'</div>'; }
   if(C12MAP&&C12MAP._missing&&!dec)h+='<div class="fmini" style="margin:-2px 0 6px;color:#b8860b">C12 材質對照表還沒建（批265 未跑）：暫時照舊依材質名稱推大類。</div>';
+  if(DV){ h+=DV.body; box.innerHTML=h; c12BindSel(); return; }   /* V129-77：已申報年度＝上表 ① 系統算＋下表 ② 收割數字怎麼來 */
   if(dec&&!C12.bsrc&&(cc.tot>0||C12.man.length)){   /* V129-42-1；V129-43：有 C1 全部類別的廠年改試算 */
     h+='<div class="msg" style="background:#fff8e1;border:1px solid #f0d98a;line-height:1.75;margin:4px 0 8px">📋 <b>'+F.year+' 已申報：系統不算 C12</b>，正式數字照下表 ESG 清冊（過去年度照原資料、不重算）。<br><span style="font-size:12px;color:#5a5a5a">原因：C12 占比要用「C1 採購總重量」（樞紐全部類別）當分母，但資料庫裡 '+esc(F.site)+' '+F.year+' 的 C1 直接物料只有清冊上被選進 80% 的 '+cc.mats.length+' 列（合計 '+nf(cc.tot,4)+' 公噸），沒有全部類別；原資料也沒有找到做過樞紐統計、合計對得上的 C1 全部類別，所以算不出正確占比。2026 年起廠端匯入全部類別，系統才算。</span></div>'; }
   else if(!cc.tot&&!C12.auto.length&&!C12.man.length){ h+='<div class="msg">'+esc(F.site)+' '+F.year+' 沒有 C01 直接物料資料，也沒有 C12 清冊或自動列。</div>'; }
   else{
     const noW=!(cc.W>0);
-    if(C12.bsrc){ const B=C12.bsrc, dd=+B.diff||0;   /* V129-43 */
-      h+='<div class="fmini" style="margin:2px 0 6px;line-height:1.6;background:#f6faf8;border:1px solid #dce9e2;border-radius:8px;padding:6px 10px">📋 '+F.year+' 已申報：系統照 <b>C1 全部類別（100%）</b>試算，只拿來跟清冊比對、不寫入。來源：'+esc(B.src_file)+'｜'+esc(B.src_sheet)+'，合計 '+nf(+B.page_total,4)+' 公噸'+(Math.abs(dd)<0.0005?'（＝ESG 當年 C12 收集表用的 C1 合計）':'；<span style="color:#b8860b">跟 ESG 當年 C12 收集表用的 C1 合計 '+nf(+B.esg_c1_total,4)+' 公噸差 '+(dd>0?'+':'')+nf(dd,4)+' 公噸</span>')+'。大類照「C12 材質對照」，對照表還沒定的暫依原檔分類或名稱推（點開下面明細看）。係數照該廠當年清冊（ESG 當年實際用的處理方式），所以跟清冊的差只剩占比與分類。C1 碳排照舊只算 80%，不受影響。</div>'; }
+    h+=c12BsrcNote();   /* V129-77：抽成函式 */
     h+='<div style="margin:4px 0 4px;font-weight:700;color:var(--d)">① 系統自己算：C01 直接物料占比 × 出貨總重量 × 係數庫 '+facY(F.year)+' 年係數　'+(C12.man.length?'<span style="font-weight:400;font-size:12px;color:#a33">這年已有 ESG 清冊（下表②）：只拿來比對，不算進系統</span>':(dec?'<span style="font-weight:400;font-size:12px;color:#a33">已申報年度：只試算，不寫入</span>':'<span style="font-weight:400;font-size:12px;color:#14603F">這年沒有 ESG 清冊：按「重算並寫入」後就是這一年的正式數字</span>'))+'</div>';
     if(!cc.tot)h+='<div class="msg" style="margin:4px 0">C01 直接物料沒有 '+F.year+' 年資料，算不出四大類占比 → 先到 <a href="javascript:void(0)" onclick="c12GoC01()" style="color:var(--p)">C01-01 直接物料</a> 登錄。</div>';
     else if(noW)h+='<div class="msg" style="margin:4px 0">'+(canInp?'請先填「出貨總重量」（或從 C12 收集表帶入），才算得出各類重量與碳排；下表先列占比。':(C12.man.length?'清冊只有碳排、沒有重量，拿不到出貨總重量：下表只列占比。':'沒有出貨總重量：下表只列占比。'))+'</div>';
@@ -8183,11 +8300,7 @@ function c12Render(){
         +'<td style="text-align:right;white-space:nowrap">'+(c.pk?(c.manEf==null?fvA(c.pk.f&&c.pk.f.factor_id,nf(c.ef,10)):fvA(c.tfid,nf(c.ef,10))):'—')+'</td><td style="text-align:left;font-size:11px;white-space:normal;word-break:break-word">'+esc(c.efu||'')+'</td>'
         +'<td style="text-align:right;font-weight:700;white-space:nowrap">'+(ok?nf(c.t,4):'—')+'</td><td style="text-align:left;white-space:normal;font-size:11px">'+stt.join('<br>')+'</td></tr>'; });
     h+='<tr style="background:#f2f9f5;font-weight:700"><td style="text-align:left" colspan="3">合計（系統自己算）</td><td style="text-align:right">'+nf(cc.tot,2)+'</td><td style="text-align:right">'+(cc.tot>0?'100.00%':'—')+'</td><td style="text-align:right">'+(cc.W>0&&cc.tot>0?nf(cc.W,4):'—')+'</td><td colspan="2" style="text-align:left;font-size:11px;font-weight:400">'+(C12.auto.length?'DB 自動列 '+C12.auto.length+' 筆合計 '+nf(dbTot,4)+' t':'')+'</td><td style="text-align:right">'+(cc.W>0&&cc.tot>0&&!cc.rows.some(c=>c.treat==='待 ESG'&&c.cw>0)?nf(tot,4):'—')+'</td><td style="text-align:left;font-size:11px">'+(need&&canWrite?'<span style="color:#b8860b">● 有變動，請重算並寫入</span>':(C12.auto.length&&!need?'<span style="color:#14603F">✓ 與 DB 一致</span>':''))+'</td></tr></tbody></table>';
-    if(cc.mats.length||cc.bad.length){ const KN={}; C12_KINDS.forEach(k=>{ KN[k.k]=k.name; });
-      h+='<details style="margin:6px 0 0"><summary style="cursor:pointer;font-size:12px;color:var(--p)">C1 直接物料 '+cc.mats.length+' 列怎麼分四大類（點開看）'+(cc.mats.some(m=>m.how==='other')?'　<span style="color:#b8860b">有 '+cc.mats.filter(m=>m.how==='other').length+' 列認不出、先歸其他</span>':'')+(cc.mats.some(m=>m.how==='guess')?'　<span style="color:#8a9c93">'+cc.mats.filter(m=>m.how==='guess').length+' 列對照表沒有、依名稱推</span>':'')+'</summary>'
-        +'<table class="fsm" style="width:100%;table-layout:fixed;font-size:12px;margin-top:4px"><colgroup><col style="width:24%"><col style="width:24%"><col><col style="width:14%"><col style="width:13%"></colgroup><thead><tr><th style="text-align:left">物料類別</th><th style="text-align:left">材質</th><th style="text-align:left">品名</th><th style="text-align:right">重量 公噸</th><th style="text-align:left">分到</th></tr></thead><tbody>'
-        +cc.mats.slice().sort((a,b)=>'MPRO'.indexOf(a.k)-'MPRO'.indexOf(b.k)||b.q-a.q).map(m=>'<tr><td style="text-align:left;white-space:normal;word-break:break-word">'+esc(m.cls||'')+'</td><td style="text-align:left;white-space:normal;word-break:break-word">'+esc(m.mat||'')+(m.cd?' <span class="fmini">'+esc(m.cd)+'</span>':'')+((typeof c12StdOf==='function'&&c12StdOf(m.mat)&&c12GKey(c12StdOf(m.mat))!==c12GKey(m.mat))?'<div style="font-size:10.5px;color:#5c7568">標準材質：'+esc(c12StdOf(m.mat))+'</div>':'')+'</td><td style="text-align:left;white-space:normal;word-break:break-word">'+esc(m.nm||'')+'</td><td style="text-align:right">'+nf(m.q,4)+'</td><td style="text-align:left">'+esc(KN[m.k])+(m.how==='map'?' <span class="fmini" style="color:#14603F">對照表</span>':m.how==='src'?' <span class="fmini" style="color:#b8860b">暫依原檔分類</span>':(m.how==='other'?' <span style="color:#b8860b">⚠ 認不出，先歸其他</span>':' <span class="fmini" style="color:#8a9c93">依名稱推</span>'))+'</td></tr>').join('')
-        +(cc.bad.length?'<tr><td colspan="5" style="text-align:left;color:#a33;white-space:normal">⚠ 單位不是重量，沒算進占比：'+esc(cc.bad.join('、'))+'</td></tr>':'')+'</tbody></table></details>'; }
+    h+=c12MatsHtml(cc);   /* V129-77：抽成函式（已申報新畫面共用） */
   }
   if(C12.man.length){
     const KO={}; C12_KINDS.forEach((k,i)=>{ KO[k.k]=i; }); const KN={}; C12_KINDS.forEach(k=>{ KN[k.k]=k.name; });
@@ -8211,10 +8324,11 @@ function c12Render(){
       +(why.length?'<tr><td colspan="10" style="text-align:left;white-space:normal;font-size:12px;background:#fffdf5;color:#5c4a00;line-height:1.7"><b>差異原因（系統算的－清冊）</b><br>'+why.map(x=>'・'+esc(x)).join('<br>')+'</td></tr>':'')+'</tbody></table>';
   }
   box.innerHTML=h;
-  const fs=document.getElementById('fu_site'), fy=document.getElementById('fu_year');
-  if(fs)fs.onchange=async()=>{F.site=fs.value; C12.imp=null; await c12Load();};
-  if(fy)fy.onchange=async()=>{F.year=+fy.value; C12.imp=null; await c12Load();};
+  c12BindSel();
 }
+function c12BindSel(){ const fs=document.getElementById('fu_site'), fy=document.getElementById('fu_year');
+  if(fs)fs.onchange=async()=>{F.site=fs.value; C12.imp=null; await c12Load();};
+  if(fy)fy.onchange=async()=>{F.year=+fy.value; C12.imp=null; await c12Load();}; }
 window.c12SetW=function(v){ const s=String(v==null?'':v).replace(/[,，\s]/g,''); if(s===''){ C12.W=null; C12.Wsrc=''; } else{ const n=+s; if(!isFinite(n)||n<0){ dlg('出貨總重量','<div class="item" style="color:#a33">「'+esc(v)+'」不是數字</div>','<button class="sec" onclick="fuelClose()">關閉</button>'); return; } C12.W=n; C12.Wsrc='C12 頁輸入'; } C12.imp=null; C12.cc=c12Calc(F.year); c12Render(); };
 function c12ReadForm(buf,fname){   /* ESG「C12 銷售產品終端處理」收集表：找「C9推估各材質重量」欄 → 上面那格＝出貨總重量；左邊「C1重量」欄＝收集表自己的 C1 分類重量（只拿來對照） */
   const wb=XLSX.read(buf,{type:'array'});
