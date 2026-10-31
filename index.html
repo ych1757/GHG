@@ -302,7 +302,7 @@ function facChg(on){ return '<span class="fchg'+(on?'':' off')+'">🟡</span>'; 
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-77</b> · 2026/10/31</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-78</b> · 2026/10/31</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -13073,7 +13073,9 @@ function rfDeclView(rows){   /* V129-75：冷媒已申報年度（2022–2025）
   const HR=W10.hr, lr=x=>x.rate==null?0:x.rate;
   const L=(HR||[]).map(r=>{ const nm=rfNorm(r.source_name||r.attr2||''); const eu=String(r.ef_unit||'');
     const gas=nm.gas||(nm.not==='噴劑'?'噴劑（WD-40 等）':(nm.not||String(r.source_name||r.attr2||'（沒寫冷媒）')));
-    return {r:r,gas:gas,not:nm.gas?'':(nm.not||'認不出'),kg:+r.quantity||0,rate:r.ef_value==null?null:(eu.indexOf('%')>=0?+r.ef_value:+r.ef_value*100),gwp:+r.gwp||0,co:+r.co2e_draft||0}; });
+    const ton=/噸/.test(String(r.quantity_unit||''));   /* V129-78：清冊單位記公噸（FQ、KH 2025）→ 換成公斤 */
+    return {r:r,gas:gas,not:nm.gas?'':(nm.not||'認不出'),kg:(+r.quantity||0)*(ton?1000:1),ton:ton,rate:r.ef_value==null?null:(eu.indexOf('%')>=0?+r.ef_value:+r.ef_value*100),gwp:r.gwp==null?null:+r.gwp,
+      nf:r.ef_value==null||r.gwp==null,co:+r.co2e_draft||0}; });   /* V129-78：nf＝清冊只記碳排、沒記逸散率或 GWP，不逐項拆 */
   const gi=g=>{ const i=RF_GAS.findIndex(x=>x[0]===g); return i<0?99:i; }, ti=t=>{ const i=RF_TYPES.findIndex(x=>x[0]===t); return i<0?99:i; };
   const GS=[...new Set(S.map(x=>x.gas).concat(L.map(x=>x.gas)))].sort((a,b)=>gi(a)-gi(b)||String(a).localeCompare(String(b)));
   const q1=S.reduce((a,x)=>a+x.co,0), nfb=S.filter(x=>!x.ok).length, LS=L.reduce((a,x)=>a+x.co,0), ST=S.reduce((a,x)=>a+(+x.r.co2e_draft||0),0);
@@ -13086,14 +13088,15 @@ function rfDeclView(rows){   /* V129-75：冷媒已申報年度（2022–2025）
     if(!o.s.length){ const nt=o.l[0]&&o.l[0].not; C.push([g+'：清冊有 '+rff(o.Q,0)+' kg，逐台清單沒有'+(nt==='噴劑'?'（噴劑，應歸 A04-04 噴式潤滑劑）':(nt==='CO2'?'（不是編號冷媒）':'這種冷媒')),-o.led]); return; }
     if(!o.l.length){ C.push([g+'：逐台清單有 '+rff(o.K,0)+' kg，清冊沒有這種冷媒',o.sys]); return; }
     if(!sk.length){ C.push([g+'：'+fb.length+' 台系統算不出（設備類型或冷媒認不出），照存的數',o.sys-o.led]); return; }
+    if(o.l.some(x=>x.nf&&x.co)||o.l.every(x=>x.nf)){ const dv=o.sys-o.led; if(Math.abs(dv)>1e-12)C.push([g+'：清冊只記碳排、沒記逸散率／GWP，不逐項拆'+(o.l.some(x=>x.ton)?'（清冊單位記公噸，已換成公斤）':'')+'；系統算 '+f4(o.sys)+' t、清冊 '+f4(o.led)+' t',dv]); return; }   /* V129-78 */
     const K=sk.reduce((a,x)=>a+x.kg,0), KR=sk.reduce((a,x)=>a+x.kg*x.rate,0), KRG=sk.reduce((a,x)=>a+x.kg*x.rate*x.gwp,0);
     const Rb=K?KR/K:0, Gb=KR?KRG/KR:(sk[0].gwp||0);
     const a=o.l.reduce((t,x)=>t+x.kg*lr(x)*(Gb-x.gwp)/1e5,0), b=o.l.reduce((t,x)=>t+x.kg*(Rb-lr(x))*Gb/1e5,0), c=(K-o.Q)*Rb*Gb/1e5;
     const exS=KRG/1e5, exL=o.l.reduce((t,x)=>t+x.kg*lr(x)*x.gwp/1e5,0);
     tail+=(sk.reduce((t,x)=>t+x.co,0)-exS)-(o.led-exL);
     const z=RF_ZH[g]&&RF_ZH[g][2];
-    if(Math.abs(a)>1e-12){ if(Gb===0&&z)B.push(['後來定不算｜'+g+' GWP：清冊用 '+uq(o.l,x=>rff(x.gwp,0))+'，系統記 0（'+(/ESG 261006/.test(z)?'ESG 261006 回覆記 0':'碳氫冷媒，不在盤查範圍')+'）',a]); else A.push(['GWP 不對｜'+g+'：清冊用 '+uq(o.l,x=>rff(x.gwp,0))+'，係數庫（AR6）'+uq(sk,x=>rff(x.gwp,0)),a]); }
-    if(Math.abs(b)>1e-12)C.push([g+' 逸散率：清冊 '+uq(o.l,x=>rff(lr(x),0)+'%')+'，系統依設備類型 '+uq(sk,x=>rff(x.rate,0)+'%'),b]);
+    if(Math.abs(a)>1e-12){ if(Gb===0&&z)B.push(['後來定不算｜'+g+' GWP：清冊用 '+uq(o.l,x=>x.gwp==null?'沒記':rff(x.gwp,0))+'，系統記 0（'+(/ESG 261006/.test(z)?'ESG 261006 回覆記 0':'碳氫冷媒，不在盤查範圍')+'）',a]); else A.push(['GWP 不對｜'+g+'：清冊用 '+uq(o.l,x=>x.gwp==null?'沒記':rff(x.gwp,0))+'，係數庫（AR6）'+uq(sk,x=>rff(x.gwp,0)),a]); }
+    if(Math.abs(b)>1e-12)C.push([g+' 逸散率：清冊 '+uq(o.l,x=>x.rate==null?'沒記':rff(lr(x),0)+'%')+'，系統依設備類型 '+uq(sk,x=>rff(x.rate,0)+'%'),b]);
     if(Math.abs(c)>1e-12)C.push([g+' 充填量：清冊 '+rff(o.Q,0)+' kg，逐台清單 '+rff(K,0)+' kg',c]);
     if(fb.length)C.push([g+'：'+fb.length+' 台系統算不出（設備類型或冷媒認不出），照存的數',fb.reduce((t,x)=>t+x.co,0)]); });
   const by=(x,y)=>Math.abs(y[1])-Math.abs(x[1]);
@@ -13135,12 +13138,12 @@ function rfDeclView(rows){   /* V129-75：冷媒已申報年度（2022–2025）
     const rd4=v=>+rff(v,4).replace(/,/g,'')+0;   // 跟畫面顯示同一種取位（0.16065 畫面顯示 0.1607，Math.round 會變 0.1606）
     const dg=GG.map(o=>rd4(o.sys-o.led)), tgt=r4(rd4(q1)-rd4(LS)); let res=r4(tgt-dg.reduce((a,v)=>a+v,0));
     if(res){ const ord=dg.map((v,i)=>i).sort((x,y)=>Math.abs(dg[y])-Math.abs(dg[x])); const k=ord.find(i=>r4(dg[i]+res)!==0); if(k!=null)dg[k]=r4(dg[k]+res); }
-    let z0=false;
+    let z0=false, nf0=false;
     GG.forEach((o,ii)=>{ const k='rf'+o.i, d=dg[ii], dx=Math.abs(d)>=0.00005;
       if(!o.l.length){ h+='<tr'+hv(k)+'><td class="tl"'+gtip(o.g)+'>'+no(o.i)+rfesc(o.g)+'</td><td class="tl fmini" style="color:#7a8f84">清冊沒有這種冷媒</td><td>—</td><td>—</td><td>—</td><td>—</td><td class="R"><b>'+f4(0)+'</b></td><td class="R'+(dx?' x':'')+'">'+(dx?sg(d):'0')+'</td></tr>'; return; }
       const ur=new Set(o.s.filter(x=>x.ok).map(x=>(+x.rate).toFixed(6))), ug=new Set(o.s.filter(x=>x.ok).map(x=>(+x.gwp).toFixed(6))), kx=!o.s.length||Math.abs(o.K-o.Q)>1e-9;
       const g0=o.s.length&&[...ug].every(v=>+v===0);
-      o.l.forEach((x,j)=>{ const rx=!o.s.length||!ur.has((+lr(x)).toFixed(6)), gx=!o.s.length||!ug.has((+x.gwp).toFixed(6)); if(rx&&g0&&!gx)z0=true;
+      o.l.forEach((x,j)=>{ const rx=!x.nf&&(!o.s.length||!ur.has((+lr(x)).toFixed(6))), gx=!x.nf&&(!o.s.length||!ug.has((+x.gwp).toFixed(6))); if(rx&&g0&&!gx)z0=true; if(x.nf)nf0=true;   /* V129-78 */
         h+='<tr'+hv(k)+'><td class="tl"'+gtip(o.g)+'>'+(j?'':no(o.i)+'<b>'+rfesc(o.g)+'</b>')+'</td><td class="tl">'+rfesc(x.r.equipment_name||'')+'</td><td>—</td>'
           +'<td'+(kx?' class="x"':'')+'>'+rff(x.kg,0)+'</td><td'+(rx?' class="x"':'')+'>'+pc(x.rate)+'</td><td'+(gx?' class="x"':'')+'>'+(x.r.factor_id?fvA(x.r.factor_id,gw(x.gwp)):gw(x.gwp))+'</td><td class="R"><b>'+f4(x.co)+'</b></td>'
           +(j?'':'<td rowspan="'+o.l.length+'" class="R'+(dx?' x':'')+'" style="vertical-align:middle">'+(dx?sg(d):'0')+'</td>')+'</tr>'; }); });
@@ -13148,8 +13151,8 @@ function rfDeclView(rows){   /* V129-75：冷媒已申報年度（2022–2025）
     if(gOK&&Math.abs(adj)>=0.00005)h+='<tr class="fdadj"'+hv('adj')+'><td class="tl" colspan="6">換回當初收割的數字：全集團頁用收割原值 '+f4(G.hv!=null?G.hv:G.g)+' t</td><td class="R x">'+sg(adj)+'</td><td class="R x">'+sg(-adj)+'</td></tr>';
     const rx=v=>+rff(v,4).replace(/,/g,'');
     h+='<tr class="fdtot"><td class="tl" colspan="2">合計 ＝ ②</td><td></td><td>'+rff(o0(L),0)+'</td><td></td><td></td><td class="R">'+(gOK?f4(G.g):f4(LS)+' <span class="fmini">（② 讀不到，這是清冊合計）</span>')+'</td><td class="R">'+(gOK?sg(+(rx(q1)-rx(G.g)).toFixed(4)+0):'—')+'</td></tr></table>';
-    h+='<div class="fmini" style="margin:3px 0 6px;color:#5f7268">游標移到任一列，上下表同一種冷媒一起亮。清冊是每種冷媒的小計，沒有台數。橘底＝跟上表不一樣（充填量看這種冷媒清冊各列加起來）；「跟上表差」＝上表減下表（每種冷媒一格），加起來＝差額。'+(z0?'GWP 記 0 的冷媒，逸散率不同也不影響碳排，所以「差在哪裡」不列。':'')+'</div></div>'; }
-  if(W10.note)h+='<details style="margin:6px 0 0"><summary class="fmini" style="cursor:pointer;color:#7a5a00">10/16 逐台補入時寫的差異說明（舊說法）</summary><div style="margin:4px 0 0;padding:6px 10px;border:1px solid #f0d9a0;background:#fffbeb;border-radius:8px;font-size:12.5px;line-height:1.55;color:#5c4400">'+rfesc(W10.note).replace(/\n/g,'<br>')+'</div></details>';
+    h+='<div class="fmini" style="margin:3px 0 6px;color:#5f7268">游標移到任一列，上下表同一種冷媒一起亮。清冊是每種冷媒的小計，沒有台數。橘底＝跟上表不一樣（充填量看這種冷媒清冊各列加起來）；「跟上表差」＝上表減下表（每種冷媒一格），加起來＝差額。'+(z0?'GWP 記 0 的冷媒，逸散率不同也不影響碳排，所以「差在哪裡」不列。':'')+(nf0?'逸散率、GWP 顯示「—」＝清冊這列只記碳排、沒記逸散率／GWP。':'')+(L.some(x=>x.ton)?'清冊單位記公噸的列，充填量已換成公斤。':'')+'</div></div>'; }
+  if(W10.note)h+='<details open style="margin:6px 0 0"><summary class="fmini" style="cursor:pointer;color:#7a5a00">差異說明</summary><div style="margin:4px 0 0;padding:6px 10px;border:1px solid #f0d9a0;background:#fffbeb;border-radius:8px;font-size:12.5px;line-height:1.55;color:#5c4400">'+rfesc(W10.note).replace(/\n/g,'<br>')+'</div></details>';
   return h;
   function o0(a){ return a.reduce((t,x)=>t+x.kg,0); } }
 function rfTr(r,ed,no){
