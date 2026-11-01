@@ -302,7 +302,7 @@ function facChg(on){ return '<span class="fchg'+(on?'':' off')+'">🟡</span>'; 
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-82</b> · 2026/11/01</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-84</b> · 2026/11/01</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -468,7 +468,7 @@ function facChg(on){ return '<span class="fchg'+(on?'':' off')+'">🟡</span>'; 
     <div style="font-size:12.5px;background:#fff8e1;border:1px solid #f0d9a0;color:#7a5a00;padding:6px 10px;border-radius:6px;margin-bottom:8px">★ ESG 各廠收集表（S1S2+C3 數據收集表）<b>不是用這裡</b>：請到 <b>📝 資料登錄</b> › 該排放源頁 › 右上「<b>⬆ 匯入</b>」，會先預覽再帶入表格。這一頁只吃「系統範本」（廠區代碼／年度／排放源代碼…）。</div>
     <div style="font-size:12.5px;color:var(--g);margin-bottom:10px">
       步驟：① 下載範本 → ② 填好（欄位：廠區代碼／資料年度／資料月份／排放源代碼／設備名稱／活動數量／單位／數據來源／填報人，其餘欄位自動存入備註）→ ③ 拖到下方 → ④ 預覽確認 → ⑤ 匯入。
-      <br>廠區代碼用 OMS 代號（GT/SF/JS…）；排放源代碼用 S1-01/S2-01/C01-M…（見資料登錄左側）。
+      <br>廠區代碼用 OMS 代號（GT/SF/JS…）；排放源代碼用 A01-01/B01-01/C01-01…（見資料登錄左側）。
     </div>
     <div id="dropzone" style="border:2px dashed var(--l);border-radius:12px;padding:34px;text-align:center;color:var(--g);cursor:pointer;background:var(--t)">
       📁 把 Excel（.xlsx）拖到這裡，或<b>點擊選檔</b>
@@ -587,6 +587,65 @@ function ghgWriteWarn(msg){   /* V107：寫入被擋／沒寫進去 → 頁面�
   }catch(e){}
 }
 window.ghgWriteWarn=ghgWriteWarn;
+/* ══ V129-84：類別碼對照表（唯一出處）——資料庫類別碼換新碼（批356）
+   網頁程式一律用新碼。資料庫還是舊碼時，catXFetch 在進出口翻譯：送出（網址條件、寫入內容、RPC 參數）新→舊，收回（類別欄、錯誤訊息）舊→新；
+   資料庫已換新碼就原樣通過。判斷＝問資料庫類別主表 ghg_emission_categories 有 A01-01（新）還是 S1-01（舊），60 秒問一次。
+   對照與主檔 ghg_emission_sources.old_code 一致（ensureESRC 會比，不一致右下角警告）。批356 跑完、核過之後，下一版拿掉這一段。 ══ */
+const CAT_O2N={'S1-01':'A01-01','S1-02':'A01-02','S1-03':'A01-03','S1-05':'A02-01','S1-06':'A02-02','S1-08':'A03-01','S1-09':'A03-02','S1-10':'A04-01','S1-11':'A04-02','S1-12':'A04-03','S1-13':'A04-04','S1-LU':'A05-01','S2-01':'B01-01','S2-02':'B02-01','C01-M':'C01-01','C01-S':'C01-02','C01-W':'C01-03','C03-E':'C03-01','C03-F':'C03-02','S1':'A','S2':'B','S3':'C'};
+const CAT_N2O={}; Object.keys(CAT_O2N).forEach(k=>{CAT_N2O[CAT_O2N[k]]=k;});
+let CAT_DB=null, CAT_DBT=0, CAT_DBP=null;   // 'old'／'new'；判斷時間
+function catOne(v,M){ if(typeof v!=='string'||!v)return v; const k=v.indexOf('@'); const a=k<0?v:v.slice(0,k); return M[a]?(M[a]+(k<0?'':v.slice(k))):v; }   /* 「C01-M@登錄」這種差異說明鍵也翻 */
+function catList(v,M){ return typeof v==='string'?v.split(',').map(x=>{ const s=x.trim(); return s?x.replace(s,catOne(s,M)):x; }).join(','):v; }
+const CAT_TXT_RE={};
+function catText(v,M){ if(typeof v!=='string')return v; const id=M===CAT_O2N?'o':'n';
+  if(!CAT_TXT_RE[id]){ const ks=Object.keys(M).filter(k=>k.length>2).sort((a,b)=>b.length-a.length); CAT_TXT_RE[id]=new RegExp('(^|[^A-Za-z0-9_\\-])('+ks.map(k=>k.replace(/-/g,'\\-')).join('|')+')(?![0-9A-Za-z\\-])','g'); }
+  return v.replace(CAT_TXT_RE[id],(s,a,b)=>a+M[b]); }
+function catRow(o,M){ if(!o||typeof o!=='object'||Array.isArray(o))return;
+  if('category_id' in o)o.category_id=catOne(o.category_id,M);
+  if('p_cat' in o)o.p_cat=catOne(o.p_cat,M);
+  if('applicable_category' in o)o.applicable_category=catList(o.applicable_category,M);
+  ['cats','return_cats','p_cats'].forEach(k=>{ if(Array.isArray(o[k]))o[k]=o[k].map(x=>catOne(x,M)); });
+  ['message','details','hint'].forEach(k=>{ if(typeof o[k]==='string')o[k]=catText(o[k],M); }); }
+function catWalk(o,M){ if(Array.isArray(o))o.forEach(x=>catRow(x,M)); else catRow(o,M); return o; }   /* 只翻最上層每一列的類別欄，extra 等巢狀內容不動 */
+function catVal(v,M){   /* PostgREST 條件值：eq.X／neq.X／in.(a,b)／like.P／ilike.P（前面可有 not.） */
+  const m=String(v).match(/^(not\.)?(eq|neq|in|like|ilike)\.([\s\S]*)$/); if(!m)return v; const ng=m[1]||'', op=m[2], x=m[3];
+  if(op==='in'){ const inner=x.replace(/^\(/,'').replace(/\)$/,''); return ng+'in.('+inner.split(',').map(s=>{ const q=/^".*"$/.test(s), w=q?s.slice(1,-1):s, r=catOne(w,M); return q?('"'+r+'"'):r; }).join(',')+')'; }
+  if(op==='like'||op==='ilike'){ const p=x.replace(/[%*]+$/,''), w=x.slice(p.length); if(!w)return ng+op+'.'+catOne(x,M);
+    if(M===CAT_N2O&&/^[AB]/.test(p)){ if(p==='A'||p==='B')return ng+op+'.'+(p==='A'?'S1':'S2')+w;
+      const L=Object.keys(M).filter(c=>c.length>1&&c.indexOf(p)===0).map(c=>M[c]); return ng+'in.('+(L.length?L.join(','):'__無__')+')'; }
+    if(M===CAT_O2N&&/^S[12]/.test(p)){ if(p==='S1'||p==='S2')return ng+op+'.'+(p==='S1'?'A':'B')+w; }
+    return v; }   /* C 開頭：舊碼也是同樣開頭（C01-M／C03-E），不用翻 */
+  return ng+op+'.'+catOne(x,M); }
+function catUrl(url,M){ const k=url.indexOf('?'); if(k<0)return url; const base=url.slice(0,k);
+  const q=url.slice(k+1).split('&').map(seg=>{ const e=seg.indexOf('='); if(e<0)return seg; const key=seg.slice(0,e), raw=seg.slice(e+1); let v; try{ v=decodeURIComponent(raw.replace(/\+/g,' ')); }catch(_){ return seg; }
+    let n=v;
+    if(key==='category_id'||key==='applicable_category')n=catVal(v,M);
+    else if((key==='or'||key==='and'||key==='not.or'||key==='not.and')&&v.indexOf('category_id.')>=0)n=v.replace(/category_id\.((?:not\.)?(?:eq|neq|in|like|ilike))\.(\([^)]*\)|[^,()]*)/g,(s,op,val)=>{ const r=catVal(op+'.'+val,M); return 'category_id.'+r; });
+    return n===v?seg:(key+'='+encodeURIComponent(n)); });
+  return base+'?'+q.join('&'); }
+const CAT_PROBE='/rest/v1/ghg_emission_categories?select=category_id&category_id=in.(S1-01,A01-01)';
+async function catDbMode(init){
+  if(CAT_DB&&Date.now()-CAT_DBT<60000)return CAT_DB;
+  if(CAT_DBP)return CAT_DBP;
+  CAT_DBP=(async()=>{ try{ const h=new Headers((init&&init.headers)||{}); h.delete('Prefer'); h.delete('Content-Type'); h.delete('Range');
+      const r=await fetch(SUPABASE_URL+CAT_PROBE,{headers:h}); if(!r.ok)return CAT_DB;
+      const s=((await r.json())||[]).map(x=>x.category_id), hn=s.indexOf('A01-01')>=0, ho=s.indexOf('S1-01')>=0;
+      if(hn!==ho){ CAT_DB=hn?'new':'old'; CAT_DBT=Date.now(); }
+      else if(typeof ghgWriteWarn==='function'&&typeof curGhgUser!=='undefined'&&curGhgUser)ghgWriteWarn('類別碼對照判斷不出資料庫用新碼還是舊碼（類別主表 '+(hn?'兩種都有':'兩種都沒有')+'）——畫面上的數字可能不完整，請通知系統管理。');
+      return CAT_DB; }catch(e){ return CAT_DB; }finally{ CAT_DBP=null; } })();
+  return CAT_DBP; }
+async function catRes(res,M){ try{ if(!res||res.status===204||!/json/i.test(res.headers.get('Content-Type')||''))return res;
+  const tx=await res.clone().text(); if(!tx||!/S[123]|C01-[MSW]|C03-[EF]/.test(tx))return res;
+  const s=JSON.stringify(catWalk(JSON.parse(tx),M)); if(s===tx)return res;
+  const h=new Headers(res.headers); h.delete('Content-Length'); h.delete('Content-Encoding');
+  return new Response(s,{status:res.status,statusText:res.statusText,headers:h}); }catch(e){ return res; } }
+async function catXFetch(input,init,f){
+  f=f||fetch; const url=typeof input==='string'?input:'';
+  if(!url||url.indexOf(SUPABASE_URL+'/rest/v1/')!==0||url.indexOf(SUPABASE_URL+CAT_PROBE)===0)return f(input,init);
+  const mode=await catDbMode(init); if(mode!=='old')return f(input,init);
+  let i2=init; if(init&&typeof init.body==='string'&&init.body){ try{ const s=JSON.stringify(catWalk(JSON.parse(init.body),CAT_N2O)); if(s!==init.body)i2=Object.assign({},init,{body:s}); }catch(e){} }
+  return catRes(await f(catUrl(url,CAT_N2O),i2),CAT_O2N); }
+window.catXFetch=catXFetch; window.catDbModeNow=()=>CAT_DB;
 const ghgFetch=async(input,init)=>{
   const m=String((init&&init.method)||(input&&input.method)||'GET').toUpperCase();
   const url=String(typeof input==='string'?input:((input&&input.url)||input||''));
@@ -607,7 +666,7 @@ const ghgFetch=async(input,init)=>{
       return new Response(JSON.stringify({code:'GHG401',message:msg,details:null,hint:null}),{status:401,headers:{'Content-Type':'application/json'}}); }
     if(m==='PATCH'){ const p=h.get('Prefer')||''; if(!/count=/.test(p))h.set('Prefer',(p?p+',':'')+'count=exact'); }
     init.headers=h; }
-  const res=await ghgFetch0(input,init);
+  const res=await catXFetch(input,init,ghgFetch0);   /* V129-84：類別碼進出口翻譯 */
   if(isR&&res&&(res.status===401||res.status===403)){   /* V129-54：讀取被擋 */
     if(!rTk){ if(url.indexOf(SUPABASE_URL+'/rest/v1/ghg_user_roles')<0)window._ghgAnonDenied=true; }   /* 還沒登入＝登入成功後重新整理一次 */
     else if(typeof curGhgUser!=='undefined'&&curGhgUser)ghgWriteWarn('讀不到資料（'+res.status+'）：登入逾時，或這個分頁的登入已失效——畫面上的數字可能不完整，請登出後用工號＋密碼重新登入。');
@@ -627,7 +686,7 @@ const fmt = n => (n==null?'-':Number(n).toLocaleString('en-US',{minimumFractionD
 const fmt2 = n => (n==null?'-':Number(n).toLocaleString('en-US',{minimumFractionDigits:4,maximumFractionDigits:4})); // 碳排量固定4位小數(四捨五入)
 // ★系統規則:碳排數字一律四捨五入至小數第4位(尾差控制)。比較/差異一律用 R4 後的值,消除第5位以後浮點噪音。
 const R4 = n => Math.round((Number(n)||0)*1e4)/1e4;
-const CATNAME={'範疇一':'直接排放','1.1':'固定式燃燒源之直接排放','1.2':'移動式燃燒源之直接排放','1.3':'生產過程之直接過程排放與移除','1.4':'人為系統釋放之直接暫時性排放(逸散)','1.5':'土地使用/變更及林業','範疇二':'能源間接(市場基礎·計統計)','2.1-M':'來自輸入電力的間接排放','2.2-M':'來自輸入能源的間接排放','範疇二-L':'能源間接(位置基礎·僅揭露)','2.1-L':'來自輸入電力的間接排放','2.2-L':'來自輸入能源的間接排放','範疇三':'價值鏈C1-15','C01':'採購商品與服務','C01-M':'直接物料','C01-S':'非直接物料','C01-W':'自來水','C02':'資本商品','C03':'燃料與能源活動','C03-E':'電力上游與T&D','C03-F':'燃料上游(WTT)','C04':'上游運輸','C05':'營運廢棄物','C06':'商務旅行','C07':'員工通勤','C08':'上游租賃','C09':'下游運輸','C10':'售出產品加工','C11':'售出產品使用','C12':'產品終端處置','C13':'下游租賃','C14':'特許經營','C15':'投資'};
+const CATNAME={'範疇一':'直接排放','1.1':'固定式燃燒源之直接排放','1.2':'移動式燃燒源之直接排放','1.3':'生產過程之直接過程排放與移除','1.4':'人為系統釋放之直接暫時性排放(逸散)','1.5':'土地使用/變更及林業','範疇二':'能源間接(市場基礎·計統計)','2.1-M':'來自輸入電力的間接排放','2.2-M':'來自輸入能源的間接排放','範疇二-L':'能源間接(位置基礎·僅揭露)','2.1-L':'來自輸入電力的間接排放','2.2-L':'來自輸入能源的間接排放','範疇三':'價值鏈C1-15','C01':'採購商品與服務','C01-01':'直接物料','C01-02':'非直接物料','C01-03':'自來水','C02':'資本商品','C03':'燃料與能源活動','C03-01':'電力上游與T&D','C03-02':'燃料上游(WTT)','C04':'上游運輸','C05':'營運廢棄物','C06':'商務旅行','C07':'員工通勤','C08':'上游租賃','C09':'下游運輸','C10':'售出產品加工','C11':'售出產品使用','C12':'產品終端處置','C13':'下游租賃','C14':'特許經營','C15':'投資'};
 
 // === 資料登錄模組（左選源／右出聯集欄位，存 extra jsonb）===
 let SITES=[];
@@ -676,28 +735,28 @@ const F_PROC=['設備','類型','日期','數量(瓶/罐)','單重(Kg)','負責�
 const F_REF=['序號','設備名稱/類型','設備型號','冷媒類型','初裝量(Kg)','數量(台)','冷媒總量(ton)','盤查年度是否充裝過','再充裝日期','使用地點','佐證照片編碼','負責部門','資料來源'];
 // 三層樹：sc(範疇/大)→mid(中分類)→細項(小)。category_id 與資料庫一致
 const SRC=[
- {c:'S1-01',sc:'範疇一',mid:'1.1 固定式燃燒源之直接排放',name:'天然氣（NG）',unit:'m³',qty:'使用量',f:F_FIX},
- {c:'S1-02',sc:'範疇一',mid:'1.1 固定式燃燒源之直接排放',name:'柴油（固定）',unit:'公升',qty:'使用量',f:F_FIX},
- {c:'S1-03',sc:'範疇一',mid:'1.1 固定式燃燒源之直接排放',name:'液化石油氣（LPG）（固定）',unit:'公斤',qty:'使用量',f:F_FIX},
+ {c:'A01-01',sc:'範疇一',mid:'1.1 固定式燃燒源之直接排放',name:'天然氣（NG）',unit:'m³',qty:'使用量',f:F_FIX},
+ {c:'A01-02',sc:'範疇一',mid:'1.1 固定式燃燒源之直接排放',name:'柴油（固定）',unit:'公升',qty:'使用量',f:F_FIX},
+ {c:'A01-03',sc:'範疇一',mid:'1.1 固定式燃燒源之直接排放',name:'液化石油氣（LPG）（固定）',unit:'公斤',qty:'使用量',f:F_FIX},
  // V69-3:S1-04 燃料油/重油 已移除——集團未使用（明細/係數/係數表皆 0 筆，260911 查證），ESG 批73 回覆亦未列（使用者 260911 指示刪除）
- {c:'S1-05',sc:'範疇一',mid:'1.2 移動式燃燒源之直接排放',name:'車用汽油',unit:'公升',qty:'使用量',f:F_MOV},
- {c:'S1-06',sc:'範疇一',mid:'1.2 移動式燃燒源之直接排放',name:'柴油（移動）',unit:'公升',qty:'使用量',f:F_MOV},
+ {c:'A02-01',sc:'範疇一',mid:'1.2 移動式燃燒源之直接排放',name:'車用汽油',unit:'公升',qty:'使用量',f:F_MOV},
+ {c:'A02-02',sc:'範疇一',mid:'1.2 移動式燃燒源之直接排放',name:'柴油（移動）',unit:'公升',qty:'使用量',f:F_MOV},
  // V70-16:S1-07 LPG(堆高機) 移除——DB 0 筆、係數庫 0 條、ESG 批73 未列（使用者 9/15）；日後有廠用再建 A02-03 液化石油氣（移動）
- {c:'S1-08',sc:'範疇一',mid:'1.3 生產過程之直接過程排放與移除',name:'乙炔（焊接）',unit:'公斤',qty:'使用量(Kg)',f:F_PROC},
- {c:'S1-09',sc:'範疇一',mid:'1.3 生產過程之直接過程排放與移除',name:'SF6（製程氣體）',unit:'公斤',qty:'使用量(Kg)',f:F_PROC},
- {c:'S1-10',sc:'範疇一',mid:'1.4 人為系統釋放之直接暫時性排放(逸散)',name:'冷媒補充',unit:'公斤',qty:'再充裝量(Kg)',f:F_REF},
- {c:'S1-11',sc:'範疇一',mid:'1.4 人為系統釋放之直接暫時性排放(逸散)',name:'滅火器',unit:'公斤',qty:'再填充量(Kg)',f:['滅火器類型/名稱','數量','日期','單隻填充量(Kg)','盤查年度是否填充','再填充日期','負責部門','資料來源']},
- {c:'S1-12',sc:'範疇一',mid:'1.4 人為系統釋放之直接暫時性排放(逸散)',name:'化糞池',unit:'人時',qty:'總工時數/h',f:['月份','月平均人數','資料來源']},
- {c:'S1-13',sc:'範疇一',mid:'1.4 人為系統釋放之直接暫時性排放(逸散)',name:'噴式潤滑劑/推進劑',unit:'瓶/L',qty:'使用數量',f:['類型','日期','單位','密度(kg/L)','單重(L)','二氧化碳含量(kgCO2e)','負責部門','資料來源','備註']},
- {c:'S2-01',sc:'範疇二',mid:'2.1 來自輸入電力的間接排放',name:'外購電力',unit:'度(kWh)',qty:'總用電量(kWh)',f:['計費期間-起','計費期間-迄','計費天數','廠區用電量','宿舍用電量','平均每天用電','費用','幣別','備註','資料來源']},
- {c:'S2-02',sc:'範疇二',mid:'2.2 來自輸入能源的間接排放',name:'外購蒸汽/能源',unit:'GJ',qty:'使用量',na:'不適用',naWhy:'集團沒有使用外購蒸汽（使用者 2026/10/21）；2022–2025 各廠也都沒有這一類的資料',f:[]},   /* V129-52 */
- {c:'S1-LU',sc:'範疇一',mid:'1.5 土地使用、土地使用變更及林業',name:'土地使用變更與林業(如適用)',unit:'-',qty:'排放/移除量',na:'不適用',naWhy:'比照外購蒸汽改成不適用（使用者 2026/10/22）；系統裡沒有這一類的資料（2022–2025 都沒有）',f:[]},
- {c:'C01-M',sc:'範疇三',mid:'C01 採購商品與服務',name:'直接物料(重量法)',unit:'公噸',qty:'採購重量(噸)',a1:'物料',f:[{l:'大類',col:'attr2'},{l:'部件/零組件',k:'細類',alt:['服務項目/材料別']},{l:'材質',k:'微類',alt:['細項/材質']},{l:'是否回收',k:'是否回收'},{l:'採購佔比(%)',k:'佔比',t:'text'},'量化係數',{l:'資料來源',k:'資料來源'}]},
- {c:'C01-S',sc:'範疇三',mid:'C01 採購商品與服務',name:'非直接物料(服務·金額法)',unit:'USD',qty:'支付金額(USD)',a1:'服務',f:[{l:'費用項目',src:true,t:'text'},{l:'量化係數依據',k:'係數品名',t:'text'},'量化係數',{l:'資料來源',k:'資料來源'}]},
- {c:'C01-W',sc:'範疇三',mid:'C01 採購商品與服務',name:'自來水',unit:'m³',qty:'用水度數(m³)',a1:'自來水',f:['計費期間-起','計費期間-迄','計費天數','平均每天用水','費用','幣別','佐證資料來源']},
+ {c:'A03-01',sc:'範疇一',mid:'1.3 生產過程之直接過程排放與移除',name:'乙炔（焊接）',unit:'公斤',qty:'使用量(Kg)',f:F_PROC},
+ {c:'A03-02',sc:'範疇一',mid:'1.3 生產過程之直接過程排放與移除',name:'SF6（製程氣體）',unit:'公斤',qty:'使用量(Kg)',f:F_PROC},
+ {c:'A04-01',sc:'範疇一',mid:'1.4 人為系統釋放之直接暫時性排放(逸散)',name:'冷媒補充',unit:'公斤',qty:'再充裝量(Kg)',f:F_REF},
+ {c:'A04-02',sc:'範疇一',mid:'1.4 人為系統釋放之直接暫時性排放(逸散)',name:'滅火器',unit:'公斤',qty:'再填充量(Kg)',f:['滅火器類型/名稱','數量','日期','單隻填充量(Kg)','盤查年度是否填充','再填充日期','負責部門','資料來源']},
+ {c:'A04-03',sc:'範疇一',mid:'1.4 人為系統釋放之直接暫時性排放(逸散)',name:'化糞池',unit:'人時',qty:'總工時數/h',f:['月份','月平均人數','資料來源']},
+ {c:'A04-04',sc:'範疇一',mid:'1.4 人為系統釋放之直接暫時性排放(逸散)',name:'噴式潤滑劑/推進劑',unit:'瓶/L',qty:'使用數量',f:['類型','日期','單位','密度(kg/L)','單重(L)','二氧化碳含量(kgCO2e)','負責部門','資料來源','備註']},
+ {c:'B01-01',sc:'範疇二',mid:'2.1 來自輸入電力的間接排放',name:'外購電力',unit:'度(kWh)',qty:'總用電量(kWh)',f:['計費期間-起','計費期間-迄','計費天數','廠區用電量','宿舍用電量','平均每天用電','費用','幣別','備註','資料來源']},
+ {c:'B02-01',sc:'範疇二',mid:'2.2 來自輸入能源的間接排放',name:'外購蒸汽/能源',unit:'GJ',qty:'使用量',na:'不適用',naWhy:'集團沒有使用外購蒸汽（使用者 2026/10/21）；2022–2025 各廠也都沒有這一類的資料',f:[]},   /* V129-52 */
+ {c:'A05-01',sc:'範疇一',mid:'1.5 土地使用、土地使用變更及林業',name:'土地使用變更與林業(如適用)',unit:'-',qty:'排放/移除量',na:'不適用',naWhy:'比照外購蒸汽改成不適用（使用者 2026/10/22）；系統裡沒有這一類的資料（2022–2025 都沒有）',f:[]},
+ {c:'C01-01',sc:'範疇三',mid:'C01 採購商品與服務',name:'直接物料(重量法)',unit:'公噸',qty:'採購重量(噸)',a1:'物料',f:[{l:'大類',col:'attr2'},{l:'部件/零組件',k:'細類',alt:['服務項目/材料別']},{l:'材質',k:'微類',alt:['細項/材質']},{l:'是否回收',k:'是否回收'},{l:'採購佔比(%)',k:'佔比',t:'text'},'量化係數',{l:'資料來源',k:'資料來源'}]},
+ {c:'C01-02',sc:'範疇三',mid:'C01 採購商品與服務',name:'非直接物料(服務·金額法)',unit:'USD',qty:'支付金額(USD)',a1:'服務',f:[{l:'費用項目',src:true,t:'text'},{l:'量化係數依據',k:'係數品名',t:'text'},'量化係數',{l:'資料來源',k:'資料來源'}]},
+ {c:'C01-03',sc:'範疇三',mid:'C01 採購商品與服務',name:'自來水',unit:'m³',qty:'用水度數(m³)',a1:'自來水',f:['計費期間-起','計費期間-迄','計費天數','平均每天用水','費用','幣別','佐證資料來源']},
  {c:'C02',sc:'範疇三',mid:'C02 資本商品',name:'資本商品',unit:'USD',qty:'資產金額(USD)',f:[{l:'大類',col:'attr1'},{l:'品項',k:'細項',t:'text'},{l:'供應商',k:'供應商',t:'text'},{l:'採購數量',k:'採購數量'},'量化係數',{l:'資料來源',k:'資料來源',t:'text'}]},
- {c:'C03-E',sc:'範疇三',mid:'C03 燃料與能源活動',name:'電力上游與T&D',unit:'度(kWh)',qty:'用電度數(kWh)',a1:'電力',f:[{l:'能源別',col:'attr2'},{l:'項目',src:true,t:'text'},{l:'資料來源',k:'係數來源',alt:['資料來源'],t:'text'}]},
- {c:'C03-F',sc:'範疇三',mid:'C03 燃料與能源活動',name:'燃料上游(WTT)',unit:'公升/公噸/m³',qty:'燃料用量',a1:'燃料',f:[{l:'燃料別',col:'attr2'},{l:'項目',src:true,t:'text'},{l:'資料來源',k:'係數來源',alt:['資料來源'],t:'text'}]},
+ {c:'C03-01',sc:'範疇三',mid:'C03 燃料與能源活動',name:'電力上游與T&D',unit:'度(kWh)',qty:'用電度數(kWh)',a1:'電力',f:[{l:'能源別',col:'attr2'},{l:'項目',src:true,t:'text'},{l:'資料來源',k:'係數來源',alt:['資料來源'],t:'text'}]},
+ {c:'C03-02',sc:'範疇三',mid:'C03 燃料與能源活動',name:'燃料上游(WTT)',unit:'公升/公噸/m³',qty:'燃料用量',a1:'燃料',f:[{l:'燃料別',col:'attr2'},{l:'項目',src:true,t:'text'},{l:'資料來源',k:'係數來源',alt:['資料來源'],t:'text'}]},
  {c:'C04',sc:'範疇三',mid:'C04 上游運輸',name:'上游運輸與配送',unit:'噸公里',qty:'運輸量',f:[{l:'材料類別',col:'attr1'},{l:'品名',src:true,t:'text'},{l:'運輸方式',col:'attr2'},{l:'運輸路徑',k:'運輸路徑',t:'text'},{l:'距離km',k:'距離km'},{l:'資料來源',k:'資料來源',t:'text'}]},
  {c:'C05',sc:'範疇三',mid:'C05 營運廢棄物',name:'營運產生廢棄物',unit:'公噸',qty:'廢棄物量',f:[{l:'廢棄物種類',col:'attr1'},{l:'名稱/來源',src:true,t:'text'},{l:'處理方式',col:'attr2'},{l:'清運日期',k:'清運日期'},{l:'資料來源',k:'資料來源',t:'text'}]},
  {c:'C06',sc:'範疇三',mid:'C06 商務旅行',name:'商務旅行',unit:'公里/趟',qty:'里程/趟次',f:[{l:'交通工具',col:'attr1'},{l:'路線/說明',src:true,t:'text'},{l:'出差人員',k:'出差人員',t:'text'},{l:'資料來源',k:'資料來源',t:'text'}]},
@@ -730,9 +789,9 @@ function buildNav(){
       const sib=(r0&&r0.parent_code&&/^B/.test(r0.code)&&ESRC&&ESRC.byCode)?Object.values(ESRC.byCode).filter(x=>x.level===3&&x.parent_code===r0.parent_code&&x.status==='啟用'&&!grp.some(g=>ncRow(g.c)&&ncRow(g.c).code===x.code)):[];
       const code0=r0?r0.code:grp[0].c;   /* V84-1：群組只有一個子項、且群組標籤開頭已經是該子項的碼（範疇三「C06 商務旅行」）→ 折成一列，維持原本 C06 那樣；標籤看不到碼的（1.5 → A05-01、2.2 → B02-01）或兩個以上子項的（C01、C03、2.1）→ 群組列＋子項列（使用者 9/17「沒有兩類就不需要展開」「範疇二展開是因為編碼是 B 開頭，不展開就看不到」） */
       if(grp.length+sib.length===1&&String(mid).split(' ')[0]===code0){const lf=grp[0];
-        h+=`<div class="navi t2" data-i="${lf.i}" onclick="selectSrc(${lf.i})" title="${srcNa(lf.c)?srcNa(lf.c).naWhy:(r0?'現行碼 '+lf.c:'ESG 新編碼未列此源')}"><span style="visibility:hidden">▸ </span>${mid}${srcNaTag(lf.c)}</div>`; return;}
+        h+=`<div class="navi t2" data-i="${lf.i}" onclick="selectSrc(${lf.i})" title="${srcNa(lf.c)?srcNa(lf.c).naWhy:(r0?'類別碼 '+lf.c:'ESG 新編碼未列此源')}"><span style="visibility:hidden">▸ </span>${mid}${srcNaTag(lf.c)}</div>`; return;}
       h+=`<div class="t2" id="${mid_id}_t" onclick="tg('${mid_id}')">${op?'▾':'▸'} ${mid}</div><div id="${mid_id}" style="display:${op?'block':'none'}">`;
-      grp.forEach(lf=>h+=`<div class="navi t3" data-i="${lf.i}" onclick="selectSrc(${lf.i})" title="${srcNa(lf.c)?srcNa(lf.c).naWhy:(ncRow(lf.c)?'現行碼 '+lf.c:'ESG 新編碼未列此源（批73 Q8 待確認移除）')}">${ncRow(lf.c)?`<span class="ncode">${ncRow(lf.c).code}</span>${ncRow(lf.c).name}`:`<span class="ncode" style="color:#c3cfc9">${lf.c}</span><span style="color:#9aa">${lf.name}</span>`}${srcNaTag(lf.c)}</div>`);   /* V129-52：子項也標不適用 */   // V69-2:葉節點顯新碼；ESG 未列者灰字   // V65-9:代號等寬定位,中文對齊
+      grp.forEach(lf=>h+=`<div class="navi t3" data-i="${lf.i}" onclick="selectSrc(${lf.i})" title="${srcNa(lf.c)?srcNa(lf.c).naWhy:(ncRow(lf.c)?'類別碼 '+lf.c:'ESG 新編碼未列此源（批73 Q8 待確認移除）')}">${ncRow(lf.c)?`<span class="ncode">${ncRow(lf.c).code}</span>${ncRow(lf.c).name}`:`<span class="ncode" style="color:#c3cfc9">${lf.c}</span><span style="color:#9aa">${lf.name}</span>`}${srcNaTag(lf.c)}</div>`);   /* V129-52：子項也標不適用 */   // V69-2:葉節點顯新碼；ESG 未列者灰字   // V65-9:代號等寬定位,中文對齊
       sib.forEach(x=>{ h+=`<div class="navi t3 nsib" title="${(x.note||'')}；不用另外點：在 ${r0.code} 頁新增電號時「電力來源」選 太陽能（或綠電）"><span class="ncode">${x.code}</span>${x.name}<span class="fmini" style="margin-left:4px">→ ${r0.code} 選太陽能</span></div>`; });   /* V129-24：只是說明，不能點、不跟 ${r0.code} 一起反綠 */
       h+='</div>';});
     h+='</div>';});
@@ -774,9 +833,11 @@ async function ensureESRC(){
       if(r.level===4&&r.name_match&&r.parent_code){ try{(rules[r.parent_code]=rules[r.parent_code]||[]).push({re:new RegExp(r.name_match,'i'),row:r});}catch(e){} }
     });
     ESRC={byCode,byOld,rules,n:data.length};
+    { const bad=Object.keys(CAT_O2N).filter(o=>!byOld[o]||byOld[o].code!==CAT_O2N[o]);   /* V129-84：網頁對照表要跟主檔 old_code 一樣 */
+      if(bad.length&&!document.getElementById('catwarn'))document.body.insertAdjacentHTML('beforeend','<div id="catwarn" style="position:fixed;bottom:34px;right:12px;font-size:11px;color:#8a1c1c;background:#fdecea;border:1px solid #f5c2c0;padding:4px 10px;border-radius:6px;z-index:99">類別碼對照表跟排放源主檔不一致：'+bad.join('、')+'（請通知系統管理）</div>'); }
     if(document.getElementById('srcnav')&&typeof buildNav==='function'&&!curSrc)buildNav();   // 主檔到位→左樹標籤換新碼（尚未選源時才重建,不打斷操作）
     // V69-1:主檔到位→已建好的下拉標籤就地換新碼（只改顯示文字,不動選項值與目前選擇）——類別下拉在主檔載入前就先建好了,不補這步會出現「類別=1.1 固定式…、子類別=A01-01」兩層不一致
-    [['q_cat',o=>ncRow(o.value)?ncText(o.value)+'（現行 '+o.value+'）':null],['f_cat',o=>ncOpt(o.value)],['fs_cat',o=>ncOpt(o.value)]].forEach(([id,fn])=>{
+    [['q_cat',o=>ncRow(o.value)?ncText(o.value):null],['f_cat',o=>ncOpt(o.value)],['fs_cat',o=>ncOpt(o.value)]].forEach(([id,fn])=>{
       const el=document.getElementById(id); if(!el)return;
       Array.from(el.options).forEach(o=>{ if(!o.value)return; const t=fn(o); if(t)o.textContent=t; });
       if(id==='q_cat'){   // V69-6:主檔載入前建好的子類別清單是舊碼序 → 依新碼文字重排（保留目前選值；「全部」固定第一）
@@ -785,13 +846,13 @@ async function ensureESRC(){
       }
     });
   }catch(e){
-    ESRC_ERR=true;   // 失敗不能看起來像成功：右下角明示，畫面退回現行碼
-    if(!document.getElementById('esrcwarn'))document.body.insertAdjacentHTML('beforeend','<div id="esrcwarn" style="position:fixed;bottom:8px;right:12px;font-size:11px;color:#c9821e;background:#fff8e1;border:1px solid #f0d9a0;padding:4px 10px;border-radius:6px;z-index:99">排放源新碼主檔未載入，畫面顯示現行碼</div>');
+    ESRC_ERR=true;   // 失敗不能看起來像成功：右下角明示，畫面退回類別碼
+    if(!document.getElementById('esrcwarn'))document.body.insertAdjacentHTML('beforeend','<div id="esrcwarn" style="position:fixed;bottom:8px;right:12px;font-size:11px;color:#c9821e;background:#fff8e1;border:1px solid #f0d9a0;padding:4px 10px;border-radius:6px;z-index:99">排放源新碼主檔未載入，畫面顯示類別碼</div>');
   }
 }
-function ncRow(oldCode,srcName){   // 舊碼(+品名)→主檔列；找不到回 null
+function ncRow(oldCode,srcName){   // 類別碼(+品名)→主檔列；找不到回 null（V129-84：程式一律新碼，直接用新碼查）
   if(!ESRC)return null;
-  const base=ESRC.byOld[oldCode]; if(!base)return null;
+  const base=ESRC.byCode[oldCode]; if(!base)return null;
   const rl=ESRC.rules[base.code];
   if(rl&&srcName){const n=String(srcName); for(const x of rl){ if(x.re.test(n))return x.row; }}
   return base;
@@ -800,7 +861,7 @@ function ncLabel(oldCode,srcName,opt){   // HTML：<b>新碼</b> 名稱（待確
   opt=opt||{}; const r=ncRow(oldCode,srcName);
   if(!r)return facEsc(oldCode||'');
   const pend=(r.status&&r.status!=='啟用')?' <span style="font-size:10px;color:#c9821e" title="'+facEsc(r.note||r.status)+'">（'+facEsc(r.status)+'）</span>':'';
-  const old=opt.noOld?'':' <span style="font-size:10px;color:#a9b8b0" title="現行碼（追溯）">'+facEsc(oldCode||'')+'</span>';
+  const old='';   /* V129-84：類別碼全面換新碼，不再附舊碼灰字 */
   return '<b>'+facEsc(r.code)+'</b> '+facEsc(r.name)+facEsc(ncSub(r,oldCode))+pend+old;
 }
 function ncSub(r,oldCode){ return (r&&r.level<=2&&/-/.test(String(oldCode||''))&&typeof CATNAME==='object'&&CATNAME[oldCode])?('·'+CATNAME[oldCode]):''; }   // V69-5:舊子碼暫掛第二階時補原子項名(C03-E→「·電力上游與T&D」),同一下拉不出現兩個同名選項
@@ -821,7 +882,7 @@ function ncGroup(nm){   // V71-2：明細名稱 → 主檔第二階祖先（A01 
   const NEW2MID={A01:'1.1',A02:'1.2',A03:'1.3',A04:'1.4',A05:'1.5',B01:'2.1'};
   return {code:x.code,label:(NEW2MID[x.code]?NEW2MID[x.code]+' ':'')+x.name};
 }
-function ncOpt(c){const r=ncRow(c); return r?(r.code+' '+r.name+'（現行 '+c+'）'):(c+' '+(typeof fcatName==='function'?fcatName(c):''));}   // 下拉：新碼 名稱（現行 舊碼）
+function ncOpt(c){const r=ncRow(c); return r?(r.code+' '+r.name):(c+' '+(typeof fcatName==='function'?fcatName(c):''));}   // 下拉：新碼 名稱（現行 舊碼）
 const MID2NEW={'1.1':'A01','1.2':'A02','1.3':'A03','1.4':'A04','2.1':'B01','2.2':'B01'};
 function ncMid(mid){ if(!ESRC)return mid; const c=MID2NEW[String(mid).slice(0,3)], r=c&&ESRC.byCode[c]; return r?(r.code+' '+r.name):mid; }   // 導覽樹中層→新第二階
 const SCOPE_LETTER={'範疇一':'A','範疇二':'B','範疇三':'C'};
@@ -928,7 +989,7 @@ function selectSrc(i){
     +ehead({title:(ncRow(s.c)?ncText(s.c):`${s.c}　${s.name}`),legend:'mix',
       siteSel:'<select id="e_site" class="ehsite"></select>',
       yearSel:'<input id="e_year" class="ehyear" type="number" value="'+entryLegacyYear()+'">',   /* V123：原本寫死 2024 */
-      x:(ncRow(s.c)?'<span class="fmini" style="color:#a9b8b0" title="現行碼（追溯）">現行碼 '+s.c+'</span>':'')})
+      x:''})
     +`<div class="row">
     <div class="fld" style="max-width:100px"><label>月份</label><select id="e_month"><option value="">（年）</option>${[...Array(12)].map((_,m)=>`<option>${m+1}</option>`).join('')}</select></div>
     <div class="fld"><label>★${s.qty} *（活動量）</label><input id="e_qty" type="number" step="any"></div>
@@ -1032,10 +1093,10 @@ function v40CommRender(){   // V40-2:Commodity 中/英雙下拉(連動;取代長
 }
 function v40QtyUnlock(){const q=document.getElementById('e_qty'); if(q){q.readOnly=false; q.style.background=''; q.title='手動輸入(已解鎖)'; q.oninput=()=>{v40Co2e();v40Proc();}; q.focus();}}
 const V40CFG={   // V42/V43:批11樣板逐類別設定——mode=money金額型/wt重量法;front=前置自由文字欄id/flabel=其標籤/fmiss=必填名/dep=自動寫入欄(depval:'zh'=寫條目中文描述,預設=寫係數庫引用;null=引用僅factor_id+🔗資訊列)/hide=收割時代欄隱藏/qty=活動量標籤/qunit=量單位(與收割同構)
- 'C01-S':{mode:'money',front:'e_f0',flabel:'費用項目（現場科目說法·自由文字）',fmiss:'費用項目',dep:'e_f1',hide:['e_f1','e_f3'],qty:'支付金額(USD)'},
+ 'C01-02':{mode:'money',front:'e_f0',flabel:'費用項目（現場科目說法·自由文字）',fmiss:'費用項目',dep:'e_f1',hide:['e_f1','e_f3'],qty:'支付金額(USD)'},
  'C02':{mode:'money',front:'e_f1',flabel:'品項（現場說法·自由文字）',fmiss:'品項',dep:null,hide:['e_f5'],qty:'資產金額(USD)'},
- 'C01-M':{mode:'wt',front:'e_f1',flabel:'部件/零組件（現場說法·自由文字）',fmiss:'部件/零組件',dep:'e_f2',depval:'zh',hide:['e_f6'],qty:'採購重量(噸)',qunit:'噸'},
- 'C01-W':{mode:'wt',front:null,fmiss:null,dep:null,hide:['e_f6'],qty:'用水度數(m³)',qunit:'度(m³)',auto:1,pick:'係數(依廠區自動)',pickmiss:'係數(請先選廠區)'},   // V44:C01-W=無前置自由文字欄,係數依廠區自動鎖定
+ 'C01-01':{mode:'wt',front:'e_f1',flabel:'部件/零組件（現場說法·自由文字）',fmiss:'部件/零組件',dep:'e_f2',depval:'zh',hide:['e_f6'],qty:'採購重量(噸)',qunit:'噸'},
+ 'C01-03':{mode:'wt',front:null,fmiss:null,dep:null,hide:['e_f6'],qty:'用水度數(m³)',qunit:'度(m³)',auto:1,pick:'係數(依廠區自動)',pickmiss:'係數(請先選廠區)'},   // V44:C01-03=無前置自由文字欄,係數依廠區自動鎖定
  'C08':{mode:'money',front:'e_f0',flabel:'資產/標的（現場說法·自由文字）',fmiss:'資產/標的',dep:null,hide:['e_f3','e_f4','e_f6'],qty:'租金(USD)'},   // V45:月租金/年租金(當地幣)=收割時代原幣欄,由原幣區取代;月份開放(MONTHLY_CATS)
  'C10':{mode:'money',front:'e_f1',flabel:'廠商/品名（現場說法·自由文字）',fmiss:'廠商/品名',dep:null,hide:['e_f3','e_f4'],qty:'發票金額(USD)',qunit:'USD'},   // V45:發票金額欄由原幣區取代;SRC.unit公噸=舊標籤,蓋寫USD
  'C13':{mode:'money',front:'e_f0',flabel:'資產/標的（現場說法·自由文字）',fmiss:'資產/標的',dep:null,hide:['e_f1'],qty:'租金(USD)'},
@@ -1046,7 +1107,7 @@ const V40CFG={   // V42/V43:批11樣板逐類別設定——mode=money金額型/
  'C07':{mode:'tkm',conv:'pkm',front:'e_f0',flabel:'通勤資訊（現場說法·自由文字）',fmiss:'通勤資訊',dep:null,depDims:{'車種':'e_f1'},hide:['e_f2'],qty:'延人公里(pkm)',qunit:'延人公里',fam:'員工通勤車種係數塊',pick:'交通工具',pickmiss:'交通工具(係數)'},   // V49:pkm=人數×單程距離;車種值寫回attr1同構
  'C06':{mode:'free',front:'e_f1',flabel:'路線/說明（現場說法·自由文字）',fmiss:'路線/說明',dep:null,veh:'e_f0',hide:['e_f3'],qty:'延人公里(pkm)',qunit:'延人公里'}};   // V49:直查型=當量手動(ICAO/係數表逐筆直查,與歷史ef全空同構),不落係數引用fam=明確家族(C05有兩個有條目適用家族:計算係數+CPCD參考表,唯一判定失效);V46:C05=二維維度(種類×處理方式);depDims=維度值寫回attr1/attr2同構;autoRegion=廠區→地區自動收斂表實體
 function v40Reorder(cat){   // V40:金額型樣板動線=①廠區年月+前置自由文字 ②係數選用(Commodity雙下拉) ③原幣→USD(唯讀系統算,✏解鎖) ④排放當量 ⑤其餘欄位/填報人(批11定案;V42設定化鋪開)
-  const cfg=V40CFG[cat]||V40CFG['C01-S'];
+  const cfg=V40CFG[cat]||V40CFG['C01-02'];
   const $=id=>document.getElementById(id);
   const fld=el=>el?el.closest('.fld'):null;
   const rowA=fld($('e_site'))?fld($('e_site')).parentElement:null;
@@ -1060,7 +1121,7 @@ function v40Reorder(cat){   // V40:金額型樣板動線=①廠區年月+前置�
    lg.innerHTML='圖例：<span style="color:#c0392b">★</span>＝必填輸入｜白底＝輸入欄｜<span style="background:#eef6f1;padding:0 6px;border-radius:4px">綠底＝系統自動</span>';
    rowA.after(lg);}   // V41-6:三態圖例
   ['e_factor','e_funit','e_gwp','e_fsrc','e_unit'].forEach(id=>{const x=fld($(id)); if(x)x.style.display='none';});   // V41-1:係數顯示四欄+單位隱藏(值都在計算過程/引用裡;隱藏input仍供計算)
-  cfg.hide.forEach(id=>{const x=fld($(id)); if(x)x.style.display='none';});   // V41-1:收割時代欄隱藏(V42:清單隨類別——C01-S=依據/資料來源,C02=資料來源)
+  cfg.hide.forEach(id=>{const x=fld($(id)); if(x)x.style.display='none';});   // V41-1:收割時代欄隱藏(V42:清單隨類別——C01-02=依據/資料來源,C02=資料來源)
   const rowRes=document.createElement('div'); rowRes.className='row'; rowRes.style.marginTop='8px';
   ['e_qty','e_co2e'].forEach(id=>{const x=fld($(id)); if(x){x.style.maxWidth=''; x.style.flex='1 1 260px'; rowRes.appendChild(x);}});
   (conv||comp||rowB).after(rowRes);
@@ -1079,7 +1140,7 @@ function v40Reorder(cat){   // V40:金額型樣板動線=①廠區年月+前置�
         const lab=q.closest('.fld').querySelector('label');
         if(lab)lab.innerHTML='<span style="color:#c0392b">★</span>'+cfg.qty; } }
     if(cfg.mode==='tkm'){window.V40CONVU=(cfg.conv==='pkm')?'kgCO2e/pkm':'kgCO2e/tkm'; fsConvSetup(window.V40CONVU);}   // V47:重量×距離輸入區常駐;V49:pkm=人數×單程距離(C07)
-    const u=$('e_unit'); if(u&&cfg.qunit)u.value=cfg.qunit;   // 量單位與收割同構(C01-M=噸/C01-W=度(m³)/C04C09=延噸公里)
+    const u=$('e_unit'); if(u&&cfg.qunit)u.value=cfg.qunit;   // 量單位與收割同構(C01-01=噸/C01-03=度(m³)/C04C09=延噸公里)
     if(cfg.auto||cfg.autoRegion){const st=$('e_site'); if(st&&!st._v44auto){st._v44auto=1; st.addEventListener('change',()=>setTimeout(()=>{v40WtRegionNarrow();v40WtAutoPick();},60));}}   // V44:換廠區→重新依地區選定係數;V46:先收斂表實體
   } else if(cfg.mode==='free'){   // V49:直查型(C06商旅)——當量=依ICAO/運具係數表逐筆直查手動填,不落係數引用(與歷史明細ef全空同構)
     window.V40FREE=true;
@@ -1110,8 +1171,8 @@ function v40Reorder(cat){   // V40:金額型樣板動線=①廠區年月+前置�
     if(lab)lab.innerHTML=cfg.qty+'·系統算 <a href="javascript:void(0)" style="font-weight:400;text-decoration:none" title="解鎖手動輸入" onclick="v40QtyUnlock()">✏手動</a>';}
   }
 }
-function v40Reg(site){ const c=siteCtry(site); return (c==='TW'||c==='CN')?c:'OTH'; }   // V44:廠區→地區(C01-W自動鎖容器)；V129-79：看廠區國家（原本寫死 20 廠）
-function v40WtAutoPick(){   // V44:依廠區地區自動選定係數條目(C01-W 3容器);同地區多條目(OTH泰/越同值)以notes廠註記再縮,無從分辨取第一;換廠自動換係數
+function v40Reg(site){ const c=siteCtry(site); return (c==='TW'||c==='CN')?c:'OTH'; }   // V44:廠區→地區(C01-03自動鎖容器)；V129-79：看廠區國家（原本寫死 20 廠）
+function v40WtAutoPick(){   // V44:依廠區地區自動選定係數條目(C01-03 3容器);同地區多條目(OTH泰/越同值)以notes廠註記再縮,無從分辨取第一;換廠自動換係數
   const cfg=V40CFG[window.V40CAT]||{}; if(!cfg.auto||!window.V40WT)return;
   const site=(document.getElementById('e_site')||{}).value; const it=document.getElementById('fs_item');
   if(!site||!it)return;
@@ -1486,13 +1547,13 @@ function v41Confirm(){   // V41-5:唯讀確認——驗證必填+預覽將寫入
   if(!g('e_year'))miss.push('年度');
   if(!g('e_qty'))miss.push('活動量('+(s.qty||'')+')');
   if(!g('e_by'))miss.push('填報人');
-  if(window.V40MONEY||window.V40WT){ const _c=V40CFG[window.V40CAT]||V40CFG['C01-S']; if(_c.front&&!g(_c.front))miss.push(_c.fmiss); if(!curFactorId)miss.push(window.V40WT?(_c.pickmiss||'材質條目(係數)'):'Commodity(係數)'); }
+  if(window.V40MONEY||window.V40WT){ const _c=V40CFG[window.V40CAT]||V40CFG['C01-02']; if(_c.front&&!g(_c.front))miss.push(_c.fmiss); if(!curFactorId)miss.push(window.V40WT?(_c.pickmiss||'材質條目(係數)'):'Commodity(係數)'); }
   if(window.V40FREE){ const _c=V40CFG[window.V40CAT]||{}; if(_c.front&&!g(_c.front))miss.push(_c.fmiss); if(!g('e_co2e'))miss.push('排放當量(直查填入)'); }   // V49:直查型必填
   const rows=[];
   const add=(k,v)=>{if(v!==''&&v!=null)rows.push('<tr><td style="text-align:left;color:var(--g);white-space:nowrap;padding:1px 10px 1px 0">'+k+'</td><td style="text-align:left">'+facEsc(String(v))+'</td></tr>');};
   add('廠區',g('e_site')); add('年度',g('e_year')+(g('e_month')?('/'+g('e_month')+'月'):'（年）'));
   if(window.V40FREE){const _c3=V40CFG[window.V40CAT]||{}; if(_c3.front)add(_c3.fmiss,g(_c3.front)); add('交通工具',g(_c3.veh||'')); add('當量來源','逐筆直查（ICAO/運具係數表）·無單一係數引用');}
-  if(window.V40MONEY||window.V40WT){const _c2=V40CFG[window.V40CAT]||V40CFG['C01-S']; if(_c2.front)add(_c2.fmiss,g(_c2.front));
+  if(window.V40MONEY||window.V40WT){const _c2=V40CFG[window.V40CAT]||V40CFG['C01-02']; if(_c2.front)add(_c2.fmiss,g(_c2.front));
     if(window.V40WT){add(_c2.pick||'材質條目',_c2.dep?g(_c2.dep):(curFactorId||''));}
     else{const zh=document.getElementById('v40_zh'); if(zh&&zh.value){const o=[...zh.options].find(x=>x.value===zh.value); add('Commodity',(o?o.textContent:'')); }}
     if(curFactorId)add('係數引用',curFactorId+'＝'+g('e_factor')+' '+g('e_funit'));
@@ -1529,7 +1590,7 @@ async function saveRow(){
   if(curEdit){
     const upd={site_id:rec.site_id,data_year:rec.data_year,data_month:rec.data_month,quantity:rec.quantity,quantity_unit:rec.quantity_unit,created_by:rec.created_by,extra:rec.extra,ef_value:(parseFloat(document.getElementById('e_factor')?.value)||null),ef_unit:(document.getElementById('e_funit')?.value||null),gwp:(parseFloat(document.getElementById('e_gwp')?.value)||null),ef_source:(document.getElementById('e_fsrc')?.value||null),factor_id:curFactorId||null};   // V34-2:更新同步結構化係數欄+factor_id
     if(rec.attr1!==undefined)upd.attr1=rec.attr1; if(rec.attr2!==undefined)upd.attr2=rec.attr2;   // 頂層分類欄(甲)
-    if(sname)upd.source_name=sname;   // 費用項目→source_name(C01-S)
+    if(sname)upd.source_name=sname;   // 費用項目→source_name(C01-02)
     const {error}=await sb.from('ghg_activity_data').update(upd).eq('record_id',curEdit);
     if(error){msg.innerHTML='<div class="msg err">更新失敗：'+error.message+'</div>';return;}
     msg.innerHTML='<div class="msg ok">✅ 已更新此筆（record_id='+curEdit+'）</div>'; newRow(); loadRecords(); return;
@@ -1566,11 +1627,11 @@ async function loadRecords(){
     return e['換算']?'🧮 '+e['換算']:(e['係數來源']?'係數來源:'+e['係數來源']:'');};
   const coOf=r=>r.co2e_draft!=null?fmt2(r.co2e_draft)+(/底稿/.test(r.status||'')?' <span style="color:var(--w);font-size:10px">底稿</span>':''):'-';
   const isGreen=r=>/光伏|綠電|綠能|再生|太陽/.test((r.source_name||'')+' '+JSON.stringify(r.extra||{}));
-  const kindTag=r=>isGreen(r)?'<span class="kg">綠電</span>':(s.c.startsWith('S2')?'<span class="km">市電</span>':(r.source_name||'—'));
+  const kindTag=r=>isGreen(r)?'<span class="kg">綠電</span>':(s.c.startsWith('B')?'<span class="km">市電</span>':(r.source_name||'—'));
   const _el='overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
   const _q=v=>String(v==null?'':v).replace(/"/g,'&quot;');
   const _cel=(v,w,extra)=>'<td title="'+_q(v)+'" style="text-align:left;max-width:'+w+'px;'+_el+(extra||'')+'">'+(v==null?'':v)+'</td>';
-  const kindCells=r=>{ if(isGreen(r))return '<td style="text-align:left"><span class="kg">綠電</span></td><td></td><td></td>'; if(s.c.startsWith('S2'))return '<td style="text-align:left"><span class="km">市電</span></td><td></td><td></td>';
+  const kindCells=r=>{ if(isGreen(r))return '<td style="text-align:left"><span class="kg">綠電</span></td><td></td><td></td>'; if(s.c.startsWith('B'))return '<td style="text-align:left"><span class="km">市電</span></td><td></td><td></td>';
     if(dynF){ // ★V25:依類別欄位定義動態產格(讀值走 fGet,與表單同一套定義)
       return dynF.map((f,i)=>{let v=fGet(r,f); if((v==null||v==='')&&i===0){const p=(r.source_name||'').split(' / '); v=p[0]||'';} return _cel(v,130,i===0?'font-weight:600;':'color:#555;');}).join(''); }
     const e=r.extra||{}; const sup=e['供應商']||'';
@@ -1578,10 +1639,10 @@ async function loadRecords(){
     let sub=e['細類']||e['微類']||e['細項']||e['細項/材質']||e['名稱']||'';
     if(!big&&!sub){ const p=(r.source_name||'—').split(' / '); big=p[0]||''; sub=p.slice(1).join(' / '); }
     return _cel(big,120,'font-weight:600;')+_cel(sub,120,'color:#555;')+_cel(sup,110,'color:#888;'); };
-  const kindSet=rs=>{const ks=[...new Set(rs.map(r=>isGreen(r)?'綠電':(s.c.startsWith('S2')?'市電':(r.source_name||''))))].filter(Boolean);return ks.length>1?'<span style="color:#999;font-size:11px">展開看</span>':(ks[0]||'—');};
+  const kindSet=rs=>{const ks=[...new Set(rs.map(r=>isGreen(r)?'綠電':(s.c.startsWith('B')?'市電':(r.source_name||''))))].filter(Boolean);return ks.length>1?'<span style="color:#999;font-size:11px">展開看</span>':(ks[0]||'—');};
   const cells=r=>`<td style="text-align:right">${(r.quantity&&Number(r.quantity)>0)?fmt(r.quantity):'<span style="color:#9aa" title="此源僅匯入碳排放量，未含活動量與係數（資料轉換待補完整）">—</span>'}</td><td style="text-align:left">${(r.quantity&&Number(r.quantity)>0)?(r.quantity_unit||''):''}</td><td style="text-align:right">${coOf(r)}</td><td style="text-align:left;white-space:normal;max-width:190px;font-size:11px;color:var(--m)">${stBadge(r)?(stBadge(r)+' '):''}${exOf(r)}</td><td>${r.created_by||''}</td><td>${(!READONLY&&typeof entryCanDel==='function'&&entryCanDel(r.site_id,r.data_year))?`<button class="sec" style="padding:3px 9px;color:#a33" title="刪除這一筆（這一年還沒鎖、沒申報才可以）" onclick="event.stopPropagation();delRow(${r.record_id})">刪</button>`:''}</td>`;   /* V129-49：已鎖／已申報年度不出刪除鈕 */
   const groups={}; data.forEach(r=>{const k=r.site_id+'|'+r.data_year;(groups[k]=groups[k]||[]).push(r);});
-  if(s.c==='C01-M') Object.values(groups).forEach(rs=>rs.sort((a,b)=>(parseFloat((b.extra||{})['佔比'])||0)-(parseFloat((a.extra||{})['佔比'])||0)));   // 直接物料:同廠年依採購佔比大→小
+  if(s.c==='C01-01') Object.values(groups).forEach(rs=>rs.sort((a,b)=>(parseFloat((b.extra||{})['佔比'])||0)-(parseFloat((a.extra||{})['佔比'])||0)));   // 直接物料:同廠年依採購佔比大→小
   const aggOf=k=>{const rs=groups[k];const p=k.split('|');return{plant:SNAME[p[0]]||p[0],year:+p[1],qty:rs.reduce((a,r)=>a+(+r.quantity||0),0),co2e:rs.reduce((a,r)=>a+(+r.co2e_draft||0),0)};};
   const gkeys=Object.keys(groups).sort((a,b)=>{const A=aggOf(a),B=aggOf(b);const x=recSort.k==='plant'?String(A.plant).localeCompare(String(B.plant),'zh-Hant'):((A[recSort.k]||0)-(B[recSort.k]||0));return x*recSort.d;});
   let gi=0, grouped=false;
@@ -2949,7 +3010,7 @@ const tplSvcHow=(page,thing)=>[
   '3. 「係數類別」用下拉選單選一種（完整清單在這一頁最下面），系統用它對係數；ESG 確認不計入的項目選「不計入」。不確定可以先不選：系統會先照本廠以前同名項目用過的係數帶，帶不到的列匯入後在頁面上會標出來，再自己選或請 ESG 補。',
   '4. 填好回系統「資料登錄 › '+page+'」，選好跟樣板一樣的廠區與年度，按「⬆ 匯入」選這個檔。會先預覽，按「帶入表格」後檢查每一列的係數，再按「💾 儲存」才寫入。',
   '5. 預覽時有一個「取代」勾選：勾著＝畫面上原有、但檔案裡沒有的項目會一併移除。所以請把整年的項目放在同一個檔。'];
-TPLS['C01-S']={code:'C01-02',name:'非直接物料與服務（金額法）',how:tplSvcHow('C01 非直接物料（服務・金額法）','服務或費用項目'),lists:tplSvcLists('C01-S'),
+TPLS['C01-02']={code:'C01-02',name:'非直接物料與服務（金額法）',how:tplSvcHow('C01 非直接物料（服務・金額法）','服務或費用項目'),lists:tplSvcLists('C01-02'),
  sheets:[{name:'採購商品表-服務',need:[['支付金額(當地幣)未稅','支付金額(USD)未稅']],
   cols:[['項次','O','流水號','1'],['部門','O','','管理部'],['服務項目','R','費用或服務的名稱；沒有名稱的列不會匯入','會計師審計費'],['細項','S','','年度財報簽證'],
    ['支付金額(當地幣)未稅','E','全年合計、未稅','350000'],['支付金額(USD)未稅','E','直接用美金付的才填','11200'],
@@ -3019,7 +3080,7 @@ TPLS['C04']={code:'C04',name:'上游運輸',lists:tplTrnLists('C04'),how:tplTrnH
 
 /* ── A04-01 冷媒（登錄頁類別碼 S1-10）：一台或一款設備一列（表頭照各廠「S1逸散-冷媒」設備清單；V125-3 起匯入認這種格式，同名稱＋型號、同冷媒、同單台充填量會併成一款）
    碳排＝單台充填量 × 台數 × 逸散率 × GWP。逸散率看設備類型：「設備類型」欄有選就用選的（匯入端加認這一欄），沒選＝系統照設備名稱判斷。 ── */
-TPLS['S1-10']={code:'A04-01',name:'冷媒',how:[
+TPLS['A04-01']={code:'A04-01',name:'冷媒',how:[
   '1. 一台設備填一列；同一款（同名稱、同型號、同冷媒、同充填量）有很多台的，也可以填一列、把台數寫在「數量」。第 1 列寫「必填」的一定要填。第 1、2 列與分頁名稱請不要改。',
   '2. 「冷媒類型」用下拉選單選（看設備銘牌；選項在這一頁最下面）。',
   '3. 「初裝量(kg)」是單台設備裡的冷媒公斤數（銘牌寫公克的請 ÷ 1000），不是全部加起來的量。',
@@ -3035,7 +3096,7 @@ TPLS['S1-10']={code:'A04-01',name:'冷媒',how:[
 
 /* ── A04-02 滅火器充填（登錄頁類別碼 S1-11）：現有匯入讀「總表」的滅火器列（設備名稱／排放源名稱／活動數據／活動數據單位）＋「…滅火器」明細分頁（類型／數量／單隻／是否／再填充量）
    所以樣板＝一頁「總表」（一種滅火器一列）＋一頁「S1逸散-滅火器明細」（佐證清單，掛在同種類那一列下面，不參與計算）。種類做成下拉（＝系統四類的名稱）。 ── */
-TPLS['S1-11']={code:'A04-02',name:'滅火器充填',how:[
+TPLS['A04-02']={code:'A04-02',name:'滅火器充填',how:[
   '1. 「總表」一種滅火器填一列：這一年全廠這一種滅火器「充填」的滅火劑總公斤數（換藥、補充、新購的都算）。第 1 列寫「必填」的一定要填。第 1、2 列與分頁名稱請不要改。',
   '2. 「排放源名稱」用下拉選單選滅火器種類。只有二氧化碳（CO2）滅火器會算出排放（充填 1 公斤＝排放 1 公斤 CO2）；乾粉、泡沫、水基型的係數是 0，還是請照實填。',
   '3. FM200、海龍等含氟氣體的滅火設備不在這四類裡，請不要填在這裡，另外告知 ESG。',
@@ -3053,13 +3114,13 @@ TPLS['S1-11']={code:'A04-02',name:'滅火器充填',how:[
 function tplMatLib(cat,year){ const y=facY(+year), all=(FACALL||[]).filter(f=>f.category_id===cat); let list=all.filter(f=>inEff(f,y)); if(!list.length)list=all; const m={};
   list.forEach(f=>{ const esg=String(f.esg_code||'').trim(); if(!esg)return; const g=((FGAS&&FGAS[f.factor_id])||[])[0]||{}; const name=svcNote(f,'中文')||svcNote(f,'Commodity')||f.factor_id, k=esg+'|'+name; (m[k]=m[k]||[]).push({esg:esg,name:name,cond:svcNote(f,'料況'),val:+g.factor_value||0}); });
   return Object.keys(m).sort().map(k=>({esg:m[k][0].esg,name:m[k][0].name,rows:m[k]})); }   /* 一個代號底下可能有兩筆不同名稱、不同係數的條目（批249 起原生料、再生料各自一號）→ 用「代號＋名稱」當一種 */
-TPLS['C01-M']={code:'C01-01',name:'直接物料（重量法）',how:[
+TPLS['C01-01']={code:'C01-01',name:'直接物料（重量法）',how:[
   '1. 先把 ERP 進料明細用樞紐分析表，依材質（類別）加總全年採購重量；樞紐出來的「全部類別」都填進來，一類一列（不是逐筆明細）。系統會依重量由大到小排，從最上面往下加到超過 80% 為止的類別才算碳排，其餘類別不算（ESG 做法）。第 1 列寫「必填」的一定要填。第 1、2 列與分頁名稱請不要改。也可以直接匯入樞紐表（「列標籤｜加總 - 採購總重量」那種）。',
   '2. 重量請填公噸（公斤 ÷ 1000）。有用再生料的：「採購總重量」填含再生料的總重量，「再生料採重量」填其中再生料的部分，系統會拆成原生料、再生料兩列分別算。',
   '3. 「係數代號」只有前 80% 的類別需要（其餘可以空白）。用下拉選單選這一種材質要用係數庫的哪一種（各代號的名稱與係數值列在這一頁最下面）。不確定可以先不選：系統會照材質名稱（不同寫法也認得，例如不銹鋼／不鏽鋼、钢／鋼）和各廠過去的紀錄先帶，帶不到的匯入後在頁面上選。再生料那一部分如果要用另一個係數（再生料的係數通常是另一個代號），在「再生料係數代號」選。',
   '4. 填好回系統「資料登錄 › C01 直接物料（重量法）」，選好跟樣板一樣的廠區與年度，按「⬆ 匯入」選這個檔。會先預覽，按「帶入表格」後檢查每一列的係數，再按「💾 儲存」才寫入。',
   '5. 預覽時有一個「取代」勾選：勾著＝畫面上原有、但檔案裡對不到的列會一併移除。所以請把整年的材質放在同一個檔。'],
- lists:(site,year)=>{ const L=tplMatLib('C01-M',year); if(!L.length)throw new Error('係數庫還沒讀完，請等這一頁的表格出來後再按一次');
+ lists:(site,year)=>{ const L=tplMatLib('C01-01',year); if(!L.length)throw new Error('係數庫還沒讀完，請等這一頁的表格出來後再按一次');
    return [['「係數代號」下拉選單的選項（'+facY(+year)+' 年版係數庫，代號＋名稱，共 '+L.length+' 種）',L.map(x=>x.esg+' '+x.name)],
      ['各代號的係數值（kgCO2e/kg；同一個代號有分料況的會分開列）',L.map(x=>x.esg+' '+x.name+'：'+x.rows.map(r=>(r.cond?r.cond+' ':'')+r.val).join('／'))]]; },
  sheets:[{name:'C1物料分類表(全部類別)',cols:[['序號','O','流水號','1'],['物料類別','S','製程或大類（例：沖壓件、塑膠件、包材）','沖壓件'],['英文材質','O','','SPCC'],['中文材質','R','樞紐出來的類別名稱（照貴廠原本的寫法）；沒有名稱的列不會匯入','冷軋鋼板'],
@@ -3423,12 +3484,12 @@ function fdlFilter(q){   // 對照清單快速篩選(全列文字子字串;Commo
 }
 
 // === 係數庫 ===
-const MONTHLY_CATS=['S2-01','C08'];   // V41-4:月份防呆——僅按月盤查類別開放月份(依歷史資料:S2-01電費96%按月/C08月租8%;其餘全年度一次性)
-const FCATN={'S1-01':'天然氣（NG）','S1-02':'柴油（固定）','S1-03':'液化石油氣（LPG）（固定）','S1-05':'汽油','S1-06':'柴油（移動）','S1-08':'乙炔（焊接）','S1-09':'SF6（製程氣體）','S1-10':'冷媒','S1-11':'滅火器','S1-12':'化糞池','S1-13':'潤滑劑','S2-01':'外購電力','C01-W':'自來水','C03':'燃料能源活動'};
-const FCAT_LIST=['S1-01','S1-02','S1-03','S1-05','S1-06','S1-08','S1-09','S1-10','S1-11','S1-12','S1-13','S2-01','C01-W','C03'];   // V34:係數庫類別清單——係數庫分頁下拉、登錄頁「從係數庫選用」共用同一份(單一出處);loadOptions 會依 DB 實際類別動態補齊(如 C01/C02/C05/C09,舊硬編清單漏列)
+const MONTHLY_CATS=['B01-01','C08'];   // V41-4:月份防呆——僅按月盤查類別開放月份(依歷史資料:B01-01電費96%按月/C08月租8%;其餘全年度一次性)
+const FCATN={'A01-01':'天然氣（NG）','A01-02':'柴油（固定）','A01-03':'液化石油氣（LPG）（固定）','A02-01':'汽油','A02-02':'柴油（移動）','A03-01':'乙炔（焊接）','A03-02':'SF6（製程氣體）','A04-01':'冷媒','A04-02':'滅火器','A04-03':'化糞池','A04-04':'潤滑劑','B01-01':'外購電力','C01-03':'自來水','C03':'燃料能源活動'};
+const FCAT_LIST=['A01-01','A01-02','A01-03','A02-01','A02-02','A03-01','A03-02','A04-01','A04-02','A04-03','A04-04','B01-01','C01-03','C03'];   // V34:係數庫類別清單——係數庫分頁下拉、登錄頁「從係數庫選用」共用同一份(單一出處);loadOptions 會依 DB 實際類別動態補齊(如 C01/C02/C05/C09,舊硬編清單漏列)
 const fcatName=c=>FCATN[c]||CATNAME[c]||'';   // V34:類別顯示名——FCATN 沒有的(C01/C02…)退 CATNAME
-function fScope(cat,notes){ if(cat==='S2-01')return '<b style="color:var(--w)">地區/省專用</b>'; const n=(notes||'').replace('適用廠:','').split(',').filter(Boolean).length; return n>=4?'國別通用':(n<=1?'單廠':'部分廠'); }
-function fFlag(cat,src,val,unit){ unit=unit||''; if(/#REF/.test(unit))return '⚠單位錯誤'; if(cat==='S1-10'||/%/.test(unit))return '⚠冷媒需依種類'; if(Number(val)===0)return '⚠係數0'; if(!String(src||'').trim()||src==='-')return '⚠無來源'; return ''; }
+function fScope(cat,notes){ if(cat==='B01-01')return '<b style="color:var(--w)">地區/省專用</b>'; const n=(notes||'').replace('適用廠:','').split(',').filter(Boolean).length; return n>=4?'國別通用':(n<=1?'單廠':'部分廠'); }
+function fFlag(cat,src,val,unit){ unit=unit||''; if(/#REF/.test(unit))return '⚠單位錯誤'; if(cat==='A04-01'||/%/.test(unit))return '⚠冷媒需依種類'; if(Number(val)===0)return '⚠係數0'; if(!String(src||'').trim()||src==='-')return '⚠無來源'; return ''; }
 function fv9(v){if(v==null||v==='')return '';const n=Number(v);if(!isFinite(n))return v;
   const d=n.toFixed(10);   // V65-17:全系統位數統一 係數10位
   return (d.length<String(v).length)?`<span title="${v}">${d}</span>`:d;}
@@ -3591,7 +3652,7 @@ function facSrcTree(){   // 與 buildNav 同一棵樹（SRC 定義），葉節�
   const tree={}; SRC.forEach((s,i)=>{(tree[s.sc]=tree[s.sc]||{});(tree[s.sc][s.mid]=tree[s.sc][s.mid]||[]).push({i,c:s.c,name:s.name});});
   const cnt={}; (FACALL||[]).forEach(f=>{cnt[f.category_id]=(cnt[f.category_id]||0)+1;});
   const leaf=(lf,cls,label)=>{const r=ncRow(lf.c), n=cnt[lf.c]||0;
-    return `<div class="navi ${cls} fsrc" data-c="${lf.c}" onclick="facPickSrc('${lf.c}')" title="${r?'現行碼 '+lf.c:'ESG 新編碼未列此源'}">`
+    return `<div class="navi ${cls} fsrc" data-c="${lf.c}" onclick="facPickSrc('${lf.c}')" title="${r?'類別碼 '+lf.c:'ESG 新編碼未列此源'}">`
       +(label?`<span style="visibility:hidden">▸ </span>${label}`:`<span class="ncode"${r?'':' style="color:#c3cfc9"'}>${r?r.code:lf.c}</span>${r?r.name:lf.name}`)   /* V70-3:葉節點名稱以主檔為準（ESG 9/14：焊接保護氣體→乙炔焊接、SF6/乙炔→SF6，主檔早已是 乙炔（焊接）/SF6（製程氣體），樹卻讀寫死的舊名） */
       +(srcNa(lf.c)?srcNaTag(lf.c):FAC_SHARE[lf.c]?facShareTag(lf.c):(n?` <span style="font-size:10px;color:var(--g)" title="係數庫條目數">${n}</span>`:` <span style="font-size:10px;color:#c9821e" title="係數庫尚無此排放源的條目">無</span>`))+`</div>`;};   /* V99：C11／C14 標不適用，不標「無」 */
   let h='';
@@ -3628,7 +3689,7 @@ async function facSrcView(){
 }
 function facSibNote(sib,code){   /* V89-1：併在別張表的排放源（目前只有 B01-02 自發自用太陽光電）點進來時的說明 */
   const own=(typeof ncRow==='function'&&ncRow(code))?ncRow(code).code:code;
-  if(sib==='B01-02')return '☀️ <b>B01-02 自發自用太陽光電</b>沒有自己的係數表，跟 '+facEsc(own)+' 用同一張（就是下面這張）：範疇二<b>市場基礎算 0</b>；<b>位置基礎＝用電量 × 這張電網係數</b>（雙軌揭露，另列）。光伏的上游排放算在範疇三 → <a href="javascript:void(0)" onclick="facPickSrc(&#39;C03-E&#39;)" style="color:var(--p);font-weight:700">C03-01 光伏上游（單晶硅／通用）↗</a>';
+  if(sib==='B01-02')return '☀️ <b>B01-02 自發自用太陽光電</b>沒有自己的係數表，跟 '+facEsc(own)+' 用同一張（就是下面這張）：範疇二<b>市場基礎算 0</b>；<b>位置基礎＝用電量 × 這張電網係數</b>（雙軌揭露，另列）。光伏的上游排放算在範疇三 → <a href="javascript:void(0)" onclick="facPickSrc(&#39;C03-01&#39;)" style="color:var(--p);font-weight:700">C03-01 光伏上游（單晶硅／通用）↗</a>';
   return '<b>'+facEsc(sib)+'</b> 沒有自己的係數表，併在 '+facEsc(own)+' 這張表。'; }
 function facPickSrc(code){
   FAC_CUR=code;
@@ -3823,7 +3884,7 @@ function fyObs(el){ if(!el||el._fyo)return; let tm=null; const run=()=>{ clearTi
   el.addEventListener('toggle',run,true);   // V129-14：展開／收合「核對」後重量
   el._fyo=new MutationObserver(run); el._fyo.observe(el,{childList:true,subtree:true}); run();
   window.addEventListener('resize',()=>{ clearTimeout(el._fyr); el._fyr=setTimeout(()=>{ el.querySelectorAll('table[data-fy]').forEach(t=>{ try{ fyPos(t); }catch(e){} }); el.querySelectorAll('.fyw').forEach(w=>{ try{ fyFit(w); }catch(e){} }); },150); }); }
-const FSM_ITEM={'S1-10':{kind:'refrig'},'S1-11':{kind:'mid'},'C04':{kind:'mid'},'C08':{kind:'mid'},'C09':{kind:'mid'},'C15':{kind:'service'}   /* V129-5：C15 改用金額法同一張表（一列一種投資） */,'C05':{kind:'vehicle'},'C06':{kind:'vehicle'},'C07':{kind:'vehicle'},'C01-M':{kind:'material'},'C01-S':{kind:'service'},'C02':{kind:'service'},'C10':{kind:'service'},'C03-E':{kind:'c03'},'C03-F':{kind:'c03'},'C12':{kind:'c12'}};   /* V94：C12 材質大類 × 年度 */   /* V90：C01-02 服務 × 年度 */   /* V88：C03 種類 × 區域 × 年度 */
+const FSM_ITEM={'A04-01':{kind:'refrig'},'A04-02':{kind:'mid'},'C04':{kind:'mid'},'C08':{kind:'mid'},'C09':{kind:'mid'},'C15':{kind:'service'}   /* V129-5：C15 改用金額法同一張表（一列一種投資） */,'C05':{kind:'vehicle'},'C06':{kind:'vehicle'},'C07':{kind:'vehicle'},'C01-01':{kind:'material'},'C01-02':{kind:'service'},'C02':{kind:'service'},'C10':{kind:'service'},'C03-01':{kind:'c03'},'C03-02':{kind:'c03'},'C12':{kind:'c12'}};   /* V94：C12 材質大類 × 年度 */   /* V90：C01-02 服務 × 年度 */   /* V88：C03 種類 × 區域 × 年度 */
 const C03FAM={'C03-01-04':'C03-01-03'};
 const C03PVK={'單晶硅':'C03-01-03','通用':'C03-01-04'};   /* V88-6：光伏種類 → 係數代號（ESG：有提供板子種類且有對應品項才用，種類不明用通用）；電力頁「光伏種類」選項也從這裡來 */   /* V88-6：同一種類的另一個品項 → 種類主碼（光伏通用 → 光伏） */
 const C03CODE={'C03-01-01':'電力上游','C03-01-02':'輸配電損失','C03-01-03':'光伏上游（單晶硅）','C03-01-04':'光伏上游（通用）','C03-02-01':'天然氣（NG）上游','C03-02-02':'柴油上游','C03-02-03':'汽油上游','C03-02-04':'液化石油氣（LPG）上游'};   /* V88：批134 系統碼（一物一號） */
@@ -4003,7 +4064,7 @@ window.c12MapGo=async function(){ const d=document.getElementById('s101dlg'); co
 let C12USE=null;
 async function c12UseLoad(){ if(C12USE)return C12USE;   /* 用在哪：2022–2025＝C12 參考表；2026 起＝C01-01 直接物料登錄頁（不含 2099 試打） */
   const b=await sbAll(()=>sb.from('ghg_c12_c1_basis').select('site_id,data_year,seq,material,weight_t').order('site_id').order('data_year').order('seq')); if(b.error)throw b.error;
-  const a=await sbAll(()=>sb.from('ghg_activity_data').select('record_id,site_id,data_year,source_name,attr1,attr2,extra,quantity,quantity_unit').eq('category_id','C01-M').gt('data_year',2025).neq('data_year',TRIAL_Y).order('record_id')); if(a.error)throw a.error;
+  const a=await sbAll(()=>sb.from('ghg_activity_data').select('record_id,site_id,data_year,source_name,attr1,attr2,extra,quantity,quantity_unit').eq('category_id','C01-01').gt('data_year',2025).neq('data_year',TRIAL_Y).order('record_id')); if(a.error)throw a.error;
   const rows=[]; (b.data||[]).forEach(r=>{ const t=+r.weight_t||0; if(t)rows.push({site:r.site_id,y:r.data_year,mat:String(r.material||'').trim(),t:t}); });
   (a.data||[]).forEach(r=>{ const e=r.extra||{}; const m=String(r.attr2||e['細項/材質']||e['微類']||r.source_name||'').trim(); const t=+r.quantity||0; if(m&&t)rows.push({site:r.site_id,y:r.data_year,mat:m,t:t}); });
   C12USE=rows; return rows; }
@@ -4194,7 +4255,7 @@ function svcNm(f){   /* V119-8：品名的中文、英文各取乾淨的一份�
   const r={zh:zh,en:en}; C.set(f.factor_id,r); return r;
 }
 function svcZh(f){ const x=svcNm(f); return x.zh||x.en; }
-function svcLibAll(cat){ return (FACALL||[]).filter(f=>f.category_id===(cat||'C01-S')); }
+function svcLibAll(cat){ return (FACALL||[]).filter(f=>f.category_id===(cat||'C01-02')); }
 function svcEntry(code,y,cat){ y=facY(y); return svcLibAll(cat).filter(f=>f.esg_code===code&&inEff(f,y)).sort((a,b)=>(efF(b)||0)-(efF(a)||0))[0]||null; }   /* 代號 × 年度 → 條目（2026 還沒有自己的版時，2025 年版沒寫迄年會延續） */
 function svcUnitCur(u){ u=String(u==null?'':u).trim(); if(!u||u==='-'||/^usd$|美金|美元/i.test(u))return 'USD'; if(/^(twd|ntd)$|台幣|臺幣/i.test(u))return 'TWD'; if(/^(rmb|cny)$|人民幣|人民币/i.test(u))return 'CNY'; if(/^vnd$|越南盾/i.test(u))return 'VND'; if(/^thb$|泰銖|泰铢/i.test(u))return 'THB'; if(/^sgd$/i.test(u))return 'SGD'; if(/^myr$/i.test(u))return 'MYR'; return null; }   /* 活動量單位是哪種貨幣；null＝不是貨幣（例 m3：水誤放在金額法） */
 function svcUsdOf(r){ const cu=svcUnitCur(r&&r.quantity_unit); const q=+(r&&r.quantity)||0; if(cu==='USD')return q; if(!cu)return null; const y=+r.data_year; const fx=(typeof FXR!=='undefined'&&FXR&&FXR[y]&&FXR[y][cu])?FXR[y][cu]:null; const rt=fx?(+fx.rate_src_disp||(fx.to_usd?1/(+fx.to_usd):0)):0; return rt>0?q/rt:null; }
@@ -4210,7 +4271,7 @@ function svcRowNm(r){ const e=(r&&r.extra)||{}; return svcKeyEn(e['Commodity']||
 function svcKeyEn(t){ return String(t||'').replace(/[^A-Za-z0-9]/g,'').toLowerCase(); }   /* 只留英數（收集表常寫「中文/English」） */
 function svcKeyOf(f){ if(!f)return ''; if(/^C(08|13|15)$/.test(f.category_id)){ const m=String(f.factor_source||'').match(/（([^）]+)）/)||String(f.notes||'').match(/出處:GZA\s*\d+\s*年版\s*([^（|(]+)/); return svcKeyEn(m?m[1]:''); } return svcKeyEn(svcNote(f,'Commodity')); }   /* C08 的品名在出處括號裡 */
 function svcKeyEq(a,b){ if(!a||!b)return false; if(a===b)return true; return a.length>=20&&b.length>=20&&(a.indexOf(b)===0||b.indexOf(a)===0); }   /* 有的年度品名被切掉尾巴 */
-const SVC_GZA={'C01-S':['C01-S','C08'],'C02':['C02','C10','C08'],'C10':['C10','C02','C08']};   /* V129-58-4：同一套 GZA 的表（品名在本類找不到才往後找） */
+const SVC_GZA={'C01-02':['C01-02','C08'],'C02':['C02','C10','C08'],'C10':['C10','C02','C08']};   /* V129-58-4：同一套 GZA 的表（品名在本類找不到才往後找） */
 function svcKeyZh(t){ return String(t||'').replace(/[^\u4e00-\u9fff]/g,''); }   /* 中文翻譯比對鍵：只留中文字 */
 function svcRowZh(r){ const e=(r&&r.extra)||{}; const t=e['中文翻譯(收集表)']||(/[\u4e00-\u9fff]/.test(String(e['微類']||''))?e['微類']:''); return svcKeyZh(t); }
 function svcByName(nb,cat,y,zh){   /* 品名 → 同年條目；同年唯一一個新編碼才算；{f} 或 {amb}（多個）或 {noYear:[別年]}；zh＝用中文翻譯比 */
@@ -4233,7 +4294,7 @@ function svcValHit(all,E,r,y){   /* 清冊係數值 → 係數庫條目（原本
 function svcHum(r){ const e=(r&&r.extra)||{}; for(const k of ['歸屬判定','批337','批338','批339']){ if(e[k])return k+'：'+String(e[k]).slice(0,120); } return ''; }   /* V129-71：人工判定過的歸屬（使用者決定、記在明細） */
 function svcRowCode(r,cat,usdHint){   /* 明細列 → {code,f,fy,how}；係數 0＝{zero}；對不到＝{none}（unit＝單位不是貨幣、noamt＝沒有金額）
      V129-58-4：已申報年度＝品名優先（鐵則：品項從項目本身認）→ 明細連結 → 清冊係數值（最後手段）；開放年度＝明細連結（使用者選的）優先 */
-  cat=cat||(r&&r.category_id)||'C01-S'; const all=svcLibAll(cat).filter(f=>f.esg_code);
+  cat=cat||(r&&r.category_id)||'C01-02'; const all=svcLibAll(cat).filter(f=>f.esg_code);
   if(svcUnitCur(r&&r.quantity_unit)===null)return {none:true,unit:true};   /* 單位不是貨幣（例 m3）＝不是金額法的資料，有記係數也不認 */
   const y=+(r&&r.data_year)||0; const decl=!!(typeof YLOCKS!=='undefined'&&YLOCKS&&YLOCKS._declMax&&y<=YLOCKS._declMax);   /* 同 svcDecl（那支在別的程式區塊，這裡讀不到） */ const E=svcEfOf(r,usdHint); const ef=(E&&E.v!=null)?E.v:null;
   const link=(r&&r.factor_id)?all.find(x=>x.factor_id===r.factor_id):null;
@@ -4535,7 +4596,7 @@ function facVehRenderOld(code){   /* V103-7 交通工具型；V103-11 泛化成�
 function facRecMapHTML(){   /* V129-50：再生料係數對照（批275） */
   const M=RMAP||{list:[]}; const f4=v=>v==null?'—':Number(v).toLocaleString('en-US',{minimumFractionDigits:4,maximumFractionDigits:4});
   const get=(n,k)=>{const m=String(n||'').match(new RegExp('(?:^|\\|)'+k+':([^|]*)')); return m?m[1].trim():'';};
-  const ent=code=>{ const fs=(FACALL||[]).filter(f=>f.category_id==='C01-M'&&String(f.esg_code||'').trim()===code).sort((a,b)=>(b.factor_year||0)-(a.factor_year||0)); const f=fs[0]; if(!f)return {name:'（係數庫沒有這個代號）',val:null,y:null,src:''}; const g=((FGAS&&FGAS[f.factor_id])||[])[0]||{}; return {name:get(f.notes,'中文')||f.factor_id,val:g.factor_value!=null?+g.factor_value:null,unit:g.factor_unit||'',y:f.factor_year,src:f.factor_source||''}; };
+  const ent=code=>{ const fs=(FACALL||[]).filter(f=>f.category_id==='C01-01'&&String(f.esg_code||'').trim()===code).sort((a,b)=>(b.factor_year||0)-(a.factor_year||0)); const f=fs[0]; if(!f)return {name:'（係數庫沒有這個代號）',val:null,y:null,src:''}; const g=((FGAS&&FGAS[f.factor_id])||[])[0]||{}; return {name:get(f.notes,'中文')||f.factor_id,val:g.factor_value!=null?+g.factor_value:null,unit:g.factor_unit||'',y:f.factor_year,src:f.factor_source||''}; };
   let h='<div style="margin-top:18px;padding-top:8px;border-top:2px solid #cfe0d6"><div style="font-size:15px;font-weight:800;color:var(--d);padding:4px 0">再生料係數對照（原生料 → 再生料）<span style="font-weight:600;font-size:13px">　'+(M.list||[]).length+' 組</span></div>'
     +'<div style="font-size:11.5px;color:var(--g);margin-bottom:6px">登錄頁匯入有再生比例的材質時，再生料那一部分照這張表帶係數；表上沒有的材質＝沒有再生料係數。2025 實際用到再生料的材質都在這裡。</div>';
   if(M._missing)return h+'<div class="msg err">再生料係數對照讀不到：'+facEsc(M.err||'')+'</div></div>';
@@ -4547,10 +4608,10 @@ function facRecMapHTML(){   /* V129-50：再生料係數對照（批275） */
   return h+'</tbody></table></div>'; }
 async function facItemShow(code,pane){
   if(FSM_ITEM[code]&&/^(vehicle|mid)$/.test(FSM_ITEM[code].kind)){ try{ pane.innerHTML=facVehRender(code); }catch(e){ pane.innerHTML='<div class="msg err">中分類係數表產生失敗：'+facEsc(e.message||e)+'</div>'; } return; }
-  if(FSM_ITEM[code]&&FSM_ITEM[code].kind==='material'){ try{ if(code==='C01-M'){ try{ await ensureRMap(); }catch(e){} if(FAC_CUR!==code)return; } pane.innerHTML=facMatRender(code)+(code==='C01-M'?facRecMapHTML():''); }catch(e){ pane.innerHTML='<div class="msg err">材質矩陣產生失敗：'+facEsc(e.message||e)+'</div>'; } return; }   /* V85-2 */
+  if(FSM_ITEM[code]&&FSM_ITEM[code].kind==='material'){ try{ if(code==='C01-01'){ try{ await ensureRMap(); }catch(e){} if(FAC_CUR!==code)return; } pane.innerHTML=facMatRender(code)+(code==='C01-01'?facRecMapHTML():''); }catch(e){ pane.innerHTML='<div class="msg err">材質矩陣產生失敗：'+facEsc(e.message||e)+'</div>'; } return; }   /* V85-2 */
   if(FSM_ITEM[code]&&FSM_ITEM[code].kind==='service'){ try{ if(!ITEM_ROWS[code]){ pane.innerHTML='<div class="msg" style="background:var(--t)">彙整明細中…</div>'; await ensureFacSites(); const r=await sbAll(()=>sb.from('ghg_activity_data').select('record_id,site_id,data_year,category_id,source_name,quantity,co2e_draft,ef_value,factor_id,input_method,extra').eq('category_id',code).neq('data_year',TRIAL_Y).order('record_id')); if(r.error)throw r.error; ITEM_ROWS[code]=r.data||[]; if(FAC_CUR!==code)return; } pane.innerHTML=facSvcRender(code); facSvcTraceHL(code,pane); }catch(e){ pane.innerHTML='<div class="msg err">服務係數表產生失敗：'+facEsc(e.message||e)+'</div>'; } return; }   /* V90 */
   if(FSM_ITEM[code]&&FSM_ITEM[code].kind==='c12'){ try{ if(!ITEM_ROWS.C12){ pane.innerHTML='<div class="msg" style="background:var(--t)">彙整明細中…</div>'; await ensureFacSites(); const r=await sbAll(()=>sb.from('ghg_activity_data').select('record_id,site_id,data_year,source_name,attr1,factor_id,ef_value,input_method,extra').eq('category_id','C12').neq('data_year',TRIAL_Y).order('record_id')); if(r.error)throw r.error; ITEM_ROWS.C12=r.data||[]; if(FAC_CUR!==code)return; } pane.innerHTML=facC12Render(code); facC12TraceHL(code,pane); }catch(e){ pane.innerHTML='<div class="msg err">C12 係數表產生失敗：'+facEsc(e.message||e)+'</div>'; } return; }   /* V94 */
-  if(FSM_ITEM[code]&&FSM_ITEM[code].kind==='c03'){ try{ if(!ITEM_ROWS.C03ALL){ pane.innerHTML='<div class="msg" style="background:var(--t)">彙整明細中…</div>'; await ensureFacSites(); const r=await sbAll(()=>sb.from('ghg_activity_data').select('record_id,site_id,data_year,category_id,source_name,attr2,factor_id,ef_value,extra').in('category_id',['C03-E','C03-F']).neq('data_year',TRIAL_Y).order('record_id')); if(r.error)throw r.error; ITEM_ROWS.C03ALL=r.data||[]; if(FAC_CUR!==code)return; } if(!window.C03GAPS&&typeof window.c03GapScan==='function'){ pane.innerHTML='<div class="msg" style="background:var(--t)">檢查各廠缺係數…</div>'; try{ await window.c03GapScan(); delete ITEM_ROWS.C03GAPERR; }catch(ge){ ITEM_ROWS.C03GAPERR=String((ge&&ge.message)||ge); console.error('C03 缺係數檢查',ge); } if(FAC_CUR!==code)return; } pane.innerHTML=facC03Render(code); facC03TraceHL(code,pane); }catch(e){ pane.innerHTML='<div class="msg err">C03 係數表產生失敗：'+facEsc(e.message||e)+'</div>'; } return; }   /* V88 */
+  if(FSM_ITEM[code]&&FSM_ITEM[code].kind==='c03'){ try{ if(!ITEM_ROWS.C03ALL){ pane.innerHTML='<div class="msg" style="background:var(--t)">彙整明細中…</div>'; await ensureFacSites(); const r=await sbAll(()=>sb.from('ghg_activity_data').select('record_id,site_id,data_year,category_id,source_name,attr2,factor_id,ef_value,extra').in('category_id',['C03-01','C03-02']).neq('data_year',TRIAL_Y).order('record_id')); if(r.error)throw r.error; ITEM_ROWS.C03ALL=r.data||[]; if(FAC_CUR!==code)return; } if(!window.C03GAPS&&typeof window.c03GapScan==='function'){ pane.innerHTML='<div class="msg" style="background:var(--t)">檢查各廠缺係數…</div>'; try{ await window.c03GapScan(); delete ITEM_ROWS.C03GAPERR; }catch(ge){ ITEM_ROWS.C03GAPERR=String((ge&&ge.message)||ge); console.error('C03 缺係數檢查',ge); } if(FAC_CUR!==code)return; } pane.innerHTML=facC03Render(code); facC03TraceHL(code,pane); }catch(e){ pane.innerHTML='<div class="msg err">C03 係數表產生失敗：'+facEsc(e.message||e)+'</div>'; } return; }   /* V88 */
   pane.innerHTML='<div class="msg" style="background:var(--t)">彙整明細中…</div>';
   try{
     if(!ITEM_ROWS[code]||!ITEM_ROWS[code].v3){ ITEM_ROWS[code]=await facRefrigLoad3(code); ITEM_ROWS[code].v3=1; }   /* V129-9：讀係數庫條目（批230）＋氣體清單＋明細 */
@@ -4567,7 +4628,7 @@ function facCatModel(){   // 依 SRC 樹（與排放源樹同一棵）分 範疇
   const leafMid={}; Object.keys(tree).forEach(sc=>Object.keys(tree[sc]).forEach(mid=>tree[sc][mid].forEach(lf=>leafMid[lf.c]={sc:sc,mid:mid})));
   const midByNew={};   // 新第二階碼 → 類別（給直接掛在第二階舊碼的條目用，如 C03／C05）
   Object.keys(tree).forEach(sc=>Object.keys(tree[sc]).forEach(mid=>tree[sc][mid].forEach(lf=>{ const r=ncRow(lf.c); if(!r)return; let x=r; while(x&&x.level>2&&ESRC&&ESRC.byCode[x.parent_code])x=ESRC.byCode[x.parent_code]; if(x&&!midByNew[x.code])midByNew[x.code]={sc:sc,mid:mid}; })));
-  const locate=c=>{ if(leafMid[c])return leafMid[c]; const r=ncRow(c); if(r){ let x=r; while(x&&x.level>2&&ESRC&&ESRC.byCode[x.parent_code])x=ESRC.byCode[x.parent_code]; if(x&&midByNew[x.code])return midByNew[x.code]; } const sc=/^S1/.test(c)?'範疇一':(/^S2/.test(c)?'範疇二':(/^C/.test(c)?'範疇三':null)); return sc?{sc:sc,mid:'（未對應現行分類）'}:null; };
+  const locate=c=>{ if(leafMid[c])return leafMid[c]; const r=ncRow(c); if(r){ let x=r; while(x&&x.level>2&&ESRC&&ESRC.byCode[x.parent_code])x=ESRC.byCode[x.parent_code]; if(x&&midByNew[x.code])return midByNew[x.code]; } const sc=/^A/.test(c)?'範疇一':(/^B/.test(c)?'範疇二':(/^C/.test(c)?'範疇三':null)); return sc?{sc:sc,mid:'（未對應現行分類）'}:null; };
   const mk=(sc,mid,leaves)=>({sc:sc,mid:mid,leaves:leaves,n:0,rg:new Set(),y0:null,y1:null,open:false,codes:new Set(leaves.map(l=>l.c))});
   const cats={}; order.forEach(sc=>{cats[sc]={}; Object.keys(tree[sc]).forEach(mid=>cats[sc][mid]=mk(sc,mid,tree[sc][mid]));});
   let lost=0;
@@ -4620,7 +4681,7 @@ async function facUseRows(y){   // 該年度全部明細（分頁抓；每年快
 function facUseModel(y,rows){   // 明細 → 群組：範疇›類別›排放源›區域›代號
   const tree={}, order=[]; SRC.forEach(s=>{ if(!tree[s.sc]){tree[s.sc]={}; order.push(s.sc);} (tree[s.sc][s.mid]=tree[s.sc][s.mid]||[]).push(s.c); });
   const leafPos={}; order.forEach((sc,a)=>Object.keys(tree[sc]).forEach((mid,b)=>tree[sc][mid].forEach((c,k)=>leafPos[c]={sc:sc,mid:mid,a:a,b:b,k:k})));
-  const locate=c=>{ if(leafPos[c])return leafPos[c]; const r=ncRow(c); if(r){ let x=r; while(x&&x.level>2&&ESRC&&ESRC.byCode[x.parent_code])x=ESRC.byCode[x.parent_code]; const hit=Object.keys(leafPos).find(lc=>{const rr=ncRow(lc); if(!rr)return false; let z=rr; while(z&&z.level>2&&ESRC&&ESRC.byCode[z.parent_code])z=ESRC.byCode[z.parent_code]; return z&&x&&z.code===x.code;}); if(hit)return leafPos[hit]; } const sc=/^S1/.test(c)?'範疇一':(/^S2/.test(c)?'範疇二':(/^C/.test(c)?'範疇三':'其他')); return {sc:sc,mid:'（未對應現行分類）',a:order.indexOf(sc)<0?9:order.indexOf(sc),b:99,k:99}; };
+  const locate=c=>{ if(leafPos[c])return leafPos[c]; const r=ncRow(c); if(r){ let x=r; while(x&&x.level>2&&ESRC&&ESRC.byCode[x.parent_code])x=ESRC.byCode[x.parent_code]; const hit=Object.keys(leafPos).find(lc=>{const rr=ncRow(lc); if(!rr)return false; let z=rr; while(z&&z.level>2&&ESRC&&ESRC.byCode[z.parent_code])z=ESRC.byCode[z.parent_code]; return z&&x&&z.code===x.code;}); if(hit)return leafPos[hit]; } const sc=/^A/.test(c)?'範疇一':(/^B/.test(c)?'範疇二':(/^C/.test(c)?'範疇三':'其他')); return {sc:sc,mid:'（未對應現行分類）',a:order.indexOf(sc)<0?9:order.indexOf(sc),b:99,k:99}; };
   const G={};
   rows.forEach(r=>{ const cat=String(r.category_id||''); if(!cat)return; const t=facTraceOf(r); const code=t&&t.code?t.code:'無'; const rg=t?t.rg:'?'; const pos=locate(cat);
     const key=[pos.a,pos.b,pos.k,cat,rg,code].join('|'); const g=G[key]||(G[key]={sc:pos.sc,mid:pos.mid,cat:cat,rg:rg,code:code,f:t&&t.f?t.f:null,why:t?t.why:'',sure:!!(t&&t.sure),n:0,q:{},c:0,sites:new Set(),pos:pos});
@@ -4675,7 +4736,7 @@ function facYOpen(y){ y=parseInt(y); if(!isFinite(y)||y===TRIAL_Y)return false; 
 // V74-7：燃燒類係數合理性檢查。燃料燃燒的 CO2 一定佔絕大多數（IPCC 那套約 97%、中國 100%）；
 //        非 CO2 佔比異常高＝CH4／N2O 很可能被重複乘了 GWP（例：UK Conversion Factors 的三欄本身已是 CO2e）。
 //        來源中立、不寫死燃料物性；只標記不改數字。
-const FAC_BURN=['S1-01','S1-02','S1-03','S1-05','S1-06'];   // 燃燒類排放源
+const FAC_BURN=['A01-01','A01-02','A01-03','A02-01','A02-02'];   // 燃燒類排放源
 const FAC_ODD_P=0.10;                                        // 非 CO2 佔比門檻
 function facOdd(code,gs){
   try{
@@ -4694,7 +4755,7 @@ function facTraceOf(r){   // 明細一筆 → 它用的係數：{code,rg,y0,f,wh
   const base=ncRow(cat); const pre=base?base.code:cat;
   let f=null, why='';
   if(r.factor_id){ f=FACALL.find(x=>x.factor_id===r.factor_id)||null; if(f)why='明細直接引用'; }
-  if(!f&&/^(C01-S|C02|C10|C15)$/.test(cat)&&typeof svcRowCode==='function'){ const m=svcRowCode(r,cat); if(m.f){ f=m.f; why=m.byName?'清冊係數係數庫沒有，依明細品名對到條目':'依明細係數值對到條目'; } else if(m.zero)return {code:'不計入',rg:'ALL',y0:null,f:null,why:'清冊這一項係數 0（不計入）'}; }   /* V90：C01-02 用係數值認是哪一種服務，不從 44 條裡亂挑 */
+  if(!f&&/^(C01-02|C02|C10|C15)$/.test(cat)&&typeof svcRowCode==='function'){ const m=svcRowCode(r,cat); if(m.f){ f=m.f; why=m.byName?'清冊係數係數庫沒有，依明細品名對到條目':'依明細係數值對到條目'; } else if(m.zero)return {code:'不計入',rg:'ALL',y0:null,f:null,why:'清冊這一項係數 0（不計入）'}; }   /* V90：C01-02 用係數值認是哪一種服務，不從 44 條裡亂挑 */
   if(!f&&(/^C0[67]$/.test(cat)||(cat==='C05'&&(r.c5code||(r.extra||{})['係數代號'])))){   /* V103-10：C05 依明細記的係數代號 */   /* V103-7：交通工具型——沒記係數代號的列依交通工具挑，不從整類隨便挑一條 */
     let vc=null; const ex=r.extra||{}; const vrg=(st&&st.country&&st.country!=='-')?st.country:rg;   /* V103-9：交通工具型係數分到國別，不用電網分區 */
     if(cat==='C07'&&typeof CM_NAME2CODE!=='undefined')vc=CM_NAME2CODE[r.equipment_name]||null;
@@ -4709,12 +4770,12 @@ function facTraceOf(r){   // 明細一筆 → 它用的係數：{code,rg,y0,f,wh
     else return {code:null,rg:vrg,y0:null,f:null,why:'係數庫沒有 '+vc+' 在 '+vrg+' '+y+' 年有效的條目'};
   }
   if(!f){ let cand=FACALL.filter(x=>x.category_id===cat&&inEff(x,y));
-    if(/^C03-[EF]$/.test(cat)){ const rc=c03RowCode(r.source_name,r.attr2); cand=rc?cand.filter(x=>(C03FAM[x.esg_code]||x.esg_code)===rc):[]; if(r.ef_value!=null&&cand.length>1){ const ev=+r.ef_value; const hit=cand.filter(x=>{ const gs=(FGAS&&FGAS[x.factor_id])||[]; const v=gs.reduce((s,g)=>s+(+g.factor_value||0)*(g.gwp==null?1:+g.gwp),0); return Math.abs(v-ev)<=Math.abs(ev)*1e-6; }); if(hit.length)cand=hit; } }   /* V88：C03 依種類（有數值再比數值）挑，不跨種類亂配 */ if(cat==='C12'){ const rc=c12RowCode(r); cand=rc?cand.filter(x=>x.esg_code===rc):[]; if(r.ef_value!=null&&cand.length>1){ const ev=+r.ef_value; const hit=cand.filter(x=>Math.abs(c12FacVal(x).v-ev)<=Math.abs(ev)*1e-6); if(hit.length)cand=hit; } }   /* V94：C12 依四大類挑，不跨類亂配 */ const p=rgPick(cand,st);   // V75：三層往上退 CN-JS → CN → ALL
+    if(/^C03-0[12]$/.test(cat)){ const rc=c03RowCode(r.source_name,r.attr2); cand=rc?cand.filter(x=>(C03FAM[x.esg_code]||x.esg_code)===rc):[]; if(r.ef_value!=null&&cand.length>1){ const ev=+r.ef_value; const hit=cand.filter(x=>{ const gs=(FGAS&&FGAS[x.factor_id])||[]; const v=gs.reduce((s,g)=>s+(+g.factor_value||0)*(g.gwp==null?1:+g.gwp),0); return Math.abs(v-ev)<=Math.abs(ev)*1e-6; }); if(hit.length)cand=hit; } }   /* V88：C03 依種類（有數值再比數值）挑，不跨種類亂配 */ if(cat==='C12'){ const rc=c12RowCode(r); cand=rc?cand.filter(x=>x.esg_code===rc):[]; if(r.ef_value!=null&&cand.length>1){ const ev=+r.ef_value; const hit=cand.filter(x=>Math.abs(c12FacVal(x).v-ev)<=Math.abs(ev)*1e-6); if(hit.length)cand=hit; } }   /* V94：C12 依四大類挑，不跨類亂配 */ const p=rgPick(cand,st);   // V75：三層往上退 CN-JS → CN → ALL
     if(p.list.length){ f=p.list.reduce((a,b)=>((efF(b)||0)>(efF(a)||0)?b:a)); why='依廠區所在區域與年度效期判定'+(p.rg!==(st&&st.country)?('（區域 '+(FSM_RG[p.rg]||p.rg)+'）'):''); } }
   if(!f)return {code:null,rg:rg,y0:null,f:null,why:'係數庫沒有此排放源在 '+rg+' '+y+' 年有效的條目'};
   const frg=(f.country&&f.country!=='-')?f.country:'ALL', y0=efF(f);
   const y1=efT(f); const rng=(y0!=null&&y1!=null&&y1!==y0)?('（條目效期 '+y0+'~'+y1+'）'):'';
-  const sure=(why==='明細直接引用')||/^C03-[EF]$/.test(cat)||(/^(C01-S|C02|C10|C15)$/.test(cat)&&why==='依明細係數值對到條目')||(cat==='C12'&&!!c12RowCode(r));   /* V90 */ let c4=(sure&&f.esg_code&&String(f.esg_code).trim())||(/^C0[567]$/.test(cat)&&facVehKey(f))||pre;   /* V103-7：交通工具型代號 */ if(f.table_id==='FT-C04-TRANSSHARED-ALL-2022'&&/^C04-\d+$/.test(c4)&&/^C0[59]$/.test(cat))c4=cat+c4.slice(3);   /* V95：運輸係數表 C4/C5/C9 共用，同一個號碼＝同一種車 */   /* V88：一物一號——確定是哪一條才顯示第四階碼；沒連結又猜不準的仍只到第三階 */
+  const sure=(why==='明細直接引用')||/^C03-0[12]$/.test(cat)||(/^(C01-02|C02|C10|C15)$/.test(cat)&&why==='依明細係數值對到條目')||(cat==='C12'&&!!c12RowCode(r));   /* V90 */ let c4=(sure&&f.esg_code&&String(f.esg_code).trim())||(/^C0[567]$/.test(cat)&&facVehKey(f))||pre;   /* V103-7：交通工具型代號 */ if(f.table_id==='FT-C04-TRANSSHARED-ALL-2022'&&/^C04-\d+$/.test(c4)&&/^C0[59]$/.test(cat))c4=cat+c4.slice(3);   /* V95：運輸係數表 C4/C5/C9 共用，同一個號碼＝同一種車 */   /* V88：一物一號——確定是哪一條才顯示第四階碼；沒連結又猜不準的仍只到第三階 */
   return {code:c4+'·'+frg+'·'+y,rg:frg,y0:y0,f:f,why:why+rng,sure:!!sure};   // V70-17:明細代號第三段＝資料年度（以後按年度維護、無效期）
 }
 async function facTrace(cat,rg,y,site,kc){   // 明細「↗」→ 係數庫矩陣，選定該排放源並標亮 區域×年度 那一格；V88-15：kc＝C03 種類碼（標亮那一列那一年）
@@ -4757,7 +4818,7 @@ async function facOverviewFam(){   // V70-9:原「係數表家族」卡片總覽
   Object.keys(FMETA||{}).forEach(k=>{const f=FMETA[k]; const t=f.table_id&&FTBLMAP[f.table_id]; if(t){const n=t.table_name||t.table_id; cnt[n]=(cnt[n]||0)+1;} else loose++;});
   // V38:卡片總覽分兩區——「🔧 專用（單一類別）」/「📦 泛用（跨類別）」;判定=適用類別含逗號或多類(或 ALL)=泛用;區內按類別代碼排序(S1,S2→C01..C15)
   const famCats=n=>[...new Set(FTFAM[n].flatMap(t=>String(t.applicable_category||'').split(',').map(s=>s.trim()).filter(Boolean)))];
-  const catRank=c=>(c==='ALL'?'2ALL':(/^S/.test(c)?('0'+c):('1'+c)));   // S1,S2 → C01..C15 → ALL
+  const catRank=c=>(c==='ALL'?'2ALL':(/^[AB]/.test(c)?('0'+c):('1'+c)));   // 範疇一二（A／B）→ C01..C15 → ALL
   const fmeta=Object.keys(FTFAM).map(n=>{const cs=famCats(n); return {n:n, multi:cs.length>1||cs.indexOf('ALL')>=0, key:cs.length?cs.map(catRank).sort()[0]:'3zz'};});
   const srt=(a,b)=>a.key.localeCompare(b.key)||a.n.localeCompare(b.n,'zh-Hant');
   const ded=fmeta.filter(m=>!m.multi).sort(srt), gen=fmeta.filter(m=>m.multi).sort(srt);
@@ -4982,7 +5043,7 @@ const QMIDS=(()=>{const o=[],seen={};SRC.forEach(s=>{if(!seen[s.mid]){seen[s.mid
 function qCatgChg(){
   const sel=document.getElementById('q_cat'); sel.innerHTML='<option value="">全部</option>';
   const g=QMIDS.find(x=>x.mid===document.getElementById('q_catg').value);
-  const lab=l=>ncRow(l.c)?ncText(l.c)+'（現行 '+l.c+'）':`${l.c} ${l.name.split('(')[0]}`;   // V69:子類別標籤顯新碼(值仍為舊碼)
+  const lab=l=>ncRow(l.c)?ncText(l.c):`${l.c} ${l.name.split('(')[0]}`;   // V69:子類別標籤顯新碼(值仍為舊碼)
   if(g){ if(g.leaves.length>1)g.leaves.forEach(l=>sel.add(new Option(lab(l),l.c))); }   // 單一子項類別不出子類(全部=該類)
   else{   // V69-4:類別=全部 → 子類別列出所選範疇底下全部排放源（篩選連動通則：選項=目前條件的交集,不留空;使用者實測「類別沒選,子類別就沒有?」）
     const sc=(document.getElementById('q_scope')||{}).value||'';
@@ -4993,7 +5054,7 @@ function qCatgChg(){
   if(typeof qCascade==='function')qCascade();   // V68-6:任何層級變動→全部下拉交集收斂
 }
 // V30:選定範疇後,類別下拉只顯示該範疇底下的類別(mid 依 leaf 代碼判範疇:S1→1/S2→2/其餘→3)
-const midScope=g=>/^S1/.test(g.leaves[0].c)?'1':(/^S2/.test(g.leaves[0].c)?'2':'3');
+const midScope=g=>/^A/.test(g.leaves[0].c)?'1':(/^B/.test(g.leaves[0].c)?'2':'3');
 function qScopeChg(){
   const sc=document.getElementById('q_scope').value;   // ''全部 / '1' / '2' / '3'
   const catg=document.getElementById('q_catg'); catg.innerHTML='<option value="">全部</option>';
@@ -5042,7 +5103,7 @@ function qRowMatch(r,skips){   // skips=忽略的條件（該下拉自己與其�
   if(!sk('year')&&q_year.value&&r.y!==q_year.value)return false;
   if(!sk('year')&&!q_year.value&&trialY(r.y))return false;   /* V99-2：沒選年度＝不含 2099 試打 */
   if(!sk('month')&&q_month.value&&r.m!==q_month.value)return false;
-  const scp=/^S1/.test(r.c)?'1':(/^S2/.test(r.c)?'2':'3');
+  const scp=/^A/.test(r.c)?'1':(/^B/.test(r.c)?'2':'3');
   if(!sk('scope')&&q_scope.value&&scp!==q_scope.value)return false;
   if(!sk('cat')&&q_cat.value){const c=q_cat.value;
     if(/^C\d\d$/.test(c)){if(r.c.indexOf(c)!==0)return false;}else if(r.c!==c)return false;}
@@ -5068,7 +5129,7 @@ function qCascade(){
         if(qRowMatch(r,['site']))sites.add(r.s);
         if(qRowMatch(r,['year']))years.add(r.y);
         if(qRowMatch(r,['month'])&&r.m!=null)months.add(r.m);
-        if(qRowMatch(r,['scope','catg','cat']))scopes.add(/^S1/.test(r.c)?'1':(/^S2/.test(r.c)?'2':'3'));
+        if(qRowMatch(r,['scope','catg','cat']))scopes.add(/^A/.test(r.c)?'1':(/^B/.test(r.c)?'2':'3'));
       });
       let cleared=qMark(q_site,sites)|qMark(q_year,years)|qMark(q_month,months)|qMark(q_scope,scopes);
       const cgValid=new Set();
@@ -5122,13 +5183,13 @@ async function runQuery(){
   if(!sb){box.innerHTML='<div class="msg err">尚未設定連線</div>';return;}
   box.innerHTML='查詢中…';
   // ★直讀明細層 ghg_activity_data（與全集團同源，符合「匯總全部源自明細」鐵則；不再接會套係數的 view）
-  const scopeOf=c=>/^S1/.test(c||'')?1:(/^S2/.test(c||'')?2:3);
+  const scopeOf=c=>/^A/.test(c||'')?1:(/^B/.test(c||'')?2:3);
   function build(){
     let q=sb.from('ghg_activity_data').select('site_id,data_year,data_month,category_id,source_name,equipment_name,attr2,quantity,quantity_unit,co2e_draft,co2e_location,extra,status,gas_type,ef_value,ef_unit,ef_source,gwp,tier_code,factor_id');   // V71-6:+equipment_name（查詢頁排放源欄顯示設備）   // V32:加結構化欄(氣體別/係數/GWP/範疇一中層);V34:加 factor_id(係數庫引用)
     const site=q_site.value, year=q_year.value, month=q_month.value, scope=q_scope.value, cat=q_cat.value, catg=q_catg.value;
     if(site)q=q.eq('site_id',site); if(year)q=q.eq('data_year',year); else q=q.neq('data_year',TRIAL_Y);   /* V99：沒選年度不含 2099 試打 */
     if(month)q=q.eq('data_month',month);
-    if(scope==='1')q=q.like('category_id','S1%'); else if(scope==='2')q=q.like('category_id','S2%'); else if(scope==='3')q=q.like('category_id','C%');
+    if(scope==='1')q=q.like('category_id','A%'); else if(scope==='2')q=q.like('category_id','B%'); else if(scope==='3')q=q.like('category_id','C%');
     if(cat){ if(/^C\d\d$/.test(cat))q=q.like('category_id',cat+'%'); else q=q.eq('category_id',cat); }   // 子類:父碼(C01/C03…)合計含子碼
     else if(catg){ const g=QMIDS.find(x=>x.mid===catg), m=catg.match(/^(C\d\d)/);
       if(m)q=q.like('category_id',m[1]+'%');                        // C 類別合計:like 含子碼與未分類(如 C01 裸碼)
@@ -5169,7 +5230,7 @@ async function runQuery(){
   if(!q_month.value&&!trialY(q_year.value)){ try{   /* V99-2：試打年度沒有清冊，不比官方 */
     let oc=['範疇一','範疇二','範疇三']; const sc=q_scope.value, ca=q_cat.value, cg=q_catg.value;
     if(sc==='1')oc=['範疇一']; else if(sc==='2')oc=['範疇二']; else if(sc==='3')oc=['範疇三'];
-    if(ca){ if(ca[0]==='C')oc=[ca.slice(0,3)]; else if(ca.indexOf('S1')===0)oc=['範疇一']; else if(ca.indexOf('S2')===0)oc=['範疇二']; else oc=['範疇三']; }   // C 碼一律歸父(C01-M→C01)
+    if(ca){ if(ca[0]==='C')oc=[ca.slice(0,3)]; else if(ca.indexOf('A')===0)oc=['範疇一']; else if(ca.indexOf('B')===0)oc=['範疇二']; else oc=['範疇三']; }   // C 碼一律歸父(C01-01→C01)
     else if(cg){ const m=cg.match(/^(C\d\d)/); if(m)oc=[m[1]]; else if(/^1\./.test(cg))oc=['範疇一']; else if(/^2\./.test(cg))oc=['範疇二']; }   // V27:只選類別→官方對到父碼/範疇
     let oq=sb.from('ghg_inventory_summary').select('co2e_ton').in('category_code',oc);
     if(q_site.value) oq=oq.eq('site_code',q_site.value);   /* V129-79 */
@@ -5223,13 +5284,13 @@ async function runQuery(){
   const tr0=(typeof facTraceOf==='function')?facTraceOf(r):null;   // V70-13:係數代號＝排放源新碼·區域·效期起年（不顯示 EF 流水號）；點 ↗ 跳矩陣標格
   const sbg=stBadge(r,tr0);   // V35-5→V72-7:資料狀態徽章(零活動/缺活動量/缺係數；係數追得到不標)
   const fid=String(r.factor_id||'').replace(/['"<>\\]/g,'');   // factor_id 消毒(僅防串壞模板,值本為 ASCII 代號)
-  const flink=tr0?((tr0.code==='不計入'||tr0.code==='零排放'||tr0.code==='逐趟直填')?(' <span style="font-size:11px;color:#7a8f84" title="'+facEsc(tr0.why)+'">'+facEsc(tr0.code)+'</span>'):(tr0.code?(' <a href="javascript:void(0)" onclick="event.stopPropagation();facTrace(&#39;'+String(r.category_id)+'&#39;,&#39;'+tr0.rg+'&#39;,'+facY(parseInt(r.data_year))+',&#39;'+String(r.site_id||'')+'&#39;,&#39;'+((/^(C01-S|C02|C10|C15)$/.test(String(r.category_id))&&tr0.f&&tr0.f.esg_code)?tr0.f.esg_code:((/^C0[567]$/.test(String(r.category_id))&&tr0.f)?facVehKey(tr0.f):((FSM_ITEM[String(r.category_id)]&&FSM_ITEM[String(r.category_id)].kind==='mid'&&tr0.f)?((facMidOf(tr0.f)||{}).k||''):'')))+'&#39;)" title="'+facEsc(tr0.why)+(fid?('；內部編號 '+fid):'')+'。點 ↗ 跳到係數矩陣並標亮這筆用的那一格" style="font-size:11px;color:var(--p);text-decoration:none;font-weight:700;white-space:nowrap">'+facEsc(tr0.code)+' ↗</a>'+((tr0.y0!=null&&tr0.y0<parseInt(r.data_year)&&facYOpen(r.data_year))?'<span style="color:#b8860b;font-size:10px;margin-left:2px" title="ESG 尚未維護 '+parseInt(r.data_year)+' 年條目：目前用的是 '+tr0.y0+' 年起的條目（係數每年由 ESG 維護、不沿用）">⚠</span>':'')):('<span style="color:#c9821e;font-size:11px" title="'+facEsc(tr0.why)+'">無</span>'))):'';   /* V90：不計入／C01-02 帶代號 */
+  const flink=tr0?((tr0.code==='不計入'||tr0.code==='零排放'||tr0.code==='逐趟直填')?(' <span style="font-size:11px;color:#7a8f84" title="'+facEsc(tr0.why)+'">'+facEsc(tr0.code)+'</span>'):(tr0.code?(' <a href="javascript:void(0)" onclick="event.stopPropagation();facTrace(&#39;'+String(r.category_id)+'&#39;,&#39;'+tr0.rg+'&#39;,'+facY(parseInt(r.data_year))+',&#39;'+String(r.site_id||'')+'&#39;,&#39;'+((/^(C01-02|C02|C10|C15)$/.test(String(r.category_id))&&tr0.f&&tr0.f.esg_code)?tr0.f.esg_code:((/^C0[567]$/.test(String(r.category_id))&&tr0.f)?facVehKey(tr0.f):((FSM_ITEM[String(r.category_id)]&&FSM_ITEM[String(r.category_id)].kind==='mid'&&tr0.f)?((facMidOf(tr0.f)||{}).k||''):'')))+'&#39;)" title="'+facEsc(tr0.why)+(fid?('；內部編號 '+fid):'')+'。點 ↗ 跳到係數矩陣並標亮這筆用的那一格" style="font-size:11px;color:var(--p);text-decoration:none;font-weight:700;white-space:nowrap">'+facEsc(tr0.code)+' ↗</a>'+((tr0.y0!=null&&tr0.y0<parseInt(r.data_year)&&facYOpen(r.data_year))?'<span style="color:#b8860b;font-size:10px;margin-left:2px" title="ESG 尚未維護 '+parseInt(r.data_year)+' 年條目：目前用的是 '+tr0.y0+' 年起的條目（係數每年由 ESG 維護、不沿用）">⚠</span>':'')):('<span style="color:#c9821e;font-size:11px" title="'+facEsc(tr0.why)+'">無</span>'))):'';   /* V90：不計入／C01-02 帶代號 */
   const Q=String.fromCharCode(39); const oc='onclick="goInput('+Q+r.site_id+Q+','+Q+(r.category_id||'')+Q+','+Q+(r.source_name||'').replace(/'/g,String.fromCharCode(92,39))+Q+','+(r.data_year||'null')+')"';
   const trAttr=S?('style="cursor:pointer;background:#f2f9f5;font-weight:700" title="點列展開/收合 '+r._n+' 個月明細" onclick="tgM('+gid+',this)"')
     :(C?('class="mrow-'+gid+'" style="cursor:pointer;display:none;background:#fbfdfc" title="點此回資料登錄(月明細)" '+oc)
     :('style="cursor:pointer" title="點此回資料登錄看/編此源" '+oc));
-  return `<tr ${trAttr}><td style="white-space:nowrap">${plantLabelHTML(r.site_id,'')}</td><td style="width:1%;white-space:nowrap">${r.data_year||''}</td><td style="width:1%;white-space:nowrap">${S?'<span class="marw">▸</span> '+r._n+'個月':(r.data_month?((C?'└ ':'')+r.data_month+'月'):'年度')}</td><td style="white-space:nowrap;text-align:left">${C?'<span style="color:#c3cfc9" title="同上（代號見年度彙總列）">〃</span> 📝':(codeCell(r)+(S?'':' 📝'))}</td><td style="text-align:left" title="${((r.source_name||'')+(r.equipment_name?'｜設備 '+r.equipment_name:'')).replace(/"/g,'&quot;')}">${(!S&&sbg)?(sbg+' '):''}${r.source_name||''}${(String(r.category_id||'')==='S2-01'&&r.attr2)?' <span style="color:var(--p);font-size:11px;font-weight:700" title="電力來源">· '+facEsc(r.attr2)+'</span>':''}${r.equipment_name?' <span style="color:var(--g);font-size:11px" title="'+((String(r.category_id||'')==='S2-01')?'電號':'設備名稱')+'">· '+((String(r.category_id||'')==='S2-01'&&(String(r.equipment_name).match(/\d/g)||[]).length>=4)?'電號 ':'')+facEsc(r.equipment_name)+'</span>':((typeof fuelBlankName==='function'&&fuelBlankName(r.category_id))?' <span style="color:#8a9c93;font-size:11px;font-style:italic" title="設備名稱空白：系統預設視為全廠共用表計（不寫入資料庫）">· '+facEsc(fuelBlankName(r.category_id))+'</span>':'')}</td><td style="white-space:nowrap">${gasCell(r)}</td><td style="text-align:right;white-space:nowrap">${(r.quantity&&Number(r.quantity)>0)?q2(r.quantity):'<span style="color:#9aa" title="此源僅匯入碳排放量，未含活動量與係數（資料轉換待補完整）">—</span>'}</td><td>${(r.quantity&&Number(r.quantity)>0)?(r.quantity_unit||''):''}</td><td style="text-align:right${fmis?';background:#FFF3CD':''}"${fmis?' title="與係數庫不一致（此筆 ef_value 與係數庫 factor_value 相對差 >0.1%）"':''}>${S&&!r._efU?'<span style="color:var(--g)" title="各月係數不同,展開看逐月">逐月</span>':(facOf(r)==='—'&&!(r.quantity&&Number(r.quantity)>0)?'—':facOf(r))}</td><td style="text-align:left">${(C&&r._pu)?'<span style="color:#c3cfc9" title="同上（係數代號見年度彙總列）">〃</span>':(flink||'')}</td><td style="text-align:right">${gwpCell(r)}</td><td style="text-align:right">${co2Cell(r)}</td></tr>`;};
-  const mkey=r=>r.site_id+'|'+r.data_year+'|'+(r.category_id||'')+'|'+(r.source_name||'')+'|'+(r.equipment_name||'')+'|'+(String(r.category_id||'')==='S2-01'?(r.attr2||''):'');   /* V83-4：電力分組也分電力來源 */   // V71-3:同源不同設備各自收合
+  return `<tr ${trAttr}><td style="white-space:nowrap">${plantLabelHTML(r.site_id,'')}</td><td style="width:1%;white-space:nowrap">${r.data_year||''}</td><td style="width:1%;white-space:nowrap">${S?'<span class="marw">▸</span> '+r._n+'個月':(r.data_month?((C?'└ ':'')+r.data_month+'月'):'年度')}</td><td style="white-space:nowrap;text-align:left">${C?'<span style="color:#c3cfc9" title="同上（代號見年度彙總列）">〃</span> 📝':(codeCell(r)+(S?'':' 📝'))}</td><td style="text-align:left" title="${((r.source_name||'')+(r.equipment_name?'｜設備 '+r.equipment_name:'')).replace(/"/g,'&quot;')}">${(!S&&sbg)?(sbg+' '):''}${r.source_name||''}${(String(r.category_id||'')==='B01-01'&&r.attr2)?' <span style="color:var(--p);font-size:11px;font-weight:700" title="電力來源">· '+facEsc(r.attr2)+'</span>':''}${r.equipment_name?' <span style="color:var(--g);font-size:11px" title="'+((String(r.category_id||'')==='B01-01')?'電號':'設備名稱')+'">· '+((String(r.category_id||'')==='B01-01'&&(String(r.equipment_name).match(/\d/g)||[]).length>=4)?'電號 ':'')+facEsc(r.equipment_name)+'</span>':((typeof fuelBlankName==='function'&&fuelBlankName(r.category_id))?' <span style="color:#8a9c93;font-size:11px;font-style:italic" title="設備名稱空白：系統預設視為全廠共用表計（不寫入資料庫）">· '+facEsc(fuelBlankName(r.category_id))+'</span>':'')}</td><td style="white-space:nowrap">${gasCell(r)}</td><td style="text-align:right;white-space:nowrap">${(r.quantity&&Number(r.quantity)>0)?q2(r.quantity):'<span style="color:#9aa" title="此源僅匯入碳排放量，未含活動量與係數（資料轉換待補完整）">—</span>'}</td><td>${(r.quantity&&Number(r.quantity)>0)?(r.quantity_unit||''):''}</td><td style="text-align:right${fmis?';background:#FFF3CD':''}"${fmis?' title="與係數庫不一致（此筆 ef_value 與係數庫 factor_value 相對差 >0.1%）"':''}>${S&&!r._efU?'<span style="color:var(--g)" title="各月係數不同,展開看逐月">逐月</span>':(facOf(r)==='—'&&!(r.quantity&&Number(r.quantity)>0)?'—':facOf(r))}</td><td style="text-align:left">${(C&&r._pu)?'<span style="color:#c3cfc9" title="同上（係數代號見年度彙總列）">〃</span>':(flink||'')}</td><td style="text-align:right">${gwpCell(r)}</td><td style="text-align:right">${co2Cell(r)}</td></tr>`;};
+  const mkey=r=>r.site_id+'|'+r.data_year+'|'+(r.category_id||'')+'|'+(r.source_name||'')+'|'+(r.equipment_name||'')+'|'+(String(r.category_id||'')==='B01-01'?(r.attr2||''):'');   /* V83-4：電力分組也分電力來源 */   // V71-3:同源不同設備各自收合
   const mg={};
   rows.forEach(r=>{if(r.data_month!=null){(mg[mkey(r)]=mg[mkey(r)]||[]).push(r);}});
   Object.keys(mg).forEach(k=>{if(mg[k].length<2)delete mg[k];});
@@ -5276,10 +5337,10 @@ async function hvAdj(years){   // 回傳要換回收割數字的格（資料登�
   const r=await sbAll(()=>sb.from('ghg_activity_data').select('record_id,site_id,data_year,category_id,co2e_draft').in('category_id',cids).in('data_year',ys).order('record_id'));
   if(r.error) throw r.error;
   const ss={}; (r.data||[]).forEach(x=>{const k=x.site_id+'|'+x.data_year+'|'+x.category_id; ss[k]=(ss[k]||0)+(Number(x.co2e_draft)||0);});
-  return hv.map(h=>{ const c=h.category_id, n=parseInt(c.slice(3))||0, hvv=Number(h.co2e_ton)||0, sv=ss[h.site_id+'|'+h.data_year+'|'+c]||0;
-    const sc=c.startsWith('S1')?'範疇一':(c.startsWith('S2')?'範疇二':'範疇三');
+  return hv.map(h=>{ const c=h.category_id, n=parseInt(c.slice(1,3))||0, hvv=Number(h.co2e_ton)||0, sv=ss[h.site_id+'|'+h.data_year+'|'+c]||0;
+    const sc=c.startsWith('A')?'範疇一':(c.startsWith('B')?'範疇二':'範疇三');
     return {site:h.site_id,pc:h.site_id,y:+h.data_year,cid:c,hv:hvv,sys:sv,dv:hvv-sv,sc,cc:sc==='範疇三'?c.slice(0,3):null,
-      sub:c.startsWith('S1')?(n<=4?'1.1':n<=7?'1.2':n<=9?'1.3':'1.4'):(c.startsWith('S2')?(c==='S2-02'?'2.2':'2.1'):null)}; }).filter(a=>Math.abs(a.dv)>=0.00005);
+      sub:c.startsWith('A')?('1.'+Math.min(Math.max(n,1),5)):(c.startsWith('B')?(c.startsWith('B02')?'2.2':'2.1'):null)}; })   /* V129-84：新碼第二階 A01～A05＝官方表 1.1～1.5 */.filter(a=>Math.abs(a.dv)>=0.00005);
 }
 function hvApply(rows,adj,allowNew){   // rows＝v_ghg_summary 列；就地把有收割原值的格換回（範疇格＋C 類別格）
   adj.forEach(a=>{ [a.sc,a.cc].filter(Boolean).forEach(code=>{
@@ -5290,9 +5351,9 @@ function gViewBtn(v){   /* V129-40：全集團兩顆按鈕照目前畫面顯示�
   [['g_btn','group'],['g_cmpbtn','cmp']].forEach(([id,k])=>{ const b=document.getElementById(id); if(!b)return; b.classList.toggle('sec',k!==v); b.setAttribute('aria-pressed',k===v?'true':'false'); });
 }
 /* V129-40-9：全集團 C01／C03 展開＝各登錄頁小計 */
-const GSUBN={'C01-M':'C01-01 直接物料（重量法）','C01-S':'C01-02 非直接物料與服務（金額法）','C01-W':'C01-03 上游自來水','C01-X':'C01 未歸登錄頁（舊資料直接記 C01）',
-  'C03-E':'C03-01 電力上游與輸配電損失','C03-F':'C03-02 燃料上游（WTT）','C03-X':'C03 未歸登錄頁'};
-const GSUBP={'C01':['C01-M','C01-S','C01-W','C01-X'],'C03':['C03-E','C03-F','C03-X']};
+const GSUBN={'C01-01':'C01-01 直接物料（重量法）','C01-02':'C01-02 非直接物料與服務（金額法）','C01-03':'C01-03 上游自來水','C01-X':'C01 未歸登錄頁（舊資料直接記 C01）',
+  'C03-01':'C03-01 電力上游與輸配電損失','C03-02':'C03-02 燃料上游（WTT）','C03-X':'C03 未歸登錄頁'};
+const GSUBP={'C01':['C01-01','C01-02','C01-03','C01-X'],'C03':['C03-01','C03-02','C03-X']};
 function gSubKey(cid){ cid=String(cid||''); if(GSUBN[cid]&&!/-X$/.test(cid))return cid; if(/^C01/.test(cid))return 'C01-X'; if(/^C03/.test(cid))return 'C03-X'; return null; }
 function gHasSub(p,cat){ return !!(GSUBP[cat]&&GSUBP[cat].some(k=>(p.d[k]||0)>0.00005)); }
 function gSubLab(pc,cat,yr){ return facEsc(GSUBN[cat])+(/-X$/.test(cat)?'':' <span style="cursor:pointer" title="到資料登錄頁看這一頁" onclick="event.stopPropagation();drillDown(\''+pc+'\',\''+cat+'\','+yr+')">🔍</span>'); }
@@ -5333,11 +5394,11 @@ async function loadGroup(){
     if(!Object.keys(m).length){ box.innerHTML='<div class="msg">'+facEsc(plantLabel(fplant,''))+' 這個年度沒有資料。</div>'; kp.classList.add('hide'); return; } }
   // V29:對齊申報表——補算範疇一 1.1~1.4(S1分組)、範疇二 2.1/2.2 位置&市場(S2子碼)。土地使用1.5無資料。
   try{
-    const r12=await sbAll(()=>{ let q=sb.from('ghg_activity_data').select('site_id,category_id,co2e_draft,co2e_location').or('category_id.like.S1%,category_id.like.S2%').eq('data_year',yr); if(!lgScopeAll())q=q.in('site_id',(curGhgUser&&curGhgUser.scope)||[]); return q.order('record_id'); });   /* V125-2：沒有全部廠區權限＝只要權限內的廠 */ if(r12.error)throw r12.error; const s12=r12.data;   /* V119-12：分頁抓全（原本沒分頁，一年超過一千筆只拿到前一千筆 → 子項加總短少）；讀不全就整組子項不顯示，不顯示錯的 */
+    const r12=await sbAll(()=>{ let q=sb.from('ghg_activity_data').select('site_id,category_id,co2e_draft,co2e_location').or('category_id.like.A%,category_id.like.B%').eq('data_year',yr); if(!lgScopeAll())q=q.in('site_id',(curGhgUser&&curGhgUser.scope)||[]); return q.order('record_id'); });   /* V125-2：沒有全部廠區權限＝只要權限內的廠 */ if(r12.error)throw r12.error; const s12=r12.data;   /* V119-12：分頁抓全（原本沒分頁，一年超過一千筆只拿到前一千筆 → 子項加總短少）；讀不全就整組子項不顯示，不顯示錯的 */
     (s12||[]).forEach(r=>{const pc=r.site_id; if(!pc||!m[pc])return; const dd=m[pc].d;
       const d=Number(r.co2e_draft)||0, loc=(r.co2e_location!=null?Number(r.co2e_location):d), cid=r.category_id||'';
-      if(cid.startsWith('S1-')){ const n=parseInt(cid.slice(3))||0; const k=n<=4?'1.1':n<=7?'1.2':n<=9?'1.3':'1.4'; dd[k]=(dd[k]||0)+d; }
-      else if(cid.startsWith('S2')){ const sub=cid==='S2-02'?'2.2':'2.1'; dd[sub+'-M']=(dd[sub+'-M']||0)+d; dd[sub+'-L']=(dd[sub+'-L']||0)+loc; }
+      if(cid.startsWith('A')){ const n=parseInt(cid.slice(1,3))||0; const k='1.'+Math.min(Math.max(n,1),5); dd[k]=(dd[k]||0)+d; }   /* V129-84：A0n＝1.n */
+      else if(cid.startsWith('B')){ const sub=cid.startsWith('B02')?'2.2':'2.1'; dd[sub+'-M']=(dd[sub+'-M']||0)+d; dd[sub+'-L']=(dd[sub+'-L']||0)+loc; }
     });
     HVA_LAST.forEach(a=>{ const p=m[a.pc]; if(!p||!a.sub)return; const dd=p.d;   // V129-13：子項也換回收割數字
       if(a.sc==='範疇一') dd[a.sub]=(dd[a.sub]||0)+a.dv; else { dd[a.sub+'-M']=(dd[a.sub+'-M']||0)+a.dv; dd[a.sub+'-L']=(dd[a.sub+'-L']||0)+a.dv; } });
@@ -5509,10 +5570,10 @@ function plantLabelHTML(code,fallback){
 }
 function catToSrc(cc){
   let i=SRC.findIndex(s=>s.c===cc); if(i>=0)return i;
-  if(/^C\d/.test(cc)){ i=SRC.findIndex(s=>s.c.slice(0,3)===cc.slice(0,3)); if(i>=0)return i; }   // C01→C01-M
-  if(cc==='範疇二')return SRC.findIndex(s=>s.c==='S2-01');
-  if(cc==='範疇一')return SRC.findIndex(s=>s.c==='S1-01');
-  if(cc==='範疇三')return SRC.findIndex(s=>s.c==='C01-M');
+  if(/^C\d/.test(cc)){ i=SRC.findIndex(s=>s.c.slice(0,3)===cc.slice(0,3)); if(i>=0)return i; }   // C01→C01-01
+  if(cc==='範疇二')return SRC.findIndex(s=>s.c==='B01-01');
+  if(cc==='範疇一')return SRC.findIndex(s=>s.c==='A01-01');
+  if(cc==='範疇三')return SRC.findIndex(s=>s.c==='C01-01');
   return -1;
 }
 async function drillDown(plantcode,cc,year){
@@ -5520,9 +5581,9 @@ async function drillDown(plantcode,cc,year){
   if(!oms){alert('此廠（'+plantcode+'）無明細層（服務據點僅彙總）');return;}
   let target=null;
   if(/^C\d/.test(cc) && SRC.some(s=>s.c===cc)) target=cc;   // C02..C15 有直接 SRC
-  else if(cc==='範疇二') target='S2-01';
+  else if(cc==='範疇二') target='B01-01';
   else {                                               // 範疇一/三 或 C01(拆子碼)：查哪個子源真的有明細
-    const pref=cc==='範疇一'?'S1':(/^C/.test(cc)?cc:'C');
+    const pref=cc==='範疇一'?'A':(/^C/.test(cc)?cc:'C');
     const {data}=await sbAll(()=>sb.from('ghg_activity_data').select('category_id').eq('site_id',oms).eq('data_year',year).like('category_id',pref+'%').order('record_id'));   // V50-3:原limit800,SF2023C09=914已超
     if(data&&data.length){ target=[...new Set(data.map(r=>r.category_id))].sort()[0]; }
   }
@@ -5553,9 +5614,9 @@ function drillQuery(plantcode,key,year){
 async function goInput(oms,target,srcname,yr){
   if(!oms){alert('此廠無明細層');return;}
   let t=target||'';
-  if(t==='範疇二')t='S2-01';
+  if(t==='範疇二')t='B01-01';
   let si=SRC.findIndex(s=>s.c===t);
-  if(si<0&&/^C\d/.test(t))si=SRC.findIndex(s=>s.c.slice(0,3)===t.slice(0,3));   // C01→C01-M
+  if(si<0&&/^C\d/.test(t))si=SRC.findIndex(s=>s.c.slice(0,3)===t.slice(0,3));   // C01→C01-01
   if(si<0){alert('「'+target+'」無對應明細表單（此源可能未建登錄表單）');return;}
   document.querySelector('.tab[data-t="input"]').click();
   window.entryCurSet(oms,yr);   /* V123：舊表單也帶這一列的廠區年度 */
@@ -5692,7 +5753,7 @@ const _selectSrcOrig=window.selectSrc;
 window._s101Legacy=false;                         // 逃生口：true=強制走舊表單
 window.selectSrc=function(i){
   const t=document.getElementById('src_title'); if(t)t.style.display='';
-  if(!window._s101Legacy&&SRC[i]&&SRC[i].c==='S1-01'){s101Enter(i);}
+  if(!window._s101Legacy&&SRC[i]&&SRC[i].c==='A01-01'){s101Enter(i);}
   else{_selectSrcOrig(i);}
 };
 window.s101Close=function(){var d=document.getElementById('s101dlg');if(d)d.style.display='none';};
@@ -5727,11 +5788,11 @@ async function s101Boot(){
       s1FacSrc={};(f.data||[]).forEach(x=>s1FacSrc[x.factor_id]=x.factor_source);
       s1Fx=fx.data||[];
     }
-    // 廠區清單：有 S1-01 明細的廠（與 V66 權限規則同：可寫者限廠區權限、唯讀檢視不限）
-    const {data:ds}=await sb.from('ghg_activity_data').select('site_id,data_year').eq('category_id','S1-01');
+    // 廠區清單：有 A01-01 明細的廠（與 V66 權限規則同：可寫者限廠區權限、唯讀檢視不限）
+    const {data:ds}=await sb.from('ghg_activity_data').select('site_id,data_year').eq('category_id','A01-01');
     const sset=[...new Set((ds||[]).map(r=>r.site_id))].sort()
       .filter(x=>!curGhgUser||lgCanSite(x));
-    if(!sset.length){box.innerHTML='<div class="msg err">您的廠區權限內無 S1-01 明細；新增請'
+    if(!sset.length){box.innerHTML='<div class="msg err">您的廠區權限內無 A01-01 明細；新增請'
       +'<a href="javascript:s101UseLegacy()">改用舊版表單</a></div>';return;}
     if(!s1.site||sset.indexOf(s1.site)<0)s1.site=sset[0];
     s1.years=[...new Set((ds||[]).filter(r=>r.site_id===s1.site).map(r=>r.data_year))].sort();
@@ -5742,7 +5803,7 @@ async function s101Boot(){
 }
 async function s101Load(){
   const {data,error}=await sb.from('ghg_activity_data').select('*')
-    .eq('category_id','S1-01').eq('site_id',s1.site).eq('data_year',s1.year)
+    .eq('category_id','A01-01').eq('site_id',s1.site).eq('data_year',s1.year)
     .order('data_month').order('record_id');
   if(error){document.getElementById('src_form').innerHTML='<div class="msg err">'+error.message+'</div>';return;}
   s1.recs=data||[];s1.orig={};
@@ -5782,7 +5843,7 @@ function s101Render(){
   else if(READONLY)chip='<span style="background:#fff3cd;color:#856404;border:1px solid #ffe69c;border-radius:999px;padding:3px 12px;font-size:12px;font-weight:700">🔒 唯讀檢視（需廠區輸入以上權限）</span>';
   else if(curGhgUser&&!lgCanSite(s1.site))chip='<span style="background:#fce4e4;color:#a33;border:1px solid #f2c4c4;border-radius:999px;padding:3px 12px;font-size:12px;font-weight:700">🔒 廠區權限不含 '+s1.site+'</span>';
   let h='<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:2px 0 8px">'
-    +'<b style="font-size:15px;color:var(--d)">'+(ncRow('S1-01')?facEsc(ncText('S1-01')):'S1-01 天然氣')+'</b><span class="fmini">逐月登錄'+(ncRow('S1-01')?'　<span style="color:#a9b8b0" title="現行碼（追溯）">現行碼 S1-01</span>':'')+'</span>'   // V69-7:模組標題改顯新碼(A01-01 天然氣)＋現行碼灰字;去掉「V68 試點」字樣
+    +'<b style="font-size:15px;color:var(--d)">'+(ncRow('A01-01')?facEsc(ncText('A01-01')):'A01-01 天然氣')+'</b><span class="fmini">逐月登錄'+(ncRow('A01-01')?'':'')+'</span>'   // V69-7:模組標題改顯新碼(A01-01 天然氣)＋現行碼灰字;去掉「V68 試點」字樣
     +'<span style="font-weight:700;color:var(--d);margin-left:6px">廠區</span>'
     +'<select id="s1_site" style="width:auto;max-width:250px;padding:5px 8px">'+s1.sites.map(x=>{const st=(s1SiteInfo||{})[x]||{};
       return '<option value="'+x+'"'+(x===s1.site?' selected':'')+'>'+x+'　'+(st.site_name||'')+'</option>';}).join('')+'</select>'
@@ -5881,7 +5942,7 @@ window.s101Tpl=function(){
   const M=(s1SiteInfo||{})[s1.site]||{};
   const R=s101Rate(M.country,s1.year);
   const aoa=[
-    ['S1-01 天然氣 逐月填報樣板（GHG 系統產生）',null,null,null],
+    ['A01-01 天然氣 逐月填報樣板（GHG 系統產生）',null,null,null],
     ['廠區:'+s1.site+'（'+(M.site_name||'')+'）','年度:'+s1.year,'幣別:'+(R?R.cur:'—'),'填妥「使用量/費用」後回系統按「⬆ 匯入」帶回；月份與筆數請勿增刪'],
     ['月份','帳單期間','使用量(m3)','費用(未稅·原幣)']];
   s1.recs.forEach(r=>{const e=r.extra||{};
@@ -5889,8 +5950,8 @@ window.s101Tpl=function(){
   const ws=XLSX.utils.aoa_to_sheet(aoa);
   ws['!cols']=[{wch:6},{wch:28},{wch:14},{wch:16}];
   const wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,ws,'S1-01填報');
-  XLSX.writeFile(wb,'S1-01天然氣樣板_'+s1.site+'_'+s1.year+'.xlsx');
+  XLSX.utils.book_append_sheet(wb,ws,'A01-01填報');
+  XLSX.writeFile(wb,'A01-01天然氣樣板_'+s1.site+'_'+s1.year+'.xlsx');
 };
 window.s101ImpPick=function(){
   if(!s101Editable())return;
@@ -6202,17 +6263,17 @@ window.s101Go=async function(){
 (function(){
 'use strict';
 const FUEL_CFG={   // V74：一類別一條設定；sheet＝ESG 收集表分頁（S1固定1／S1移動，區塊同構：設備或車輛類型／燃料／日期／使用量／費用）
-  'S1-03':{fuelKey:'液化石油氣',units:['公斤','公噸'],defUnit:{},def:'公斤',src:'液化石油氣',attr1:'固定燃燒',attr2:'液化石油氣',sheet:'固定',fuelKeys:['液化石油','lpg','石油氣','瓦斯'],eqHint:'燃氣灶、烘烤模具、廚房…；全廠採購就填「全廠採購（管理部）」'},   // V74：LPG（A01-03）
-  'S1-06':{fuelKey:'柴油',units:['公升','公噸'],defUnit:{},def:'公升',src:'柴油',attr1:'移動燃燒',attr2:'柴油',sheet:'移動',fuelKeys:['柴油','diesel','desel'],eqHint:'堆高機、貨車、公務車（可含車牌）…'},   // V74：柴油（移動）（A02-02）
-  'S1-05':{fuelKey:'汽油',units:['公升','公噸'],defUnit:{},def:'公升',src:'車用汽油',attr1:'移動燃燒',attr2:'車用汽油',sheet:'移動',fuelKeys:['汽油','gasoline','petrol'],eqHint:'公務車、商務車（可含車牌）…'},   // V74：車用汽油（A02-01）
-  'S1-01':{fuelKey:'天然氣',units:['m3'],defUnit:{},def:'m3',src:'天然氣',attr1:'固定燃燒',attr2:'天然氣',sheet:'固定',fuelKeys:['天然氣','天然气','natural gas'],eqHint:'中央溶解爐、鍋爐…（空白＝全廠共用表計）',period:true,blankName:'全廠（表計）'},   // V73-2：blankName＝設備名稱空白時畫面的系統預設標籤（不寫庫）；V73：天然氣收進同一版面；period＝逐月列多「帳單期間」選填欄（帳單非整月時填起訖，一個月可多筆）
-  'S1-02':{fuelKey:'柴油',units:['公升','公噸'],defUnit:{},def:'公升',src:'柴油',attr1:'固定燃燒',attr2:'柴油',sheet:'固定',fuelKeys:['柴油','diesel','desel'],eqHint:'發電機、消防泵…；管理部統一採購就填「全廠採購（管理部）」，設備寫在備註'},
-  'S1-09':{units:['公斤'],defUnit:{},def:'公斤',src:'SF6',attr1:'製程',attr2:'SF6',sheet:'製程',fuelKeys:['sf6','六氟化硫'],gases:['SF6'],conv:{a:'數量(瓶/罐)',b:'單重(Kg)'},eqHint:'鎂合金熔爐（保護氣體）、鋼瓶…'},   // V77：製程氣體 SF6（A03-02）；gases＝只列這些氣體欄；conv＝逐月列多「數量 × 單重」兩欄
-  'S1-08':{units:['公斤'],defUnit:{},def:'公斤',src:'乙炔',attr1:'製程',attr2:'乙炔',sheet:'製程',fuelKeys:['乙炔','c2h2','acetylene'],gases:['CO2'],conv:{a:'數量(瓶/罐)',b:'單重(Kg)'},eqHint:'切割槍、焊接、鋼瓶…'},   // V77：乙炔（A03-01）
-  'S2-01':{units:['kWh'],defUnit:{},def:'kWh',src:'電力',attr1:'電力',attr2:'市電',sheet:'外購電力',sheetPfx:'S2',fuelKeys:[],gases:['CO2'],period:true,periodLabel:'計費期間',qLabel:'用電量 kWh',blankName:'全廠（電表）',eqHint:'電號／電表（例 3206900065473）；另一個電號就再加一塊',split:['廠區用電量','宿舍用電量'],srcOpts:['市電','太陽能','綠電'],dual:true,mtype:'度數',elec:true},   // V80：外購電力（B01-01）
-  'S1-12':{units:['人時'],defUnit:{},def:'人時',src:'水肥',attr1:'逸散',attr2:'水肥',sheet:'逸散-化糞池',sheetRe:/化糞池|化粪池/,fuelKeys:[],gases:['CH4'],qLabel:'總工時數 h（人時）',info:{key:'月平均人數',label:'月平均人數'},blankName:'全廠（化糞池）',eqHint:'化糞池（全廠一座就空白）',mtype:'人時',septic:true},   // V81：化糞池（A04-03）；info＝資訊欄（存 extra，不算碳排）
-  'S1-13':{units:['公斤'],defUnit:{},def:'公斤',src:'噴式潤滑劑',attr1:'逸散',attr2:'噴式潤滑劑',sheet:'逸散噴式潤滑劑',sheetRe:/噴式|潤滑劑|推進劑/,fuelKeys:['噴式','潤滑','wd','推進'],gases:['CO2'],conv:{a:'使用數量(瓶)',b:'單重(KG)'},qLabel:'使用量 公斤',blankName:'全廠（噴劑）',eqHint:'WD-40 等噴式防銹潤滑劑（品名）',mtype:'使用量'}   // V82：噴式潤滑劑／推進劑（A04-04）；瓶數×單重＝公斤；conv op '+'＝兩欄相加為使用量；srcOpts＝塊級電力來源（attr2）；dual＝雙軌（位置基礎欄）
-  ,'C01-W':{units:['m3'],defUnit:{},def:'m3',src:'自來水',attr1:'自來水',attr2:'自來水',sheet:'自來水',sheetPfx:'C1上',sheetRe:/自來水|自来水/,fuelKeys:[],gases:['CO2'],period:true,periodLabel:'計費期間',qLabel:'帳單度數 m³',blankName:'全廠（水表）',eqHint:'水號（例 2G534496056）；沒有水號就填地點（例 龜山廠房）',mtype:'用水度數',water:true}   /* V91：上游自來水（C01-03）；water＝水號 × 帳單、跨年帳單按天數比例（見 wTable／wQ） */
+  'A01-03':{fuelKey:'液化石油氣',units:['公斤','公噸'],defUnit:{},def:'公斤',src:'液化石油氣',attr1:'固定燃燒',attr2:'液化石油氣',sheet:'固定',fuelKeys:['液化石油','lpg','石油氣','瓦斯'],eqHint:'燃氣灶、烘烤模具、廚房…；全廠採購就填「全廠採購（管理部）」'},   // V74：LPG（A01-03）
+  'A02-02':{fuelKey:'柴油',units:['公升','公噸'],defUnit:{},def:'公升',src:'柴油',attr1:'移動燃燒',attr2:'柴油',sheet:'移動',fuelKeys:['柴油','diesel','desel'],eqHint:'堆高機、貨車、公務車（可含車牌）…'},   // V74：柴油（移動）（A02-02）
+  'A02-01':{fuelKey:'汽油',units:['公升','公噸'],defUnit:{},def:'公升',src:'車用汽油',attr1:'移動燃燒',attr2:'車用汽油',sheet:'移動',fuelKeys:['汽油','gasoline','petrol'],eqHint:'公務車、商務車（可含車牌）…'},   // V74：車用汽油（A02-01）
+  'A01-01':{fuelKey:'天然氣',units:['m3'],defUnit:{},def:'m3',src:'天然氣',attr1:'固定燃燒',attr2:'天然氣',sheet:'固定',fuelKeys:['天然氣','天然气','natural gas'],eqHint:'中央溶解爐、鍋爐…（空白＝全廠共用表計）',period:true,blankName:'全廠（表計）'},   // V73-2：blankName＝設備名稱空白時畫面的系統預設標籤（不寫庫）；V73：天然氣收進同一版面；period＝逐月列多「帳單期間」選填欄（帳單非整月時填起訖，一個月可多筆）
+  'A01-02':{fuelKey:'柴油',units:['公升','公噸'],defUnit:{},def:'公升',src:'柴油',attr1:'固定燃燒',attr2:'柴油',sheet:'固定',fuelKeys:['柴油','diesel','desel'],eqHint:'發電機、消防泵…；管理部統一採購就填「全廠採購（管理部）」，設備寫在備註'},
+  'A03-02':{units:['公斤'],defUnit:{},def:'公斤',src:'SF6',attr1:'製程',attr2:'SF6',sheet:'製程',fuelKeys:['sf6','六氟化硫'],gases:['SF6'],conv:{a:'數量(瓶/罐)',b:'單重(Kg)'},eqHint:'鎂合金熔爐（保護氣體）、鋼瓶…'},   // V77：製程氣體 SF6（A03-02）；gases＝只列這些氣體欄；conv＝逐月列多「數量 × 單重」兩欄
+  'A03-01':{units:['公斤'],defUnit:{},def:'公斤',src:'乙炔',attr1:'製程',attr2:'乙炔',sheet:'製程',fuelKeys:['乙炔','c2h2','acetylene'],gases:['CO2'],conv:{a:'數量(瓶/罐)',b:'單重(Kg)'},eqHint:'切割槍、焊接、鋼瓶…'},   // V77：乙炔（A03-01）
+  'B01-01':{units:['kWh'],defUnit:{},def:'kWh',src:'電力',attr1:'電力',attr2:'市電',sheet:'外購電力',sheetPfx:'S2',fuelKeys:[],gases:['CO2'],period:true,periodLabel:'計費期間',qLabel:'用電量 kWh',blankName:'全廠（電表）',eqHint:'電號／電表（例 3206900065473）；另一個電號就再加一塊',split:['廠區用電量','宿舍用電量'],srcOpts:['市電','太陽能','綠電'],dual:true,mtype:'度數',elec:true},   // V80：外購電力（B01-01）
+  'A04-03':{units:['人時'],defUnit:{},def:'人時',src:'水肥',attr1:'逸散',attr2:'水肥',sheet:'逸散-化糞池',sheetRe:/化糞池|化粪池/,fuelKeys:[],gases:['CH4'],qLabel:'總工時數 h（人時）',info:{key:'月平均人數',label:'月平均人數'},blankName:'全廠（化糞池）',eqHint:'化糞池（全廠一座就空白）',mtype:'人時',septic:true},   // V81：化糞池（A04-03）；info＝資訊欄（存 extra，不算碳排）
+  'A04-04':{units:['公斤'],defUnit:{},def:'公斤',src:'噴式潤滑劑',attr1:'逸散',attr2:'噴式潤滑劑',sheet:'逸散噴式潤滑劑',sheetRe:/噴式|潤滑劑|推進劑/,fuelKeys:['噴式','潤滑','wd','推進'],gases:['CO2'],conv:{a:'使用數量(瓶)',b:'單重(KG)'},qLabel:'使用量 公斤',blankName:'全廠（噴劑）',eqHint:'WD-40 等噴式防銹潤滑劑（品名）',mtype:'使用量'}   // V82：噴式潤滑劑／推進劑（A04-04）；瓶數×單重＝公斤；conv op '+'＝兩欄相加為使用量；srcOpts＝塊級電力來源（attr2）；dual＝雙軌（位置基礎欄）
+  ,'C01-03':{units:['m3'],defUnit:{},def:'m3',src:'自來水',attr1:'自來水',attr2:'自來水',sheet:'自來水',sheetPfx:'C1上',sheetRe:/自來水|自来水/,fuelKeys:[],gases:['CO2'],period:true,periodLabel:'計費期間',qLabel:'帳單度數 m³',blankName:'全廠（水表）',eqHint:'水號（例 2G534496056）；沒有水號就填地點（例 龜山廠房）',mtype:'用水度數',water:true}   /* V91：上游自來水（C01-03）；water＝水號 × 帳單、跨年帳單按天數比例（見 wTable／wQ） */
 };
 // V78：石油產品容積與重量單位換算表（ghg_unit_conv＝係數庫換算參照 UC，全集團共用）。登錄以採購單位（公升）為準，公噸由系統算＝公升÷1000×（公噸÷公秉）
 window.UCONV=(window.UCONV===undefined)?null:window.UCONV;   // 全域：係數庫總覽在登錄模組閉包外，也要讀得到
@@ -6323,10 +6384,10 @@ async function fuelLoad(){
   F.recs=(data||[]).map(r=>{r._new=false;return r;}); F.orig={}; F.retire={}; F.open={};
   F.recs.forEach(r=>F.orig[r.record_id]=JSON.stringify(pick(r)));
   F.note=null; try{ const n=await sb.from('ghg_diff_notes').select('note').eq('site_code',F.site).eq('data_year',F.year).eq('category_id',F.cat); F.note=(n.data&&n.data[0])?n.data[0].note:null; }catch(e){}   /* V129-15：與 ESG 收集表／清冊的差異原因（同冷媒頁） */
-   F.wGrp=(cfg()&&cfg().water&&wDecl(F.year))?await entryCidLoad(F.site,F.year,['C01-W']):null;
+   F.wGrp=(cfg()&&cfg().water&&wDecl(F.year))?await entryCidLoad(F.site,F.year,['C01-03']):null;
    F.fGrp=(cfg()&&!cfg().water&&wDecl(F.year))?await entryCidLoad(F.site,F.year,[F.cat]):null;   /* V129-74：② 收割數字＝本類明細加總＋收割原值換回（全集團頁沒有單一類別的格子） */   /* V129-70：自來水 ② 收割數字＝全集團頁 C01 展開的 C01-03 小計 */
   if(cfg()&&cfg().septic)await sewInit();   /* V111 */
-  F.wOther=null; if(cfg()&&cfg().water){ try{ const {data:o}=await sb.from('ghg_activity_data').select('record_id,source_name,quantity,quantity_unit,co2e_draft').eq('site_id',F.site).eq('data_year',F.year).eq('category_id','C01-S').in('quantity_unit',['m3','m³','度','度(m3)']); F.wOther=o||[]; }catch(e){ F.wOther=null; } }   /* V91：清冊把自來水記在 C01-02 的年度 */
+  F.wOther=null; if(cfg()&&cfg().water){ try{ const {data:o}=await sb.from('ghg_activity_data').select('record_id,source_name,quantity,quantity_unit,co2e_draft').eq('site_id',F.site).eq('data_year',F.year).eq('category_id','C01-02').in('quantity_unit',['m3','m³','度','度(m3)']); F.wOther=o||[]; }catch(e){ F.wOther=null; } }   /* V91：清冊把自來水記在 C01-02 的年度 */
   fuelRender();
 }
 function pick(r){const e=r.extra||{}; const cv=(cfg()||{}).conv; return{sw:(e['汙水處理費']===true?1:0),i1:((cfg()||{}).info&&e[cfg().info.key]!=null)?e[cfg().info.key]:'',es:r.attr2||'',uc:e['換算產品']||'',dn:e['密度']==null?'':e['密度'],L:e['公升']==null?'':e['公升'],ca:cv?(e[cv.a]==null?'':e[cv.a]):'',cb:cv?(e[cv.b]==null?'':e[cv.b]):'',p:e['期間原文']||'',q:+r.quantity||0,u:r.quantity_unit||'',c:e['原幣金額']==null?'':e['原幣金額'],d:e['負責部門']||'',s:r.data_source_note||'',eq:r.equipment_name||'',n:e['設備備註']||'',pvk:e['光伏種類']||'',md:e['填報方式']||'',ci:e['換算記錄項目']||'',cv:e['換算記錄值']==null?'':e['換算記錄值'],cr:e['換算率']==null?'':e['換算率'],cu:e['換算率單位']||'',wb:e['帳單度數']==null?'':e['帳單度數'],pk:e['盤查區間']||'',lc:e['地點']||''};}
@@ -6403,7 +6464,7 @@ function fuelRender0(){
     siteSel:'<select id="fu_site" class="ehsite">'
       +F.sites.map(x=>{const s2=(FAC_SITES||[]).find(z=>z.site_id===x)||{}; return '<option value="'+x+'"'+(x===F.site?' selected':'')+'>'+x+' '+esc(s2.site_name||'')+(F.haveSites&&F.haveSites.has(x)?'':'（尚無資料）')+'</option>';}).join('')+'</select>',
     yearSel:'<select id="fu_year" class="ehyear">'+yearOpts(F.years,F.year)+'</select>',
-    x:'<span class="fmini">'+(C.water?'水號 × 帳單（跨年帳單按天數比例）':'設備 × 填報方式')+'　<span style="color:#a9b8b0" title="現行碼（追溯）">現行碼 '+F.cat+'</span></span>'
+    x:'<span class="fmini">'+(C.water?'水號 × 帳單（跨年帳單按天數比例）':'設備 × 填報方式')+'</span>'
       +'<a href="javascript:void(0)" onclick="facTrace(&#39;'+F.cat+'&#39;,&#39;'+rg+'&#39;,'+facY(F.year)+',&#39;'+F.site+'&#39;)" style="background:var(--t);color:var(--d);border-radius:999px;padding:3px 12px;font-size:12px;font-weight:700;text-decoration:none;cursor:pointer" title="係數代號＝排放源新碼·區域·年度。點一下跳到係數庫矩陣，標亮這個廠區年度用的那一格（與查詢頁的 ↗ 相同）">'+esc(code())+' ↗</a>'
       +chip,
     btns:'<button class="sec" '+(canEdit?'':'disabled')+' onclick="fuelAddEq()" title="'+((cfg()&&cfg().elec)?'新增市電電號，或太陽能／綠電（各自一塊）':((cfg()&&cfg().water)?'新增一個水號（12 個月空白帳單列）':'新增一台設備（或全廠採購）'))+'；儲存時才寫入">'+((cfg()&&cfg().elec)?'＋ 新增電號／光伏':((cfg()&&cfg().water)?'＋ 新增水號':'＋ 新增設備'))+'</button>'
@@ -6753,7 +6814,7 @@ function wEfSrc(rows){ const r=rows.find(x=>x.ef_source||(x.extra||{})['係數�
 function wPat(x){   // 清冊這張帳單的天數算法（少算 1 天＝用「迄日−起日」）
   const w=x.w; if(!w||!w.P||!(w.bd>1))return ''; const b=w.bill, q=x.qs, ok=v=>Math.abs(v-q)<=0.001;
   if(ok(b*w.kd/(w.bd-1))||ok(b*(w.kd-1)/(w.bd-1))||ok(b*(w.kd-1)/w.bd))return '（清冊天數用「迄日−起日」，少算 1 天）'; return ''; }
-function fuelDeclTip(){ const s=SRC.find(x=>x.c===F.cat)||{}; return '全集團頁沒有單獨一格：這是全集團頁'+(s.sc||'')+'「'+(s.mid||'')+'」'+(F.cat==='S2-01'?'（市場基礎）':'')+'裡，'+ncText(F.cat)+' 這一份'; }
+function fuelDeclTip(){ const s=SRC.find(x=>x.c===F.cat)||{}; return '全集團頁沒有單獨一格：這是全集團頁'+(s.sc||'')+'「'+(s.mid||'')+'」'+(F.cat==='B01-01'?'（市場基礎）':'')+'裡，'+ncText(F.cat)+' 這一份'; }
 window.fdHl=function(k,on){ document.querySelectorAll('#src_form tr[data-fdk="'+k+'"]').forEach(tr=>tr.classList.toggle('fdhl',!!on)); };
 window.fuelDTg=function(gi){ const b=blocks()[gi]; if(!b)return; F.dopen=F.dopen||{}; F.dopen[b.name]=!F.dopen[b.name]; fuelRender(); };
 function fuelDeclView(BL,gs,gmap,GASES,GC,needDens,showLoc,rg){   /* V129-74：已申報年度（2022–2025）＝上表 ① 系統算（係數庫該年、照正確方式）＋下表「② 收割數字怎麼來」（清冊列＋收割原值）；兩表同一組欄寬（使用者 261030「上下表欄位一樣要上下位置一樣」）、同一台設備游標一起亮；係數都能點（fvA）。使用者 261030 選示意方案 B-1 */
@@ -7146,9 +7207,9 @@ window.fuelGo=async function(){
    係數由廠端從係數庫 C01-M 挑；系統只「幫忙記」：同廠過去用過的（品名相同優先、其次材質相同）自動帶上並標「依 YYYY 記錄」，
    沒有就看係數庫條目的材質別名，再沒有就留空讓使用者選。碳排＝重量 t × 係數 kgCO₂e/kg，即時算不存數字；鎖定年度唯讀照原記錄。
    ══════════════════════════════════════════════════════════════════════════ */
-const MAT_CFG={'C01-M':{unit:'公噸',mtype:'重量',a1:'物料',conds:['原生料','再生料'],defSrc:'C1 採購物料 80% 分類表'}};
+const MAT_CFG={'C01-01':{unit:'公噸',mtype:'重量',a1:'物料',conds:['原生料','再生料'],defSrc:'C1 採購物料 80% 分類表'}};
 let MREC=[],MORIG={},MRET={},MHIST={},MLIB=null,MPEND=[],MIMP=null,MNEW=-1;
-function mcfg(){return MAT_CFG[F.cat]||MAT_CFG['C01-M'];}
+function mcfg(){return MAT_CFG[F.cat]||MAT_CFG['C01-01'];}
 const MVAR={'钢':'鋼','铁':'鐵','铝':'鋁','铜':'銅','锌':'鋅','镁':'鎂','镍':'鎳','锡':'錫','铅':'鉛','钛':'鈦','铬':'鉻','钼':'鉬','锰':'錳','银':'銀','纸':'紙','胶':'膠','树':'樹','热':'熱','轧':'軋','镀':'鍍','锈':'鏽','銹':'鏽','繡':'鏽','绵':'綿','纤':'纖','维':'維','酰':'醯','龙':'龍','硅':'矽','铸':'鑄','锻':'鍛','线':'線','缆':'纜','电':'電','涂':'塗','层':'層','复':'複','组':'組','弹':'彈','丝':'絲','钉':'釘','垫':'墊','铆':'鉚','钣':'鈑','带':'帶','标':'標','签':'籤','书':'書','黄':'黃','卷':'捲','码':'碼','软':'軟','质':'質','块':'塊','条':'條','网':'網','压':'壓','锭':'錠','车':'車','铣':'銑','聚':'聚','脂':'脂','棉':'棉','沫':'沫','楞':'楞','瓦':'瓦','纶':'綸','丙':'丙','烯':'烯','腈':'腈','乙':'乙','苯':'苯','酯':'酯','碳':'碳','氯':'氯','氟':'氟','亚':'亞','麦':'麥','绒':'絨','实':'實','磁':'磁','铁':'鐵','氧':'氧','铝':'鋁'};
 const mnorm=s=>{ let t=String(s==null?'':s).replace(/[\uFF01-\uFF5E]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0)).toLowerCase();   /* V129-29：全形→半形 */
   t=t.replace(/[\s()（）\[\]【】{}<>《》,，、\/／\\\-－—_·．.:：;；'"‘’“”|+＊*]/g,'');   /* 去空白、括號、標點 */
@@ -7200,7 +7261,7 @@ async function matLoad(){
   }catch(e){ MHIST.gName={}; MHIST.gMat={}; MHIST.grName={}; MHIST.grMat={}; MHIST.vr={}; }
   F.mtNote=await entryNote(F.site,F.year,F.cat);   /* V129-20：與明細檔的差異原因（鍵＝類別@登錄） */
   MBASIS=null; MBSRC=null;   /* V129-45：過去年度讀批266 的 C1 全部類別；沒有就下表寫原因 */
-  if(!mat80On()&&F.cat==='C01-M'){ try{ const {data:bs}=await sb.from('ghg_c12_c1_basis_src').select('*').eq('site_id',F.site).eq('data_year',F.year); if(bs&&bs.length){ const r2=await sbAll(()=>sb.from('ghg_c12_c1_basis').select('seq,material,weight_t,src_class').eq('site_id',F.site).eq('data_year',F.year).order('seq')); if(!r2.error){ MBSRC=bs[0]; MBASIS=r2.data||[]; } } }catch(e){ console.error('C1 全部類別',e); } }
+  if(!mat80On()&&F.cat==='C01-01'){ try{ const {data:bs}=await sb.from('ghg_c12_c1_basis_src').select('*').eq('site_id',F.site).eq('data_year',F.year); if(bs&&bs.length){ const r2=await sbAll(()=>sb.from('ghg_c12_c1_basis').select('seq,material,weight_t,src_class').eq('site_id',F.site).eq('data_year',F.year).order('seq')); if(!r2.error){ MBSRC=bs[0]; MBASIS=r2.data||[]; } } }catch(e){ console.error('C1 全部類別',e); } }
   try{ await ensureC12Map(); }catch(e){}
   try{ await ensureRMap(); }catch(e){}   /* V129-50 */
   matRender();
@@ -7395,7 +7456,7 @@ function matRender(){
     siteSel:'<select id="fu_site" class="ehsite">'
       +F.sites.map(x=>{const s2=(FAC_SITES||[]).find(z=>z.site_id===x)||{}; return '<option value="'+x+'"'+(x===F.site?' selected':'')+'>'+x+' '+esc(s2.site_name||'')+(F.haveSites&&F.haveSites.has(x)?'':'（尚無資料）')+'</option>';}).join('')+'</select>',
     yearSel:'<select id="fu_year" class="ehyear">'+yearOpts(F.years,F.year)+'</select>',
-    x:'<span class="fmini">物料清單 × 全年重量　<span style="color:#a9b8b0" title="現行碼（追溯）">現行碼 '+F.cat+'</span></span>'
+    x:'<span class="fmini">物料清單 × 全年重量</span>'
       +'<a href="javascript:void(0)" onclick="facTrace(&#39;'+F.cat+'&#39;,&#39;ALL&#39;,'+facY(F.year)+',&#39;'+F.site+'&#39;)" style="background:var(--t);color:var(--d);border-radius:999px;padding:3px 12px;font-size:12px;font-weight:700;text-decoration:none;cursor:pointer" title="係數庫 C01-01 直接物料（重量法）的條目清單（依材質）">📐 係數庫 '+lib.length+' 條</a>'
       +chip,
     btns:tplBtn(F.cat,F.site,F.year)+'<button class="sec" '+(canEdit?'':'disabled')+' onclick="matAdd()" title="新增一列物料；儲存時才寫入">＋ 新增物料</button>'
@@ -7406,7 +7467,7 @@ function matRender(){
   h+='<div class="fstrip">'   /* V129-26：係數說明壓成一條 */
     +'<div><div class="fmini">係數</div>由各列「係數」欄從係數庫挑選；'+(lk?'鎖定年度各列依記錄係數計算':'系統依本廠過去記錄／材質別名先帶，未帶到的請自行選')+'</div>'
     +'<div><div class="fmini">碳排</div>採購重量 t × 係數 kgCO₂e/kg ＝ tCO₂e（系統即時算，不存數字）</div>'
-    +'<div class="fmini" style="margin-left:auto">係數庫 C01-M 本年有效條目 '+lib.length+' 條</div></div>';
+    +'<div class="fmini" style="margin-left:auto">係數庫 C01-01 本年有效條目 '+lib.length+' 條</div></div>';
   if(!rows.length)h+='<div class="msg" style="margin:10px 12px">此廠此年尚無資料。'+(canEdit?'按「＋ 新增物料」開始登錄，或「⬆ 匯入」C1 採購物料檔。':'')+'</div>';
   let TQ=0,TC=0,nNew=0,nUnl=0,SN=0,SA=0,SB=0;   /* V104：SN／SA／SB＝係數≠材質標準的列數／記錄碳排／照標準碳排 */
   if(rows.length){
@@ -7446,7 +7507,7 @@ function matRender(){
     });
     h+='<tr class="tot"><td class="tl" colspan="'+(6-(noCls?1:0)-(noEn?1:0))+'">合計　<span class="fmini" style="font-weight:400">'+rows.length+' 列'+(M8.on&&M8.n?'　<b style="color:#14603F">計入 '+M8.n+' 類·涵蓋 '+(M8.cov*100).toFixed(2)+'%</b>':'')+(nNew?'（新 '+nNew+'）':'')+(nUnl?'　<span style="color:#b8860b">未連結係數庫 '+nUnl+' 列</span>':'')+'</span></td><td>'+nf(TQ,4)+'</td><td class="sep"></td><td></td><td><b>'+nf(TC,4)+'</b></td>'+(canEdit?'<td></td>':'')+'</tr></tbody></table></details>';
   }
-  if(F.cat==='C01-M')h+=matAllHTML(M8,canEdit);   /* V129-45 */
+  if(F.cat==='C01-01')h+=matAllHTML(M8,canEdit);   /* V129-45 */
   if(SN)h+='<div class="msg" style="margin:6px 12px;background:#fff8e6;border:1px solid #f0d9a0;color:#7a5a00;font-size:12px">⚠ 本頁 '+SN+' 列用了跟系統材質標準不同的係數（Ecoinvent v3.12）：記 '+nf(SA,4)+' t；照系統材質標準算 '+nf(SB,4)+' t（多 '+nf(SB-SA,4)+' t）。'+F.year+' 已申報，照原資料不改（前年度疑點 #26）；2026 起用哪一個待 ESG 回覆（待問清單 J1）。</div>';   /* V104 */
   h+='<div class="s101legend">'+(M8.on?'上表＝系統從下表「全部類別（100%）」依重量由大到小，取到累計超過 80% 的類別，只有上表選係數、算碳排（ESG 做法）；材質、重量、料況在「逐列明細」改　｜　':'上表＝清冊原本的 80%（已申報照原資料）；下表＝做過樞紐的全部類別（100%）　｜　')+'一列一種材質（＋料況）；採購重量 t × 係數 kgCO₂e/kg ＝ 碳排 tCO₂e　｜　係數下拉＝係數庫 C01-01 本年有效條目，系統先依本廠過去記錄／材質別名帶入，可改選　｜　黃底＝尚未儲存的變更</div>';
   h+='</div></div>';
@@ -7503,7 +7564,7 @@ window.matGo=async function(){
         const {error}=await sb.from('ghg_activity_data').update({quantity:0,co2e_draft:0,co2e_location:null,extra:e,input_method:'V85移除留痕'}).eq('record_id',r.record_id); if(error)throw error; ok++; done.push('舊列 '+(mfld(r).mat||'')+' 歸零留痕 ✓'); }catch(err){ fail++; done.push('舊列歸零 ✗ '+(err.message||err)); } } }
   else done.push('★有列寫入失敗，舊列未歸零，請修正後再存');
   await matLoad();
-  let c12h=''; try{ if(F.cat==='C01-M'&&mat80On()&&!trialY(F.year)){ const its=MREC.filter(r=>!mvoid(r)&&(+r.quantity||0)>0).map(r=>({name:mfld(r).mat||mfld(r).nm,q:+r.quantity||0})); c12h=c12MapPendHtml(await c12MapPendSync(its,F.site,F.year),F.site,F.year); } }catch(e){ console.error('C12 材質對照',e); }   /* V129-42 */
+  let c12h=''; try{ if(F.cat==='C01-01'&&mat80On()&&!trialY(F.year)){ const its=MREC.filter(r=>!mvoid(r)&&(+r.quantity||0)>0).map(r=>({name:mfld(r).mat||mfld(r).nm,q:+r.quantity||0})); c12h=c12MapPendHtml(await c12MapPendSync(its,F.site,F.year),F.site,F.year); } }catch(e){ console.error('C12 材質對照',e); }   /* V129-42 */
   d.querySelector('h3').textContent=fail?'⚠ 儲存結果（部分失敗）':'✅ 儲存完成';
   list.innerHTML='<div style="font-size:15px;font-weight:800;padding:8px 2px;color:'+(fail?'#a33':'#14603F')+'">'+(fail?('成功 '+ok+' 筆／失敗 '+fail+' 筆'):('已寫入 '+ok+' 筆並回讀'))+'</div>'+done.map(x=>'<div class="item">'+esc(x)+'</div>').join('')+c12h;
   foot.style.display='flex'; foot.innerHTML='<button onclick="fuelClose()">關閉</button>';
@@ -7708,16 +7769,16 @@ window.selectSrc=function(i){
    範疇二電量 → 電力上游／輸配電損失／光伏；範疇一燃料量 → 天然氣／柴油／汽油／LPG 上游（WTT）。
    一廠一年一種類一列（範疇一二逐月就彙總成年量）；寫進明細表 input_method='C03自動'、extra 記來源彙總＋係數代號；範疇一二改了按「重算並寫入」。
    有清冊列（收割／手登）的年度只試算比對、不寫入（歷史年度照原資料）。係數每國別×年度×種類挑一條：優先該年度條目、其次各廠用得最多的；多條不同值標 ⚠ 待 ESG 指定。 */
-const C03_CATS={'C03-E':'電力上游與輸配電損失（T&D）','C03-F':'燃料上游（WTT）'};
-const C03_SRC=['S2-01','S1-01','S1-02','S1-03','S1-05','S1-06'];
+const C03_CATS={'C03-01':'電力上游與輸配電損失（T&D）','C03-02':'燃料上游（WTT）'};
+const C03_SRC=['B01-01','A01-01','A01-02','A01-03','A02-01','A02-02'];
 const C03_KINDS=[
- {k:'E_UP',code:'C03-01-01',cat:'C03-E',name:'電力上游排放',a1:'電力',a2:'市電',cats:['S2-01'],pv:false,unit:'kWh',esg:{TW:'C03-02',CN:'C03-04',VN:'C03-10',TH:'C03-13'},note:{TW:'台灣係數已含輸配電損失'}},
- {k:'E_TD',code:'C03-01-02',cat:'C03-E',name:'電力輸配電損失',a1:'電力',a2:'市電',cats:['S2-01'],pv:false,unit:'kWh',esg:{CN:'C03-05',VN:'C03-11',TH:'C03-14'},skip:{TW:1}},
- {k:'E_PV',code:'C03-01-03',gen:'C03-01-04',cat:'C03-E',name:'光伏電力上游排放',a1:'電力',a2:'光伏',cats:['S2-01'],pv:true,unit:'kWh',esg:{CN:'C03-06'}},
- {k:'F_NG',code:'C03-02-01',cat:'C03-F',name:'天然氣（NG）上游排放',a1:'燃料',a2:'天然氣',cats:['S1-01'],unit:'m3',esg:{}},
- {k:'F_DS',code:'C03-02-02',cat:'C03-F',name:'柴油上游排放',a1:'燃料',a2:'柴油',cats:['S1-02','S1-06'],unit:'公升',fk:'柴油',esg:{TW:'C03-03',CN:'C03-08',VN:'C03-12',TH:'C03-16'}},
- {k:'F_GS',code:'C03-02-03',cat:'C03-F',name:'汽油上游排放',a1:'燃料',a2:'汽油',cats:['S1-05'],unit:'公升',fk:'汽油',esg:{TW:'C03-01',CN:'C03-09',TH:'C03-15'}},
- {k:'F_LPG',code:'C03-02-04',cat:'C03-F',name:'液化石油氣（LPG）上游排放',a1:'燃料',a2:'液化石油氣',cats:['S1-03'],unit:'公斤',fk:'液化石油氣',esg:{CN:'C03-07'}}];
+ {k:'E_UP',code:'C03-01-01',cat:'C03-01',name:'電力上游排放',a1:'電力',a2:'市電',cats:['B01-01'],pv:false,unit:'kWh',esg:{TW:'C03-02',CN:'C03-04',VN:'C03-10',TH:'C03-13'},note:{TW:'台灣係數已含輸配電損失'}},
+ {k:'E_TD',code:'C03-01-02',cat:'C03-01',name:'電力輸配電損失',a1:'電力',a2:'市電',cats:['B01-01'],pv:false,unit:'kWh',esg:{CN:'C03-05',VN:'C03-11',TH:'C03-14'},skip:{TW:1}},
+ {k:'E_PV',code:'C03-01-03',gen:'C03-01-04',cat:'C03-01',name:'光伏電力上游排放',a1:'電力',a2:'光伏',cats:['B01-01'],pv:true,unit:'kWh',esg:{CN:'C03-06'}},
+ {k:'F_NG',code:'C03-02-01',cat:'C03-02',name:'天然氣（NG）上游排放',a1:'燃料',a2:'天然氣',cats:['A01-01'],unit:'m3',esg:{}},
+ {k:'F_DS',code:'C03-02-02',cat:'C03-02',name:'柴油上游排放',a1:'燃料',a2:'柴油',cats:['A01-02','A02-02'],unit:'公升',fk:'柴油',esg:{TW:'C03-03',CN:'C03-08',VN:'C03-12',TH:'C03-16'}},
+ {k:'F_GS',code:'C03-02-03',cat:'C03-02',name:'汽油上游排放',a1:'燃料',a2:'汽油',cats:['A02-01'],unit:'公升',fk:'汽油',esg:{TW:'C03-01',CN:'C03-09',TH:'C03-15'}},
+ {k:'F_LPG',code:'C03-02-04',cat:'C03-02',name:'液化石油氣（LPG）上游排放',a1:'燃料',a2:'液化石油氣',cats:['A01-03'],unit:'公斤',fk:'液化石油氣',esg:{CN:'C03-07'}}];
 let C3={src:[],rows:[],auto:[],man:[],use:null,calc:[],st:null};
 const c3pv=r=>/太陽|太阳|綠電|绿电|光伏/.test(String(r.attr2||''))||/光伏|太陽|太阳/.test(String(r.source_name||'')+String(r.equipment_name||''));
 const c3unit=u=>{u=String(u||'').trim(); if(/^kwh$/i.test(u)||u==='度')return 'kWh'; if(/^m3$|^m³$/i.test(u))return 'm3'; if(/^(公噸|噸|t|ton|tonne)$/i.test(u))return '公噸'; if(/^(公斤|kg)$/i.test(u))return '公斤'; if(/^(公升|l|liter|litre)$/i.test(u))return '公升'; return u;};
@@ -7766,7 +7827,7 @@ function c03PvSplit(kd,src){ if(!kd.pv)return [kd];   /* V88-6：光伏各塊依
   if(ts.length<=1)return [Object.assign({},kd,{pvType:ts[0]||''})];
   return ts.map(t=>Object.assign({},kd,{pvType:t,split:true,name:kd.name+'（'+(t||'未填種類')+'）'})); }
 function c03Agg(rows,kd){ const gk=r=>r.category_id+'|'+(r.source_name||'')+'|'+(r.equipment_name||'')+'|'+(r.attr2||''); const hasM={}; rows.forEach(r=>{ if(r.data_month!=null)hasM[gk(r)]=1; });
-  const rs=rows.filter(r=>kd.cats.indexOf(r.category_id)>=0&&(kd.cats[0]!=='S2-01'||(!!kd.pv===c3pv(r)))&&(!kd.split||c3pvk(r)===kd.pvType)&&!(hasM[gk(r)]&&r.data_month==null));   /* V88-6：分列時只算該光伏種類的塊 */   /* 同鍵有逐月列就只算逐月，年列不重複算 */
+  const rs=rows.filter(r=>kd.cats.indexOf(r.category_id)>=0&&(kd.cats[0]!=='B01-01'||(!!kd.pv===c3pv(r)))&&(!kd.split||c3pvk(r)===kd.pvType)&&!(hasM[gk(r)]&&r.data_month==null));   /* V88-6：分列時只算該光伏種類的塊 */   /* 同鍵有逐月列就只算逐月，年列不重複算 */
   const b={}, bc={}, eq={}; let n=0; rs.forEach(r=>{ const q=+r.quantity||0; if(!q)return; const u=c3unit(r.quantity_unit); b[u]=(b[u]||0)+q; const cb=(bc[r.category_id]=bc[r.category_id]||{}); cb[u]=(cb[u]||0)+q; const en=String(r.equipment_name||r.source_name||'').trim(); if(en)(eq[r.category_id]=eq[r.category_id]||new Set()).add(en); n++; }); return {b:b,bc:bc,eq:eq,n:n,cats:[...new Set(rs.map(r=>r.category_id))]}; }   /* V88-15：各來源（固定／移動）分開記，來源欄與差異原因用 */
 function c03ToUnit(b,unit,dens){ let q=0, conv='';   /* V88-15：抽出來共用（整種類合計、各來源分開都用這支） */
   Object.keys(b||{}).forEach(u=>{ const v=b[u]; if(u===unit)q+=v;
@@ -7827,7 +7888,7 @@ function c03Why(am){   /* V129-72：am＝已申報年度頁首用，回傳 [說�
   if(am){ const un=C3.man.filter(r=>!c03KindText(r.source_name,'')), su=un.reduce((a,r)=>a+(+r.co2e_draft||0),0); if(un.length&&su!==0)out.push(['清冊另有 '+un.length+' 列認不出是哪一種（'+un.map(r=>r.source_name||'（空白）').join('、')+'），系統沒有對應',-su]); }
   return out; }
 function c03Body(c){ const kd=c.kd, pk=c.pk, y=F.year; const ok=!!(pk&&!c.bad); const e={}; if(kd.pvType)e['光伏種類']=kd.pvType;   /* V88-6 */
-  e['填報方式']='自動'; e['來源']=kd.cats.join('+')+(kd.cats[0]==='S2-01'?(kd.pv?'（光伏／綠電）':'（市電）'):'')+' 合計 '+c.q+' '+c.unit+'（'+c.agg.n+' 列'+(c.conv?('；'+c.conv):'')+'）'; e['係數代號']=c03Code(kd,c.st,pk);
+  e['填報方式']='自動'; e['來源']=kd.cats.join('+')+(kd.cats[0]==='B01-01'?(kd.pv?'（光伏／綠電）':'（市電）'):'')+' 合計 '+c.q+' '+c.unit+'（'+c.agg.n+' 列'+(c.conv?('；'+c.conv):'')+'）'; e['係數代號']=c03Code(kd,c.st,pk);
   if(ok){ e['gases']=[{gas:'CO2e',ef:c.ef,unit:c.efu,gwp:1,src:pk.f.factor_source||'',fid:pk.f.factor_id,co2e:c.t}]; e['換算']='用量 '+c.q+' '+c.unit+(c.how?(' '+c.how+' = '+c.qd+' '+c.ud):'')+' × '+c.ef+' '+c.efu+' = '+c.t.toFixed(4)+' t'; if(c.how)e['原始用量']=c.q+' '+c.unit;   /* V88-15：存換算後的用量，原始用量留著 */ e['係數條目']=pk.f.factor_id; if(c.stale)e['⚠']='ESG 尚未維護 '+y+' 年條目，暫用 '+efF(pk.f)+' 年起條目'; if(pk.multi)e['⚠多條']=pk.list.map(f=>f.factor_id+' '+c03Val(f).v).join('；'); }
   else e['換算']=pk?'★活動量單位與係數單位不相容，未算碳排':('★係數庫無 '+facY(y)+' 年 '+kd.name+' 條目，未算碳排');
   if(curGhgUser)e['最後更新']=curGhgUser.emp_id+' '+(curGhgUser.name||'');
@@ -7852,7 +7913,7 @@ async function c03Boot(){
     step('（係數庫）'); await c03T(ensureFacAll(),'係數庫'); await c03T(ensureFacSites(),'廠區清單'); await c03T(ensureFGas(),'係數氣體');
     step('（換算表）'); if(typeof ensureUnitConv==='function')await c03T(ensureUnitConv(),'換算表');
     step('（C03 明細）');
-    if(!C3.use){ const {data:u,error:ue}=await c03T(sbAll(()=>sb.from('ghg_activity_data').select('site_id,factor_id,source_name,ef_value,extra,data_year').in('category_id',['C03-E','C03-F']).neq('data_year',TRIAL_Y).order('record_id')),'C03 明細');   /* V88-6：多抓廠別；改分頁抓全（limit 5000 會被伺服器每次 1000 筆上限默默截斷） */ if(ue)throw ue; C3.use=c03UseBuild(u||[]); }   /* 全部 C03 明細列（含未連結）→ 條目種類與使用次數 */
+    if(!C3.use){ const {data:u,error:ue}=await c03T(sbAll(()=>sb.from('ghg_activity_data').select('site_id,factor_id,source_name,ef_value,extra,data_year').in('category_id',['C03-01','C03-02']).neq('data_year',TRIAL_Y).order('record_id')),'C03 明細');   /* V88-6：多抓廠別；改分頁抓全（limit 5000 會被伺服器每次 1000 筆上限默默截斷） */ if(ue)throw ue; C3.use=c03UseBuild(u||[]); }   /* 全部 C03 明細列（含未連結）→ 條目種類與使用次數 */
     F.pno=x=>siteLegacy(x)||'--';   /* V129-79：舊官方廠號，只給係數備註「廠:01…」比對 */
     const all=(FAC_SITES||[]).map(x=>x.site_id).sort(siteCmp);
     F.sites=all.filter(x=>!curGhgUser||lgCanSite(x));
@@ -7865,16 +7926,16 @@ async function c03Load(){
   const box=document.getElementById('src_form');
   try{
     if(!/^<table|<div style="display:flex/.test(box.innerHTML))box.innerHTML='<div class="msg">載入中…（'+F.site+' '+F.year+' 範疇一二彙總）</div>';
-    const {data:ys,error:ye}=await c03T(sb.from('ghg_activity_data').select('data_year').eq('site_id',F.site).in('category_id',['S2-01','C03-E','C03-F']).neq('data_year',TRIAL_Y).limit(5000),'年度清單'); if(ye)throw ye;
+    const {data:ys,error:ye}=await c03T(sb.from('ghg_activity_data').select('data_year').eq('site_id',F.site).in('category_id',['B01-01','C03-01','C03-02']).neq('data_year',TRIAL_Y).limit(5000),'年度清單'); if(ye)throw ye;
     F.years=entryYears((ys||[]).map(r=>r.data_year)); F.year=entryPickYear(F.years);   /* V99 */
     const {data:src,error:e1}=await c03T(sb.from('ghg_activity_data').select('record_id,category_id,source_name,equipment_name,attr2,data_month,quantity,quantity_unit,input_method,extra').eq('site_id',F.site).eq('data_year',F.year).in('category_id',C03_SRC).order('record_id').limit(4000),'範疇一二明細'); if(e1)throw e1;
-    const {data:cr,error:e2}=await c03T(sb.from('ghg_activity_data').select('*').eq('site_id',F.site).eq('data_year',F.year).in('category_id',['C03-E','C03-F']).order('record_id'),'C03 列'); if(e2)throw e2;
+    const {data:cr,error:e2}=await c03T(sb.from('ghg_activity_data').select('*').eq('site_id',F.site).eq('data_year',F.year).in('category_id',['C03-01','C03-02']).order('record_id'),'C03 列'); if(e2)throw e2;
     C3.src=src||[]; C3.rows=cr||[]; C3.auto=C3.rows.filter(r=>r.input_method==='C03自動'); C3.man=C3.rows.filter(r=>r.input_method!=='C03自動');
     C3.st=(FAC_SITES||[]).find(x=>x.site_id===F.site)||null; const ctry=C3.st&&C3.st.country&&C3.st.country!=='-'?C3.st.country:'ALL';
     C3.calc=[]; C03_KINDS.forEach(kd0=>{ if(kd0.skip&&kd0.skip[ctry])return; c03PvSplit(kd0,C3.src).forEach(kd=>{ const agg=c03Agg(C3.src,kd); const has=C3.auto.some(r=>r.category_id===kd.cat&&r.source_name===kd.name); if(!agg.n&&!has)return; C3.calc.push(c03Calc(kd,C3.st,agg)); }); });   /* V88-6：光伏依塊的光伏種類分列 */
     C3.decl=c03decl(); C3.raw=C3.decl; C3.note=null; C3.grp=null;   /* raw＝已申報年度：表格多「原始用量」「換算」兩欄、不放代號欄（使用者 261030「請統一格式」「點到係數值會顯出代號」） */
-    if(C3.decl){ C3.note=(await Promise.all(['C03-E','C03-F','C03'].map(k=>entryNote(F.site,F.year,k)))).filter(Boolean).join('\n\n')||null;   /* V129-72：登錄頁差異說明三個鍵（同共用黃框 V129-40-5） */
-      C3.grp=await entryGrpLoad(F.site,F.year,'C03',['C03-E','C03-F']); }   /* V129-72：② 收割數字＝全集團頁 C03 那一格 */
+    if(C3.decl){ C3.note=(await Promise.all(['C03-01','C03-02','C03'].map(k=>entryNote(F.site,F.year,k)))).filter(Boolean).join('\n\n')||null;   /* V129-72：登錄頁差異說明三個鍵（同共用黃框 V129-40-5） */
+      C3.grp=await entryGrpLoad(F.site,F.year,'C03',['C03-01','C03-02']); }   /* V129-72：② 收割數字＝全集團頁 C03 那一格 */
     c03Render();
   }catch(e){box.innerHTML='<div class="msg err">載入失敗：'+esc(e.message||e)+'</div>';console.error(e);}
 }
@@ -7965,8 +8026,8 @@ function c03Render(){
     siteSel:'<select id="fu_site" class="ehsite">'
       +F.sites.map(x=>{const s2=(FAC_SITES||[]).find(z=>z.site_id===x)||{}; return '<option value="'+x+'"'+(x===F.site?' selected':'')+'>'+x+' '+esc(s2.site_name||'')+'</option>';}).join('')+'</select>',
     yearSel:'<select id="fu_year" class="ehyear">'+yearOpts(F.years,F.year)+'</select>',
-    x:'<span class="fmini">自動帶出　<span style="color:#a9b8b0" title="現行碼（追溯）">現行碼 C03-E／C03-F</span></span>'
-      +'<a href="javascript:void(0)" onclick="facTrace(&#39;C03-E&#39;,&#39;'+ctry+'&#39;,'+facY(F.year)+',&#39;'+F.site+'&#39;)" style="background:var(--t);color:var(--d);border-radius:999px;padding:3px 12px;font-size:12px;font-weight:700;text-decoration:none;cursor:pointer" title="係數庫 C03 條目">📐 係數庫</a>'
+    x:'<span class="fmini">自動帶出</span>'
+      +'<a href="javascript:void(0)" onclick="facTrace(&#39;C03-01&#39;,&#39;'+ctry+'&#39;,'+facY(F.year)+',&#39;'+F.site+'&#39;)" style="background:var(--t);color:var(--d);border-radius:999px;padding:3px 12px;font-size:12px;font-weight:700;text-decoration:none;cursor:pointer" title="係數庫 C03 條目">📐 係數庫</a>'
       +chip,
     btns:(canWrite?'<button onclick="c03Ask()" style="padding:6px 14px;font-weight:700">🔁 重算並寫入</button>':'')
       +((C3.auto.length&&canEdit&&!C3.decl)?'<button class="sec" onclick="c03DropAsk()" style="padding:6px 14px">🗑 刪除自動列</button>':'')});
@@ -7985,7 +8046,7 @@ function c03Render(){
       const cats2=kd.cats.filter(x=>c.agg.bc&&c.agg.bc[x]); const brk=cats2.length>1?cats2.map(x=>{ const m=String(ncText(x)).match(/（([^）]+)）/); return (m?m[1]:ncText(x))+' '+nf(c03ToUnit(c.agg.bc[x],c.unit,c.dens).q,2)+' '+c.unit; }).join('＋'):''; const eqTip=cats2.map(x=>ncText(x)+'：'+[...((c.agg.eq&&c.agg.eq[x])||[])].join('、')).join(String.fromCharCode(10));   /* V88-15：兩個以上來源（柴油 固定＋移動）分開寫各多少 */
       h+='<tr'+(C3.decl?c03KindLk(c,EQM):'')+'><td style="text-align:left;white-space:normal"><b>'+esc(kd.name)+'</b>'+((kd.pv&&!kd.split)?'<div class="fmini">光伏種類：'+esc(kd.pvType||'未填（用通用）')+'</div>':'')+(kd.note&&kd.note[ctry]?'<div class="fmini">'+esc(kd.note[ctry])+'</div>':'')+'</td>'
         +(C3.decl?'':'<td style="text-align:left">'+(c.pk?('<a href="javascript:void(0)" onclick="facTrace(&#39;'+kd.cat+'&#39;,&#39;'+rg+'&#39;,'+facY(F.year)+',&#39;'+F.site+'&#39;,&#39;'+kc+'&#39;)" title="'+esc(c.pk.f.factor_id+'｜'+(c.pk.f.factor_source||''))+'" style="color:var(--p);font-weight:700;font-size:11.5px;text-decoration:none;white-space:nowrap">'+esc(code)+' ↗</a>'):('<a href="javascript:void(0)" onclick="facTrace(&#39;'+kd.cat+'&#39;,&#39;'+rg+'&#39;,'+facY(F.year)+',&#39;'+F.site+'&#39;,&#39;'+kc+'&#39;)" title="係數庫沒有這一格的係數，點了看係數庫 C03 表（標「⚠ 無係數」那一格）" style="color:#c9821e;font-size:11.5px;text-decoration:none;white-space:nowrap">'+esc(code)+' ↗</a>'))+'</td>')   /* V129-72：已申報年度不放代號欄（點係數值看代號） */
-        +'<td style="text-align:left;white-space:normal;word-break:break-word;font-size:11.5px" title="'+esc(eqTip)+'">'+esc(kd.cats.map(x=>ncText(x)).join('＋')+(kd.cats[0]==='S2-01'&&kd.pv?'（光伏／綠電）':'')+'　'+c.agg.n+' 列')+((brk&&!C3.decl)?'<div class="fmini">'+esc(brk)+'</div>':'')+(c.conv?'<div class="fmini">'+esc(c.conv)+'</div>':'')+(C3.decl?c03KindTag(c,EQM):'')+'</td>'   /* V129-72：已申報年度固定／移動分開看下面設備列 */
+        +'<td style="text-align:left;white-space:normal;word-break:break-word;font-size:11.5px" title="'+esc(eqTip)+'">'+esc(kd.cats.map(x=>ncText(x)).join('＋')+(kd.cats[0]==='B01-01'&&kd.pv?'（光伏／綠電）':'')+'　'+c.agg.n+' 列')+((brk&&!C3.decl)?'<div class="fmini">'+esc(brk)+'</div>':'')+(c.conv?'<div class="fmini">'+esc(c.conv)+'</div>':'')+(C3.decl?c03KindTag(c,EQM):'')+'</td>'   /* V129-72：已申報年度固定／移動分開看下面設備列 */
         +'<td style="text-align:right;white-space:normal" title="'+esc(c.how&&c.ucr?('密度：換算表「'+(c.ucr.product_name||'')+'」'+c.ucr.kl+' 公秉＝'+c.ucr.t+' 公噸（'+(c.ucr.source||'')+'）'):'')+'">'+(C3.raw?c03RawCells(c.q,c):(c.how?('<div>'+nf(c.q,2)+' '+esc(c.unit)+'</div><div class="fmini" style="color:#5c7568">'+esc(c.how)+'</div>'):'<span style="color:#c3cfc9">—</span>'))+'</td><td style="text-align:right;white-space:nowrap">'+nf(c.qd,4)+'</td><td>'+esc(c.ud)+'</td>'   /* V88-15：換算欄＋用量換成係數的單位（上下兩表一致） */
         +'<td style="text-align:right;white-space:nowrap">'+(c.pk?fvA(c.pk.f&&c.pk.f.factor_id,nf(c.ef,10)):'—')+'</td><td style="text-align:left;font-size:11px;white-space:normal;word-break:break-word">'+esc(c.efu||'')+'</td>'
         +'<td style="text-align:right;font-weight:700;white-space:nowrap">'+(ok?nf(c.t,4):(fbv!=null?nf(fbv,4)+'<div class="fmini" style="color:#7a8f84;font-weight:400" title="系統算不出（看狀態欄），照資料庫存的數">照存的數</div>':'—'))+'</td><td style="text-align:left;white-space:normal;font-size:11px">'+stt.join('<br>')+'</td></tr>'+(C3.decl?c03EqHTML(c,EQM):''); });   /* V129-72：已申報年度種類下面逐台設備對到清冊列（下表另列清冊原始列） */
@@ -8044,10 +8105,10 @@ function c03PvHintFill(){ if(!document.querySelector('#src_form .c03pvh'))return
     document.querySelectorAll('#src_form .c03pvh').forEach(el=>{ const pv=el.dataset.pv||''; let pk=null; try{ pk=(st&&FACALL)?c03Pick(Object.assign({},kd0,{pvType:pv}),st,y):null; }catch(e){ pk=null; }
       if(!pk){ el.textContent='→ C03 光伏上游：係數庫沒有 '+y+' 年的係數'; return; }
       const code=(pk.f.esg_code&&C03CODE[pk.f.esg_code])?pk.f.esg_code:kd0.code; const v=c03Val(pk.f);
-      el.innerHTML='→ C03 '+esc(C03CODE[code]||'光伏上游')+'係數 <a href="javascript:void(0)" onclick="facTrace(&#39;C03-E&#39;,&#39;'+rgOf(pk.f)+'&#39;,'+y+',&#39;'+esc(F.site)+'&#39;,&#39;'+code+'&#39;)" style="color:var(--p);font-weight:700;text-decoration:none" title="點了看係數庫這一格">'+nf(v.v,10)+' '+esc(v.u)+' ↗</a>'+(pv?'':'（未填：照這個廠以前清冊用的，沒有紀錄用通用）'); }); };
+      el.innerHTML='→ C03 '+esc(C03CODE[code]||'光伏上游')+'係數 <a href="javascript:void(0)" onclick="facTrace(&#39;C03-01&#39;,&#39;'+rgOf(pk.f)+'&#39;,'+y+',&#39;'+esc(F.site)+'&#39;,&#39;'+code+'&#39;)" style="color:var(--p);font-weight:700;text-decoration:none" title="點了看係數庫這一格">'+nf(v.v,10)+' '+esc(v.u)+' ↗</a>'+(pv?'':'（未填：照這個廠以前清冊用的，沒有紀錄用通用）'); }); };
   if(C3.use&&typeof FACALL!=='undefined'&&FACALL&&FAC_SITES&&FGAS){ paint(); return; }
   document.querySelectorAll('#src_form .c03pvh').forEach(el=>{ el.textContent='→ C03 光伏上游係數讀取中…'; });
-  if(!C3._useP)C3._useP=(async()=>{ await ensureFacAll(); await ensureFacSites(); await ensureFGas(); if(!C3.use){ const r=await sbAll(()=>sb.from('ghg_activity_data').select('site_id,factor_id,source_name,ef_value,extra,data_year').in('category_id',['C03-E','C03-F']).neq('data_year',TRIAL_Y).order('record_id')); if(r.error)throw r.error; C3.use=c03UseBuild(r.data||[]); } })();
+  if(!C3._useP)C3._useP=(async()=>{ await ensureFacAll(); await ensureFacSites(); await ensureFGas(); if(!C3.use){ const r=await sbAll(()=>sb.from('ghg_activity_data').select('site_id,factor_id,source_name,ef_value,extra,data_year').in('category_id',['C03-01','C03-02']).neq('data_year',TRIAL_Y).order('record_id')); if(r.error)throw r.error; C3.use=c03UseBuild(r.data||[]); } })();
   C3._useP.then(paint).catch(e=>{ C3._useP=null; document.querySelectorAll('#src_form .c03pvh').forEach(el=>{ el.textContent='→ C03 光伏上游係數讀取失敗：'+((e&&e.message)||e); }); }); }
 const _prevC03=window.selectSrc;
 window.selectSrc=function(i){
@@ -8186,9 +8247,9 @@ async function c12Load(){
   const box=document.getElementById('src_form');
   try{
     if(!/^<table|<div style="display:flex/.test(box.innerHTML))box.innerHTML='<div class="msg">載入中…（'+F.site+' '+F.year+' C01 直接物料與 C12）</div>';
-    const {data:ys,error:ye}=await c03T(sb.from('ghg_activity_data').select('data_year').eq('site_id',F.site).in('category_id',['C12','C01-M']).neq('data_year',TRIAL_Y).limit(5000),'年度清單'); if(ye)throw ye;
+    const {data:ys,error:ye}=await c03T(sb.from('ghg_activity_data').select('data_year').eq('site_id',F.site).in('category_id',['C12','C01-01']).neq('data_year',TRIAL_Y).limit(5000),'年度清單'); if(ye)throw ye;
     F.years=entryYears((ys||[]).map(r=>r.data_year)); F.year=entryPickYear(F.years);   /* V99 */
-    const {data:src,error:e1}=await c03T(sb.from('ghg_activity_data').select('record_id,category_id,source_name,attr1,attr2,quantity,quantity_unit,input_method,extra,data_month').eq('site_id',F.site).eq('data_year',F.year).eq('category_id','C01-M').order('record_id').limit(3000),'C01 直接物料'); if(e1)throw e1;
+    const {data:src,error:e1}=await c03T(sb.from('ghg_activity_data').select('record_id,category_id,source_name,attr1,attr2,quantity,quantity_unit,input_method,extra,data_month').eq('site_id',F.site).eq('data_year',F.year).eq('category_id','C01-01').order('record_id').limit(3000),'C01 直接物料'); if(e1)throw e1;
     const {data:cr,error:e2}=await c03T(sb.from('ghg_activity_data').select('*').eq('site_id',F.site).eq('data_year',F.year).eq('category_id','C12').order('record_id'),'C12 列'); if(e2)throw e2;
     C12.src=(src||[]).filter(r=>!mvoid(r)); C12.rows=cr||[]; C12.auto=C12.rows.filter(r=>r.input_method==='C12自動'); C12.man=C12.rows.filter(r=>r.input_method!=='C12自動');
     if(window.__c12TestSrc&&window.__c12TestSrc[F.site+'|'+F.year])C12.src=window.__c12TestSrc[F.site+'|'+F.year];   /* 本機測試頁用：注入 C01 列（正式頁不會有這個變數） */
@@ -8335,7 +8396,7 @@ function c12Render(){
     siteSel:'<select id="fu_site" class="ehsite">'
       +F.sites.map(x=>{const s2=(FAC_SITES||[]).find(z=>z.site_id===x)||{}; return '<option value="'+x+'"'+(x===F.site?' selected':'')+'>'+x+' '+esc(s2.site_name||'')+'</option>';}).join('')+'</select>',
     yearSel:'<select id="fu_year" class="ehyear">'+yearOpts(F.years,F.year)+'</select>',
-    x:'<span class="fmini">自動帶出　<span style="color:#a9b8b0" title="現行碼（追溯）">現行碼 C12</span></span>'
+    x:'<span class="fmini">自動帶出</span>'
       +'<a href="javascript:void(0)" onclick="facTrace(&#39;C12&#39;,&#39;ALL&#39;,'+facY(F.year)+',&#39;'+F.site+'&#39;)" style="background:var(--t);color:var(--d);border-radius:999px;padding:3px 12px;font-size:12px;font-weight:700;text-decoration:none;cursor:pointer" title="係數庫 C12 條目">📐 係數庫</a>'
       +chip,
     btns:(canWrite?'<button onclick="c12Ask()" style="padding:6px 14px;font-weight:700">🔁 重算並寫入</button>':(canInp?'<button disabled title="有材質待 ESG 歸類，歸類後才能寫入" style="padding:6px 14px;font-weight:700">🔁 重算並寫入（等 ESG 歸類）</button>':''))
@@ -8428,7 +8489,7 @@ window.c12ReadFormTest=(buf,fname)=>c12ReadForm(buf,fname);   /* 本機測試用
 window.c12ImpPick=function(){ const inp=document.createElement('input'); inp.type='file'; inp.accept='.xlsx,.xls,.xlsm';
   inp.onchange=async()=>{ const f=inp.files&&inp.files[0]; if(!f)return; try{ const r=c12ReadForm(await f.arrayBuffer(),f.name); C12.W=Math.round(r.W*1e6)/1e6; C12.Wsrc='C12 收集表 '+f.name; C12.imp=r; C12.cc=c12Calc(F.year); c12Render(); }catch(e){ dlg('❌ 讀不到出貨總重量','<div class="item" style="color:#a33">'+esc(e.message||e)+'</div>','<button class="sec" onclick="fuelClose()">關閉</button>'); } };
   inp.click(); };
-window.c12GoC01=function(){ const i=SRC.findIndex(s=>s.c==='C01-M'); if(i>=0)window.selectSrc(i); };
+window.c12GoC01=function(){ const i=SRC.findIndex(s=>s.c==='C01-01'); if(i>=0)window.selectSrc(i); };
 window.c12Ask=function(){ if(!editable()||C12.man.length||c12Decl(F.year))return; const cc=C12.cc; if(cc&&cc.pend&&cc.pend.length)return;   /* V129-42 */
   if(!(cc&&cc.tot>0)){ dlg('無法寫入','<div class="item">C01 直接物料沒有 '+F.year+' 年資料，算不出占比。</div>','<button class="sec" onclick="fuelClose()">關閉</button>'); return; }
   if(!(cc.W>0)){ dlg('無法寫入','<div class="item">請先填「出貨總重量」。</div>','<button class="sec" onclick="fuelClose()">關閉</button>'); return; }
@@ -8471,11 +8532,11 @@ window.selectSrc=function(i){
    - 匯入 ESG 收集表：2025 年版「採購商品表-服務」與舊版「服務類別」都認；美金照系統匯率表，檔案匯率不同標黃。
    - 設定驅動（SVC_CFG）：C02 資本商品（一樣是 美金 × EEIO）之後加一條設定就能用同一頁。
    ══════════════════════════════════════════════════════════════════════════ */
-const SVC_CFG={'C01-S':{unit:'USD',mtype:'金額',a1:'服務',defSrc:'C1 採購商品-服務',noun:'服務項目',ph:'例 會計師審計費',head:'服務項目 × 全年金額',codeP:'C01-02',form:'C1 採購商品-服務',thing:'服務',legendX:'　｜　廢棄物處理費照 ESG 收集表填在這裡，ESG 不計的選「不計入」'},
+const SVC_CFG={'C01-02':{unit:'USD',mtype:'金額',a1:'服務',defSrc:'C1 採購商品-服務',noun:'服務項目',ph:'例 會計師審計費',head:'服務項目 × 全年金額',codeP:'C01-02',form:'C1 採購商品-服務',thing:'服務',legendX:'　｜　廢棄物處理費照 ESG 收集表填在這裡，ESG 不計的選「不計入」'},
   'C02':{unit:'USD',mtype:'金額',a1:'',defSrc:'C2 資本商品',noun:'資本財細項',ph:'例 珠擊機',head:'資本財 × 資產金額',codeP:'C02',form:'C2 資本商品',thing:'資本財',amtLabel:'資產金額',catCol:true,catLabel:'帳上類別',catSub:'選填',cats:['機器設備','製造設備','儀器設備','研展設備','辦公設備','電腦軟體','資料存儲設備','影音設備','運輸設備','空調設備','模具設備','電子設備','其他設備','建物改良'],im:'V92資本商品登錄'},
   'C10':{unit:'USD',mtype:'金額',a1:'加工',defSrc:'C10 委外加工',noun:'加工品項',ph:'例 陽極處理',head:'加工品項 × 加工費',codeP:'C10',form:'C10 委外加工',thing:'加工',amtLabel:'加工費',im:'V93委外加工登錄'}};   /* V93：C10 委外加工（加工費 × EEIO） */   /* V92：C02 資本商品（同為 美金 × EEIO）；catCol＝多一欄「資本財項目」（存 attr1） */
 let SREC=[],SORIG={},SRET={},SHIST={byName:{},any:{},names:new Set(),all:new Set()},SPEND=[],SIMP=null,SNEW=-1,SFOC=null,SALL=null,SKB=null;
-function scfg(){return SVC_CFG[F.cat]||SVC_CFG['C01-S'];}
+function scfg(){return SVC_CFG[F.cat]||SVC_CFG['C01-02'];}
 const snorm=s=>String(s==null?'':s).replace(/[\s　]+/g,'').toLowerCase();
 const g6=v=>(+v).toFixed(10);   /* V103-7：係數一律顯示 10 位（ESG 8/25 定案） */
 const g6r=v=>String(+(+v).toFixed(6));   /* 匯率仍 6 位 */
@@ -8484,7 +8545,7 @@ function svcDecl(y){ return !!(typeof YLOCKS!=='undefined'&&YLOCKS&&YLOCKS._decl
 function svcCanEdit(){ return editable()&&!svcDecl(F.year); }
 function svcCurOf(s){ s=String(s==null?'':s).trim(); if(!s)return ''; if(/^(twd|ntd|nt\$?)$|台幣|臺幣|新台幣/i.test(s))return 'TWD'; if(/^(rmb|cny)$|人民幣|人民币/i.test(s))return 'CNY'; if(/^vnd$|越南盾|越盾/i.test(s))return 'VND'; if(/^thb$|泰銖|泰铢/i.test(s))return 'THB'; if(/^sgd$|新幣|新加坡/i.test(s))return 'SGD'; if(/^myr$|馬幣|令吉/i.test(s))return 'MYR'; if(/^usd$|美金|美元/i.test(s))return 'USD'; return ''; }
 function svcSiteCur(){ const cu=CUR[region()]; return cu?cu.code:'USD'; }
-function svcRate(code,y){ if(code==='USD')return 1; const L=(F.fx||[]).filter(x=>x.rate_year===y&&x.currency===code); const r=L.find(x=>x.rate_type==='集團統一版')||L.find(x=>x.rate_type==='主流年版')||L.find(x=>x.rate_type==='定義值')||(F.cat==='C01-S'?L.find(x=>x.rate_type==='表別版本C1'):(F.cat==='C02'?L.find(x=>x.rate_type==='表別版本C2'):null)); if(!r)return null; svcRate._t=r.rate_type; const v=+r.rate_src_disp||(r.to_usd?1/(+r.to_usd):0); return v>0?v:null; }   /* V129-71：沒有主流年版時用原檔的表別版本 */   /* 系統匯率表：1 美金＝? 原幣（跟 ensureFX 同一個優先序；廠區變體／C15 前年版不在登錄頁用） */
+function svcRate(code,y){ if(code==='USD')return 1; const L=(F.fx||[]).filter(x=>x.rate_year===y&&x.currency===code); const r=L.find(x=>x.rate_type==='集團統一版')||L.find(x=>x.rate_type==='主流年版')||L.find(x=>x.rate_type==='定義值')||(F.cat==='C01-02'?L.find(x=>x.rate_type==='表別版本C1'):(F.cat==='C02'?L.find(x=>x.rate_type==='表別版本C2'):null)); if(!r)return null; svcRate._t=r.rate_type; const v=+r.rate_src_disp||(r.to_usd?1/(+r.to_usd):0); return v>0?v:null; }   /* V129-71：沒有主流年版時用原檔的表別版本 */   /* 系統匯率表：1 美金＝? 原幣（跟 ensureFX 同一個優先序；廠區變體／C15 前年版不在登錄頁用） */
 function svcRateFor(code,y){ code=code||svcSiteCur(); y=facY(+y||F.year);   /* V99 */ let r=svcRate(code,y); if(r!=null)return {rate:r,y:y,cur:code,typ:svcRate._t}; for(let yy=y-1;yy>=y-3;yy--){ r=svcRate(code,yy); if(r!=null)return {rate:r,y:yy,cur:code,stale:true,typ:svcRate._t}; } return null; }   /* 年度匯率還沒維護（年底最後一個交易日公告）→ 暫用前一年，畫面標出 */
 function svcLib(y){   /* 係數下拉：該年有效條目，一代號一條（同代號多條取起年最晚） */
   y=facY(+y||F.year); const m={}; svcLibAll(F.cat).forEach(f=>{ if(!f.esg_code||!inEff(f,y))return; const o=m[f.esg_code]; if(!o||(efF(f)||0)>(efF(o)||0))m[f.esg_code]=f; });
@@ -8617,7 +8678,7 @@ async function svcLoad(){
     const c=(cnt[k]=cnt[k]||{}); (c[m.code]=c[m.code]||new Set()).add(r.site_id); });
   Object.keys(cnt).forEach(k=>{ const best=Object.keys(cnt[k]).sort((a,b)=>cnt[k][b].size-cnt[k][a].size)[0]; SHIST.any[k]={code:best,sites:[...cnt[k][best]].sort()}; });
   F.svNote=await entryNote(F.site,F.year,F.cat);   /* V129-19：與明細檔的差異原因（鍵＝類別@登錄） */
-  F.svGrp=svcDecl(F.year)?(F.cat==='C01-S'?await entryCidLoad(F.site,F.year,['C01-S']):await entryGrpLoad(F.site,F.year,F.cat,[F.cat])):null;   /* V129-68：② 收割數字＝全集團頁那一格（C01-02＝C01 展開的 C01-02 小計） */
+  F.svGrp=svcDecl(F.year)?(F.cat==='C01-02'?await entryCidLoad(F.site,F.year,['C01-02']):await entryGrpLoad(F.site,F.year,F.cat,[F.cat])):null;   /* V129-68：② 收割數字＝全集團頁那一格（C01-02＝C01 展開的 C01-02 小計） */
   svcRender();
 }
 function svcFitCols(){   /* V94-4：數字欄放不下就加寬（泰銖／越南盾上億的合計會跟隔壁欄黏在一起）；從文字欄勻，不夠才動備註；總寬不變、不會左右捲 */
@@ -8654,7 +8715,7 @@ function svcRender(){
     siteSel:'<select id="fu_site" class="ehsite">'
       +F.sites.map(x=>{const s2=(FAC_SITES||[]).find(z=>z.site_id===x)||{}; return '<option value="'+x+'"'+(x===F.site?' selected':'')+'>'+x+' '+esc(s2.site_name||'')+(F.haveSites&&F.haveSites.has(x)?'':'（尚無資料）')+'</option>';}).join('')+'</select>',
     yearSel:'<select id="fu_year" class="ehyear">'+yearOpts(F.years,Y)+'</select>',
-    x:'<span class="fmini">'+esc(C.head)+'　<span style="color:#a9b8b0" title="現行碼（追溯）">現行碼 '+F.cat+'</span></span>'
+    x:'<span class="fmini">'+esc(C.head)+'</span>'
       +'<a href="javascript:void(0)" onclick="facTrace(&#39;'+F.cat+'&#39;,&#39;ALL&#39;,'+facY(Y)+',&#39;'+F.site+'&#39;)" style="background:var(--t);color:var(--d);border-radius:999px;padding:3px 12px;font-size:12px;font-weight:700;text-decoration:none;cursor:pointer" title="係數庫 '+esc(C.codeP)+' '+esc(C.thing)+' × 年度 係數表">📐 係數庫 '+lib.length+' 種</a>'
       +chip,
     btns:tplBtn(F.cat,F.site,Y)+(decl?'':'<button class="sec" '+(canEdit?'':'disabled')+' onclick="svcAdd()" title="新增一列'+esc(C.noun)+'；儲存時才寫入">＋ 新增項目</button>'
@@ -9014,11 +9075,11 @@ function trnUniKey(rg,lv,fuel){ if(!rg||!lv)return null; if(rg==='TW'){ if(lv===
 function trnUniOfKey(k){ const it=trnLib().by[k]; if(!it||it.mode!=='L')return ''; if(it.ct==='TW')return /大/.test(it.veh)?'中型／重型':'微型／輕型'; const m=TRN_UNI_MAP[it.ct]||{}; return TRN_UNI_LV.filter(l=>m[l]===it.veh).join('／'); }
 const TRN_PL=[   /* 地點文字 → 區域（TW／CN／ALL）；由清查用的地名對照 geo.py 自動產生（V129-71-1） */
   ['TW',/台灣|臺灣|台湾|taiwan|中國台灣|中国台湾/i],
-  ['ALL',/越南|vietnam|viet nam|ha nam|hanoi|河內|河内|海防|haiphong|hai phong|bac ninh|北寧|quang ninh|dong van|友谊口岸|友誼口岸|syncmold vn|越南信|cửu long|cuu long|hoa khoa|cuong anh|qisda +vn|yuke vn|vnt\(b\)|泰國|泰国|thailand|bangkok|曼谷|chachoengsao|bangpakong|laem chabang|林查班|samut ?prak|chon ?buri|rayong|prachin|nakhon|ฉะเชิงเทรา|หมู่|syncmold enterprise \(thailand\)|泰国信锦|thai|samut|ratchaburi|นนทบุรี|จังหวัด|馬來西亞|马来西亚|malaysia|penang|selangor|johor|bukit|新加坡|singapore|robinson road|美國|美国|united states|\busa\b|u\.s\.a|\bus\b|el paso|\btx\b|california|\bca \d|ontario, ca|georgia|\bga \d|\bmi ?\d|\bmo \d|\bnm \d|newark|hawthorne|santa teresa|lavonia|wixom|fenton|, ?wa,? \d|, ?il \d|ninth avenue|墨西哥|mexico|tijuana|juarez|chihuahua|日本|japan|kanagawa|shizuoka|aichi|ishikawa|yokohama|mie\b|yokkaichi|印度|india|tamil ?nadu|chennai|sriperumbudur|kanchip|波蘭|波兰|poland|lodz|荷蘭|荷兰|netherlands|venlo|意大利|義大利|italy|milano|slovak|斯洛伐克|加拿大|canada|vancouver|vacouver|colombia|哥倫比亞|哥伦比亚|bogota|德國|德国|germany|munich|慕尼黑|法國|法国|france|paris|巴黎|韓國|韩国|korea|菲律賓|菲律宾|philippines|捷克|czech|匈牙利|hungary|巴西|brazil|澳大利亞|澳大利亚|australia|悉尼|英國|英国|united kingdom|伦敦|倫敦|london/i],
+  ['ALL',/越南|vietnam|viet nam|ha nam|hanoi|河內|河内|海防|haiphong|hai phong|bac ninh|北寧|quang ninh|dong van|友谊口岸|友誼口岸|syncmold vn|越南信|同奈|dong ?nai|đồng ?nai|long ?thành|long ?thanh|隆城|cửu long|cuu long|hoa khoa|cuong anh|qisda +vn|yuke vn|vnt\(b\)|泰國|泰国|thailand|bangkok|曼谷|chachoengsao|bangpakong|laem chabang|林查班|samut ?prak|chon ?buri|rayong|prachin|nakhon|ฉะเชิงเทรา|หมู่|syncmold enterprise \(thailand\)|泰国信锦|thai|samut|ratchaburi|นนทบุรี|จังหวัด|馬來西亞|马来西亚|malaysia|penang|selangor|johor|bukit|新加坡|singapore|robinson road|美國|美国|united states|\busa\b|u\.s\.a|\bus\b|el paso|\btx\b|california|\bca \d|ontario, ca|georgia|\bga \d|\bmi ?\d|\bmo \d|\bnm \d|newark|hawthorne|santa teresa|lavonia|wixom|fenton|, ?wa,? \d|, ?il \d|ninth avenue|墨西哥|mexico|tijuana|juarez|chihuahua|日本|japan|kanagawa|shizuoka|aichi|ishikawa|yokohama|mie\b|yokkaichi|印度|india|tamil ?nadu|chennai|sriperumbudur|kanchip|波蘭|波兰|poland|lodz|荷蘭|荷兰|netherlands|venlo|意大利|義大利|italy|milano|slovak|斯洛伐克|加拿大|canada|vancouver|vacouver|colombia|哥倫比亞|哥伦比亚|bogota|德國|德国|germany|munich|慕尼黑|法國|法国|france|paris|巴黎|韓國|韩国|korea|菲律賓|菲律宾|philippines|捷克|czech|匈牙利|hungary|巴西|brazil|澳大利亞|澳大利亚|australia|悉尼|英國|英国|united kingdom|伦敦|倫敦|london/i],
   ['CN',/中國|中国|china|大陸|大陆|省|苏州|蘇州|上海|昆山|太仓|太倉|吳江|吴江|相城|東莞|东莞|深圳|广州|廣州|中山市|中山富|福州|福清|重庆|重慶|厦门|廈門|宁波|寧波|天津|北京|武汉|武漢|成都|合肥|南京|无锡|無錫|杭州|青岛|青島|威海|淄博|常熟|嘉兴|嘉興|莆田|宁德|寧德|闽侯|閩侯|鄂州|巢湖|临汾|臨汾|河源|樟木頭|樟木头|璧山|西永|巴南|弇山|张浦|張浦|xiamen|鴻嘉駿|鸿嘉骏|富鸿齐|富鴻齊|冠皇|富群|冠華|冠华|福清冠|kh\(b\)|fuqing|zs\(b\)|longsheng|rongshuo|xinchang|福建|fujian|广东|廣東|江苏|江蘇|浙江|江西|惠州|珠海|常州|镇江|鎮江|句容|张家港|張家港|泰興|泰兴|兴化|興化|南通|天门|天門|瑞安|鹤山|鶴山|火炬开发区|火炬開發區|南朗鎮|浦东|浦東|ningbo|suzhou|吳中|吴中|北海|博羅|博罗|陶朱|鹽田|盐田|shanghai|cnsha|yantian|shenzhen|虎门|虎門|深圳港|廈門港|厦门港|上海港|洋山|江阴|江陰|沙边路|沙邊路|珠江路|金枫路|金楓路|马运路|馬運路|聚峰路|宏路|阳下|陽下|洪宽|洪寬/i],
   ['TW',/new taipei|taichung|北市|鶯歌|台北|臺北|新北|桃園|桃园|新竹|hsinchu|苗栗|miao-?li|台中|臺中|彰化|南投|雲林|嘉義|台南|臺南|高雄|屏東|宜蘭|花蓮|台東|基隆|keelung|觀音區|观音区|龜山|龟山|林口|中壢|中坜|zhongli|汐止|汐止|土城|內湖|内湖|三重|中和|新莊|新庄|泰山區|樹林|楊梅|杨梅|湖口|竹南|chu-nan|豐原|丰原|大里|南屯|深坑|taoyuan|dayuan|luchu|syncmold tw|敬得\(觀音\)|陸合\(台中\)|信鋐/i]]
 const TRN_ALIAS={'yuke':'CN','yuke_b':'CN','dengsheng':'CN'};   /* YUKE＝2023 年「馭科」（路徑 馭科→鹽田港→海防港）；DENGSHENG＝2023 年「東莞登生」 */
-const TRN_OWN=/^\s*(syncmold|敬得科技|敬得|越南信錦|越南信锦|信錦|信锦|commuwell)\s*$/i;
+const TRN_OWN=/^\s*(syncmold|敬得科技|敬得|越南信錦|越南信锦|信錦|信锦|commuwell|信錦同奈|信锦同奈|syncmold dong nai)\s*$/i;   /* V129-83：加 DN 信錦同奈 */
 function trnPlRg(s){ s=String(s==null?'':s).trim(); if(!s)return null; for(const [rg,re] of TRN_PL){ if(re.test(s))return rg; } const a=TRN_ALIAS[s.toLowerCase()]; return a||null; }
 function trnPathFr(p){ return String(p||'').split(/→|->|=>|-|－|：|:|\s{2,}/).map(x=>x.replace(/[（）()]/g,' ').trim()).filter(x=>x&&!/^(陸運|陆运|海運|海运|空運|空运|海运\d*|陆运\d*)\s*\d*$/.test(x)&&x.toLowerCase()!=='port'); }
 function trnLegRg(p,rt,sct){   /* 這一段在哪一區（TW／CN／ALL）＋說明 */
@@ -9341,7 +9402,7 @@ function trnRender(){
     siteSel:'<select id="fu_site" class="ehsite">'
       +F.sites.map(x=>{const s2=(FAC_SITES||[]).find(z=>z.site_id===x)||{}; return '<option value="'+x+'"'+(x===F.site?' selected':'')+'>'+x+' '+esc(s2.site_name||'')+(F.haveSites&&F.haveSites.has(x)?'':'（尚無資料）')+'</option>';}).join('')+'</select>',
     yearSel:'<select id="fu_year" class="ehyear">'+yearOpts(F.years,Y)+'</select>',
-    x:'<span class="fmini">'+esc(C.head)+'　<span style="color:#a9b8b0" title="現行碼（追溯）">現行碼 '+F.cat+'</span></span>'
+    x:'<span class="fmini">'+esc(C.head)+'</span>'
       +tChip(TFAC,'📐 運輸係數表 '+lib.items.length+' 種','運輸係數表（C4/C5/C9 共用）：陸運依國別 × 車種、空運／海運依國別','trnFacTg')
       +tChip(TRTE,'🛣 本廠用過的路線'+((TTPL&&TTPL.k===tkey&&TTPL.list.length)?' '+TTPL.list.length+' 種':''),'本廠歷年用過的路線（各段公里數＋車種一樣算同一種）：可以查，輸入年度可以直接拿來新增','trnRteTg')
       +chip,
@@ -10031,7 +10092,7 @@ function wstRender(){
     siteSel:'<select id="w5_site" class="ehsite">'
       +W5.sites.map(s=>{const st=(FAC_SITES||[]).find(x=>x.site_id===s)||{};return '<option value="'+s+'"'+(s===W5.site?' selected':'')+'>'+w5esc(s+' '+(st.site_name||''))+'</option>';}).join('')+'</select>',
     yearSel:'<select id="w5_year" class="ehyear">'+yearOpts(W5.years,W5.year)+'</select>',
-    x:'<span class="fmini"><span style="color:#a9b8b0" title="現行碼（追溯）">現行碼 C05</span></span>'
+    x:'<span class="fmini"></span>'
       +((typeof trialY==='function'&&trialY(W5.year))?trialChip():'')+((typeof facPendChip==='function')?facPendChip(W5.year):''),
     btns:tplBtn('C05',W5.site,W5.year)+(ed?'<button onclick="wstAdd()">＋ 新增清運</button> <button class="sec" onclick="wstImportPick()" title="上傳 ESG 的 C5 營運廢棄物收集表，先預覽、確認才寫入">📥 匯入收集表</button> <button class="pri" onclick="wstSave()">💾 儲存</button>':'')});
   h+='<div class="fmini ehdesc" style="margin:0 2px 4px;line-height:1.4">碳排＝處理排放＋運輸排放；係數 '+w5esc(rg)+' '+fy+' 年版　<span title="一列＝一筆清運。處理排放＝重量 × 處理係數（依「廢棄物種類 × 處理方式 × 區域 × 年度」從係數庫自動帶，代號 C05-＜大類＞＜處理方式＞）；運輸排放＝延噸公里 × 運輸係數。" style="cursor:help;color:var(--p);font-weight:700;white-space:nowrap">ⓘ 怎麼算</span></div>';   /* V106-1：說明收成一行 */
@@ -10394,7 +10455,7 @@ function btRender(){
     siteSel:'<select id="bt_site" class="ehsite">'
       +W6.sites.map(s=>{const st=(FAC_SITES||[]).find(x=>x.site_id===s)||{};return '<option value="'+s+'"'+(s===W6.site?' selected':'')+'>'+btesc(s+' '+(st.site_name||''))+'</option>';}).join('')+'</select>',
     yearSel:'<select id="bt_year" class="ehyear">'+yearOpts(W6.years,W6.year)+'</select>',
-    x:'<span class="fmini"><span style="color:#a9b8b0" title="現行碼（追溯）">現行碼 C06</span></span>'
+    x:'<span class="fmini"></span>'
       +((typeof trialY==='function'&&trialY(W6.year))?trialChip():'')+((typeof facPendChip==='function')?facPendChip(W6.year):''),
     btns:tplBtn('C06',W6.site,W6.year)+(ed?'<button onclick="btAdd()">＋ 新增一趟</button> <button class="sec" onclick="btImportPick()" title="上傳 ESG 的 C6 商務旅行收集表（各交通模式分頁），先預覽、確認才寫入">📥 匯入收集表</button> <button class="pri" onclick="btSave()">💾 儲存</button>':'')});
   h+='<div class="fmini ehdesc" style="margin:0 2px 4px;line-height:1.4">陸運、軌道＝延人公里 × 係數；航空、台灣高鐵、客船＝逐趟直查　<span title="陸運的碳排記在「車種彙總列」＝該車種逐趟延人公里加總 × 係數（一物一號，依區域 × 年度自動帶）；軌道（台鐵／捷運／海外鐵路）＝逐趟延人公里 × 係數；航空＝ICAO 逐趟查、台灣高鐵＝站距對照表、客船＝請款單，逐趟直接填當量。" style="cursor:help;color:var(--p);font-weight:700;white-space:nowrap">ⓘ 怎麼算</span></div>';   /* V106：說明收成一行（比照 V104-2 新四頁） */
@@ -10668,11 +10729,11 @@ async function piiRest(path,opt){
   const base=SUPABASE_URL+'/rest/v1/'+path; const method=opt.method||'GET';
   const hd={apikey:SUPABASE_ANON_KEY,Authorization:'Bearer '+t,'Content-Type':'application/json'};
   if(method!=='GET'){ if(opt.prefer)hd.Prefer=opt.prefer;
-    const r=await fetch(base,{method:method,headers:hd,body:opt.body!=null?JSON.stringify(opt.body):undefined}); let d=null; try{d=await r.json();}catch(e){}
+    const r=await catXFetch(base,{method:method,headers:hd,body:opt.body!=null?JSON.stringify(opt.body):undefined}); let d=null; try{d=await r.json();}catch(e){}
     if(!r.ok)return {error:{message:(d&&(d.message||d.msg))||('HTTP '+r.status),code:d&&d.code},status:r.status};
     return {data:d,status:r.status}; }
   let all=[],from=0;
-  while(true){ const r=await fetch(base,{headers:Object.assign({},hd,{Range:from+'-'+(from+999)})}); let d=null; try{d=await r.json();}catch(e){}
+  while(true){ const r=await catXFetch(base,{headers:Object.assign({},hd,{Range:from+'-'+(from+999)})}); let d=null; try{d=await r.json();}catch(e){}
     if(!r.ok)return {error:{message:(d&&(d.message||d.msg))||('HTTP '+r.status),code:d&&d.code},status:r.status,data:all};
     all=all.concat(d||[]); if(!d||d.length<1000)break; from+=1000; }
   return {data:all};
@@ -10879,7 +10940,7 @@ function cmRender(){
   let h=ehead({title:'C07 員工通勤',legend:'mix',
     siteSel:'<select id="cm_site" class="ehsite">'+W7.sites.map(s=>{const st=(FAC_SITES||[]).find(x=>x.site_id===s)||{};return '<option value="'+s+'"'+(s===W7.site?' selected':'')+'>'+cmesc(s+' '+(st.site_name||''))+'</option>';}).join('')+'</select>',
     yearSel:'<select id="cm_year" class="ehyear">'+yearOpts(W7.years,W7.year)+'</select>',
-    x:'<span class="fmini"><span style="color:#a9b8b0" title="現行碼（追溯）">現行碼 C07</span></span>'+cmPiiChip()+((typeof trialY==='function'&&trialY(W7.year))?trialChip():'')+((typeof facPendChip==='function')?facPendChip(W7.year):''),
+    x:'<span class="fmini"></span>'+cmPiiChip()+((typeof trialY==='function'&&trialY(W7.year))?trialChip():'')+((typeof facPendChip==='function')?facPendChip(W7.year):''),
     btns:tplBtn('C07',W7.site,W7.year)+cmCarryBtn()+(ed?'<button onclick="cmAdd()">＋ 新增一人</button> <button onclick="cmImportPick()">📥 匯入收集表</button> <button class="pri" onclick="cmSave()">💾 儲存</button>':'')});
   h+='<div class="fmini ehdesc" style="margin:0 2px 4px;line-height:1.4">延人公里＝來回距離 × 當年度工作天數；係數依區域 × 年度自動帶　<span title="上方「彙總」＝系統依交通工具加總延人公里 × 係數（C07 一物一號，依區域 × 年度自動帶）算碳排；下方「逐人輸入」＝每位員工的距離與天數（延人公里＝來回距離 × 當年度工作天數）。詳細住址要被授權才看得到。" style="cursor:help;color:var(--p);font-weight:700;white-space:nowrap">ⓘ 怎麼算</span></div>';   /* V106：說明收成一行（比照 V104-2 新四頁） */
   const blocks={}; W7.recs.forEach(r=>{ const k=cmblk(r); (blocks[k]=blocks[k]||[]).push(r); });
@@ -11579,7 +11640,7 @@ function rlRender(){
   let h=ehead({title:rlesc(typeof ncText==='function'?ncText(W8.cat):W8.cat),legend:'mix',
     siteSel:'<select id="rl_site" class="ehsite">'+W8.sites.map(s=>{const st=(FAC_SITES||[]).find(x=>x.site_id===s)||{};return '<option value="'+s+'"'+(s===W8.site?' selected':'')+'>'+rlesc(s+' '+(st.site_name||''))+(W8.have&&W8.have.has(s)?'':'（尚無資料）')+'</option>';}).join('')+'</select>',
     yearSel:'<select id="rl_year" class="ehyear">'+yearOpts(W8.years,W8.year)+'</select>',
-    x:'<span class="fmini"><span style="color:#a9b8b0" title="現行碼（追溯）">現行碼 '+W8.cat+'</span></span>'
+    x:'<span class="fmini"></span>'
       +'<a href="javascript:void(0)" onclick="facTrace(&#39;'+W8.cat+'&#39;,&#39;ALL&#39;,'+facY(W8.year)+',&#39;'+W8.site+'&#39;)" style="background:var(--t);color:var(--d);border-radius:999px;padding:3px 12px;font-size:12px;font-weight:700;text-decoration:none;cursor:pointer;white-space:nowrap" title="係數庫 '+W8.cat+' 代號 × 年度">📐 係數庫</a>'+chip,
     btns:tplBtn(W8.cat,W8.site,W8.year)+(ed?'<button class="sec" onclick="rlAdd()">＋ 新增一筆</button> <button class="sec" onclick="rlImportPick()" title="上傳 ESG 收集表（'+(C.inv?'C15 投資 Table1':'C8／C13 租賃表')+'），先預覽、確認才寫入">📥 匯入收集表</button> <button onclick="rlSave()">💾 儲存</button>':'')});
   const howTip='上方「彙總」＝系統依代號加總美金 × 係數（一年一代號，依年度自動帶）算碳排；下方「逐筆輸入」＝每一筆'+(C.inv?'投資的帳面金額':'租約的租金')+'（美金＊＝原幣 ÷ 系統匯率表）。'+(C.desc||'');
@@ -12013,7 +12074,7 @@ window.rlState=()=>W8;
    ・已申報年度唯讀：頁首 ① 系統算（充填量 × 係數庫本年標準）／② 清冊（明細存的收集表值；範疇一逸散沒有單獨的申報數）／差異原因
    ・收集表明細分頁（同類型各規格的支數、單隻填充量、是否充填）存在 extra，名稱格下小字列出
    ══════════════════════════════════════════════════════════════════════════ */
-const FE_CFG={'S1-11':{title:'滅火器'}};
+const FE_CFG={'A04-02':{title:'滅火器'}};
 const FE_TYPES=[['A04-02-01','CO2滅火器','二氧化碳滅火器'],['A04-02-02','乾粉滅火器','乾粉滅火器'],['A04-02-03','泡沫滅火器','泡沫滅火器'],['A04-02-04','水基型滅火器','水基型滅火器']];
 const FE_MANUAL='登錄頁';
 const FE_IMPORT='匯入收集表';   /* V105 */
@@ -12094,7 +12155,7 @@ async function feBoot(){
     if(typeof ensureYLocks==='function')await ensureYLocks();
     if(typeof ensureFacSites==='function')await ensureFacSites();
     await feLoadFac();
-    const ds=await sbAll(()=>sb.from('ghg_activity_data').select('record_id,site_id,data_year').eq('category_id','S1-11').order('record_id'));
+    const ds=await sbAll(()=>sb.from('ghg_activity_data').select('record_id,site_id,data_year').eq('category_id','A04-02').order('record_id'));
     if(ds.error)throw ds.error;
     W9.pno=x=>siteLegacy(x)||'--';   /* V129-79：舊官方廠號，只給係數備註「廠:01…」比對 */
     const all=(FAC_SITES||[]).map(x=>x.site_id).sort(siteCmp);
@@ -12110,10 +12171,10 @@ async function feBoot(){
 async function feLoad(){
   const box=document.getElementById('src_form');
   box.innerHTML='<div class="msg">載入中…（這一廠年的滅火器明細）</div>';
-  const {data,error}=await sbAll(()=>sb.from('ghg_activity_data').select('*').eq('category_id','S1-11').eq('site_id',W9.site).eq('data_year',W9.year).order('record_id'));
+  const {data,error}=await sbAll(()=>sb.from('ghg_activity_data').select('*').eq('category_id','A04-02').eq('site_id',W9.site).eq('data_year',W9.year).order('record_id'));
   if(error){ box.innerHTML='<div class="msg err">讀取失敗：'+feesc(error.message)+'</div>'; return; }
   W9.recs=(data||[]).map(r=>{ r._new=false; return r; }); W9.del={};
-  W9.grp=fedecl()?await entryCidLoad(W9.site,W9.year,['S1-11']):null;   /* V129-70：② 收割數字＝全集團頁範疇一 1.4 裡滅火器這一類 */
+  W9.grp=fedecl()?await entryCidLoad(W9.site,W9.year,['A04-02']):null;   /* V129-70：② 收割數字＝全集團頁範疇一 1.4 裡滅火器這一類 */
   feRender();
 }
 /* ── 已申報年度面板 ── */
@@ -12156,14 +12217,14 @@ function feRender(){
   else if(typeof READONLY!=='undefined'&&READONLY)chip=pill('#fff3cd','#856404','#ffe69c','🔒 唯讀檢視');
   else if(curGhgUser&&!lgCanSite(W9.site))chip=pill('#fce4e4','#a33','#f2c4c4','🔒 廠區權限不含 '+W9.site);
   if(typeof trialY==='function'&&trialY(W9.year))chip+=trialChip(); chip+=((typeof facPendChip==='function')?facPendChip(W9.year):'');
-  let h=ehead({title:feesc(typeof ncText==='function'?ncText('S1-11'):'A04-02 滅火器'),legend:'mix',
+  let h=ehead({title:feesc(typeof ncText==='function'?ncText('A04-02'):'A04-02 滅火器'),legend:'mix',
     siteSel:'<select id="fe_site" class="ehsite">'+W9.sites.map(s=>{const st=(FAC_SITES||[]).find(x=>x.site_id===s)||{};return '<option value="'+s+'"'+(s===W9.site?' selected':'')+'>'+feesc(s+' '+(st.site_name||''))+(W9.have&&W9.have.has(s)?'':'（尚無資料）')+'</option>';}).join('')+'</select>',
     yearSel:'<select id="fe_year" class="ehyear">'+yearOpts(W9.years,W9.year)+'</select>',
-    x:'<span class="fmini"><span style="color:#a9b8b0" title="現行碼（追溯）">現行碼 S1-11</span></span>'
-      +'<a href="javascript:void(0)" onclick="facTrace(&#39;S1-11&#39;,&#39;ALL&#39;,'+facY(W9.year)+',&#39;'+W9.site+'&#39;)" style="background:var(--t);color:var(--d);border-radius:999px;padding:3px 12px;font-size:12px;font-weight:700;text-decoration:none;cursor:pointer;white-space:nowrap" title="係數庫 A04-02 滅火器 × 年度">📐 係數庫</a>'+chip,
-    btns:tplBtn('S1-11',W9.site,W9.year)+feCarryBtn()+(ed?'<button class="sec" onclick="feAdd()">＋ 新增一種</button> <button class="sec" onclick="feImportPick()" title="上傳 S1+S2+C3 活動數據蒐集表（讀總表的滅火器列＋滅火器明細分頁），先預覽、確認才寫入">📥 匯入收集表</button> <button onclick="feSave()">💾 儲存</button>':'')});
+    x:'<span class="fmini"></span>'
+      +'<a href="javascript:void(0)" onclick="facTrace(&#39;A04-02&#39;,&#39;ALL&#39;,'+facY(W9.year)+',&#39;'+W9.site+'&#39;)" style="background:var(--t);color:var(--d);border-radius:999px;padding:3px 12px;font-size:12px;font-weight:700;text-decoration:none;cursor:pointer;white-space:nowrap" title="係數庫 A04-02 滅火器 × 年度">📐 係數庫</a>'+chip,
+    btns:tplBtn('A04-02',W9.site,W9.year)+feCarryBtn()+(ed?'<button class="sec" onclick="feAdd()">＋ 新增一種</button> <button class="sec" onclick="feImportPick()" title="上傳 S1+S2+C3 活動數據蒐集表（讀總表的滅火器列＋滅火器明細分頁），先預覽、確認才寫入">📥 匯入收集表</button> <button onclick="feSave()">💾 儲存</button>':'')});
   h+='<div class="fmini ehdesc" style="margin:0 2px 4px;line-height:1.4">係數：二氧化碳滅火器 1 kgCO₂/kg；乾粉、泡沫、水基型不含溫室氣體＝0　<span title="上方「彙總」＝系統依類型加總當年充填量 × 係數（A04-02 一年一代號，依年度自動帶）算碳排；下方「逐筆輸入」＝每一種滅火器的數量、單隻填充量與當年充填量（照收集表「滅火器」明細）。" style="cursor:help;color:var(--p);font-weight:700;white-space:nowrap">ⓘ 怎麼算</span></div>';   /* V104-2：說明收成一行 */
-  h+='<div id="s101wrap" data-k="'+feesc('S1-11|'+W9.site+'|'+W9.year)+'">'+fedeclPanel();
+  h+='<div id="s101wrap" data-k="'+feesc('A04-02|'+W9.site+'|'+W9.year)+'">'+fedeclPanel();
   if(!W9.recs.length){ h+='<div class="msg" style="margin:10px 12px">此廠此年尚無資料。'+(ed?'可以按「📥 匯入收集表」上傳 S1+S2+C3 活動數據蒐集表，或「＋ 新增一種」逐筆登錄。':(lk&&!decl?'這個年度還沒開放登錄。':''))+'</div></div>'; box.innerHTML=h; feBind(); return; }
   const blocks={}; W9.recs.forEach(r=>{ const k=fecode(r)||'（未歸類）'; (blocks[k]=blocks[k]||[]).push(r); });
   const order=FE_TYPES.map(x=>x[0]).filter(k=>blocks[k]).concat(Object.keys(blocks).filter(k=>!fetype(k)).sort());
@@ -12247,7 +12308,7 @@ function feAdd(code){
       sel.onchange=f; f(); },30);
     return; }
   const t=fetype(code);
-  const r={record_id:'new-'+(++W9.newseq),site_id:W9.site,data_year:W9.year,data_month:null,category_id:'S1-11',equipment_name:'滅火器',source_name:null,attr1:t?t[1]:null,attr2:null,
+  const r={record_id:'new-'+(++W9.newseq),site_id:W9.site,data_year:W9.year,data_month:null,category_id:'A04-02',equipment_name:'滅火器',source_name:null,attr1:t?t[1]:null,attr2:null,
     measurement_type:'填充量',quantity:0,quantity_unit:'公斤',status:'工作底稿',input_method:FE_MANUAL,gas_type:'CO2',gwp:1,co2e_draft:0,data_source_note:'S1 逸散-滅火器',extra:{},_new:true,_chg:true,_code:code};
   W9.recs.push(r); W9.open[code]=true; feRender();
   if(typeof fuelClose==='function')fuelClose();
@@ -12260,7 +12321,7 @@ function feBody(r){
   e['係數代號']=lib?feCodeYr(lib.fid):(code+'·ALL·'+facY(W9.year)+'（係數庫還沒有這一年的條目，碳排先記 0）');
   e['換算']='充填量 '+fefk(kg)+' 公斤 × '+(lib?fef(lib.v,10):'—')+' kgCO2/kg ÷ 1000 ＝ '+fef(lib?kg*lib.v/1000:0,6)+' t';
   if(curGhgUser)e['最後更新']=curGhgUser.emp_id+' '+(curGhgUser.name||'')+' '+new Date().toISOString().slice(0,10);
-  return {site_id:W9.site,data_year:W9.year,data_month:null,category_id:'S1-11',equipment_name:'滅火器',source_name:r.source_name||null,quantity:kg,quantity_unit:'公斤',measurement_type:'填充量',
+  return {site_id:W9.site,data_year:W9.year,data_month:null,category_id:'A04-02',equipment_name:'滅火器',source_name:r.source_name||null,quantity:kg,quantity_unit:'公斤',measurement_type:'填充量',
     attr1:t?t[1]:(r.attr1||null),attr2:null,data_source_note:'S1 逸散-滅火器',status:'工作底稿',input_method:FE_MANUAL,gas_type:'CO2',gwp:1,
     ef_value:lib?lib.v:null,ef_unit:'kgCO2/kg',ef_source:lib?lib.src:null,factor_id:lib?lib.fid:null,co2e_draft:lib?+(kg*lib.v/1000).toFixed(10):0,extra:e}; }
 async function feSave(){
@@ -12277,7 +12338,7 @@ async function feSave(){
     for(const r of ups){ const o=feBody(r); ['site_id','data_year','data_month','category_id','status','input_method'].forEach(k=>delete o[k]);
       const {error}=await sb.from('ghg_activity_data').update(o).eq('record_id',r.record_id).eq('input_method',FE_MANUAL); if(error)throw error; }
     if(ups.length)msg.push('更新 '+ups.length+' 列');
-    if(dels.length){ const {error}=await sb.from('ghg_activity_data').delete().in('record_id',dels.map(r=>r.record_id)).eq('category_id','S1-11').eq('input_method',FE_MANUAL); if(error)throw error; msg.push('刪除 '+dels.length+' 列'); }
+    if(dels.length){ const {error}=await sb.from('ghg_activity_data').delete().in('record_id',dels.map(r=>r.record_id)).eq('category_id','A04-02').eq('input_method',FE_MANUAL); if(error)throw error; msg.push('刪除 '+dels.length+' 列'); }
     fedlg('✅ 已儲存','<div class="msg ok">'+feesc(W9.site+' '+W9.year+'：'+msg.join('、'))+'</div>','<button onclick="fuelClose();feLoad()">關閉</button>');
   }catch(e){ fedlg('❌ 存檔失敗','<div class="msg err">'+feesc(e.message||e)+'</div><div class="fmini" style="margin-top:6px">畫面上的輸入還在，修正後可以再按一次儲存。</div>'); }
 }
@@ -12320,7 +12381,7 @@ function feImportPick(){
     catch(e){ fedlg('❌ 讀不到檔案','<div class="msg err">'+feesc(e.message||e)+'</div>'); } };
   inp.click(); }
 function feImportPrep(wb,fname){
-  { const g=tplCheck(wb,'S1-11',W9.site,W9.year); if(g){ fedlg('❌ 無法匯入',g); return; } }   /* V126 */
+  { const g=tplCheck(wb,'A04-02',W9.site,W9.year); if(g){ fedlg('❌ 無法匯入',g); return; } }   /* V126 */
   const sc=feScanWb(wb);
   if(!sc.sum.length){ fedlg('❌ 找不到滅火器','<div class="msg err">這個檔案的「總表」裡找不到滅火器的列（設備名稱／排放源名稱要有「滅火器」）。分頁：'+feesc(wb.SheetNames.join('、'))+'</div>'); return; }
   window._feImp={fname:fname,sc:sc,stamp:'I'+Date.now()}; feImportPreview(); }
@@ -12338,7 +12399,7 @@ function feImportBuild(){
       '係數單位(收集表)':x.efu,'GWP(收集表)':x.gwp,'排放量(乘GWP前)':x.em0,'碳排(收集表,t)':x.em,'明細分頁（同類型）':dets[code]?dets[code].slice(0,8):null,
       '係數代號':lib?feCodeYr(lib.fid):code+'·ALL·'+facY(y)+'（係數庫還沒有這一年的條目，碳排先記 0）','換算':'充填量 '+fefk(kg)+' 公斤 × '+(lib?fef(lib.v,10):'—')+' kgCO2/kg ÷ 1000 ＝ '+fef(co,6)+' t','匯入':note,'匯入批':I.stamp});
     if(x.hidden)e['收集表隱藏列']='不計';
-    rows.push({site_id:W9.site,data_year:y,data_month:null,category_id:'S1-11',equipment_name:'滅火器',source_name:x.nm||x.eq||null,quantity:kg,quantity_unit:'公斤',measurement_type:'填充量',attr1:t[1],attr2:null,
+    rows.push({site_id:W9.site,data_year:y,data_month:null,category_id:'A04-02',equipment_name:'滅火器',source_name:x.nm||x.eq||null,quantity:kg,quantity_unit:'公斤',measurement_type:'填充量',attr1:t[1],attr2:null,
       data_source_note:'S1 逸散-滅火器',status:'工作底稿',input_method:FE_IMPORT,gas_type:'CO2',gwp:1,ef_value:lib?lib.v:null,ef_unit:'kgCO2/kg',ef_source:lib?lib.src:null,factor_id:lib?lib.fid:null,co2e_draft:co,extra:e,_code:code,_xt:x.hidden?null:x.em,_ex:!!x.hidden}); });
   return {rows:rows,warn:warn}; }
 function feImportPreview(){
@@ -12363,7 +12424,7 @@ async function feImportGo(){
   const B=feImportBuild(); const ins=B.rows.map(r=>{ const o=Object.assign({},r); ['_code','_xt','_ex'].forEach(k=>delete o[k]); if(curGhgUser)o.created_by=curGhgUser.emp_id; return o; });
   const box=document.getElementById('s101list'); if(box)box.innerHTML='<div class="msg">匯入中…（成功後才刪原本的登錄頁／匯入列；寫入 '+ins.length+' 列）</div>';
   try{
-    const SW=await impSwap({oldQ:()=>sb.from('ghg_activity_data').select('record_id').eq('category_id','S1-11').eq('site_id',W9.site).eq('data_year',W9.year).in('input_method',[FE_IMPORT,FE_MANUAL]),rows:ins});   /* V113 */
+    const SW=await impSwap({oldQ:()=>sb.from('ghg_activity_data').select('record_id').eq('category_id','A04-02').eq('site_id',W9.site).eq('data_year',W9.year).in('input_method',[FE_IMPORT,FE_MANUAL]),rows:ins});   /* V113 */
     const del={data:new Array(SW.oldN)};
     fedlg('✅ 匯入完成','<div class="msg ok">'+feesc(W9.site+' '+W9.year)+'：刪除舊列 '+((del.data||[]).length)+'、寫入 '+ins.length+' 列；系統算碳排合計 '+fef(ins.reduce((s,r)=>s+r.co2e_draft,0),4)+' t。</div>','<button onclick="fuelClose();feLoad()">關閉</button>');
   }catch(e){ fedlg('❌ 匯入失敗','<div class="msg err">'+feesc(e.message||e)+'</div>','<button onclick="fuelClose();feLoad()">關閉</button>'); } }
@@ -12824,7 +12885,7 @@ async function rcRun(){
    選一個廠：照範疇列出每一類的狀態（已填幾筆／已填但跟去年差一半以上／還沒填／系統自動算／去年沒有），點「去登錄」直接到那一類、帶廠區與年度。
    只讀明細表，不新增資料表；看得到的廠＝跟登錄頁一樣（自己權限內的廠；唯讀角色看全部）。 ══ */
 const FP={year:null,site:'',cache:{},busy:false};
-const FP_AUTO={'C03-E':1,'C03-F':1};
+const FP_AUTO={'C03-01':1,'C03-02':1};
 function fpEsc(v){ return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function fpT(v){ return (v==null||!isFinite(v))?'—':Number(v).toLocaleString('en-US',{minimumFractionDigits:4,maximumFractionDigits:4}); }
 function fpPno(s){ return siteLegacy(s)||'--'; }   /* V129-79：舊官方廠號 */
@@ -12952,7 +13013,7 @@ window.fpGo=async function(c){ const i=SRC.findIndex(z=>z.c===c); if(i<0)return;
    ・已申報年度（2022–2025）：照資料庫原資料唯讀列出，不重算
    ・匯入收集表：讀總表的冷媒列（一列＝該類設備的總充填量，台數記 1），冷媒寫法正規化、設備類型照名稱建議；收集表的逸散率／GWP／排放量只比對
    ══════════════════════════════════════════════════════════════════════════ */
-const RF_CFG={'S1-10':1};
+const RF_CFG={'A04-01':1};
 const RF_MANUAL='登錄頁', RF_IMPORT='匯入收集表';
 const RF_SRCTXT='逸散率＝IPCC 2006；GWP＝AR6';   /* V120：ESG 261006 五-7 定的寫法 */
 /* 設備類型（ESG「設備類型逸散率」8 類；IPCC 2006 表 7.9 中值 %） */
@@ -13051,7 +13112,7 @@ async function rfBoot(){
   try{
     if(typeof ensureYLocks==='function')await ensureYLocks();
     if(typeof ensureFacSites==='function')await ensureFacSites();
-    const ds=await sbAll(()=>sb.from('ghg_activity_data').select('record_id,site_id,data_year').eq('category_id','S1-10').order('record_id'));
+    const ds=await sbAll(()=>sb.from('ghg_activity_data').select('record_id,site_id,data_year').eq('category_id','A04-01').order('record_id'));
     if(ds.error)throw ds.error;
     W10.pno=x=>siteLegacy(x)||'--';   /* V129-79：舊官方廠號，只給係數備註「廠:01…」比對 */
     const all=(FAC_SITES||[]).map(x=>x.site_id).sort(siteCmp);
@@ -13065,15 +13126,15 @@ async function rfBoot(){
   }catch(e){ box.innerHTML='<div class="msg err">載入失敗：'+rfesc(e.message||e)+'　<button class="sec" onclick="selectSrc(curSrc)" style="padding:4px 10px">重試</button></div>'; console.error(e); } }
 async function rfLoad(){
   const box=document.getElementById('src_form'); box.innerHTML='<div class="msg">載入中…（這一廠年的冷媒明細）</div>';
-  const {data,error}=await sbAll(()=>sb.from('ghg_activity_data').select('*').eq('category_id','S1-10').eq('site_id',W10.site).eq('data_year',W10.year).order('record_id'));
+  const {data,error}=await sbAll(()=>sb.from('ghg_activity_data').select('*').eq('category_id','A04-01').eq('site_id',W10.site).eq('data_year',W10.year).order('record_id'));
   if(error){ box.innerHTML='<div class="msg err">讀取失敗：'+rfesc(error.message)+'（冷媒明細沒有載入，請重試）</div>'; return; }
   W10.recs=(data||[]).map(r=>{ r._new=false; return r; }); W10.del={}; W10.note=null;
-  try{ const n=await sb.from('ghg_diff_notes').select('note').eq('site_code',W10.site).eq('data_year',W10.year).eq('category_id','S1-10'); W10.note=(n.data&&n.data[0])?n.data[0].note:null; }catch(e){}   /* V129-7：與 ESG 收集表／清冊的差異原因 */
+  try{ const n=await sb.from('ghg_diff_notes').select('note').eq('site_code',W10.site).eq('data_year',W10.year).eq('category_id','A04-01'); W10.note=(n.data&&n.data[0])?n.data[0].note:null; }catch(e){}   /* V129-7：與 ESG 收集表／清冊的差異原因 */
   W10.FXERR=null; try{ await rfFxLoad(); }catch(e){ W10.FX=null; W10.FXERR=String((e&&e.message)||e); console.error('冷媒係數庫',e); }   /* V129-10 */
   W10.grp=null; W10.hr=null; W10.hrErr=null; W10.dopen={};
   if(rfdecl()){   /* V129-75：已申報年度 ② 收割數字（本類明細加總＋收割原值換回）＋當初清冊的列（批343 ghg_harvest_rows） */
-    W10.grp=await entryCidLoad(W10.site,W10.year,['S1-10']);
-    try{ const q=await sbAll(()=>sb.from('ghg_harvest_rows').select('*').eq('category_id','S1-10').eq('site_id',W10.site).eq('data_year',+W10.year).order('record_id')); if(q.error)throw q.error; W10.hr=q.data||[]; }
+    W10.grp=await entryCidLoad(W10.site,W10.year,['A04-01']);
+    try{ const q=await sbAll(()=>sb.from('ghg_harvest_rows').select('*').eq('category_id','A04-01').eq('site_id',W10.site).eq('data_year',+W10.year).order('record_id')); if(q.error)throw q.error; W10.hr=q.data||[]; }
     catch(e){ W10.hr=null; W10.hrErr=String((e&&e.message)||e); console.warn('冷媒當初清冊列',e); } }
   rfRender(); }
 function rfcss(){ if(document.getElementById('rfcss'))return; const st=document.createElement('style'); st.id='rfcss';
@@ -13096,11 +13157,11 @@ function rfRender(){
   else if(typeof READONLY!=='undefined'&&READONLY)chip=pill('#fff3cd','#856404','#ffe69c','🔒 唯讀檢視');
   else if(curGhgUser&&!lgCanSite(W10.site))chip=pill('#fce4e4','#a33','#f2c4c4','🔒 廠區權限不含 '+W10.site);
   if(typeof trialY==='function'&&trialY(W10.year))chip+=trialChip();
-  let h=ehead({title:rfesc(typeof ncText==='function'?ncText('S1-10'):'A04-01 冷媒'),legend:'mix',
+  let h=ehead({title:rfesc(typeof ncText==='function'?ncText('A04-01'):'A04-01 冷媒'),legend:'mix',
     siteSel:'<select id="rf_site" class="ehsite">'+W10.sites.map(s=>{const st=(FAC_SITES||[]).find(x=>x.site_id===s)||{};return '<option value="'+s+'"'+(s===W10.site?' selected':'')+'>'+rfesc(s+' '+(st.site_name||''))+(W10.have&&W10.have.has(s)?'':'（尚無資料）')+'</option>';}).join('')+'</select>',
     yearSel:'<select id="rf_year" class="ehyear">'+yearOpts(W10.years,W10.year)+'</select>',
-    x:'<span class="fmini"><span style="color:#a9b8b0" title="現行碼（追溯）">現行碼 S1-10</span></span>'+chip,
-    btns:tplBtn('S1-10',W10.site,W10.year)+rfCarryBtn()+(ed?'<button class="sec" onclick="rfAdd()">＋ 新增一款設備</button> <button class="sec" onclick="rfImportPick()" title="上傳 S1+S2+C3 活動數據蒐集表（先讀總表的冷媒列；也認「S1逸散-冷媒」那種一台一列的設備清單，單獨另存成一個檔也可以），先預覽、確認才寫入">📥 匯入收集表</button> <button onclick="rfSave()">💾 儲存</button>':'')});
+    x:'<span class="fmini"></span>'+chip,
+    btns:tplBtn('A04-01',W10.site,W10.year)+rfCarryBtn()+(ed?'<button class="sec" onclick="rfAdd()">＋ 新增一款設備</button> <button class="sec" onclick="rfImportPick()" title="上傳 S1+S2+C3 活動數據蒐集表（先讀總表的冷媒列；也認「S1逸散-冷媒」那種一台一列的設備清單，單獨另存成一個檔也可以），先預覽、確認才寫入">📥 匯入收集表</button> <button onclick="rfSave()">💾 儲存</button>':'')});
   h+='<div class="fmini ehdesc" style="margin:0 2px 4px;line-height:1.4">碳排＝單台充填量 × 台數 × 逸散率 × GWP ÷ 1000；逸散率依設備類型、GWP 依冷媒自動帶　<span title="'+rfesc('對照表：'+RF_SRCTXT+'。對照表已照 ESG 261006 的回覆更新：R22／R12 的 GWP 記 0；乾燥機 16%、冷卻機（冰水機）與熱泵熱水器 8.5%、除濕機與空氣清淨機 0.3%；6 種冷媒代號轉正式；租賃的公務車冷媒也要算（營運控制法）。再充裝量、租賃、備註先收進來，不參與計算（2026 維持總充填量 × 逸散率）。')+'" style="cursor:help;color:var(--p);font-weight:700;white-space:nowrap">ⓘ 怎麼算</span></div>';
   h+='<div id="s101wrap">';
   const oldRows=W10.recs.filter(r=>!rfNew(r)), newRows=W10.recs.filter(rfNew);
@@ -13185,9 +13246,9 @@ function rfDeclView(rows){   /* V129-75：冷媒已申報年度（2022–2025）
     if(fb.length)C.push([g+'：'+fb.length+' 台系統算不出（設備類型或冷媒認不出），照存的數',fb.reduce((t,x)=>t+x.co,0)]); });
   const by=(x,y)=>Math.abs(y[1])-Math.abs(x[1]);
   const items=A.sort(by).concat(B.sort(by),C.sort(by)); if(Math.abs(tail)>1e-12)items.push(['清冊每列存到小數 4 位的尾差',tail]);
-  const sx=SRC.find(x=>x.c==='S1-10')||{};
+  const sx=SRC.find(x=>x.c==='A04-01')||{};
   let h=entryDeclBox({yr:W10.year,q1:q1,S:HR?LS:ST,grp:W10.grp,items:HR?items:[],note:false,big:true,
-    cellTip:'全集團頁沒有單獨一格：這是全集團頁'+(sx.sc||'範疇一')+'「'+(sx.mid||'')+'」裡，'+(typeof ncText==='function'?ncText('S1-10'):'A04-01 冷媒')+' 這一份',
+    cellTip:'全集團頁沒有單獨一格：這是全集團頁'+(sx.sc||'範疇一')+'「'+(sx.mid||'')+'」裡，'+(typeof ncText==='function'?ncText('A04-01'):'A04-01 冷媒')+' 這一份',
     q1tip:'逐台：單台充填量 × 台數 × 逸散率（依設備類型）× GWP（依冷媒）÷ 1000；逸散率、GWP 取係數庫 '+W10.year+' 年那一條（已申報年度不照清冊記錄的值）'+(nfb?'；'+nfb+' 台算不出，照存的數':''),
     foot:(nfb?'<div class="fmini" style="color:#7a8f84">'+nfb+' 台系統算不出（設備類型或冷媒認不出），照存的數，格子標「照存的數」。</div>':'')
       +(HR?'':'<div class="msg err" style="margin:3px 0 0;font-size:12px">讀不到當初清冊的列（'+rfesc(W10.hrErr||'')+'），差異先不拆原因；① ② 和差額照常。</div>')});
@@ -13281,7 +13342,7 @@ function rfEdit(k,f,v){
   else if(f==='note')setE('備註',s||null);
   r._chg=true; rfRender(); }
 function rfAdd(){ if(!rfcanEdit())return;
-  const r={record_id:'new-'+(++W10.newseq),site_id:W10.site,data_year:W10.year,data_month:null,category_id:'S1-10',equipment_name:null,source_name:null,attr1:null,attr2:null,
+  const r={record_id:'new-'+(++W10.newseq),site_id:W10.site,data_year:W10.year,data_month:null,category_id:'A04-01',equipment_name:null,source_name:null,attr1:null,attr2:null,
     measurement_type:'設備充填量',quantity:0,quantity_unit:'公斤',status:'工作底稿',input_method:RF_MANUAL,gas_type:'HFCs',co2e_draft:0,extra:{'台數':1},_new:true,_chg:true};
   W10.recs.push(r); rfRender();
   setTimeout(()=>{ const el=document.querySelector('#s101wrap input[data-k="'+r.record_id+'"][data-f="nm"]'); if(el)el.focus(); },40); }
@@ -13293,18 +13354,18 @@ async function carryRows(cat,site,py,mod){ let q=()=>sb.from('ghg_activity_data'
 function carryMsg(dlgf,n,py,y,extra){ dlgf('⤵ 已帶入 '+n+' 筆 '+py+' 年資料','<div class="msg" style="background:#fff8e1">已把 <b>'+py+'</b> 年的 '+n+' 筆帶進畫面（黃底＝還沒存）。<br>請核對：跟今年不同的直接修改、不用的按 ✕ 刪除、新的按「＋」新增，確認後按「💾 儲存」才會寫入 <b>'+y+'</b> 年；係數照 '+y+' 年的係數庫重算。'+(extra||'')+'</div>','<button onclick="fuelClose()">知道了</button>'); }
 function rfCarryBtn(){ return carryBtn('rfCarry',W10.year,rfcanEdit(),!W10.recs.length); }
 async function rfCarry(){ if(!rfcanEdit()||W10.recs.length)return; const py=entryPrevY(W10.year);
-  try{ const src=await carryRows('S1-10',W10.site,py,x=>[RF_MANUAL,RF_IMPORT].indexOf(String(x.input_method||''))>=0);
+  try{ const src=await carryRows('A04-01',W10.site,py,x=>[RF_MANUAL,RF_IMPORT].indexOf(String(x.input_method||''))>=0);
     if(!src.length){ rfdlg('沒有可以帶入的資料',py+' 年這個廠沒有冷媒逐台清單（'+py+' 年以前的舊資料只有 ESG 小計、沒有逐台，不能帶）。'); return; }
-    W10.recs=src.map(x=>({record_id:'new-'+(++W10.newseq),site_id:W10.site,data_year:W10.year,data_month:null,category_id:'S1-10',equipment_name:x.equipment_name,source_name:x.source_name,attr1:x.attr1,attr2:x.attr2,
+    W10.recs=src.map(x=>({record_id:'new-'+(++W10.newseq),site_id:W10.site,data_year:W10.year,data_month:null,category_id:'A04-01',equipment_name:x.equipment_name,source_name:x.source_name,attr1:x.attr1,attr2:x.attr2,
       measurement_type:x.measurement_type||'設備充填量',quantity:x.quantity,quantity_unit:x.quantity_unit||'公斤',status:'工作底稿',input_method:RF_MANUAL,gas_type:x.gas_type||'HFCs',co2e_draft:0,
       extra:Object.assign(carryPick(x.extra,['設備類型','冷媒','台數','單台充填量(kg)','使用地點','負責部門','租賃','備註']),{'帶入自':py,'帶入自列':x.record_id}),_new:true,_chg:true}));
     rfRender(); carryMsg(rfdlg,src.length,py,W10.year,'<br>冷媒：新增的設備用「＋ 新增一款設備」，報廢的按 ✕。');
   }catch(e){ rfdlg('❌ 帶入失敗',String(e.message||e)); } }
 function feCarryBtn(){ return carryBtn('feCarry',W9.year,fecanEdit(),!W9.recs.length); }
 async function feCarry(){ if(!fecanEdit()||W9.recs.length)return; const py=entryPrevY(W9.year);
-  try{ const src=await carryRows('S1-11',W9.site,py);
+  try{ const src=await carryRows('A04-02',W9.site,py);
     if(!src.length){ fedlg('沒有可以帶入的資料','<div class="msg">'+py+' 年這個廠沒有滅火器資料。</div>'); return; }
-    W9.recs=src.map(x=>{ const code=fecode(x); W9.open[code]=true; return {record_id:'new-'+(++W9.newseq),site_id:W9.site,data_year:W9.year,data_month:null,category_id:'S1-11',equipment_name:'滅火器',source_name:x.source_name,attr1:x.attr1,attr2:null,
+    W9.recs=src.map(x=>{ const code=fecode(x); W9.open[code]=true; return {record_id:'new-'+(++W9.newseq),site_id:W9.site,data_year:W9.year,data_month:null,category_id:'A04-02',equipment_name:'滅火器',source_name:x.source_name,attr1:x.attr1,attr2:null,
       measurement_type:'填充量',quantity:x.quantity,quantity_unit:'公斤',status:'工作底稿',input_method:FE_MANUAL,gas_type:'CO2',gwp:1,co2e_draft:0,data_source_note:'S1 逸散-滅火器',
       extra:Object.assign(carryPick(x.extra,['備註']),{'帶入自':py,'帶入自列':x.record_id}),_new:true,_chg:true,_code:code}; });
     feRender(); carryMsg(fedlg,src.length,py,W9.year,'<br>滅火器：每年實際充填量不同，請照今年的數字修改。');
@@ -13328,7 +13389,7 @@ function rfBody(r){
   e['換算']=c.co==null?'資料不完整（設備類型／冷媒／單台充填量／台數要填齊），碳排先記 0':(rff(c.each,0)+' 公斤 × '+rff(c.n,0)+' 台 × '+rff(c.rate,0)+'% × GWP '+rff(c.gwp,0)+' ÷ 1000 ＝ '+rff(c.co,6)+' t');
   if(curGhgUser)e['最後更新']=curGhgUser.emp_id+' '+(curGhgUser.name||'')+' '+new Date().toISOString().slice(0,10);
   Object.keys(e).forEach(k=>{ if(e[k]==null)delete e[k]; });
-  return {site_id:W10.site,data_year:W10.year,data_month:null,category_id:'S1-10',equipment_name:r.equipment_name||null,source_name:c.g?c.g[0]:(e['冷媒']||null),attr1:c.t?c.t[0]:null,attr2:c.g?c.g[1]:null,
+  return {site_id:W10.site,data_year:W10.year,data_month:null,category_id:'A04-01',equipment_name:r.equipment_name||null,source_name:c.g?c.g[0]:(e['冷媒']||null),attr1:c.t?c.t[0]:null,attr2:c.g?c.g[1]:null,
     quantity:c.kg||0,quantity_unit:'公斤',measurement_type:'設備充填量',data_source_note:'S1 逸散-冷媒',status:'工作底稿',input_method:r._new?RF_MANUAL:String(r.input_method||RF_MANUAL),
     gas_type:'HFCs',gwp:c.gwp,ef_value:c.rate==null?null:+(c.rate/100).toFixed(6),ef_unit:'逸散率',ef_source:RF_SRCTXT,factor_id:(c.fx&&c.fx.fid)?c.fx.fid:null,co2e_draft:c.co||0,extra:e}; }   /* V129-10：記用到的係數庫條目 */
 async function rfSave(){
@@ -13350,7 +13411,7 @@ async function rfSave(){
       const {data,error}=await sb.from('ghg_activity_data').update(o).eq('record_id',r.record_id).in('input_method',[RF_MANUAL,RF_IMPORT]).select('record_id'); if(error)throw error;
       if(!data||data.length!==1)throw new Error('第 '+(nu+1)+' 列沒有更新到（可能沒有權限或年度已鎖住）'); nu++; }
     if(ups.length)msg.push('更新 '+ups.length+' 列');
-    if(dels.length){ const {data,error}=await sb.from('ghg_activity_data').delete().in('record_id',dels.map(r=>r.record_id)).eq('category_id','S1-10').in('input_method',[RF_MANUAL,RF_IMPORT]).select('record_id'); if(error)throw error;
+    if(dels.length){ const {data,error}=await sb.from('ghg_activity_data').delete().in('record_id',dels.map(r=>r.record_id)).eq('category_id','A04-01').in('input_method',[RF_MANUAL,RF_IMPORT]).select('record_id'); if(error)throw error;
       if(!data||data.length!==dels.length)throw new Error('只刪到 '+((data||[]).length)+'／'+dels.length+' 列'); msg.push('刪除 '+dels.length+' 列'); }
     rfdlg('✅ 已儲存','<div class="msg ok">'+rfesc(W10.site+' '+W10.year+'：'+msg.join('、'))+'</div>'+(inc?'<div class="msg" style="background:#fff8e6;border:1px solid #f0d9a0;color:#7a5a00;font-size:12px">有 '+inc+' 列資料還不完整（設備類型／冷媒／單台充填量／台數），碳排先記 0，補齊後再存一次。</div>':''),'<button onclick="fuelClose();rfLoad()">關閉</button>');
   }catch(e){ rfdlg('❌ 存檔失敗','<div class="msg err">'+rfesc(e.message||e)+'</div><div class="fmini" style="margin-top:6px">已經存進去的會照實保留；畫面上的輸入還在，修正後可以再按一次儲存（已存的不會重複新增，會先重新載入再改）。</div>','<button onclick="fuelClose();rfLoad()">重新載入</button>'); }
@@ -13409,7 +13470,7 @@ function rfImportPick(){ if(!rfcanEdit())return;
   inp.value=''; inp.onchange=async function(){ const f=this.files&&this.files[0]; if(!f)return;
     try{ const buf=await f.arrayBuffer(); rfImportPrep(XLSX.read(buf,{type:'array',cellStyles:true}),f.name); }catch(e){ rfdlg('❌ 讀不到檔案','<div class="msg err">'+rfesc(e.message||e)+'</div>'); } };
   inp.click(); }
-function rfImportPrep(wb,fname){ { const g=tplCheck(wb,'S1-10',W10.site,W10.year); if(g){ rfdlg('❌ 無法匯入',g); return; } }   /* V126 */
+function rfImportPrep(wb,fname){ { const g=tplCheck(wb,'A04-01',W10.site,W10.year); if(g){ rfdlg('❌ 無法匯入',g); return; } }   /* V126 */
   const sc=rfScanWb(wb), L=rfScanList(wb);   /* V125-3：除了總表，也認一台一列的設備清單 */
   if(!sc.length&&!L.items.length){ rfdlg('❌ 找不到冷媒','<div class="msg err">這個檔案裡找不到冷媒資料：<br>① 「總表」沒有冷媒的列（排放型式「逸散」、或排放源名稱是 R22、R410A 這類冷媒）；<br>② 也沒有一台一列的設備清單（像收集表的「S1逸散-冷媒」分頁，表頭要有「冷媒／製冷劑類型」「初裝量」「數量」三欄）。<br>分頁：'+rfesc(wb.SheetNames.join('、'))+'</div>'); return; }
   window._rfImp={fname:fname,sc:sc,list:L.items,lsheet:L.sheet,gAsKg:!!L.gAsKg,flt:!!L.flt,mode:L.items.length?'list':'sum',stamp:'I'+Date.now()}; rfImportPreview(); }   /* V129-7：有設備清單就先用清單（一台一列） */
@@ -13448,7 +13509,7 @@ async function rfImportGo(){ if(!rfcanEdit())return;
   const B=rfImportBuild(); const ins=B.rows.map(r=>{ const o=Object.assign({},r); ['_x','_gas','_t'].forEach(k=>delete o[k]); return o; });
   const box=document.getElementById('s101list'); if(box)box.innerHTML='<div class="msg">匯入中…（成功後才刪原本的登錄頁／匯入列；寫入 '+ins.length+' 列）</div>';
   try{
-    const SW=await impSwap({oldQ:()=>sb.from('ghg_activity_data').select('record_id').eq('category_id','S1-10').eq('site_id',W10.site).eq('data_year',W10.year).in('input_method',[RF_IMPORT,RF_MANUAL]),rows:ins});
+    const SW=await impSwap({oldQ:()=>sb.from('ghg_activity_data').select('record_id').eq('category_id','A04-01').eq('site_id',W10.site).eq('data_year',W10.year).in('input_method',[RF_IMPORT,RF_MANUAL]),rows:ins});
     rfdlg('✅ 匯入完成','<div class="msg ok">'+rfesc(W10.site+' '+W10.year)+'：刪除舊列 '+SW.oldN+'、寫入 '+ins.length+' 列；系統算碳排合計 '+rff(ins.reduce((s,r)=>s+r.co2e_draft,0),4)+' t。</div>','<button onclick="fuelClose();rfLoad()">關閉</button>');
   }catch(e){ rfdlg('❌ 匯入失敗','<div class="msg err">'+rfesc(e.message||e)+'</div>','<button onclick="fuelClose();rfLoad()">關閉</button>'); } }
 window.rfAdd=rfAdd; window.rfDrop=rfDrop; window.rfSave=rfSave; window.rfImportPick=rfImportPick; window.rfImportGo=rfImportGo; window.rfImportPrep=rfImportPrep; window.rfImpMode=rfImpMode; window.rfScanList=rfScanList; window.rfImportBuild=rfImportBuild;
@@ -13463,7 +13524,7 @@ window.rfState=()=>W10;
    內容只放這一份（GHG_GUIDE）：登錄頁表頭「📖 怎麼填」點開看；之後的快速入門也從這裡產生。
    每頁四段：要準備／怎麼開始／每一欄／常見錯誤。用詞照畫面上的按鈕與欄名。 ══ */
 const GHG_GUIDE={
- 'S2-01':{t:'B01-01 外購電力',
+ 'B01-01':{t:'B01-01 外購電力',
   prep:['每一期的電費單（每個電號各一張）','有太陽能（光伏）或綠電的話：發電量或購電量紀錄'],
   start:['<b>匯入</b>：按「⬆ 匯入」，選 ESG 收集表（S2 外購電力那一頁），或先按「⬇ 下載樣板」填好再匯入（樣板一列一個電號一個月：電號、電力來源、用電量）。匯入後會先預覽，<b>按「💾 儲存」才會寫入</b>。',
          '<b>逐筆</b>：按「＋ 新增電號／光伏」，選電力來源（市電／太陽能／綠電），再填電號或名稱。一個電號一塊。'],
@@ -13486,7 +13547,7 @@ const GHG_GUIDE={
           ['零活動','設備今年還在但完全沒用，照實填 0（跟「沒有這台設備」不一樣）。'],
           ['灰底欄位不用填','CO2／CH4／N2O 碳排＊、排放當量＊、費用（美金）＊都是系統算的。']],
   err:['單位填錯：例如帳單是公噸、這一頁是公升，沒換算就直接填。','同一筆用量在兩台設備各填一次。','費用填成含稅金額。','忘了按「💾 儲存」就離開頁面。']},
- 'C01-W':{t:'C01-03 上游自來水',
+ 'C01-03':{t:'C01-03 上游自來水',
   prep:['每一期的水費單（每個水號各一張）'],
   start:['<b>匯入</b>：按「⬆ 匯入」，選 ESG 收集表（C1 上游自來水那一頁），或先按「⬇ 下載樣板」填好再匯入。匯入後會先預覽，<b>按「💾 儲存」才會寫入</b>。',
          '<b>逐筆</b>：按「＋ 新增水號」，填水號（沒有水號就填地點）。新水號預設 12 列，一列一張帳單。'],
@@ -13507,7 +13568,7 @@ const GHG_GUIDE={
           ['步行、腳踏車','照填人數和距離，碳排是 0。'],
           ['灰底欄位不用填','延人公里＊、係數、碳排都是系統算的（上方「彙總」依交通工具加總）。']],
   err:['高鐵把公斤數填在公里欄 → 要用起站、迄站和每趟公斤數那兩格。','單程、來回都填，而且兩個數字對不起來。','工作天數直接填 365。','用免密碼登入，結果工號、住址存不進去。']},
- 'S1-10':{t:'A04-01 冷媒',
+ 'A04-01':{t:'A04-01 冷媒',
   prep:['冷媒設備清冊：每一款設備的名稱、冷媒種類、單台充填量（公斤）、台數','今年有補冷媒的話：再充裝量（公斤）'],
   start:['<b>匯入</b>：按「📥 匯入收集表」，選 S1+S2+C3 活動數據蒐集表，系統讀總表的冷媒列（一列＝一類設備的總充填量，台數記 1），先預覽再寫入。',
          '<b>匯入設備清單</b>：只有「S1逸散-冷媒」那種一台一列的設備清單（表頭有 冷媒／製冷劑類型、初裝量、數量）也可以匯入，系統會把同名稱、同冷媒、同單台充填量的併成一款、台數相加。整份蒐集表兩種都有時，預覽上可以選要用哪一種。',
@@ -13520,7 +13581,7 @@ const GHG_GUIDE={
           ['設備類型對照','各廠設備名稱對到 8 類的對照表 ESG 261006 已確認；系統照名稱建議，不對可以改。'],
           ['灰底欄位不用填','逸散率＊、GWP＊、碳排＊都是系統算的。']],
   err:['冷媒寫法不統一（R410a、R-410A、410A）→ 用下拉選，不要自己打。','把一整類設備的總充填量當單台填，又填了台數 → 重複放大。','乾燥機、除濕機歸錯類 → 照系統建議（乾燥機 16%、除濕機 0.3%，ESG 261006 定）。','忘了按「💾 儲存」就離開頁面。']}
- ,'C01-M':{t:'C01-01 直接物料（重量法）',
+ ,'C01-01':{t:'C01-01 直接物料（重量法）',
   prep:['C1 採購物料檔的「80% 分類表」（一種材質一年採購多少公噸）'],
   start:['<b>匯入</b>：按「⬆ 匯入」，選 C1 採購物料檔，系統讀 80% 分類表；先預覽、選版本，<b>按「💾 儲存」才寫入</b>。','<b>逐筆</b>：按「＋ 新增物料」，一種材質（＋料況）一列。'],
   fields:[['物料類別、品名／英文材質、中文材質','照分類表填；材質決定用哪個係數。'],['料況','原生料或再生料（係數不同；係數下拉只會列這一種料況的條目）。'],['採購重量','這一年的採購重量，單位<b>公噸</b>。'],
@@ -13562,13 +13623,13 @@ const GHG_GUIDE={
   start:['<b>匯入</b>：按「📥 匯入收集表」（C15 投資 Table1），先預覽、確認才寫入。','<b>逐筆</b>：按「＋ 新增一筆」。'],
   fields:[['帳面金額、幣別','原幣；系統用<b>前一年底</b>的匯率換美金（C15 規定）。'],['對方範疇一、範疇二、持股比率','對方有公布排放時填，系統用持股比例法算。'],['灰底欄位不用填','美金＊、合計＊、碳排都是系統算的。']],
   err:['自己先用今年匯率換成美金再填（系統已經用前一年底匯率換）。','同一家同時用對方排放和帳面金額兩種算法，重複算。']}
- ,'S1-11':{t:'A04-02 滅火器充填',
+ ,'A04-02':{t:'A04-02 滅火器充填',
   prep:['滅火器清冊：名稱規格、數量、單隻填充量；今年有充填或更換藥劑的日期與公斤數'],
   start:['<b>匯入</b>：按「📥 匯入收集表」，選 S1+S2+C3 活動數據蒐集表（讀總表的滅火器列＋滅火器明細），先預覽、確認才寫入。','<b>逐筆</b>：按「＋ 新增一種」，選類型（二氧化碳／乾粉／泡沫／水基型），一種規格一列。'],
   fields:[['數量、單隻填充量','照清冊。'],['當年是否充填','是／否，或填日期與支數。'],['充填量','今年<b>實際充填或更換</b>的公斤數；碳排只算這一欄。'],
           ['係數','二氧化碳滅火器 1（充多少就排多少），乾粉、泡沫、水基型 0。']],
   err:['把全部滅火器的總重量填在充填量（只填今年有充填的）。','FM200、海龍等含氟滅火器不在這四類，請跟 ESG 確認。']}
- ,'S1-12':{t:'A04-03 化糞池（水肥）',
+ ,'A04-03':{t:'A04-03 化糞池（水肥）',
   prep:['全廠每月總工時（人時）','有付汙水處理費的話：汙水處理費帳單'],
   start:['<b>匯入</b>：按「⬆ 匯入」，選 ESG 收集表（S1 逸散-化糞池）或系統樣板；先預覽，<b>按「💾 儲存」才寫入</b>。','<b>逐筆</b>：按「＋ 新增設備」，設備名稱空白就是「全廠（化糞池）」。'],
   fields:[['總工時數','人時（人數 × 工作時數）。'],['填報方式','逐月或年量。'],
@@ -13590,8 +13651,8 @@ const GHG_GUIDE={
   fields:[['出貨總重量','單位公噸；系統按 C01 材質占比分到四大類，再乘係數。'],['其他','全部系統算。']],
   err:['C01-01 還沒填就重算，占比是空的。','C01 或出貨重量改了沒重算。']}
 };
-const GHG_GUIDE_MAP={'S1-01':'FUEL','S1-02':'FUEL','S1-03':'FUEL','S1-05':'FUEL','S1-06':'FUEL','C01-S':'SVC','C02':'SVC','C10':'SVC','C04':'TRANS','C09':'TRANS',
-  'C08':'LEASE','C13':'LEASE','S1-08':'PROC','S1-09':'PROC','S1-13':'PROC','C03-E':'AUTO03','C03-F':'AUTO03'};
+const GHG_GUIDE_MAP={'A01-01':'FUEL','A01-02':'FUEL','A01-03':'FUEL','A02-01':'FUEL','A02-02':'FUEL','C01-02':'SVC','C02':'SVC','C10':'SVC','C04':'TRANS','C09':'TRANS',
+  'C08':'LEASE','C13':'LEASE','A03-01':'PROC','A03-02':'PROC','A04-04':'PROC','C03-01':'AUTO03','C03-02':'AUTO03'};
 function ghgGuideKey(c){ return GHG_GUIDE[c]?c:(GHG_GUIDE_MAP[c]||null); }
 function ghgGuideHtml(c){ const k=ghgGuideKey(c); if(!k)return ''; const G=GHG_GUIDE[k]; const src=SRC.find(z=>z.c===c)||{};
   const u=s=>String(s).replace(/\{unit\}/g,src.unit||'');
@@ -13983,7 +14044,7 @@ window.xpOpen=async function(){
   d.querySelector('h3').textContent='📥 匯出盤查清冊'; d.querySelector('#s101list').innerHTML=h;
   d.querySelector('.foot').innerHTML='<button class="sec" onclick="fuelClose()">取消</button> <button onclick="xpGo()">下載 Excel</button>'; d.style.display='flex'; };
 function xpCat(c){ const t=(typeof ncText==='function')?ncText(c):c; return (t===c||t.indexOf(c+' ')===0)?t:(t+'（'+c+'）'); }
-function xpScope(c){ const s=SRC.find(z=>z.c===c); if(s)return s.sc; return /^S1/.test(c)?'範疇一':(/^S2/.test(c)?'範疇二':'範疇三'); }
+function xpScope(c){ const s=SRC.find(z=>z.c===c); if(s)return s.sc; return /^A/.test(c)?'範疇一':(/^B/.test(c)?'範疇二':'範疇三'); }
 function xpVoid(r){ return /留痕/.test(String(r.input_method||''))&&!(+r.quantity)&&!(+r.co2e_draft)&&!(+r.co2e_location); }
 window.xpGo=async function(){
   const y=+document.getElementById('xp_y').value, s1=document.getElementById('xp_s').value, msg=t=>{ const m=document.getElementById('xp_msg'); if(m)m.textContent=t; };
@@ -14251,15 +14312,16 @@ const XP_SITEINFO={   /* 廠區代號：[盤查單位, 地址]；ESG 清冊原�
   SG:['Syncmold Enterprise (Singapore) Pte., Ltd.','The Synergy, 1 International Business Park Rd, 新加坡 609917'],
   MY:['Syncmold Enterprise (Malaysia) Sdn. Bhd.','Suite 15-02, Level 15 G-Tower, No199 Jalan Tun Razak, 50400 KL'],
   US:['Syncmold Enterprise (USA) Corp.','Expeditors – Santa Teresa 3150 Constellation Dr. Santa Teresa, NM 88008'],
-  TH:['信錦企業(泰國)股份有限公司','泰國20190春武里府農艾區農艾鄉第6村875/1 號']
+  TH:['信錦企業(泰國)股份有限公司','泰國20190春武里府農艾區農艾鄉第6村875/1 號'],
+  DN:['Syncmold Dong Nai Co., Ltd.','越南同奈市隆城放祿安-平山工業園區N5、N6路N3地塊X1-A、B工廠']   /* V129-83：DN 沒有 ESG 清冊，名稱與地址取 OMS 廠區主檔（name_en／address，261101 讀） */
 };
 function xpLine(c){ const s=SRC.find(z=>z.c===c), mid=s?String(s.mid||''):''; let m=mid.match(/^(\d\.\d)/); if(m)return m[1];
   m=mid.match(/^C(\d\d)/)||String(c).match(/^C(\d\d)/); if(m)return 'C'+(+m[1]);
-  if(/^S2/.test(c))return '2.1'; if(/^S1/.test(c))return '1.4'; return 'C1'; }
+  if(/^B/.test(c))return '2.1'; if(/^A/.test(c))return '1.4'; return 'C1'; }
 function xpGasKey(g,c){ g=String(g||'').toUpperCase().replace(/\s/g,'');
   if(g==='CO2')return 'CO2'; if(g==='CH4')return 'CH4'; if(g==='N2O')return 'N2O'; if(/^SF6/.test(g))return 'SF6'; if(/^NF3/.test(g))return 'NF3';
   if(/PFC|^CF4|^C2F6/.test(g))return 'PFCs'; if(/HFC|^R-?\d/.test(g))return 'HFCs';
-  return c==='S1-09'?'SF6':(c==='S1-10'?'HFCs':(c==='S1-12'?'CH4':'CO2')); }
+  return c==='A03-02'?'SF6':(c==='A04-01'?'HFCs':(c==='A04-03'?'CH4':'CO2')); }
 function xpGases(r){ const co=+r.co2e_draft||0, o={}, G=(r.extra||{}).gases;
   if(Array.isArray(G)&&G.length){ let s=0; G.forEach(g=>{ const v=+(g&&g.co2e)||0; if(!v)return; const k=xpGasKey(g.gas,r.category_id); o[k]=(o[k]||0)+v; s+=v; });
     if(s>0){ const f=co/s; if(Math.abs(f-1)>1e-9)Object.keys(o).forEach(k=>{ o[k]*=f; }); return o; } }
@@ -14874,7 +14936,7 @@ body.ghgfocus #src_form .ehead>.fxfocus{background:#1B8A60;border-color:#1B8A60;
   const code=c=>{ const t=(typeof ncText==='function')?ncText(c):c; return String(t).split(' ')[0]||c; };
   const cname=c=>{ const t=(typeof ncText==='function')?ncText(c):c; return t; };
   const cats=()=>{ const seen={}; return (SRC||[]).filter(s=>{ if(seen[s.c])return false; seen[s.c]=1; return !(typeof srcNa==='function'&&srcNa(s.c)); }).map(s=>s.c); };
-  const scope=c=>/^S1/.test(c)?'範疇一':(/^S2/.test(c)?'範疇二':'範疇三');
+  const scope=c=>/^A/.test(c)?'範疇一':(/^B/.test(c)?'範疇二':'範疇三');
   function cell(st,a,p,dc){
     if(dc)return (a&&a.n)?'dc':'';   /* V129-39：已申報／已鎖的年度不套送出審核 */
     if(st){ if(st.status==='approved')return 'ok'; if(st.status==='submitted')return 'wt'; if(st.status==='returned')return 'rt'; if(st.no_data)return 'nd'; }
@@ -15196,9 +15258,9 @@ body.ghgfocus #src_form .ehead>.fxfocus{background:#1B8A60;border-color:#1B8A60;
 (function(){
   const CACHE={};
   function keysFor(c){
-    if(/^S[12]/.test(c)) return [c, c+'@登錄'];
+    if(/^[AB]/.test(c)) return [c, c+'@登錄'];
     const ks=[c+'@登錄'], b=c.slice(0,3); if(b!==c) ks.push(b+'@登錄');
-    if(/^C03-[EF]$/.test(c)) ks.push('C03-E@登錄','C03-F@登錄');   /* C03 一頁放 C03-E＋C03-F */
+    if(/^C03-0[12]$/.test(c)) ks.push('C03-01@登錄','C03-02@登錄');   /* C03 一頁放 C03-01＋C03-02 */
     return [...new Set(ks)];
   }
   async function load(pno,y,ks){ const k=pno+'|'+y+'|'+ks.join(','); if(CACHE[k])return CACHE[k];
@@ -15487,7 +15549,7 @@ body.ghgfocus #src_form .ehead>.fxfocus{background:#1B8A60;border-color:#1B8A60;
   function eqToast(t){ let e=document.getElementById('eqToast'); if(!e){ e=document.createElement('div'); e.id='eqToast'; e.style.cssText='position:fixed;right:20px;bottom:20px;background:#0A7051;color:#fff;padding:8px 14px;border-radius:8px;z-index:9999;font-size:13px'; document.body.appendChild(e); }
     e.textContent=t; e.style.display='block'; clearTimeout(eqToast._t); eqToast._t=setTimeout(()=>{ e.style.display='none'; },2200); }
   window.esgqGo=function(){ const x=(Q.rows||[]).find(r=>r.q_id===Q.sel); if(!x||typeof progGo!=='function')return;
-    progGo(x.site_id,/^C03/.test(x.category_id)?'C03-F':x.category_id,x.data_year); };
+    progGo(x.site_id,/^C03/.test(x.category_id)?'C03-02':x.category_id,x.data_year); };
 
   /* 資料登錄頁：這一格有沒有題目（只讀快取；每 1.5 秒比對一次目前廠區／年度／類別） */
   let lastKey='';
