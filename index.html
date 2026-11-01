@@ -302,7 +302,7 @@ function facChg(on){ return '<span class="fchg'+(on?'':' off')+'">🟡</span>'; 
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-79-1</b> · 2026/11/01</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-80-1</b> · 2026/11/01</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -2038,13 +2038,13 @@ function sitePanelHtml(){
         :'<button class="sec" style="'+btn+'" onclick="siteSortStart()"'+(SITEM_OK?'':' disabled title="廠區表還沒讀到"')+'>⇅ 調整順序</button>')+'</div>';
   if(SITEM_ERR)s+='<div class="msg err" style="margin-top:6px">⚠ 讀不到 GHG 廠區表：'+E(SITEM_ERR)+'（下面是備用清單，不能調整順序）</div>';
   if(SITE_OMS_ERR)s+='<div class="msg err" style="margin-top:6px">⚠ 讀不到 OMS 廠區主檔：'+E(SITE_OMS_ERR)+'（名稱、國家先用 GHG 廠區表）</div>';
-  s+='<table style="margin-top:6px;font-size:12.5px;width:auto"><thead><tr><th>順序</th><th style="text-align:left">代碼</th><th style="text-align:left">名稱</th><th>國家</th><th style="text-align:left">事業群</th><th>舊官方廠號<br><span style="font-size:10px;font-weight:400">2022–2025 官方 Excel</span></th><th>電網區域</th>'+(ed?'<th>移動</th>':'')+'</tr></thead><tbody>';
+  s+='<table style="margin-top:6px;font-size:12.5px;width:auto"><thead><tr><th>順序</th><th style="text-align:left">代碼</th><th style="text-align:left">名稱</th><th>國家</th><th style="text-align:left">事業群</th><th>舊官方廠號<br><span style="font-size:10px;font-weight:400">2022–2025 官方 Excel</span></th><th>電網區域</th><th>第一年應填比照</th>'+(ed?'<th>移動</th>':'')+'</tr></thead><tbody>';
   list.forEach((c,i)=>{ const st=siteOf(c), o=om[c]||null;
     const nm=(o&&o.name)||(st&&(st.ghg_name||st.site_name))||'';
     const ct=o?((o.country_code||'')+' '+(o.country||'')).trim():((st&&st.country)||'');
     s+='<tr><td>'+(i+1)+'</td><td style="text-align:left"><b>'+E(c)+'</b></td><td style="text-align:left">'+E(nm)
       +(o?'':' <span style="font-size:11px;color:#b7791f">（OMS 未建）</span>')+(st?'':' <span style="font-size:11px;color:#2b6cb0">（新加入，儲存後加進 GHG）</span>')+'</td>'
-      +'<td>'+E(ct)+'</td><td style="text-align:left">'+E((o&&o.bu)||'')+'</td><td>'+E((st&&st.legacy)||'—')+'</td><td>'+E((st&&st.grid_region)||'')+'</td>'
+      +'<td>'+E(ct)+'</td><td style="text-align:left">'+E((o&&o.bu)||'')+'</td><td>'+E((st&&st.legacy)||'—')+'</td><td>'+E((st&&st.grid_region)||'')+'</td><td>'+E((st&&st.need_ref_site)||'—')+'</td>'
       +(ed?'<td style="white-space:nowrap"><button class="sec" style="padding:1px 8px"'+(i===0?' disabled':'')+' onclick="siteSortMove('+i+',-1)">▲</button> <button class="sec" style="padding:1px 8px"'+(i===list.length-1?' disabled':'')+' onclick="siteSortMove('+i+',1)">▼</button>'
         +(st?'':' <button class="sec" style="padding:1px 8px" onclick="siteSortDrop(\''+E(c)+'\')">不加入</button>')+'</td>':'')+'</tr>'; });
   s+='</tbody></table>';
@@ -12837,6 +12837,10 @@ async function fpRows(y){
 function fpAgg(rows){ const m={};   /* 廠 → 類別 → {n,co,last} */
   rows.forEach(r=>{ if(fpVoid(r))return; const s=(m[r.site_id]=m[r.site_id]||{}), c=(s[r.category_id]=s[r.category_id]||{n:0,co:0,q:0,last:''});
     c.n++; c.co+=(+r.co2e_draft||0); c.q+=Math.abs(+r.quantity||0); if(r.updated_at&&r.updated_at>c.last)c.last=r.updated_at; }); return m; }
+function fpPrevFor(P){   /* V129-80：新廠第一年（前一年沒有任何資料）應填類別比照廠區設定的比照廠（ghg_sites.need_ref_site，使用者 261101「比照越南廠」）；只借類別、不借數字——co 記 0（不比差一半以上）、ref 記比照廠 */
+  try{ (SITEM||[]).forEach(s=>{ const r=s.need_ref_site, own=P[s.site_id]; if(!r||r===s.site_id||(own&&Object.keys(own).length))return; const src=P[r]; if(!src)return;
+    const m={}; Object.keys(src).forEach(c=>{ const x=src[c]; if(x&&(x.q>0||x.co>0))m[c]={n:0,co:0,q:1,last:'',ref:r}; }); if(Object.keys(m).length)P[s.site_id]=m; }); }catch(e){}
+  return P; }
 function fpCats(){ return SRC.map(s=>s.c).filter((c,i,a)=>a.indexOf(c)===i); }
 function fpBig(cur,prev){ return prev>0&&cur!=null&&Math.abs(cur-prev)/prev>0.5; }
 function fpSite(s,A,P){   /* 一個廠的進度 */
@@ -12848,7 +12852,7 @@ function fpSite(s,A,P){   /* 一個廠的進度 */
   const extra=Object.keys(a).filter(c=>inSrc(c)&&!FP_AUTO[c]&&exp.indexOf(c)<0);
   let last=''; Object.values(a).forEach(x=>{ if(x.last>last)last=x.last; });
   const st=!exp.length?(extra.length?'填寫中':'去年沒有資料'):(!miss.length?'已填完':(done.length||extra.length?'填寫中':'還沒開始'));
-  return {exp,done,miss,big,extra,last,st}; }
+  return {exp,done,miss,big,extra,last,st,ref:(Object.values(p).find(v=>v&&v.ref)||{}).ref||''}; }
 function fpOrder(c){ const i=SRC.findIndex(s=>s.c===c); return i<0?999:i; }
 window.fpEnter=async function(){
   document.querySelectorAll('.navi').forEach(n=>n.classList.toggle('on',n.id==='nav_fp'));
@@ -12866,7 +12870,7 @@ async function fpRender(){
   const box=document.getElementById('src_form'); const Y=FP.year, PY=fpPrevY(Y);
   box.innerHTML='<div class="msg">讀取 '+Y+' 與 '+PY+' 年資料中…</div>';
   const [ry,rp]=await Promise.all([fpRows(Y),fpRows(PY)]);
-  const A=fpAgg(ry), P=fpAgg(rp);
+  const A=fpAgg(ry), P=fpPrevFor(fpAgg(rp));   /* V129-80 */
   { const e=await sbAll(()=>sb.from('ghg_entry_status').select('site_id,category_id,status,no_data,no_data_reason').eq('data_year',Y).order('site_id').order('category_id'));   /* V129-37：本年沒有 */
     if(e.error)throw e.error; window.FP_ES={}; (e.data||[]).forEach(r=>{ window.FP_ES[r.site_id+'|'+r.category_id]=r; }); }
   const sites=(FAC_SITES||[]).map(x=>x.site_id).filter(s=>!curGhgUser||lgCanSite(s)).sort(siteCmp);
@@ -12879,7 +12883,7 @@ async function fpRender(){
   const pill=(t,bg,fg,bd)=>'<span style="display:inline-block;white-space:nowrap;background:'+bg+';color:'+fg+';border:1px solid '+bd+';border-radius:999px;padding:1px 10px;font-size:11.5px;font-weight:700">'+t+'</span>';
   let h=ehead({title:'📊 填報進度',legend:'auto',siteSel:siteSel,yearSel:yearSel,
     x:lgScopeTag()+pill('已填完 '+cnt('已填完')+' 廠','var(--st-done-bg)','var(--st-done-fg)','var(--st-done-bd)')+' '+pill('填寫中 '+cnt('填寫中')+' 廠','var(--st-fill-bg)','var(--st-fill-fg)','var(--st-fill-bd)')+' '+pill('還沒開始 '+cnt('還沒開始')+' 廠','#f3f5f4','#5b6b63','#d7dfdb')});
-  h+='<div class="fmini ehdesc" style="margin:0 2px 4px;line-height:1.4">應填＝'+PY+' 年這個廠有資料的類別（整類都是 0 的不算；扣掉系統自動算的 C03、不適用的 C11／C14）；「差一半以上」＝碳排跟 '+PY+' 年相差 50% 以上，請確認有沒有漏填或單位填錯　<span title="只讀明細資料，不會改任何東西。進度是照資料庫目前的內容即時算的；某一類去年有、今年確定沒有，會一直顯示還沒填（之後可以加「本年沒有」的勾選）。" style="cursor:help;color:var(--p);font-weight:700;white-space:nowrap">ⓘ 怎麼算</span></div>';
+  h+='<div class="fmini ehdesc" style="margin:0 2px 4px;line-height:1.4">應填＝'+PY+' 年這個廠有資料的類別（整類都是 0 的不算；扣掉系統自動算的 C03、不適用的 C11／C14；新廠第一年照權限頁「廠區設定」的比照廠）；「差一半以上」＝碳排跟 '+PY+' 年相差 50% 以上，請確認有沒有漏填或單位填錯　<span title="只讀明細資料，不會改任何東西。進度是照資料庫目前的內容即時算的；某一類去年有、今年確定沒有，會一直顯示還沒填（之後可以加「本年沒有」的勾選）。" style="cursor:help;color:var(--p);font-weight:700;white-space:nowrap">ⓘ 怎麼算</span></div>';
   h+='<div id="s101wrap">';
   if(!FP.site){
     h+='<div class="s101zone"><table class="wtbl" style="width:100%;table-layout:fixed"><colgroup><col style="width:20%"><col style="width:22%"><col style="width:36%"><col style="width:10%"><col style="width:12%"></colgroup>'
@@ -12896,7 +12900,7 @@ async function fpRender(){
     h+='</tbody></table></div>';
   } else {
     const s=FP.site, x=R[s], a=A[s]||{}, p=P[s]||{};
-    h+='<div class="c7sec" style="font-weight:700;color:var(--d);font-size:13px;margin:6px 2px 4px">'+fpEsc(fpSiteName(s))+'　'+Y+' 年　已填 '+x.done.length+'／應填 '+x.exp.length+(x.extra.length?'（另有今年新增 '+x.extra.length+' 類）':'')+'　<a href="javascript:void(0)" onclick="FP.site=\'\';fpRender()" class="fmini">← 回各廠一覽</a></div>';
+    h+='<div class="c7sec" style="font-weight:700;color:var(--d);font-size:13px;margin:6px 2px 4px">'+fpEsc(fpSiteName(s))+'　'+Y+' 年　已填 '+x.done.length+'／應填 '+x.exp.length+(x.ref?'（新廠第一年：應填比照 '+fpEsc(fpSiteName(x.ref))+' '+PY+' 年有資料的類別）':'')+(x.extra.length?'（另有今年新增 '+x.extra.length+' 類）':'')+'　<a href="javascript:void(0)" onclick="FP.site=\'\';fpRender()" class="fmini">← 回各廠一覽</a></div>';
     h+='<div class="s101zone"><table class="wtbl" style="width:100%;table-layout:fixed"><colgroup><col style="width:40%"><col style="width:20%"><col style="width:14%"><col style="width:14%"><col style="width:12%"></colgroup>'
       +'<thead><tr class="cols"><th class="tl">類別</th><th class="tl">'+Y+' 狀態</th><th>'+Y+' 碳排 t</th><th>'+PY+' 碳排 t</th><th></th></tr></thead><tbody>';
     let lastSc='';
@@ -12912,11 +12916,11 @@ async function fpRender(){
       else if(exp)st='<b style="color:#a33">還沒填</b>';
       else { st='<span style="color:#a9b8b0">去年沒有</span>'; dim=true; }
       h+='<tr'+(dim?' style="color:#a9b8b0"':'')+'><td class="tl">'+fpEsc(fpCatLab(c))+'</td><td class="tl">'+st+'</td>'
-        +'<td class="R">'+(cy?fpT(cy.co):'—')+'</td><td class="R">'+(cp?fpT(cp.co):'—')+'</td>'
+        +'<td class="R">'+(cy?fpT(cy.co):'—')+'</td><td class="R">'+(cp?(cp.ref?'<span style="color:#7a8f84">比照 '+fpEsc(cp.ref)+'</span>':fpT(cp.co)):'—')+'</td>'
         +'<td class="tl">'+(auto?'':'<a href="javascript:void(0)" onclick="fpGo(\''+c+'\')">'+(dim?'今年有可填':'去登錄')+'</a>')+'</td></tr>'; });
     h+='</tbody></table></div>';
   }
-  h+='<div class="s101legend">填報進度＝只讀明細資料即時算｜應填＝前一年這個廠有資料的類別（整類都填 0＝沒有用的不算；扣 C03 系統自動算、C11／C14 不適用）｜差一半以上＝碳排跟前一年相差 50% 以上｜點廠區列看各類別，點「去登錄」直接到那一類的登錄頁（帶廠區與年度）</div>';
+  h+='<div class="s101legend">填報進度＝只讀明細資料即時算｜應填＝前一年這個廠有資料的類別（整類都填 0＝沒有用的不算；扣 C03 系統自動算、C11／C14 不適用；新廠第一年照權限頁「廠區設定」的比照廠）｜差一半以上＝碳排跟前一年相差 50% 以上｜點廠區列看各類別，點「去登錄」直接到那一類的登錄頁（帶廠區與年度）</div>';
   box.innerHTML=h+'</div>';
 }
 window.fpRender=fpRender;
@@ -14891,7 +14895,7 @@ body.ghgfocus #src_form .ehead>.fxfocus{background:#1B8A60;border-color:#1B8A60;
       sbAll(()=>sb.from('ghg_verify_round').select('site_id,version,status').eq('data_year',Y).order('site_id').order('version'))]);
     if(es.error)throw es.error;
     const VR={}; (vq.data||[]).forEach(r=>{ if(r.status==='verifying'||r.status==='final')VR[r.site_id]=r; });   /* V129-41：第三方查證中／已定稿（批261） */
-    const A=fpAgg(ry), P=fpAgg(rp), S={}; (es.data||[]).forEach(r=>{ S[r.site_id+'|'+r.category_id]=r; });
+    const A=fpAgg(ry), P=fpPrevFor(fpAgg(rp)), S={};   /* V129-80 */ (es.data||[]).forEach(r=>{ S[r.site_id+'|'+r.category_id]=r; });
     const sites=(FAC_SITES||[]).map(x=>x.site_id).filter(s=>!curGhgUser||lgCanSite(s)).sort(siteCmp);
     const DC=!trialY(Y)&&Y<=declMaxY();   /* V129-39：已申報的年度（年度只是還沒開放＝鎖著，不算申報，照常看進度） */
     const CS0=cats(); const M={}; const tot={ok:0,wt:0,rt:0,ed:0,no:0,nd:0,dc:0};
@@ -15070,13 +15074,13 @@ body.ghgfocus #src_form .ehead>.fxfocus{background:#1B8A60;border-color:#1B8A60;
     const [es,ry,rp]=await Promise.all([sb.from('ghg_entry_status').select('*').eq('site_id',s).eq('data_year',+y),fpRows(y),fpRows(fpPrevY(y))]).catch(e=>[{error:e}]);
     if(!es||es.error){ alert('讀不到審核狀態：'+vErr(es&&es.error)); return; }
     /* 應填類別＝跟審核進度同一套：有狀態、今年有資料、或去年有資料（自動帶出的也算） */
-    const A=(fpAgg(ry)[s])||{}, P=(fpAgg(rp)[s])||{}, S={}; (es.data||[]).forEach(r=>{ S[r.category_id]=r; });
+    const A=(fpAgg(ry)[s])||{}, P=(fpPrevFor(fpAgg(rp))[s])||{}, S={};   /* V129-80 */ (es.data||[]).forEach(r=>{ S[r.category_id]=r; });
     const seen={}, CS=(SRC||[]).filter(z=>{ if(seen[z.c])return false; seen[z.c]=1; return !(typeof srcNa==='function'&&srcNa(z.c)); }).map(z=>z.c);
     const LB={wt:'已送出、等 ESG 確認',rt:'退回',ed:'填寫中（有資料還沒送出）',no:'還沒填（去年有資料）',nd:'勾了本年沒有、還沒送出'};
     const need=[], bad=[]; CS.forEach(c=>{ const st=S[c], a=A[c], p=P[c]; let k='';
       if(st){ k=st.status==='approved'?'ok':(st.status==='submitted'?'wt':(st.status==='returned'?'rt':(st.no_data?'nd':''))); }
       if(!k){ if(a&&a.n)k='ed'; else if(p&&(p.q>0||p.co>0))k='no'; }
-      if(k){ need.push(c); if(k!=='ok')bad.push(vCatNm(c)+'：'+LB[k]); } });
+      if(k){ need.push(c); if(k!=='ok')bad.push(vCatNm(c)+'：'+((k==='no'&&p&&p.ref)?'還沒填（新廠第一年比照 '+p.ref+' 應填）':LB[k])); } });
     if(!need.length){ alert(nm+' '+y+' 年沒有任何應填類別，不能送查證。'); return; }
     if(bad.length){ alert(nm+' '+y+' 年還沒整廠通過，不能送查證：\n\n'+bad.join('\n')+'\n\n要全部「✓ 通過」才能送（可到「📋 審核進度」看）。'); return; }
     IV.live[y]=null; await loadLive(y); if(IV.lerr){ alert('讀不到明細：'+IV.lerr); return; }
