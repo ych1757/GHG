@@ -302,7 +302,7 @@ function facChg(on){ return '<span class="fchg'+(on?'':' off')+'">🟡</span>'; 
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-81</b> · 2026/11/01</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-82</b> · 2026/11/01</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -7649,7 +7649,11 @@ function matImpMatch(row){ const lib=matLib(); const r={source_name:row.nm,attr2
   if(!fid&&row.cd==='再生料'&&!why)why='⚠ 這種材質沒有再生料係數（係數庫 → 直接物料 → 再生料係數對照沒有它，過去也沒用過），請自己選';   /* V129-46-1／V129-50 */
   return {fid:fid,why:why};
 }
-const IMP_SITE_ALIAS={SF:['蘇州富鴻齊','苏州富鸿齐'],JS:['中山富鴻齊','中山富鸿齐'],FF:['福州富鴻齊','福州富鸿齐'],CF:['重慶富鴻齊','重庆富鸿齐'],KH:['冠皇'],GH:['冠華','冠华'],FQ:['富群'],KS:['鴻嘉駿','鸿嘉骏'],GT:['敬得觀音','觀音敬得','观音敬得','敬得(觀音)','敬得（觀音）'],TC:['苏州敬得','蘇州敬得','敬得蘇州','敬得太倉','太仓敬得','敬得(太倉)','敬得（太倉）'],LH:['陸合台中','台中陸合','陸合(台中)','陸合（台中）'],LS:['蘇州陸和','苏州陆和','陸和','陆和','陸合(蘇州)','陸合（蘇州）','陸合蘇州'],LT:['泰國協和','協和泰國','協和','陸合(泰國)','陸合（泰國）','陸合泰國'],SH:['信鋐','桃園信錦'],VN:['越南'],TH:['信錦泰國','SYNCTH'],SY:['中和信錦','信錦中和','臺北信錦','台北信錦','台北總公司'],SG:['新加坡'],MY:['馬來西亞','马来西亚'],US:['美國','美国']};   /* V90：檔名像別廠 → 警告；直接物料／服務類匯入共用這一份 */
+const IMP_SITE_ALIAS={SF:['蘇州富鴻齊','苏州富鸿齐'],JS:['中山富鴻齊','中山富鸿齐'],FF:['福州富鴻齊','福州富鸿齐'],CF:['重慶富鴻齊','重庆富鸿齐'],KH:['冠皇'],GH:['冠華','冠华'],FQ:['富群'],KS:['鴻嘉駿','鸿嘉骏'],GT:['敬得觀音','觀音敬得','观音敬得','敬得(觀音)','敬得（觀音）'],TC:['苏州敬得','蘇州敬得','敬得蘇州','敬得太倉','太仓敬得','敬得(太倉)','敬得（太倉）'],LH:['陸合台中','台中陸合','陸合(台中)','陸合（台中）'],LS:['蘇州陸和','苏州陆和','陸和','陆和','陸合(蘇州)','陸合（蘇州）','陸合蘇州'],LT:['泰國協和','協和泰國','協和','陸合(泰國)','陸合（泰國）','陸合泰國'],SH:['信鋐','桃園信錦'],VN:['越南'],TH:['信錦泰國','SYNCTH'],SY:['中和信錦','信錦中和','臺北信錦','台北信錦','台北總公司'],SG:['新加坡'],MY:['馬來西亞','马来西亚'],US:['美國','美国'],DN:['同奈']};   /* V90：檔名像別廠 → 警告；直接物料／服務類匯入共用這一份 */
+const IMP_SITE_KEY={DN:['dongnai']};   /* V129-82：越南文 Đồng Nai、英文 Dong Nai／DONGNAI／Dong_Nai 去聲調、去空白底線、轉小寫後比；只給 DN 用，其他廠照原本逐字比（套到全部廠會讓 ESG 現有 16 個檔變成認得出廠，例「陸合(台中_泰國_蘇州)」被當成陸合台中） */
+const IMP_SITE_OVER={DN:['VN']};   /* V129-82：檔名同時有「越南」和「同奈」→ 只算 DN（使用者 261101「廠區應該會有同奈的字眼 不管是中文 還是越南文或是英文」） */
+function impNameKey(s){ return String(s==null?'':s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[đĐ]/g,'d').toLowerCase().replace(/[\s_\-.()（）　]+/g,''); }
+function impSiteHits(fname){ const raw=String(fname||''), key=impNameKey(raw); let hits=Object.keys(IMP_SITE_ALIAS).filter(s=>IMP_SITE_ALIAS[s].some(a=>raw.indexOf(a)>=0)||(IMP_SITE_KEY[s]||[]).some(k=>key.indexOf(k)>=0)); hits.slice().forEach(s=>{ (IMP_SITE_OVER[s]||[]).forEach(o=>{ hits=hits.filter(h=>h!==o); }); }); return hits; }   /* V129-82：直接物料、服務類、運輸三種匯入共用 */
 function matImpPreview(res,fname){
   if(mat80On()&&res&&res.blocks&&res.blocks.some(b=>b.pivot))res.blocks.sort((a,b)=>(b.pivot?1:0)-(a.pivot?1:0));   /* V129-29 */
   const blocks=res.blocks; const cur=matRows().filter(r=>!MRET[r.record_id]); const curT=cur.reduce((a,r)=>a+(matCo2e(r)||0),0), curQ=cur.reduce((a,r)=>a+(+r.quantity||0),0);
@@ -7659,7 +7663,7 @@ function matImpPreview(res,fname){
   { let bi=-1; blocks.forEach((b,i)=>{ if(b.raw&&(bi<0||b.raw.nIn>blocks[bi].raw.nIn))bi=i; }); if(bi>=0)sel=bi; }   /* V129-57：有原始明細＝預設選它（多份選筆數最多的，例 協和泰國 1~12 月匯總） */
   if(res._selObj){ const k=blocks.indexOf(res._selObj); if(k>=0)sel=k; }   /* V129-57：改欄位重算後停在同一個區塊 */
   const SITE_ALIAS=IMP_SITE_ALIAS;   /* V85-6：檔名像別廠的檔 → 警告（使用者 9/17 把蘇州富鴻齊的檔開在敬得(太倉)頁） */
-  const hits=Object.keys(SITE_ALIAS).filter(s=>SITE_ALIAS[s].some(a=>String(fname||'').indexOf(a)>=0)); const wrong=hits.length&&hits.indexOf(F.site)<0;
+  const hits=impSiteHits(fname); const wrong=hits.length&&hits.indexOf(F.site)<0;   /* V129-82 */
   let h=(wrong?'<div style="margin:0 0 8px;padding:8px 12px;border:2px solid #c0392b;background:#fdecea;color:#7a1f14;border-radius:8px;font-size:13px;font-weight:700">⚠ 檔名看起來是 '+esc(hits.map(s=>{const st=(FAC_SITES||[]).find(z=>z.site_id===s)||{}; return s+' '+(st.site_name||'');}).join('／'))+' 的檔案，目前畫面是 '+esc(F.site+' '+(((FAC_SITES||[]).find(z=>z.site_id===F.site)||{}).site_name||''))+'。除非你確定檔案內容是本廠的，請按「取消」重選。</div>':'')
     +'<div style="font-size:12.5px;color:#3f544a;padding:2px 0 6px">檔案：<b>'+esc(fname)+'</b>　｜　找到 '+blocks.length+' 個分類表區塊，請選要帶入的一個（'+(mat80On()?'本年度請選「樞紐表（全部類別）」，系統會挑 80%；':'')+'ESG 各廠採用的版本不同：全原生料／含再生料；100% 清單分頁也會列出，通常不是要帶的）</div>'
     +(cur.length?'<div style="font-size:12px;color:#3f544a;padding:0 0 6px">目前畫面 '+F.site+' '+F.year+' 已有 '+cur.length+' 列：重量 '+nf(curQ,4)+' t、碳排 '+nf(curT,4)+' t</div>':'');
@@ -8864,7 +8868,7 @@ function svcImpMatch(it){   /* 檔案一列 → 代號。ESG 收集表英文 Com
   return {code:code,why:why,warn:warns.join('；')}; }
 function svcImpPreview(res,fname){
   const cur0=srows().filter(r=>!SRET[r.record_id]); let sel=0; res.blocks.forEach((b,i)=>{ if(b.items.length>res.blocks[sel].items.length)sel=i; });
-  const hits=Object.keys(IMP_SITE_ALIAS).filter(s=>IMP_SITE_ALIAS[s].some(a=>String(fname||'').indexOf(a)>=0)); const wrong=hits.length&&hits.indexOf(F.site)<0;
+  const hits=impSiteHits(fname); const wrong=hits.length&&hits.indexOf(F.site)<0;   /* V129-82 */
   const nmS=s=>{ const st=(FAC_SITES||[]).find(z=>z.site_id===s)||{}; return s+' '+(st.site_name||''); };
   let h=(wrong?'<div style="margin:0 0 8px;padding:8px 12px;border:2px solid #c0392b;background:#fdecea;color:#7a1f14;border-radius:8px;font-size:13px;font-weight:700">⚠ 檔名看起來是 '+esc(hits.map(nmS).join('／'))+' 的檔案，目前畫面是 '+esc(nmS(F.site))+'。除非你確定檔案內容是本廠的，請按「取消」重選。</div>':'')
     +'<div style="font-size:12.5px;color:#3f544a;padding:2px 0 6px">檔案：<b>'+esc(fname)+'</b>　｜　找到 '+res.blocks.length+' 個'+scfg().thing+'表'+(res.blocks.length>1?'，請選要帶入的一個':'')+'</div>'
@@ -9654,7 +9658,7 @@ function trnImpRoute(x){ const rt=trnNew(); Object.assign(rt,{cls:x.cls,nm:x.nm,
 function trnImpItemT(x){ const c=trnCalc(trnImpRoute(x)); return c.t; }
 function trnImpPreview(res,fname){
   const cur0=TRT.filter(rt=>!rt.old&&!rt.ro&&!TRET[rt.rid]);
-  const hits=Object.keys(IMP_SITE_ALIAS).filter(s=>IMP_SITE_ALIAS[s].some(a=>String(fname||'').indexOf(a)>=0)); const wrong=hits.length&&hits.indexOf(F.site)<0;
+  const hits=impSiteHits(fname); const wrong=hits.length&&hits.indexOf(F.site)<0;   /* V129-82 */
   const nmS=s=>{ const st=(FAC_SITES||[]).find(z=>z.site_id===s)||{}; return s+' '+(st.site_name||''); };
   const sig=b=>b.items.map(x=>x.nm+'|'+(x.w==null?'':x.w.toFixed(3))).join('#'); const seen={};
   res.blocks.forEach(b=>{ const s=sig(b); b.dup=seen[s]!=null?seen[s]:null; if(b.dup==null)seen[s]=b.sheet; b.on=b.dup==null; });
