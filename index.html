@@ -302,7 +302,7 @@ function facChg(on){ return '<span class="fchg'+(on?'':' off')+'">🟡</span>'; 
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-80-1</b> · 2026/11/01</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-81</b> · 2026/11/01</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -634,7 +634,7 @@ let SITES=[];
 /* ══ V129-79：廠區識別一律用廠區代碼（使用者 261030「數字當初只是要做排列順序 以後可能會修改，所以還是要用廠區代碼來做識別才對」）
    SITEM＝全站唯一的廠區清單＝GHG 廠區表 ghg_sites（排序 sort_order、舊官方廠號 legacy_plant_code、電網區域）＋OMS 廠區主檔 factories（名稱、國家、事業群；使用者 261030「要，讀 OMS」），照排序排。
    內部一律拿廠區代碼當鍵；PLANT2OMS 名稱留著只為沿用各頁舊寫法，現在是「代碼→代碼」。
-   舊官方廠號（01～20）只用在：係數條目備註「廠:01中和」比對、權限頁「廠區設定」對照 2022–2025 官方 Excel。
+   舊官方廠號（01～20）只留在權限頁「廠區設定」對照 2022–2025 官方 Excel；批350 起係數備註也改寫代碼（「廠:JS中山」，程式兩種寫法都認）。
    地區（台灣／中國／越南／泰國…）一律看廠區的國家，不再寫死哪個廠在哪國。 ══ */
 const SITE_FB={SY:['TW','01'],SH:['TW','02'],VN:['VN','03'],JS:['CN','04'],SF:['CN','05'],FF:['CN','06'],CF:['CN','07'],KH:['CN','08'],GH:['CN','09'],FQ:['CN','10'],
   KS:['CN','11'],GT:['TW','12'],TC:['CN','13'],LH:['TW','14'],LS:['CN','15'],LT:['TH','16'],SG:['SG','17'],MY:['MY','18'],US:['US','19'],TH:['TH','20']};   // 讀到廠區表之前的備用（＝改版前寫死的對照，國家照改版前各頁的地區表）
@@ -4515,7 +4515,7 @@ function facVehRenderOld(code){   /* V103-7 交通工具型；V103-11 泛化成�
   const keys=Object.keys(items).sort((a,b)=>go(a)-go(b)||a.localeCompare(b));
   const nm=k=>{ const x=items[k].map(nmOf).find(Boolean); return x||''; };
   const sitesOf=f=>{ const nt=String(f.notes||''); const raw=(nt.match(/用在:([^|]*)/)||[])[1]||(nt.match(/廠:([^|;]*)/)||[])[1]||''; const out=[];
-    raw.split(/[、,，\s]+/).forEach(x=>{ x=x.trim(); if(!x)return; if((FAC_SITES||[]).some(z=>z.site_id===x)){ out.push(x); return; } const mm=x.match(/^(\d{2})/); if(mm&&SITE_LEG2[mm[1]])out.push(SITE_LEG2[mm[1]]);   /* 備註寫舊官方廠號（01中和）→ 廠區代碼 */ });
+    raw.split(/[、,，\s]+/).forEach(x=>{ x=x.trim(); if(!x)return; if((FAC_SITES||[]).some(z=>z.site_id===x)){ out.push(x); return; } const mc=x.match(/^([A-Z]{2})/); if(mc&&(FAC_SITES||[]).some(z=>z.site_id===mc[1])){ out.push(mc[1]); return; }   /* V129-81：備註寫「JS中山」 */ const mm=x.match(/^(\d{2})/); if(mm&&SITE_LEG2[mm[1]])out.push(SITE_LEG2[mm[1]]);   /* 備註寫舊官方廠號（01中和）→ 廠區代碼 */ });
     return out; };
   const f0=items[keys[0]][0];
   let h='<div class="ftitle" style="margin-bottom:2px">'+title+'<span class="fmini" style="margin-left:8px">係數（中分類 × 區域 × 年度）·唯讀</span></div>'+(code==='C09'?'<div class="msg" style="background:#fff6dc;border:1px solid #f0cf7a;border-left:6px solid #d99a00;font-size:14px;margin:6px 0 8px;padding:8px 12px;line-height:1.6">🔗 <b style="color:#7a4f00">係數來源＝C04 上游運輸的共用運輸表</b>　<a href="javascript:void(0)" onclick="facGoSrc(&#39;C04&#39;)" style="font-size:12.5px;font-weight:700;color:var(--p)">到 C04 看 →</a>'+'<div style="font-size:12px;color:#5d4a1f;margin-top:2px">同一批條目，代號前綴換成 C09；以 C04 為主維護，這裡自動跟著動。2022～2024 歸戶的歷史條目另列在各車種底下，不再維護。</div></div>':'')
@@ -5440,7 +5440,7 @@ async function loadCompare(){
   kp.classList.add('hide'); box.innerHTML='查詢中…';
   try{ await siteMasterLoad(); }catch(e){}   /* V129-79 */
   const YEARS=['2022','2023','2024','2025'];
-  const {data,error}=await sbAll(()=>sb.from('v_ghg_summary').select('*').order('plant_code').order('data_year').order('category_code'));  // ★明細層;V50-3:原limit5000無效(現761筆,2025入庫破千拆彈)
+  const {data,error}=await sbAll(()=>sb.from('v_ghg_summary').select('*').order('site_id').order('data_year').order('category_code'))   /* V129-81：批350 拿掉 plant_code */;  // ★明細層;V50-3:原limit5000無效(現761筆,2025入庫破千拆彈)
   if(error){box.innerHTML='<div class="msg err">查詢失敗（請先在 Supabase 跑 GHG_view_summary 建視圖）：'+error.message+'</div>';return;}
   if(!data||!data.length){ if(lgScopeAll()||!data){box.innerHTML='<div class="msg">查無資料 — 明細層尚無資料。</div>';return;} }   /* V129-63：沒有全部廠區＝明細空了也往下走（官方跨年數字照樣出） */
   data.forEach(r=>{ r.plant_code=siteFromAny(r.site_id||r.plant_code); });   // V129-79：一律用廠區代碼當鍵
@@ -6344,7 +6344,7 @@ function factors0(){   // 該區域該年的係數（矩陣同一格，同區同
     const gl=(cfg()&&cfg().gases)||GAS_ORDER;   // V77：製程氣體（SF6）依設定列氣體，不再寫死 CO2/CH4/N2O
     const pno=F.pno?F.pno(F.site):''; const snm=(siteInfo()||{}).site_name||'';   // V78：同區同年多條 → 條目 notes 有「廠:<廠號>」或廠名的優先（ESG 各廠檔不同版本）
     const pnos=n=>{const m=String(n||'').match(/廠:([^|；;]+)/); return m?m[1].split(/[,，、]/).map(s=>s.trim()).filter(Boolean):[];};   /* V80-1：條目 notes「廠:01中和,02信鋐」→ ['01中和','02信鋐'] */
-    const pickFor=c=>{ if(!c.alts||!c.alts.length)return c; const L=[c].concat(c.alts); const hit=L.find(x=>pnos(x.notes).some(s=>(pno&&s.slice(0,2)===pno)||s===F.site||(snm&&s.indexOf(snm)>=0)))||L.find(x=>x.notes&&snm&&x.notes.indexOf(snm)>=0); return hit||c; };   /* V80-1 */
+    const pickFor=c=>{ if(!c.alts||!c.alts.length)return c; const L=[c].concat(c.alts); const hit=L.find(x=>pnos(x.notes).some(s=>(pno&&s.slice(0,2)===pno)||s===F.site||s.slice(0,2)===F.site||(snm&&s.indexOf(snm)>=0)))||L.find(x=>x.notes&&snm&&x.notes.indexOf(snm)>=0); return hit||c; };   /* V80-1 */
     return gl.filter(g=>cell[g]).map(g=>{const c=pickFor(cell[g]); return {gas:g,ef:c.v,gwp:c.gwp==null?1:c.gwp,unit:c.unit||'',src:c.src||'',fid:c.fid||null,from:c.from||null,nalt:(cell[g].alts||[]).length};});   // V74-1:from＝條目起年（沿用判定）
   }catch(e){return [];}
 }
@@ -8086,7 +8086,7 @@ function c12Pick(kd,st,y){ y=facY(y);
   const list=(FACALL||[]).filter(f=>f.category_id==='C12'&&f.esg_code===kd.code&&inEff(f,y)); if(!list.length)return null;
   const U=C12.use||{};
   const gen=f=>{ const n=c12FacName(f); if(new RegExp('^('+kd.en+'s?|'+kd.name+')$','i').test(n))return 8; if(kd.k==='P'&&/^plastics?: average plastics$/i.test(n))return 6; if(kd.k==='R'&&/^paper and board: paper$/i.test(n))return 6; if(kd.k==='M'&&/^metal: scrap metal$/i.test(n))return 6; return 0; };
-  const pno=(st&&F.pno)?F.pno(st.site_id):''; const reg=f=>{ if(!pno||pno==='--')return 0; const m=String(f.notes||'').match(/(?:^|\|)廠:([^|]*)/); return (m&&m[1].split(/[,，、]/).some(x=>x.trim().indexOf(pno)===0))?10:0; };   /* 條目登記的廠別（notes「廠:02信鋐/桃園」）也算該廠的 */
+  const pno=(st&&F.pno)?F.pno(st.site_id):''; const pk=[pno,st&&st.site_id].filter(k=>k&&k!=='--'); const reg=f=>{ if(!pk.length)return 0; const m=String(f.notes||'').match(/(?:^|\|)廠:([^|]*)/); return (m&&m[1].split(/[,，、]/).some(x=>pk.some(k=>x.trim().indexOf(k)===0)))?10:0; };   /* V129-81：批350 起備註寫代碼（JS中山），舊廠號寫法也認 */   /* 條目登記的廠別（notes「廠:02信鋐/桃園」）也算該廠的 */
   const score=f=>{ const u=st?U[st.site_id+'|'+f.factor_id]:0; return (u?20+u/1e4:0)+reg(f)+gen(f)+((efF(f)===y)?4:0)+((efF(f)||0)/1e5); };
   list.sort((a,b)=>score(b)-score(a));
   const vals=new Set(list.map(f=>c03Val(f).v.toFixed(8)));
