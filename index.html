@@ -65,6 +65,11 @@ th:last-child>.colrz{right:0!important}   /* V88-4：最右欄把手不突出表
 .permwrap{max-height:calc(100vh / var(--z,1) - 170px);overflow:auto;border-radius:8px}
 #src_records thead tr:first-child th,#q_result thead tr:first-child th,#g_result thead tr:first-child th,#su_result thead tr:first-child th,#f_result thead tr:first-child th{position:sticky;top:0;z-index:7;background:var(--d)!important;color:#fff!important;border-bottom:2px solid var(--p);box-shadow:0 2px 4px rgba(0,0,0,.08)}
 .permwrap td{padding-top:2px!important;padding-bottom:2px!important}
+/* V129-84-3：權限表每列一行、各欄縮到內容寬；最後一欄吃剩下的寬度；Email 優先 14%、不夠時只縮 Email */
+.permwrap table.permt>thead>tr>th,.permwrap table.permt>tbody>tr>td:not([colspan]){white-space:nowrap!important;width:1%}
+.permwrap table.permt>thead>tr>th:last-child,.permwrap table.permt>tbody>tr>td:last-child:not([colspan]){width:auto}
+.permwrap table.permt>tbody>tr>td.pemail{max-width:0!important;width:14%!important}
+.permwrap table.permt>thead>tr>th,.permwrap table.permt>tbody>tr>td:not([colspan]){padding-left:5px!important;padding-right:5px!important}
 .qfixed td{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .qfixed th{white-space:nowrap;overflow:visible}
 .qfixed thead tr.fltrow th select{max-width:100%}
@@ -302,7 +307,7 @@ function facChg(on){ return '<span class="fchg'+(on?'':' off')+'">🟡</span>'; 
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-92</b> · 2026/11/02</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-95</b> · 2026/11/02</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -587,65 +592,7 @@ function ghgWriteWarn(msg){   /* V107：寫入被擋／沒寫進去 → 頁面�
   }catch(e){}
 }
 window.ghgWriteWarn=ghgWriteWarn;
-/* ══ V129-84：類別碼對照表（唯一出處）——資料庫類別碼換新碼（批356）
-   網頁程式一律用新碼。資料庫還是舊碼時，catXFetch 在進出口翻譯：送出（網址條件、寫入內容、RPC 參數）新→舊，收回（類別欄、錯誤訊息）舊→新；
-   資料庫已換新碼就原樣通過。判斷＝問資料庫類別主表 ghg_emission_categories 有 A01-01（新）還是 S1-01（舊），60 秒問一次。
-   對照與主檔 ghg_emission_sources.old_code 一致（ensureESRC 會比，不一致右下角警告）。批356 跑完、核過之後，下一版拿掉這一段。 ══ */
-const CAT_O2N={'S1-01':'A01-01','S1-02':'A01-02','S1-03':'A01-03','S1-05':'A02-01','S1-06':'A02-02','S1-08':'A03-01','S1-09':'A03-02','S1-10':'A04-01','S1-11':'A04-02','S1-12':'A04-03','S1-13':'A04-04','S1-LU':'A05-01','S2-01':'B01-01','S2-02':'B02-01','C01-M':'C01-01','C01-S':'C01-02','C01-W':'C01-03','C03-E':'C03-01','C03-F':'C03-02','S1':'A','S2':'B','S3':'C'};
-const CAT_N2O={}; Object.keys(CAT_O2N).forEach(k=>{CAT_N2O[CAT_O2N[k]]=k;});
-let CAT_DB=null, CAT_DBT=0, CAT_DBP=null;   // 'old'／'new'；判斷時間
-function catOne(v,M){ if(typeof v!=='string'||!v)return v; const k=v.indexOf('@'); const a=k<0?v:v.slice(0,k); return M[a]?(M[a]+(k<0?'':v.slice(k))):v; }   /* 「C01-M@登錄」這種差異說明鍵也翻 */
-function catList(v,M){ return typeof v==='string'?v.split(',').map(x=>{ const s=x.trim(); return s?x.replace(s,catOne(s,M)):x; }).join(','):v; }
-const CAT_TXT_RE={};
-function catText(v,M){ if(typeof v!=='string')return v; const id=M===CAT_O2N?'o':'n';
-  if(!CAT_TXT_RE[id]){ const ks=Object.keys(M).filter(k=>k.length>2).sort((a,b)=>b.length-a.length); CAT_TXT_RE[id]=new RegExp('(^|[^A-Za-z0-9_\\-])('+ks.map(k=>k.replace(/-/g,'\\-')).join('|')+')(?![0-9A-Za-z\\-])','g'); }
-  return v.replace(CAT_TXT_RE[id],(s,a,b)=>a+M[b]); }
-function catRow(o,M){ if(!o||typeof o!=='object'||Array.isArray(o))return;
-  if('category_id' in o)o.category_id=catOne(o.category_id,M);
-  if('p_cat' in o)o.p_cat=catOne(o.p_cat,M);
-  if('applicable_category' in o)o.applicable_category=catList(o.applicable_category,M);
-  ['cats','return_cats','p_cats'].forEach(k=>{ if(Array.isArray(o[k]))o[k]=o[k].map(x=>catOne(x,M)); });
-  ['message','details','hint'].forEach(k=>{ if(typeof o[k]==='string')o[k]=catText(o[k],M); }); }
-function catWalk(o,M){ if(Array.isArray(o))o.forEach(x=>catRow(x,M)); else catRow(o,M); return o; }   /* 只翻最上層每一列的類別欄，extra 等巢狀內容不動 */
-function catVal(v,M){   /* PostgREST 條件值：eq.X／neq.X／in.(a,b)／like.P／ilike.P（前面可有 not.） */
-  const m=String(v).match(/^(not\.)?(eq|neq|in|like|ilike)\.([\s\S]*)$/); if(!m)return v; const ng=m[1]||'', op=m[2], x=m[3];
-  if(op==='in'){ const inner=x.replace(/^\(/,'').replace(/\)$/,''); return ng+'in.('+inner.split(',').map(s=>{ const q=/^".*"$/.test(s), w=q?s.slice(1,-1):s, r=catOne(w,M); return q?('"'+r+'"'):r; }).join(',')+')'; }
-  if(op==='like'||op==='ilike'){ const p=x.replace(/[%*]+$/,''), w=x.slice(p.length); if(!w)return ng+op+'.'+catOne(x,M);
-    if(M===CAT_N2O&&/^[AB]/.test(p)){ if(p==='A'||p==='B')return ng+op+'.'+(p==='A'?'S1':'S2')+w;
-      const L=Object.keys(M).filter(c=>c.length>1&&c.indexOf(p)===0).map(c=>M[c]); return ng+'in.('+(L.length?L.join(','):'__無__')+')'; }
-    if(M===CAT_O2N&&/^S[12]/.test(p)){ if(p==='S1'||p==='S2')return ng+op+'.'+(p==='S1'?'A':'B')+w; }
-    return v; }   /* C 開頭：舊碼也是同樣開頭（C01-M／C03-E），不用翻 */
-  return ng+op+'.'+catOne(x,M); }
-function catUrl(url,M){ const k=url.indexOf('?'); if(k<0)return url; const base=url.slice(0,k);
-  const q=url.slice(k+1).split('&').map(seg=>{ const e=seg.indexOf('='); if(e<0)return seg; const key=seg.slice(0,e), raw=seg.slice(e+1); let v; try{ v=decodeURIComponent(raw.replace(/\+/g,' ')); }catch(_){ return seg; }
-    let n=v;
-    if(key==='category_id'||key==='applicable_category')n=catVal(v,M);
-    else if((key==='or'||key==='and'||key==='not.or'||key==='not.and')&&v.indexOf('category_id.')>=0)n=v.replace(/category_id\.((?:not\.)?(?:eq|neq|in|like|ilike))\.(\([^)]*\)|[^,()]*)/g,(s,op,val)=>{ const r=catVal(op+'.'+val,M); return 'category_id.'+r; });
-    return n===v?seg:(key+'='+encodeURIComponent(n)); });
-  return base+'?'+q.join('&'); }
-const CAT_PROBE='/rest/v1/ghg_emission_categories?select=category_id&category_id=in.(S1-01,A01-01)';
-async function catDbMode(init){
-  if(CAT_DB&&Date.now()-CAT_DBT<60000)return CAT_DB;
-  if(CAT_DBP)return CAT_DBP;
-  CAT_DBP=(async()=>{ try{ const h=new Headers((init&&init.headers)||{}); h.delete('Prefer'); h.delete('Content-Type'); h.delete('Range');
-      const r=await fetch(SUPABASE_URL+CAT_PROBE,{headers:h}); if(!r.ok)return CAT_DB;
-      const s=((await r.json())||[]).map(x=>x.category_id), hn=s.indexOf('A01-01')>=0, ho=s.indexOf('S1-01')>=0;
-      if(hn!==ho){ CAT_DB=hn?'new':'old'; CAT_DBT=Date.now(); }
-      else if(typeof ghgWriteWarn==='function'&&typeof curGhgUser!=='undefined'&&curGhgUser)ghgWriteWarn('類別碼對照判斷不出資料庫用新碼還是舊碼（類別主表 '+(hn?'兩種都有':'兩種都沒有')+'）——畫面上的數字可能不完整，請通知系統管理。');
-      return CAT_DB; }catch(e){ return CAT_DB; }finally{ CAT_DBP=null; } })();
-  return CAT_DBP; }
-async function catRes(res,M){ try{ if(!res||res.status===204||!/json/i.test(res.headers.get('Content-Type')||''))return res;
-  const tx=await res.clone().text(); if(!tx||!/S[123]|C01-[MSW]|C03-[EF]/.test(tx))return res;
-  const s=JSON.stringify(catWalk(JSON.parse(tx),M)); if(s===tx)return res;
-  const h=new Headers(res.headers); h.delete('Content-Length'); h.delete('Content-Encoding');
-  return new Response(s,{status:res.status,statusText:res.statusText,headers:h}); }catch(e){ return res; } }
-async function catXFetch(input,init,f){
-  f=f||fetch; const url=typeof input==='string'?input:'';
-  if(!url||url.indexOf(SUPABASE_URL+'/rest/v1/')!==0||url.indexOf(SUPABASE_URL+CAT_PROBE)===0)return f(input,init);
-  const mode=await catDbMode(init); if(mode!=='old')return f(input,init);
-  let i2=init; if(init&&typeof init.body==='string'&&init.body){ try{ const s=JSON.stringify(catWalk(JSON.parse(init.body),CAT_N2O)); if(s!==init.body)i2=Object.assign({},init,{body:s}); }catch(e){} }
-  return catRes(await f(catUrl(url,CAT_N2O),i2),CAT_O2N); }
-window.catXFetch=catXFetch; window.catDbModeNow=()=>CAT_DB;
+/* V129-95：拿掉 V129-84 的類別碼翻譯層（CAT_O2N／catXFetch）——資料庫 261101 批356 起全是新碼。⚠ 資料庫若用 SQL 613 退回舊碼，網頁要先退到 V129-84～V129-94。 */
 const ghgFetch=async(input,init)=>{
   const m=String((init&&init.method)||(input&&input.method)||'GET').toUpperCase();
   const url=String(typeof input==='string'?input:((input&&input.url)||input||''));
@@ -666,7 +613,7 @@ const ghgFetch=async(input,init)=>{
       return new Response(JSON.stringify({code:'GHG401',message:msg,details:null,hint:null}),{status:401,headers:{'Content-Type':'application/json'}}); }
     if(m==='PATCH'){ const p=h.get('Prefer')||''; if(!/count=/.test(p))h.set('Prefer',(p?p+',':'')+'count=exact'); }
     init.headers=h; }
-  const res=await catXFetch(input,init,ghgFetch0);   /* V129-84：類別碼進出口翻譯 */
+  const res=await ghgFetch0(input,init);
   if(isR&&res&&(res.status===401||res.status===403)){   /* V129-54：讀取被擋 */
     if(!rTk){ if(url.indexOf(SUPABASE_URL+'/rest/v1/ghg_user_roles')<0)window._ghgAnonDenied=true; }   /* 還沒登入＝登入成功後重新整理一次 */
     else if(typeof curGhgUser!=='undefined'&&curGhgUser)ghgWriteWarn('讀不到資料（'+res.status+'）：登入逾時，或這個分頁的登入已失效——畫面上的數字可能不完整，請登出後用工號＋密碼重新登入。');
@@ -834,8 +781,6 @@ async function ensureESRC(){
       if(r.level===4&&r.name_match&&r.parent_code){ try{(rules[r.parent_code]=rules[r.parent_code]||[]).push({re:new RegExp(r.name_match,'i'),row:r});}catch(e){} }
     });
     ESRC={byCode,byOld,rules,n:data.length};
-    { const bad=Object.keys(CAT_O2N).filter(o=>!byOld[o]||byOld[o].code!==CAT_O2N[o]);   /* V129-84：網頁對照表要跟主檔 old_code 一樣 */
-      if(bad.length&&!document.getElementById('catwarn'))document.body.insertAdjacentHTML('beforeend','<div id="catwarn" style="position:fixed;bottom:34px;right:12px;font-size:11px;color:#8a1c1c;background:#fdecea;border:1px solid #f5c2c0;padding:4px 10px;border-radius:6px;z-index:99">類別碼對照表跟排放源主檔不一致：'+bad.join('、')+'（請通知系統管理）</div>'); }
     if(document.getElementById('srcnav')&&typeof buildNav==='function'&&!curSrc)buildNav();   // 主檔到位→左樹標籤換新碼（尚未選源時才重建,不打斷操作）
     // V69-1:主檔到位→已建好的下拉標籤就地換新碼（只改顯示文字,不動選項值與目前選擇）——類別下拉在主檔載入前就先建好了,不補這步會出現「類別=1.1 固定式…、子類別=A01-01」兩層不一致
     [['q_cat',o=>ncRow(o.value)?ncText(o.value):null],['f_cat',o=>ncOpt(o.value)],['fs_cat',o=>ncOpt(o.value)]].forEach(([id,fn])=>{
@@ -1906,12 +1851,12 @@ async function permResetPwd(email,name){
 /* V124：內部同仁的「開通登入」（permCreateAcct）拿掉——帳號只從 SyncHub 授權頁開通 */
 // ===== V56 自建名單(外部查核)UI(照 MHR「② 自建帳號」) =====
 window._extEdit=null;   // null=收合 / {} 新增 / {email:...} 編輯
-function extPanelHtml(){
+function extPanelHtml(n){   /* V129-84-2：自建名單接在權限名單同一張表最下面，欄位對齊上方（n＝上方表的欄數） */
   if(!curGhgUser||curGhgUser.role!=='admin')return '';
   const E=window._extUsers||[]; const ed=window._extEdit;
   const sites=siteCodes();   /* V129-79：照 GHG 廠區排序 */
-  let s='<div class="card" style="margin-top:12px;border-left:4px solid #6b46c1">'
-    +'<div style="display:flex;align-items:center;gap:10px"><b style="font-size:13.5px;color:#553c9a">🔍 GHG 自建名單（外部查核人員／顧問·OMS 名單沒有的人）</b>'
+  let s='<tr class="extsec"><td colspan="'+(n||15)+'" style="text-align:left;white-space:normal;padding:12px 10px 8px!important;background:#faf7ff;border-top:3px solid #6b46c1;border-left:4px solid #6b46c1">'
+    +'<div style="display:flex;align-items:center;gap:4px 10px;flex-wrap:wrap"><b style="font-size:13.5px;color:#553c9a">🔍 GHG 自建名單（外部查核人員／顧問·OMS 名單沒有的人）</b>'
     +'<span style="font-size:11.5px;color:var(--g)">共 '+E.length+' 人｜角色固定「查看」唯讀；密碼與 SyncHub 同一 Auth，可重設；到期自動失效</span>'
     +'<span style="flex:1"></span>'
     +(ed?'':'<button style="padding:5px 12px;font-size:12px" onclick="window._extEdit={};window._extScopeTmp=null;permRender()">＋ 新增人員</button>')+'</div>';
@@ -1938,26 +1883,36 @@ function extPanelHtml(){
       +'<div style="margin-top:6px;font-size:12px"><b style="color:#553c9a">可看廠區：</b>'+chips+'</div>'
       +'<div style="margin-top:8px"><button style="padding:6px 14px;font-size:12px" onclick="extSave()">'+(isNew?'建立帳號並加入名單':'儲存')+'</button> '
       +'<button class="sec" style="padding:6px 12px;font-size:12px" onclick="window._extEdit=null;window._extScopeTmp=null;permRender()">取消</button>'
+      +(isNew?'':('<span style="display:inline-block;width:18px"></span>'   /* V129-84-3：這三顆原本在名單列上 */
+        +'<button class="sec" style="padding:6px 12px;font-size:12px" onclick="permResetPwd(\''+facEsc(cur.email)+'\',\''+facEsc(cur.name||'')+'\')">🔑 重設密碼</button> '
+        +'<button class="sec" style="padding:6px 12px;font-size:12px" onclick="extToggle(\''+facEsc(cur.email)+'\','+(cur.active===false?'true':'false')+')">'+(cur.active===false?'啟用':'停用')+'</button> '
+        +'<button class="sec" style="padding:6px 12px;font-size:12px;color:#c0392b" onclick="extRevoke(\''+facEsc(cur.email)+'\',\''+facEsc(cur.name||'')+'\')">移出名單</button>'))
       +(isNew?'<span style="font-size:11.5px;color:var(--g);margin-left:10px">系統自動判斷：Email 已有帳號＝只加入名單（密碼沿用）／全新＝建帳號（初始密碼由 DTO 告知，建立時會請您輸入；首次登入須改）</span>':'')+'</div></div>';
   }
-  if(E.length){
-    s+='<table style="font-size:12.5px;width:auto;margin-top:8px"><thead><tr><th style="text-align:left;padding:5px 10px">姓名</th><th style="text-align:left;padding:5px 10px">單位</th><th style="text-align:left;padding:5px 10px">Email 帳號</th><th style="text-align:left;padding:5px 10px">可看廠區</th><th style="text-align:left;padding:5px 10px">到期</th><th style="text-align:left;padding:5px 10px">狀態</th><th style="text-align:left;padding:5px 10px">來源</th><th></th></tr></thead><tbody>';
-    E.slice().sort((a,b)=>String(a.name).localeCompare(String(b.name),'zh-Hant')).forEach(x=>{
-      const ok=extValid(x); const st=x.active===false?'<span style="color:#c0392b">停用</span>':(ok?'<span style="color:#2f855a">啟用</span>':'<span style="color:#b7791f">已到期</span>');
-      const scope=(x.scope&&x.scope.length===1&&x.scope[0]==='*')?'全部廠區':(x.scope||[]).join(', ');
-      s+='<tr><td style="text-align:left;padding:4px 10px;white-space:nowrap"><b>'+facEsc(x.name||'')+'</b></td><td style="text-align:left;padding:4px 10px;white-space:nowrap">'+facEsc(x.org||'')+'</td>'
-        +'<td style="text-align:left;padding:4px 10px;font-size:11.5px;color:var(--g);white-space:nowrap">'+facEsc(x.email)+'</td>'
-        +'<td style="text-align:left;padding:4px 10px;white-space:nowrap">'+facEsc(scope)+'</td><td style="text-align:left;padding:4px 10px;white-space:nowrap">'+facEsc(x.expires_at||'不限')+'</td>'
-        +'<td style="text-align:left;padding:4px 10px;white-space:nowrap">'+st+'</td><td style="text-align:left;padding:4px 10px;white-space:nowrap"><span style="font-size:11px;background:#ede9fe;color:#553c9a;border-radius:8px;padding:1px 7px">GHG 自建</span></td>'
-        +'<td style="text-align:left;padding:4px 10px;white-space:nowrap;font-size:11.5px">'
-        +'<a href="javascript:void(0)" onclick="window._extEdit={email:\''+facEsc(x.email)+'\'};window._extScopeTmp=null;permRender()" style="margin-right:8px">編輯</a>'
-        +'<a href="javascript:void(0)" onclick="permResetPwd(\''+facEsc(x.email)+'\',\''+facEsc(x.name||'')+'\')" style="margin-right:8px">🔑 重設密碼</a>'
-        +'<a href="javascript:void(0)" onclick="extToggle(\''+facEsc(x.email)+'\','+(x.active===false?'true':'false')+')" style="margin-right:8px">'+(x.active===false?'啟用':'停用')+'</a>'
-        +'<a href="javascript:void(0)" onclick="extRevoke(\''+facEsc(x.email)+'\',\''+facEsc(x.name||'')+'\')" style="color:#c0392b">移出名單</a></td></tr>';
-    });
-    s+='</tbody></table>';
-  } else if(!ed){ s+='<div style="font-size:12px;color:var(--g);margin-top:6px">尚無自建人員。外部查核期間按「＋ 新增人員」核發帳號，用完停用或設到期日。</div>'; }
-  return s+'</div>';
+  if(!E.length&&!ed){ s+='<div style="font-size:12px;color:var(--g);margin-top:6px">尚無自建人員。外部查核期間按「＋ 新增人員」核發帳號，用完停用或設到期日。</div>'; }
+  s+='</td></tr>';
+  const nil='<span style="color:#bbb">─</span>', cap=ROLECAP.view||{};
+  const dot=v=>v?'<span style="color:#2f855a;font-weight:700">✓</span>':nil;
+  const pills=Object.keys(GHGROLES).map(k=>{ const on=(k==='view');
+    return '<span title="自建名單（外部查核）角色固定「查看」唯讀" style="cursor:default;'+(on?'':'opacity:.35;')+'display:inline-block;white-space:nowrap;min-width:48px;text-align:center;padding:1px 6px;margin:1px 2px;border-radius:12px;font-size:11.5px;font-weight:600;border:1.5px solid '+PERMCOLOR[k]+';'+(on?('background:'+PERMCOLOR[k]+';color:#fff'):('background:#fff;color:'+PERMCOLOR[k]))+'">'+GHGROLES[k].n+'</span>'; }).join('');
+  E.slice().sort((a,b)=>String(a.name).localeCompare(String(b.name),'zh-Hant')).forEach(x=>{
+    const ok=extValid(x); const st=x.active===false?'<span style="color:#c0392b">停用</span>':(ok?'<span style="color:#2f855a">啟用</span>':'<span style="color:#b7791f">已到期</span>');
+    const scope=(x.scope&&x.scope.length===1&&x.scope[0]==='*')?'全部廠區':(x.scope||[]).join(', ');
+    s+='<tr class="extrow" style="background:#fcfaff">'
+      +'<td style="padding:4px 10px"><span style="font-size:11px;background:#ede9fe;color:#553c9a;border-radius:8px;padding:1px 7px;white-space:nowrap" title="GHG 自建名單（外部查核人員／顧問·OMS 名單沒有的人）">自建</span></td>'
+      +'<td style="text-align:left;padding:4px 10px">'+nil+'</td>'
+      +'<td style="text-align:left;padding:4px 10px;white-space:nowrap"><b>'+facEsc(x.name||'')+'</b></td>'
+      +'<td style="text-align:left;padding:4px 8px;white-space:nowrap;max-width:90px;overflow:hidden;text-overflow:ellipsis" title="單位：'+facEsc(x.org||'')+'">'+facEsc(x.org||'')+'</td>'
+      +'<td style="text-align:left;padding:4px 8px">'+nil+'</td>'
+      +'<td class="pemail" style="text-align:left;padding:4px 8px;font-size:11px;color:var(--g);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+facEsc(x.email)+'">'+facEsc(x.email)+'</td>'
+      +'<td style="text-align:left;padding:4px 6px">'+st+'</td>'
+      +'<td style="text-align:left;white-space:normal;padding:4px 6px">'+pills+'</td>'
+      +'<td style="text-align:left;white-space:nowrap;padding:4px 6px"><b>'+facEsc(scope)+'</b></td>'
+      +'<td>'+dot(cap.e)+'</td><td>'+dot(cap.f)+'</td><td>'+dot(cap.a)+'</td><td>'+dot(cap.p)+'</td>'
+      +'<td style="text-align:left;font-size:11px;color:var(--g);padding:4px 10px">到期 '+facEsc(x.expires_at||'不限')+'</td>'
+      +'<td style="text-align:left;font-size:11.5px;padding:4px 6px" colspan="'+Math.max(1,(n||15)-14)+'"><a href="javascript:void(0)" onclick="window._extEdit={email:\''+facEsc(x.email)+'\'};window._extScopeTmp=null;permRender()" title="編輯；重設密碼、停用、移出名單也在編輯表單裡">編輯</a></td></tr>';
+  });
+  return s;
 }
 function extScopeToggle(code){
   let sc=(window._extScopeTmp||['*']).slice();
@@ -2147,7 +2102,7 @@ function permRender(){
     +'<span style="font-size:12px;color:var(--g)">① OMS 名單：已勾 GHG <b>'+D.ppl.length+'</b> 人｜已指派 <b>'+Object.keys(D.roles).length+'</b> 人　·　② 自建名單見下方</span>'
     +'<button class="sec" onclick="permExport()" title="把畫面上這份名單（照現在的廠區篩選、搜尋與排序）下載成 Excel" style="margin-left:auto;padding:4px 12px;font-size:12px;white-space:nowrap">📥 匯出名單</button></div>';   /* V124-1 */
   head+=permOrphHtml();   // V107-1
-  let hh=head+'<div class="permwrap"><table style="font-size:12.5px;width:100%;table-layout:auto"><thead><tr>'+permTh('廠區','site','padding:6px 10px')+permTh('工號','emp','text-align:left;padding:6px 10px')+permTh('姓名','name','text-align:left;padding:6px 10px')+permTh('部門','dept','text-align:left;padding:6px 10px')+permTh('職稱','title','text-align:left;padding:6px 10px')+permTh('Email 帳號','email','text-align:left;padding:6px 10px')+((curGhgUser&&curGhgUser.role==='admin')?permTh('登入','acct','text-align:left;padding:6px 10px'):'')+permTh('Role 角色（點選即指派）','role','text-align:left;padding:6px 10px')+permTh('廠區權限','scope','text-align:left;padding:6px 10px')+'<th style="padding:6px 6px;white-space:normal;line-height:1.2">輸入<br>修改</th><th style="padding:6px 6px;white-space:normal;line-height:1.2">係數庫<br>維護</th><th style="padding:6px 6px;white-space:normal;line-height:1.2" title="可以在資料登錄頁按「✓ 確認」「↩ 退回」，在審核進度頁按「↩ 整廠退回」">審核<br>通過／退回</th><th style="padding:6px 6px;white-space:normal;line-height:1.2">權限<br>設定</th>'+permTh('指派記錄','upd','text-align:left;padding:6px 10px')+'<th></th></tr></thead><tbody>';   // V48-1b:width:auto=欄寬夠用右側留白(使用者7/15:別填滿整頁造成欄距過大);工號獨立欄靠左
+  let hh=head+'<div class="permwrap"><table class="permt" style="font-size:12.5px;width:100%;table-layout:auto"><thead><tr>'+permTh('廠區','site','padding:6px 10px')+permTh('工號','emp','text-align:left;padding:6px 10px')+permTh('姓名','name','text-align:left;padding:6px 10px')+permTh('部門','dept','text-align:left;padding:6px 10px')+permTh('職稱','title','text-align:left;padding:6px 10px')+permTh('Email 帳號','email','text-align:left;padding:6px 10px')+((curGhgUser&&curGhgUser.role==='admin')?permTh('登入','acct','text-align:left;padding:6px 10px'):'')+permTh('Role 角色（點選即指派）','role','text-align:left;padding:6px 10px')+permTh('廠區權限','scope','text-align:left;padding:6px 10px')+'<th style="padding:6px 6px;white-space:normal;line-height:1.2">輸入<br>修改</th><th style="padding:6px 6px;white-space:normal;line-height:1.2">係數庫<br>維護</th><th style="padding:6px 6px;white-space:normal;line-height:1.2" title="可以在資料登錄頁按「✓ 確認」「↩ 退回」，在審核進度頁按「↩ 整廠退回」">審核<br>通過／退回</th><th style="padding:6px 6px;white-space:normal;line-height:1.2">權限<br>設定</th>'+permTh('指派記錄','upd','text-align:left;padding:6px 10px')+'<th></th></tr></thead><tbody>';   // V48-1b:width:auto=欄寬夠用右側留白(使用者7/15:別填滿整頁造成欄距過大);工號獨立欄靠左
   list.forEach(p=>{const r=D.roles[p.emp_id]||null; const rk=r?r.role:'';
     const cap=rk?ROLECAP[rk]:null;
     const pills=Object.keys(GHGROLES).map(k=>{const on=(rk===k);
@@ -2161,7 +2116,7 @@ function permRender(){
       +'<td style="text-align:left;padding:4px 10px;white-space:nowrap"><b>'+facEsc(p.name||'')+'</b></td>'
       +'<td style="text-align:left;padding:4px 8px;white-space:nowrap;max-width:90px;overflow:hidden;text-overflow:ellipsis" title="'+facEsc(p.dept||'')+'">'+facEsc(p.dept||'')+'</td>'
       +'<td style="text-align:left;padding:4px 8px;white-space:nowrap;max-width:64px;overflow:hidden;text-overflow:ellipsis" title="'+facEsc(p.title||'')+'">'+facEsc(p.title||'')+'</td>'
-      +'<td style="text-align:left;padding:4px 8px;font-size:11px;color:var(--g);white-space:nowrap;max-width:110px;overflow:hidden;text-overflow:ellipsis" title="'+facEsc(p.email||'')+'">'+facEsc(p.email||'—')+'</td>'
+      +'<td class="pemail" style="text-align:left;padding:4px 8px;font-size:11px;color:var(--g);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+facEsc(p.email||'')+'">'+facEsc(p.email||'—')+'</td>'
       +((curGhgUser&&curGhgUser.role==='admin')?('<td style="text-align:left;white-space:normal;line-height:1.6;padding:4px 6px">'+permAcctCell(p)+'</td>'):'')
       +'<td style="text-align:left;white-space:normal;padding:4px 6px">'+pills+'</td>'
       +'<td style="text-align:left;white-space:nowrap;padding:4px 6px">'+scopeCell+'</td>'
@@ -2178,8 +2133,7 @@ function permRender(){
         +'<span onclick="window._permScopeEdit=null;permRender()" style="cursor:pointer;display:inline-block;padding:2px 12px;margin:2px 3px 2px 10px;border-radius:10px;font-size:11.5px;background:var(--d);color:#fff;font-weight:700">✔ 完成</span>'
         +'<span style="font-size:11px;color:var(--g);margin-left:8px">點選切換即存；「全部廠區」選定自動收合；多選完按 ✔ 完成（或再點 ✎）</span></td></tr>';
     }});
-  hh+='</tbody></table></div>';
-  hh+=extPanelHtml();   // V56:自建名單(外部查核)
+  hh+='</tbody>'+((curGhgUser&&curGhgUser.role==='admin')?('<tbody>'+extPanelHtml(15)+'</tbody>'):'')+'</table></div>';   // V56:自建名單(外部查核)；V129-84-2：接在同一張表、欄位對齊上方
   hh+=sitePanelHtml();   // V129-79：廠區設定（⇅ 調整順序）
   box.innerHTML=hh;
 }
@@ -4299,7 +4253,7 @@ function svcRowCode(r,cat,usdHint){   /* 明細列 → {code,f,fy,how}；係數 
   if(svcUnitCur(r&&r.quantity_unit)===null)return {none:true,unit:true};   /* 單位不是貨幣（例 m3）＝不是金額法的資料，有記係數也不認 */
   const y=+(r&&r.data_year)||0; const decl=!!(typeof YLOCKS!=='undefined'&&YLOCKS&&YLOCKS._declMax&&y<=YLOCKS._declMax);   /* 同 svcDecl（那支在別的程式區塊，這裡讀不到） */ const E=svcEfOf(r,usdHint); const ef=(E&&E.v!=null)?E.v:null;
   const link=(r&&r.factor_id)?all.find(x=>x.factor_id===r.factor_id):null;
-  const hum=svcHum(r); if(decl&&link&&hum){ const fy0=svcEntry(link.esg_code,y,cat)||link; return {code:link.esg_code,f:fy0,fy:efF(fy0),how:'人工判定',ef:ef,hum:hum}; }   /* V129-71：人工判定決定歸哪一類；V129-71-1：數值照係數庫當年那一條 */
+  const hum=svcHum(r); if(decl&&link&&hum){ const fy0=svcEntry(link.esg_code,y,cat)||link; const hv=(ef!=null)?all.find(x=>x.esg_code===link.esg_code&&Math.round(svcVal(x)*1e8)===Math.round(ef*1e8)):null; return {code:link.esg_code,f:fy0,fy:hv?efF(hv):efF(fy0),how:'人工判定',ef:ef,hum:hum,humSame:!!hv}; }   /* V129-94：清冊係數＝同代號某年的值＝類別沒改、只是年版錯 → 照「清冊用 X 年版」（使用者 261102） */   /* V129-71：人工判定決定歸哪一類；V129-71-1：數值照係數庫當年那一條 */
   if(!decl&&link)return {code:link.esg_code,f:link,fy:efF(link),how:'連結'};
   if(ef!=null&&Math.abs(ef)<1e-12)return {zero:true,code:'0',how:'係數0'};
   const V=svcValHit(all,E,r,y); let N=null;
@@ -8861,8 +8815,8 @@ function svcRender(){
     const dl=(id,arr)=>'<datalist id="'+id+'">'+[...new Set(arr.map(s=>String(s||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'zh-Hant')).map(v=>'<option value="'+esc(v)+'">').join('')+'</datalist>';
     if(canEdit)h+=dl('svc_dl_nm',[...SHIST.names].concat([...SHIST.all])); if(canEdit&&C.catCol)h+=dl('svc_dl_cat',(C.cats||[]))   /* V119-8：只列標準類別（原本連全集團歷年寫過的字都倒出來：機械設備／機器設備並列、還有整台機器名稱） */;   /* V92：資本財項目候選 */   /* 輸入候選：本廠＋他廠用過的項目名稱 */
     if(canEdit)h+=dl('svc_dl_code',['不計入（係數 0）'].concat(lib.map(x=>x.zh+(x.enc&&x.enc!==x.zh?'｜'+x.enc:''))));   /* V129-71：類別欄打中文或英文找 */
-    const W=C.catCol?(decl?[4,21,19,9,9,7,8,9,14]:[4,25,16,10,9,7,8,10,9,2]):(decl?[4,25,23,10,10,7,8,13]:[4,27,20,11,10,7,8,11,2]);   /* V129-68：已申報年度拿掉 ② 欄 */   /* V119-9：類別搬到第一欄 */   /* V92：C02 多一欄資本財項目；序號欄 4%（已申報年度常超過 100 列） */   /* 欄寬百分比；表頭可換行（窄畫面「支付金額（台幣，未稅）」不壓到隔壁欄） */
-    h+='<style>#s101wrap table.svct thead th{white-space:normal;line-height:1.25;vertical-align:bottom}#s101wrap table.svct .nclamp{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.35}#s101wrap select[data-f="code"] option{color:#000}#s101wrap select[data-f="code"] option[value=""]{color:#a33}</style><table class="svct" style="width:100%;table-layout:fixed"><colgroup>'+W.map(w=>'<col style="width:'+w+'%">').join('')+'</colgroup><thead><tr class="cols" style="background:#fafcfb"><th class="tl">#</th><th class="tl" title="這一列屬於係數庫 '+esc(C.codeP)+' 的哪一種（中英對照）；選了，係數就帶出來">'+esc(C.thing)+'類別<br><span class="fmini" style="font-weight:400">'+(decl?'（對應係數庫 '+esc(C.codeP)+'）':'（係數庫 '+esc(C.codeP)+'，選了就帶出係數）')+'</span></th><th class="tl">'+esc(C.noun)+'</th><th class="R">'+esc(C.amtLabel||'支付金額')+'<br><span class="fmini" style="font-weight:400">（'+esc(curZh)+'，未稅）</span></th><th class="R">美金＊</th><th class="R sep">kgCO₂e<br>/美金＊</th>'
+    const W=C.catCol?(decl?[4,12,15,16,9,9,7,8,9,11]:[4,16,13,14,10,9,7,8,10,7,2]):(decl?[4,14,17,19,10,10,7,8,11]:[4,18,14,16,11,10,7,8,10,2]);   /* V129-84-3：類別拆中文／英文兩欄 */   /* V129-68：已申報年度拿掉 ② 欄 */   /* V119-9：類別搬到第一欄 */   /* V92：C02 多一欄資本財項目；序號欄 4%（已申報年度常超過 100 列） */   /* 欄寬百分比；表頭可換行（窄畫面「支付金額（台幣，未稅）」不壓到隔壁欄） */
+    h+='<style>#s101wrap table.svct thead th{white-space:normal;line-height:1.25;vertical-align:bottom}#s101wrap table.svct .svc1,#s101wrap table.svct td.svcen,#s101wrap table.svct td.svc1l{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#s101wrap table.svct .nclamp{display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;line-height:1.35}#s101wrap select[data-f="code"] option{color:#000}#s101wrap select[data-f="code"] option[value=""]{color:#a33}</style><table class="svct" style="width:100%;table-layout:fixed"><colgroup>'+W.map(w=>'<col style="width:'+w+'%">').join('')+'</colgroup><thead><tr class="cols" style="background:#fafcfb"><th class="tl">#</th><th class="tl" title="這一列屬於係數庫 '+esc(C.codeP)+' 的哪一種（中英對照）；選了，係數就帶出來">'+esc(C.thing)+'類別<br><span class="fmini" style="font-weight:400">'+(decl?'（對應係數庫 '+esc(C.codeP)+'）':'（係數庫 '+esc(C.codeP)+'，選了就帶出係數）')+'</span></th><th class="tl" title="係數庫的英文品名">英文<br><span class="fmini" style="font-weight:400">English</span></th><th class="tl">'+esc(C.noun)+'</th><th class="R">'+esc(C.amtLabel||'支付金額')+'<br><span class="fmini" style="font-weight:400">（'+esc(curZh)+'，未稅）</span></th><th class="R">美金＊</th><th class="R sep" title="係數庫該年版的係數（kgCO₂e／美金）">係數＊<br><span class="fmini" style="font-weight:400">kgCO₂e／美金</span></th>'
       +(decl?'<th class="R" title="原始輸入 × 系統匯率表 × 係數庫 '+Y+' 年版；算不出的列照存的數">系統算 t＊</th>':'<th class="R">碳排 t＊</th>')
       +(C.catCol?'<th class="tl" title="帳上的類別（ESG 收集表的「資本財項目」欄，例：機器設備、辦公設備）。選填，只是分類用，不影響係數">'+esc(C.catLabel)+(C.catSub&&!decl?'<br><span class="fmini" style="font-weight:400">（'+esc(C.catSub)+'）</span>':'')+'</th>':'')+'<th class="tl">備註</th>'+(decl?'':'<th></th>')+'</tr></thead><tbody>';
     const chgOf=r=>{const o0=SORIG[r.record_id]?JSON.parse(SORIG[r.record_id]):null,n0=spick(r); return f=>r._new||(!!o0&&String(o0[f])!==String(n0[f]));};
@@ -8881,7 +8835,7 @@ function svcRender(){
         const noneTxt=m.unit?'<span style="color:#a33" title="這一列的單位不是金額，不是金額法的資料">⚠ 單位 '+esc(r.quantity_unit||'')+'，不是金額</span>':(m.noamt?'<span style="color:#a33" title="清冊這一列只有碳排，沒有記金額">⚠ 沒有金額</span>':'<span style="color:#a33" title="'+esc('品名「'+String((r.extra||{})['Commodity(收集表)']||(r.extra||{})['Commodity']||(r.extra||{})['微類']||'（沒記品名）')+'」'+(m.enzh?'英文品名對到 '+m.enzh[0]+'、中文翻譯對到 '+m.enzh[1]+'，兩欄不一致：待判斷（判定後記在明細，照判定算）':m.nameAmb?'對到多個代號（'+m.nameAmb.join('、')+'）':(m.noYear?'只有別年條目（'+m.noYear.join('、')+'）':'對不到條目'))+'；清冊係數 '+(m.ef!=null?g6(m.ef):'—')+' 係數庫也沒有')+'">⚠ 認不出（待 ESG）'+(m.ef!=null?'（清冊 '+g6(m.ef)+'）':'')+'</span>');
         const efR0=(()=>{ const E=svcEfOf(r,svcHint(r)); return (E&&E.v!=null)?E.v:0; })(); const miss0=!!(r.extra||{})['清冊沒有這一列']; const who0=miss0?'收集表':'清冊';   /* V99-8：清冊沒有這一列的係數是收集表填的 */ const nmRaw=String((r.extra||{})['Commodity(收集表)']||(r.extra||{})['Commodity']||(r.extra||{})['微類']||''); const nameTxt=(m.byName&&m.efDiff&&(m.valNone||m.valCode!==m.code))?'<div class="fmini" style="color:#b8860b" title="'+esc('依明細品名「'+nmRaw+'」認品項；'+who0+'係數 '+g6(m.ef)+(m.valNone?' 在係數庫找不到':'＝'+m.valCode+' 的值')+'；① 系統算用係數庫 '+Y+' 年版')+'">'+who0+'係數 '+g6(m.ef)+(m.valNone?'（係數庫沒有）':'＝'+esc(m.valCode)+' 的值')+'</div>':'';
         const ezTxt=m.enzh?'<div class="fmini" style="color:#8a6d00" title="收集表英文品名對到 '+esc(m.enzh[0])+'、中文翻譯對到 '+esc(m.enzh[1])+'，兩欄不一致；照清冊係數挑這一個">英中品名不一致（'+esc(m.enzh[0])+'／'+esc(m.enzh[1])+'）</div>':''; const valTxt=ezTxt+(m.byVal?'<div class="fmini" style="color:#8a6d00" title="明細沒有記品名（或品名對不到同年條目），只能用'+who0+'係數值推定品項">依'+who0+'係數推定</div>':''); const verTxt=nameTxt+valTxt+(((m.fy!=null&&m.fy!==Y)&&!(m.byName&&m.valNone))?'<div class="fmini" style="color:#b8860b" title="'+who0+'用的是 '+m.fy+' 年版（'+g6(efR0)+'）'+(miss0?'；這一項清冊沒有算':'')+'；① 系統算用 '+Y+' 年版">'+who0+'用 '+m.fy+' 年版 '+g6(efR0)+'</div>':'');
-        fcell='<td class="tl" style="white-space:normal;line-height:1.3">'+(code==='0'?zeroTxt:(code?('<div class="svc1" title="'+esc(fz||code)+(fen?'｜'+esc(fen):'')+'"><b style="font-weight:600">'+esc(fz||code)+'</b></div>'+(fen?'<div class="fmini" style="color:#7a8f84;overflow-wrap:anywhere">'+esc(fen)+'</div>':'')+(m.hum?'<div class="fmini" style="color:#14603F" title="'+esc(m.hum)+'">人工判定</div>':'')+verTxt):(m.none?noneTxt:'<span style="color:#a33">未選係數</span>')))+'</td>';
+        fcell='<td class="tl" style="white-space:normal;line-height:1.3">'+(code==='0'?zeroTxt:(code?('<div class="svc1" title="'+esc(fz||code)+(fen?'｜'+esc(fen):'')+'"><b style="font-weight:600">'+esc(fz||code)+'</b></div>'+((m.hum&&!m.humSame)?'<div class="fmini" style="color:#14603F" title="'+esc(m.hum)+'">人工判定</div>':'')   /* V129-94：只是年版錯的不標人工判定 */+verTxt):(m.none?noneTxt:'<span style="color:#a33">未選係數</span>')))+'</td>';
       }
       const amtCell=(canEdit&&!ret)?'<td class="edit'+(chg('amt')?' chgd':'')+'"><input data-rid="'+r.record_id+'" data-f="amt" value="'+(c.a.v==null?'':esc(+c.a.v))+'" placeholder="'+esc(curZh)+'金額" style="width:100%;min-width:0;box-sizing:border-box"></td>'
         :'<td title="'+esc(c.a.v==null?'沒有記當地幣金額（舊資料只有美金）':(c.a.cur+' '+c.a.v))+'">'+(c.a.v==null?'<span class="dash">—</span>':nf(c.a.v,Math.abs(c.a.v)>=1e7?0:2)+(c.a.cur!==cur?' <span class="fmini">'+esc(c.a.cur)+'</span>':''))+'</td>';
@@ -8892,16 +8846,16 @@ function svcRender(){
       const t2=+r.co2e_draft||0; const diff=decl&&c.t!=null&&Math.abs(c.t-t2)>=0.00005; if(diff)nD++;
       const why=decl?svcRowWhy(r,c):[]; const WN={miss:'清冊沒有這一列',fx:'匯率不同',r4:'清冊係數只取到幾位小數',none:'品項認不出、係數庫也找不到清冊係數',name:'清冊係數係數庫沒有（依品名重算）',oth:'清冊用了別品項的係數（依品名重算）',unit:'單位不是金額',noamt:'沒有金額',other:'其他'}; const whyTip=why.map(p=>(p.k.indexOf('ver:')===0?('清冊用 '+p.k.slice(4)+' 年版係數'):(WN[p.k]||p.k))+' '+(p.d>0?'+':'')+nf(p.d,4)+' t').join('；');
       h+='<tr'+(ret?' style="opacity:.45;text-decoration:line-through"':'')+'><td class="tl">'+(i+1)+(r._new?' <span style="color:#b8860b;font-size:10px">新</span>':'')+'</td>'
-        +fcell   /* V119-9：類別在第一欄 */
-        +((canEdit&&!ret)?'<td class="edit'+(chg('nm')?' chgd':'')+'"><input class="tl" data-rid="'+r.record_id+'" data-f="nm" value="'+esc(r.source_name||'')+'" placeholder="'+esc(C.ph)+'" list="svc_dl_nm" autocomplete="off" style="text-align:left;width:100%;min-width:0;box-sizing:border-box"></td>':'<td class="tl" style="white-space:normal;overflow-wrap:anywhere" title="'+esc(r.source_name||'')+'">'+esc(r.source_name||'')+((r.extra||{})['清冊沒有這一列']?'<div class="fmini" style="color:#b8860b" title="'+esc(r.extra['清冊沒有這一列'])+'">清冊沒有這一列</div>':'')+'</td>')
+        +fcell+'<td class="tl svcen" style="color:#5f7268;font-size:12px" title="'+esc(code&&code!=='0'?fen:'')+'">'+esc(code&&code!=='0'?fen:'')+'</td>'   /* V119-9：類別在第一欄；V129-84-3：英文另一欄 */
+        +((canEdit&&!ret)?'<td class="edit'+(chg('nm')?' chgd':'')+'"><input class="tl" data-rid="'+r.record_id+'" data-f="nm" value="'+esc(r.source_name||'')+'" placeholder="'+esc(C.ph)+'" list="svc_dl_nm" autocomplete="off" style="text-align:left;width:100%;min-width:0;box-sizing:border-box"></td>':'<td class="tl svc1l" title="'+esc(r.source_name||'')+'">'+esc(r.source_name||'')+((r.extra||{})['清冊沒有這一列']?'<div class="fmini" style="color:#b8860b" title="'+esc(r.extra['清冊沒有這一列'])+'">清冊沒有這一列</div>':'')+'</td>')
         +amtCell
         +'<td class="ro"'+usdTip+'>'+(c.usd==null?'<span class="dash">—</span>':nf(c.usd,2))+'</td>'
         +'<td class="ro sep" data-sv="ef">'+(c.ef==null?'<span class="dash">—</span>':fvA(c.f&&c.f.factor_id,nf(c.ef,10)))+'</td>'
         +(decl?'<td class="ro" data-sv="t"'+(diff?' title="'+esc('跟存的數 '+nf(t2,4)+' t 不同：'+whyTip)+'"':'')+'><b>'+nf(svcSys(r,c),4)+'</b>'+(c.t==null?'<div class="fmini" style="color:#7a8f84;font-weight:400" title="系統算不出（單位不是金額／沒有金額／品項認不出），照資料庫存的數">照存的數</div>':'')+'</td>':'<td class="ro" data-sv="t"><b>'+(c.t==null?'<span style="color:#c0392b" title="沒有金額、匯率或係數">—</span>':nf(c.t,4))+'</b></td>')
-        +(C.catCol?((canEdit&&!ret)?'<td class="edit'+(chg('cat')?' chgd':'')+'"><input class="tl" data-rid="'+r.record_id+'" data-f="cat" value="'+esc(r.attr1||'')+'" placeholder="例 機器設備" list="svc_dl_cat" autocomplete="off" style="text-align:left;width:100%;min-width:0;box-sizing:border-box"></td>':'<td class="tl" style="white-space:normal;overflow-wrap:anywhere;font-size:12px" title="'+esc(r.attr1||'')+'">'+esc(r.attr1||'')+'</td>'):'')   /* V92 */
+        +(C.catCol?((canEdit&&!ret)?'<td class="edit'+(chg('cat')?' chgd':'')+'"><input class="tl" data-rid="'+r.record_id+'" data-f="cat" value="'+esc(r.attr1||'')+'" placeholder="例 機器設備" list="svc_dl_cat" autocomplete="off" style="text-align:left;width:100%;min-width:0;box-sizing:border-box"></td>':'<td class="tl svc1l" style="font-size:12px" title="'+esc(r.attr1||'')+'">'+esc(r.attr1||'')+'</td>'):'')   /* V92 */
         +noteCell
         +(decl?'':'<td>'+(canEdit?'<a href="javascript:void(0)" onclick="svcDrop('+r.record_id+')" title="'+(r._new?'移除這列（尚未儲存）':(ret?'取消移除':'移除此列（已儲存的列不刪，改歸零留痕）'))+'" style="color:#a33;text-decoration:none;font-size:12px">'+(ret?'↶':'✕')+'</a>':'')+'</td>')+'</tr>'; });
-    h+='<tr class="tot"><td class="tl" colspan="3">合計　<span class="fmini" style="font-weight:400">'+rows.length+' 項'+(nNew?'（新 '+nNew+'）':'')+(nNoC&&!decl?'　<span style="color:#a33">未選係數 '+nNoC+' 項</span>':'')+'</span></td><td>'+(aOk?nf(TA,Math.abs(TA)>=1e7?0:2):'<span class="fmini" title="有幾列沒有記當地幣金額（舊資料只有美金）">—</span>')+'</td><td class="ro">'+nf(TU,2)+'</td><td class="ro sep"></td><td class="ro" data-sv="tt"><b>'+nf(T1,4)+'</b></td>'
+    h+='<tr class="tot"><td class="tl" colspan="4">合計　<span class="fmini" style="font-weight:400">'+rows.length+' 項'+(nNew?'（新 '+nNew+'）':'')+(nNoC&&!decl?'　<span style="color:#a33">未選係數 '+nNoC+' 項</span>':'')+'</span></td><td>'+(aOk?nf(TA,Math.abs(TA)>=1e7?0:2):'<span class="fmini" title="有幾列沒有記當地幣金額（舊資料只有美金）">—</span>')+'</td><td class="ro">'+nf(TU,2)+'</td><td class="ro sep"></td><td class="ro" data-sv="tt"><b>'+nf(T1,4)+'</b></td>'
       +(C.catCol?'<td></td>':'')+(decl?'<td></td>':'<td></td><td></td>')+'</tr></tbody></table>';
   }
   h+='<div class="s101legend">一列一個'+esc(C.noun)+'；當地幣 ÷ 匯率 ＝ 美金，美金 × 係數 ÷ 1000 ＝ 碳排 tCO₂e　｜　欄名＊、灰底＝系統算，白底＝要輸入'+(decl?'':'　｜　黃底＝尚未儲存的變更'+(C.legendX||''))+'</div>';
@@ -10958,11 +10912,11 @@ async function piiRest(path,opt){
   const base=SUPABASE_URL+'/rest/v1/'+path; const method=opt.method||'GET';
   const hd={apikey:SUPABASE_ANON_KEY,Authorization:'Bearer '+t,'Content-Type':'application/json'};
   if(method!=='GET'){ if(opt.prefer)hd.Prefer=opt.prefer;
-    const r=await catXFetch(base,{method:method,headers:hd,body:opt.body!=null?JSON.stringify(opt.body):undefined}); let d=null; try{d=await r.json();}catch(e){}
+    const r=await fetch(base,{method:method,headers:hd,body:opt.body!=null?JSON.stringify(opt.body):undefined}); let d=null; try{d=await r.json();}catch(e){}
     if(!r.ok)return {error:{message:(d&&(d.message||d.msg))||('HTTP '+r.status),code:d&&d.code},status:r.status};
     return {data:d,status:r.status}; }
   let all=[],from=0;
-  while(true){ const r=await catXFetch(base,{headers:Object.assign({},hd,{Range:from+'-'+(from+999)})}); let d=null; try{d=await r.json();}catch(e){}
+  while(true){ const r=await fetch(base,{headers:Object.assign({},hd,{Range:from+'-'+(from+999)})}); let d=null; try{d=await r.json();}catch(e){}
     if(!r.ok)return {error:{message:(d&&(d.message||d.msg))||('HTTP '+r.status),code:d&&d.code},status:r.status,data:all};
     all=all.concat(d||[]); if(!d||d.length<1000)break; from+=1000; }
   return {data:all};
@@ -13833,7 +13787,7 @@ const GHG_GUIDE={
   prep:['ESG 收集表對應那一頁（C1 採購商品-服務／C2 資本商品／C10 委外加工），或費用明細（項目、金額）'],
   start:['<b>匯入</b>：按「⬆ 匯入」，選 ESG 收集表那一頁；先預覽，<b>按「💾 儲存」才寫入</b>。','<b>逐筆</b>：按「＋ 新增項目」，一個項目一列。'],
   fields:[['類別（第一欄，對應係數庫）','先下拉選這個項目屬於係數庫裡的哪一種，選項是中英對照（服務例：清潔、保全、運輸服務；資本商品例：空氣和氣體壓縮機、電腦、汽車）。<b>選了，係數就自動帶出來</b>。ESG 不計的項目選「不計入」。'],['項目名稱','照收集表寫法填（例：保全費、廢棄物處理費、設備名稱）。類別空著時，以前填過同名的系統會先幫你選。'],['支付金額','填<b>未稅</b>、當地幣別；系統用匯率表換美金。'],
-          ['帳上類別（只有 C02 資本商品，選填）','照收集表「資本財項目」填帳上的類別（機器設備、辦公設備、模具設備…）。只是分類用，<b>不影響係數</b>。'],['灰底欄位不用填','美金＊、kgCO₂e/美金＊、碳排＊都是系統算的。']],
+          ['帳上類別（只有 C02 資本商品，選填）','照收集表「資本財項目」填帳上的類別（機器設備、辦公設備、模具設備…）。只是分類用，<b>不影響係數</b>。'],['灰底欄位不用填','美金＊、係數＊（kgCO₂e／美金）、碳排＊都是系統算的。']],
   err:['金額填成含稅。','同一筆費用在 C01-02 和 C08（租賃）各填一次。','影印機等設備租賃、叉車租賃、軟體授權／資安服務要填在 C01-02，不是 C08（ESG 261006）。']}
  ,'TRANS':{t:'運輸（C04 上游運輸、C09 下游運輸）',
   prep:['ESG 收集表 C4／C9 那一頁，或運輸明細：品名、重量、起訖地、各段運輸方式與公里數'],
