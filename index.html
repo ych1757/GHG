@@ -302,7 +302,7 @@ function facChg(on){ return '<span class="fchg'+(on?'':' off')+'">🟡</span>'; 
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-90</b> · 2026/11/02</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-91</b> · 2026/11/02</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -4562,6 +4562,13 @@ function facVehRender(code){
   /* V129-86：C04／C09 比照 C07（代號一塊、區域分列、年度當欄）；V129-71 統一車種對照表收在最下面（facVehRenderOld 裡） */
   return facVehRenderOld(code); }
 /* V129-87：台灣高鐵站間碳足跡（每人單程 kg）——商務旅行與員工通勤共用；資料庫 ghg_thsr_cf，讀不到用內建 114 年版 */
+/* V129-91：台灣高鐵各站里程（km，參考；不參與計算）——src：官方＝鐵道局 96938 車站資料里程；座標＝鐵道局 96938 車站座標對 96939 里程座標檔最近點；收集表＝陸合 2024 收集表各站距離表（官方未公布）；南港未查 */
+const THSR_KM={'南港':{km:null,src:'未查',note:'官方未公布；收集表寫 4.168，疑少負號（里程座標檔從 -7 km 起算）'},'台北':{km:6.0,src:'座標'},'板橋':{km:13.0,src:'座標'},'桃園':{km:42.3,src:'官方'},'新竹':{km:72.2,src:'官方'},
+  '苗栗':{km:104.9,src:'收集表'},'台中':{km:165.7,src:'官方'},'彰化':{km:193.9,src:'收集表'},'雲林':{km:218.5,src:'收集表'},'嘉義':{km:251.6,src:'官方'},'台南':{km:313.9,src:'官方'},'左營':{km:345.1,src:'座標'}};
+window.THSR_KM=THSR_KM;
+function thsrDist(a,b){ const x=THSR_KM[a], y=THSR_KM[b]; if(!x||!y||x.km==null||y.km==null)return null; return {km:+Math.abs(y.km-x.km).toFixed(1),est:x.src==='收集表'||y.src==='收集表'}; }
+/* 用官方／座標站的實際里程反算每公里公克（只用 100 km 以上的站對，減少小數四捨五入影響） */
+function thsrPerKm(v){ let kg=0,km=0; v.stations.forEach((a,i)=>v.stations.forEach((b,j)=>{ if(j<=i)return; const x=THSR_KM[a], y=THSR_KM[b]; if(!x||!y||x.km==null||y.km==null||x.src==='收集表'||y.src==='收集表')return; const d=Math.abs(y.km-x.km); if(d<100)return; kg+=+v.matrix[i][j]; km+=d; })); return km?kg/km*1000:null; }
 function facThsrPanel(code){   /* V129-88：年版切換（109／114…），預設現行 */
   const V=(window.THSR_VERS&&window.THSR_VERS.length)?window.THSR_VERS:(window.THSR_CF&&THSR_CF.st?[{ver:'114',label:'台灣高鐵站間表 114 年版（網頁內建）',per_km_g:29,cert_no:'碳標字第2014910001-01號',valid_from:'2025-12-17',valid_to:'2027-12-16',stations:THSR_CF.st,matrix:THSR_CF.m}]:[]);
   if(!V.length)return ''; const sel=V.find(v=>v.ver===window._thsrVer)||V[0], S=sel.stations, M=sel.matrix;
@@ -4570,8 +4577,12 @@ function facThsrPanel(code){   /* V129-88：年版切換（109／114…），預
     +'<div style="margin:6px 0 4px">'+V.map(btn).join('')+'</div>'
     +'<div class="fmini" style="margin:2px 0 6px;line-height:1.6"><b>'+facEsc(sel.label||'')+'</b>：每人每公里 '+facEsc(sel.per_km_g)+' gCO₂e；'+facEsc(sel.cert_no||'')+'；有效 '+facEsc(sel.valid_from||'')+'～'+facEsc(sel.valid_to||'')+'；<b>系統啟用日 '+facEsc((window.thsrStart?thsrStart(sel):sel.valid_from)||'')+'</b>'+(sel.use_from&&sel.use_from!==sel.valid_from?'（特例）':'')+(sel.captured?'；'+facEsc(sel.captured):'')+(sel.note?'；'+facEsc(sel.note):'')+'。</div>'
     +'<div class="fmini" style="margin:0 0 6px;line-height:1.6;color:#4a5f55"><b>規則（使用者 261102 定）：照車票日期認版本（系統啟用日 ≤ 車票日期的最新一版）；114 年版因 2025 已盤查完、新版近年底發行，系統啟用日訂 2026-01-01（官方 2025-12-17 起），所以 2025 以前用 109 年版、2026 起用 114 年版；以後新版在年中發布，系統啟用日＝官方生效日</b>；系統算照規則，收集表、全集團明細、查證、申報都不動，算出來不同的在資料登錄頁寫差異原因。2022–2024 收集表用 109 年版（高鐵官網 2024-05-27 存檔逐格對過）；2025 收集表有些用了 114 年版。商務旅行（C06-R02·TW）與員工通勤（C07-R02·TW）共用。'+(code==='C07'?'員工通勤另有一條「高鐵碳足跡2020」每延人公里 0.032（＝109 年版每公里值；台北總公司 2023、2024 彙總用）。':'')+'</div>'
+    +(()=>{ const pk=thsrPerKm(sel);   /* V129-91 */
+      return '<div class="fmini" style="margin:0 0 6px;line-height:1.7;color:#1f4e79"><b>各站里程（km，參考；碳排不用里程算）</b>：'+S.map(s=>{ const x=THSR_KM[s]||{km:null,src:'未查'}; return facEsc(s)+' '+(x.km==null?'<span style="color:#a33" title="'+facEsc(x.note||'官方未公布')+'">未查</span>':(x.src==='收集表'?'<span style="color:#b8860b" title="收集表值，官方未公布">'+x.km.toFixed(1)+'＊</span>':x.km.toFixed(1))); }).join('、')
+        +'<br>里程出處：桃園、新竹、台中、嘉義、台南＝鐵道局「高鐵車站資料」官方里程；台北、板橋、左營＝鐵道局官方車站座標對「高鐵沿線里程座標」檔推得（±0.1 km）；<span style="color:#b8860b">＊苗栗、彰化、雲林＝收集表值·官方未公布</span>；南港官方未公布（收集表 4.168 疑少負號），未查。'
+        +(pk!=null?'<br>用實際里程反算：這一版每人每公里約 <b>'+pk.toFixed(1)+' g</b>（官網公告 '+facEsc(sel.per_km_g)+' g，只公布到整數）；所以站間表的公斤數不能用「公里 × '+facEsc(sel.per_km_g)+' g」反推里程。':'')+'</div>'; })()
     +'<div style="overflow-x:auto"><table style="border-collapse:collapse;font-size:11.5px;width:100%;table-layout:fixed"><tr><th style="padding:3px 4px;background:#eef5f1;text-align:left">起＼迄</th>'+S.map(s=>'<th style="padding:3px 2px;background:#eef5f1">'+facEsc(s)+'</th>').join('')+'</tr>';
-  S.forEach((a,i)=>{ h+='<tr><th style="padding:3px 4px;background:#eef5f1;text-align:left">'+facEsc(a)+'</th>'+S.map((b,j)=>{ const HL=window._thsrHL, on=i!==j&&HL&&((a===HL[0]&&b===HL[1])||(a===HL[1]&&b===HL[0])); return '<td'+(on&&a===HL[0]?' id="thsr_hl"':'')+' style="padding:3px 2px;text-align:right;border-bottom:1px solid #e3ece7;'+(i===j?'background:#f3f6f4;color:#bbb':'')+(on?'background:#ffe58f;font-weight:800;outline:2px solid #d9a400':'')+'">'+(i===j?'—':String(M[i][j]))+'</td>'; }).join('')+'</tr>'; });
+  S.forEach((a,i)=>{ h+='<tr><th style="padding:3px 4px;background:#eef5f1;text-align:left">'+facEsc(a)+'</th>'+S.map((b,j)=>{ const HL=window._thsrHL, on=i!==j&&HL&&((a===HL[0]&&b===HL[1])||(a===HL[1]&&b===HL[0])), dd=i!==j?thsrDist(a,b):null; return '<td'+(on&&a===HL[0]?' id="thsr_hl"':'')+(i!==j?' title="'+facEsc(a+'↔'+b+'：'+(dd?'約 '+dd.km.toFixed(1)+' km'+(dd.est?'（含收集表里程）':''):'里程未查（南港官方未公布）')+'；官網值 '+M[i][j]+' kg（每人單程，查表值，不是公里 × 每公里公克）')+'"':'')+' style="padding:3px 2px;text-align:right;border-bottom:1px solid #e3ece7;'+(i===j?'background:#f3f6f4;color:#bbb':'')+(on?'background:#ffe58f;font-weight:800;outline:2px solid #d9a400':'')+'">'+(i===j?'—':String(M[i][j]))+'</td>'; }).join('')+'</tr>'; });
   return h+'</table></div></div>'; }
 window.facThsrSetVer=function(v,code){ window._thsrVer=v; const el=document.getElementById('thsr_panel'); if(el)el.outerHTML=facThsrPanel(code); };
 function facVehRenderOld(code){   /* V103-7 交通工具型；V103-11 泛化成中分類型（C04／C08／C09／C15 用 facMidOf 的細碼） */
@@ -10383,20 +10394,25 @@ function btThsrInfoRow(){ const I=btThsrYearInfo(); if(!I)return ''; const v=I.v
     +(I.nOth?'<span style="color:#b8860b">本年收集表有 '+I.nOth+' 趟的每趟公斤數不是這一版（'+Object.entries(I.oth).map(([k,n])=>btesc(k)+' '+n+' 趟').join('、')+'），系統照規則算，差額列在上方差異原因。</span>':'')
     +'</td></tr>'; }
 /* V129-90：台灣高鐵每趟公斤數的點擊（同 fvA：點一下看出處、點兩下跳係數庫站對站表那一格） */
-function thsrA(ver,o,d,y,t){ const q=s=>String(s==null?'':s).replace(/['"<>&\\]/g,''); if(!ver||!o||!d)return t;
-  return '<span class="fva" onclick="event.stopPropagation();thsrShow(this,&#39;'+q(ver)+'&#39;,&#39;'+q(o)+'&#39;,&#39;'+q(d)+'&#39;,&#39;'+q(y)+'&#39;)" ondblclick="event.stopPropagation();thsrGo(&#39;'+q(ver)+'&#39;,&#39;'+q(o)+'&#39;,&#39;'+q(d)+'&#39;)" title="點一下看出處；點兩下跳到係數庫站對站表這一格" style="cursor:pointer;text-decoration:underline dotted;text-underline-offset:2px">'+t+'</span>'; }
-window.thsrShow=function(el,ver,o,d,y){ let p=document.getElementById('fvpop'); if(!p){ p=document.createElement('div'); p.id='fvpop'; document.body.appendChild(p);
+function thsrA(ver,o,d,y,t,cat){ cat=cat==='C07'?'C07':'C06'; const q=s=>String(s==null?'':s).replace(/['"<>&\\]/g,''); if(!ver||!o||!d)return t;
+  return '<span class="fva" onclick="event.stopPropagation();thsrShow(this,&#39;'+q(ver)+'&#39;,&#39;'+q(o)+'&#39;,&#39;'+q(d)+'&#39;,&#39;'+q(y)+'&#39;,&#39;'+cat+'&#39;)" ondblclick="event.stopPropagation();thsrGo(&#39;'+q(ver)+'&#39;,&#39;'+q(o)+'&#39;,&#39;'+q(d)+'&#39;,&#39;'+cat+'&#39;)" title="點一下看出處；點兩下跳到係數庫站對站表這一格" style="cursor:pointer;text-decoration:underline dotted;text-underline-offset:2px">'+t+'</span>'; }
+window.thsrShow=function(el,ver,o,d,y,cat){ cat=cat==='C07'?'C07':'C06'; let p=document.getElementById('fvpop'); if(!p){ p=document.createElement('div'); p.id='fvpop'; document.body.appendChild(p);
     document.addEventListener('click',e=>{ if(!e.target.closest||!e.target.closest('.fva'))p.style.display='none'; }); window.addEventListener('scroll',()=>{ p.style.display='none'; },true); }
   const v=(window.THSR_VERS||[]).find(x=>x.ver===ver), kg=v?thsrKgV(v,o,d):null, r=el.getBoundingClientRect();
-  p.innerHTML='<div style="font-weight:700;color:#1f2d26">C06-R02·TW·'+facEsc(y)+'　台灣高鐵站對站碳足跡</div>'
+  p.innerHTML='<div style="font-weight:700;color:#1f2d26">'+cat+'-R02·TW·'+facEsc(y)+'　台灣高鐵站對站碳足跡</div>'
     +'<div style="color:#3f544a">'+facEsc(v?(v.label||('站間表 '+ver+' 年版')):('站間表 '+ver+' 年版'))+'：'+facEsc(o)+'↔'+facEsc(d)+' '+(kg==null?'—':facEsc(kg))+' kgCO₂e（每人單程）</div>'
     +(v?'<div style="color:#3f544a">每人每公里 '+facEsc(v.per_km_g)+' gCO₂e（官網公告值）；'+facEsc(v.cert_no||'')+'</div>':'')
     +'<div style="color:#8a6400;margin-top:2px">點兩下 → 跳到係數庫站對站表這一格</div>';
   p.style.cssText='position:fixed;z-index:9999;left:'+Math.max(4,Math.min(r.left,window.innerWidth-340))+'px;top:'+(r.bottom+4)+'px;max-width:330px;background:#fffbe6;border:1px solid #d9b64a;border-radius:8px;padding:6px 10px;font-size:12px;line-height:1.4;box-shadow:0 4px 14px rgba(0,0,0,.15);text-align:left;white-space:normal'; };
-window.thsrGo=async function(ver,o,d){ const p=document.getElementById('fvpop'); if(p)p.style.display='none';
+window.thsrGo=async function(ver,o,d,cat){ const p=document.getElementById('fvpop'); if(p)p.style.display='none';
   window._thsrVer=ver; window._thsrHL=[thsrSt(o),thsrSt(d)];
-  try{ FAC_TRACE=null; }catch(e){} window._facLoaded=true; document.querySelector('.tab[data-t="fac"]').click(); FAC_CUR='C06'; await facMode('src');
+  try{ FAC_TRACE=null; }catch(e){} window._facLoaded=true; document.querySelector('.tab[data-t="fac"]').click(); FAC_CUR=(cat==='C07'?'C07':'C06'); await facMode('src');
   for(let i=0;i<40;i++){ const c=document.getElementById('thsr_hl'); if(c){ c.scrollIntoView({block:'center'}); return; } await new Promise(r=>setTimeout(r,150)); } };
+/* V129-91：台灣高鐵延人公里（參考）＝站間里程 × 趟數；碳排照站間表每趟公斤數，不用這個數 */
+function btThsrPkm(r){ const e=bte(r), so=thsrSt(e['起點']), sd=thsrSt(e['終點']), n=+e['單趟來回']||1; const d=(so&&sd&&window.thsrDist)?thsrDist(so,sd):null; return d?{km:d.km,n:n,pkm:+(d.km*n).toFixed(1),est:d.est}:{miss:!!(so&&sd)}; }
+function btThsrPkmCell(r){ const p=btThsrPkm(r), tip='台灣高鐵碳排照站間表每趟公斤數 × 趟數算，不用延人公里；這一格＝站間里程 × 趟數，只是參考（不加進合計）。站間里程在 係數庫 → C06 商務旅行 → 台灣（TW）站對站表';
+  if(p.pkm==null)return '<span class="fmini" style="color:#7a8f84" title="'+btesc(tip+(p.miss?'；南港官方未公布里程':''))+'">'+(p.miss?'里程未查':'—')+'</span>';
+  return '<span style="color:#7a8f84" title="'+btesc(tip+(p.est?'；含收集表里程（苗栗／彰化／雲林官方未公布）':''))+'">'+btf(p.pkm,1)+(p.est?'＊':'')+'</span><div class="fmini" style="color:#a9b8b0;white-space:nowrap">'+btf(p.km,1)+' km × '+btf(p.n,0)+' 趟·參考</div>'; }
 function btHsrMoved(r){ if(String(r.equipment_name||'')!=='高鐵(台灣)'||r._new||String(r.input_method||'')==='登錄頁')return false; const e=bte(r); return !btHsrTW(e['起點'],e['終點'],r.site_id); }
 function btIsAgg(r){ return String(r.measurement_type||'')==='車種彙總'; }
 /* V129-85：C06 代號比照 C07（一種車一個代號、區域分列；使用者 261102）。內部一律用「新代號@區域」查係數。
@@ -10508,6 +10524,7 @@ function btflags(r){
   if(e['隱藏列'])out.push(['隱','#7a8f84','收集表這一列是被篩選隱藏的列（清冊有算，照收']);
   if(e['批187']&&/照舊保留/.test(String(e['批187'])))out.push(['舊','#1B8A60',e['批187']]);
   if(btHsrMoved(r))out.push(['原標台灣高鐵','#b8860b','收集表標在「高鐵(台灣)」，起訖站（'+String(e['起點']||'')+' → '+String(e['終點']||'')+'）不是台灣高鐵的站 → 依起訖站歸長途鐵路（C06-R02 高鐵／長途鐵路），系統照延人公里 × 係數庫該年值算；收集表當初也是用長途鐵路係數，資料庫原標不動']);   /* V129-89 */
+  if(btblk(r)==='高鐵(台灣)'&&(r._new||String(r.input_method||'')==='登錄頁')&&(String(e['起點']||'').trim()||String(e['終點']||'').trim())&&!btHsrTW(e['起點'],e['終點'],r.site_id||W6.site))out.push(['非台灣站','#a33','起訖站不是台灣高鐵 12 站；中國高鐵等請改在「鐵路(海外)」那一塊輸入（延人公里 × 長途鐵路係數）']);   /* V129-91 */
   if(String(r.input_method||'')==='登錄頁')out.push(['新','#1B8A60','本列由登錄頁輸入（非收集表匯入）']);
   return out;
 }
@@ -10598,7 +10615,7 @@ function btRender(){
     if(!op&&_hN){ h+=HDR; _hN=false; }   /* V129-3：收合的組，表頭放分組列上方（連續收合只放一次） */
       h+='<tr class="s101blk" style="background:#eef6f1;cursor:pointer" onclick="btToggle('+JSON.stringify(bk).replace(/"/g,'&quot;')+')">'
       +'<td class="tl" colspan="4"><b>'+(op?'▾ ':'▸ ')+btesc(bk)+'</b> <span class="fmini">'+trips.length+' 趟'+(aggs.length?'＋'+aggs.length+' 列車種彙總':'')+(()=>{ const n=trips.filter(btHsrMoved).length; return n?'<span style="color:#b8860b">（其中 '+n+' 趟收集表原標「高鐵(台灣)」，起訖站是台灣以外的站，改歸這裡）</span>':''; })()+(op?'':'（點開展開）')+'</span></td>'
-      +'<td class="tl" colspan="4">'+(bk==='高鐵(台灣)'?btThsrBlkTag():'')+(ed&&bk!=='照舊年筆'?'<a href="javascript:void(0)" onclick="event.stopPropagation();btAdd('+JSON.stringify(bk).replace(/"/g,'&quot;')+')" class="fmini">＋ 這一塊再加一趟</a>':'')+'</td></tr>'; if(op){ h+=(bk==='高鐵(台灣)'?btThsrInfoRow()+HDR.replace('kgCO2e/pkm','kgCO₂e/人·趟'):HDR); _hN=true; }   /* V129-3；V129-90 台灣高鐵加說明列、單位 */
+      +'<td class="tl" colspan="4">'+(bk==='高鐵(台灣)'?btThsrBlkTag():'')+(ed&&bk!=='照舊年筆'?'<a href="javascript:void(0)" onclick="event.stopPropagation();btAdd('+JSON.stringify(bk).replace(/"/g,'&quot;')+')" class="fmini">＋ 這一塊再加一趟</a>':'')+'</td></tr>'; if(op){ h+=(bk==='高鐵(台灣)'?btThsrInfoRow()+HDR.replace('kgCO2e/pkm','kgCO₂e/人·趟').replace('<th>延人公里</th>','<th>延人公里<br><span class="fmini" style="font-weight:400">站間里程 × 趟數·參考</span></th>'):HDR); _hN=true; }   /* V129-3；V129-90 台灣高鐵加說明列、單位 */
     if(BT_LAND[bk]){   /* V129-40-8：陸運照車種＋動力分組（油車／電車係數不同）；收合時也顯示各車種彙總列 */
       const vs=[], byV={}; const put=(r,k)=>{ const v=btVehNm(r); if(!byV[v]){ byV[v]={t:[],a:[]}; vs.push(v); } byV[v][k].push(r); };
       trips.forEach(r=>put(r,'t')); aggs.forEach(r=>put(r,'a'));
@@ -10609,7 +10626,7 @@ function btRender(){
     const bk2=v=>Number(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});   /* 延人公里小計／合計固定 2 位小數 */
     const efk=Object.keys(efs), bt='border-top:1px solid #cfdcd5';
     if(order.length>1&&trips.length+aggs.length>1)h+='<tr><td class="tl fmini" colspan="4" style="text-align:right;color:#4a5f55">小計　'+btesc(bk)+'　'+trips.length+' 趟'+(aggs.length?'＋'+aggs.length+' 列車種彙總':'')+'</td>'
-      +'<td class="R" style="'+bt+'"><b>'+(BKn?bk2(BK):'—')+'</b></td>'
+      +'<td class="R" style="'+bt+'"><b>'+(BKn?bk2(BK):(bk==='高鐵(台灣)'?(()=>{ let s=0,n=0; trips.forEach(r=>{ const p=btThsrPkm(r); if(p.pkm!=null){ s+=p.pkm; n++; } }); return n?'<span style="color:#7a8f84;font-weight:400" title="站間里程 × 趟數加總，只是參考，不加進合計">'+bk2(s)+'（參考）</span>':'—'; })():'—'))+'</b></td>'
       +'<td class="R fmini" style="'+bt+';color:#4a5f55" title="'+(efk.length>1?'這一塊有 '+efk.length+' 種係數（不同車種／區域），展開看各列':'')+'">'+(efk.length===1?btf(+efk[0],10):(efk.length>1?'（'+efk.length+' 種）':'—'))+'</td>'
       +'<td class="R" style="'+bt+'"><b>'+btf(BC,4)+'</b></td><td></td></tr>';   /* V106：小計放在這一塊最後（比照 V104-2）；V129-40-7：補延人公里／係數 */   /* V106：小計放在這一塊最後（比照 V104-2） */
   });
@@ -10640,7 +10657,7 @@ function btTr(r,bk,ed){
     +'<td class="tl">'+(canRow?tin('p',e['出差人員']||'','姓名'):who)+fl.map(btbadge).join('')+(ed&&entryCanDel(W6.site,W6.year)?entryDelX('btDelTg',r.record_id,r._del):'')+'</td>'
     +'<td class="tl fmini"><span class="cl2" title="'+btesc(route)+'">'+(canRow?(tin('o',o1,'起點')+'<span class="fmini">→</span>'+tin('t',o2,'終點')):btesc(route))+'</span></td>'
     +'<td class="tl fmini">'+(canRow&&bk==='高鐵(台灣)'&&window.THSR_CF&&THSR_CF.on?'<select data-k="'+btesc(r.record_id)+'" data-f="v" style="font-size:12px;width:100%"><option value="1">單程</option><option value="2"'+(+(bte(r)['單趟來回'])===2?' selected':'')+'>來回</option></select>'+(bte(r)['站間表']?'<div class="fmini" style="color:#1f4e79" title="'+btesc(bte(r)['站間表'])+'">站間表 '+btf(bte(r)['碳足跡KG'],0)+' kg</div>':''):(canRow&&land?btVehSel(r,veh):canRow&&!direct?tin('v',veh,'車種'):(canRow?tin('v',veh,'艙等'):(bk==='高鐵(台灣)'?(()=>{ const n=+e['單趟來回']||1; return '<span title="收集表「單趟來回」欄＝這一列算幾趟">'+(n===1?'單程 1 趟':'× '+btf(n,0)+' 趟')+'</span>'; })():btesc(veh)))))+'</td>'
-    +'<td class="R">'+(canRow?tin('q',c.pkm==null?'':c.pkm,'pkm',1):(c.pkm==null&&bk==='高鐵(台灣)'?'<span class="fmini" style="color:#7a8f84" title="台灣高鐵照站對站碳足跡算（每趟公斤數 × 趟數），不用延人公里">—</span>':c.pkm==null?(direct?'<span class="fmini" style="color:#7a8f84;cursor:help" title="'+btesc(bk==='高鐵(台灣)'?'高鐵收集表只填起訖站與單程／來回，碳排直接查高鐵碳足跡站距表，沒有公里數':'收集表這一趟沒填公里數；碳排是逐趟直接填的')+'">收集表沒填</span>':'—'):btf(c.pkm,1)))+'</td>'
+    +'<td class="R">'+(canRow?tin('q',c.pkm==null?'':c.pkm,'pkm',1):(c.pkm==null&&bk==='高鐵(台灣)'?btThsrPkmCell(r):c.pkm==null?(direct?'<span class="fmini" style="color:#7a8f84;cursor:help" title="'+btesc(bk==='高鐵(台灣)'?'高鐵收集表只填起訖站與單程／來回，碳排直接查高鐵碳足跡站距表，沒有公里數':'收集表這一趟沒填公里數；碳排是逐趟直接填的')+'">收集表沒填</span>':'—'):btf(c.pkm,1)))+'</td>'
     +(bk==='高鐵(台灣)'&&!canRow?(()=>{ const k=btThsrCalc(r);   /* V129-90 */
       if(!k.s){ const kg=k.kgC; return '<td class="R sysv" title="台灣高鐵站對站碳足跡：碳排＝每趟公斤數 × 趟數 ÷ 1000">'+'<span style="white-space:nowrap">'+(kg==null?'<span class="fmini" style="color:#7a8f84">逐趟直查</span>':btf(kg,2)+'<span class="fmini"> kg/趟</span>')+(window.thsrCmpTag?thsrCmpTag(kg,e['起點'],e['終點'],facY(W6.year)):'')+'</span>'+(kg!=null?'<div class="fmini" style="color:#7a8f84">收集表值（站間表查不到這兩站）</div>':'')+'</td>'; }
       const v=k.s.v, tip='每趟公斤數＝高鐵官網公布的站間碳足跡表直接查（'+(v.label||'')+'，'+(v.cert_no||'')+'，每人每公里 '+v.per_km_g+' g）'+k.so+'↔'+k.sd+' 這一格；官方直接公布每一對站的公斤數，不是公里數 × 每公里公克。'+(k.s.dt?'車票日期 '+k.s.dt:'車票日期讀不到，照 '+W6.year+'-01-01')+' 適用 '+v.ver+' 年版（照車票日期認版本；系統啟用日 '+thsrStart(v)+' 起）。整張表在 係數庫 → C06 商務旅行 → 台灣（TW）站對站表。';
@@ -10931,7 +10948,8 @@ async function cmLoadPii(){
 const CM_HSR='C07-R02';   /* V111-2：高鐵＝站間碳足跡 */
 const CM_THSR=['南港','台北','板橋','桃園','新竹','苗栗','台中','彰化','雲林','嘉義','台南','左營'];
 const CM_STN_TIP='高鐵照起訖站的站間碳足跡算：每趟公斤數 × 趟數（每天來回 2 趟 × 工作天數）÷ 1000；不用延人公里 × 係數（ESG 260930：高鐵一直以來都用各站間的碳排）';
-function cmStn(r){ const e=cme(r); const kg=cmn(e['每趟kg']); if(kg==null&&e['算法']!=='站間')return null;
+function cmStn(r){ const e=cme(r); let kg=cmn(e['每趟kg']); if(kg==null&&e['算法']!=='站間')return null;
+  { const vY=(e['起站']&&e['迄站']&&window.thsrVerForYear)?thsrVerForYear(facY(W7.year)):null, kY=vY?thsrKgV(vY,e['起站'],e['迄站']):null; if(kY!=null)kg=kY; }   /* V129-91：有起訖站＝照該年適用版本（員工通勤沒有車票日期） */
   const days=cmn(e['工作天數']); const tr=cmn(e['趟數'])!=null?cmn(e['趟數']):(days!=null?+(days*2).toFixed(6):null);
   return {kg:kg,tr:tr,co:(kg!=null&&tr!=null)?+(kg*tr/1000).toFixed(10):0}; }
 function cmStSum(rs){ const L=rs.map(cmStn).filter(Boolean); if(!L.length)return null;
@@ -11133,13 +11151,21 @@ function cmPiiCell(r,canRow){
     return '<div class="cl1"><b>'+cmesc(k.emp_no||'')+'</b>'+(k.person_name_mask?' ・ '+cmesc(k.person_name_mask):' ・ <span style="color:#a9b8b0" title="收集表沒有填姓名">○○○</span>')+'</div><div class="cl1 fmini">'+ar+' <span class="lock" title="詳細住址要授權才看得到">🔒</span></div>'; }
   return '<span class="lock">🔒</span>';
 }
+/* V129-91：員工通勤高鐵每趟公斤數——可點（點一下看出處、點兩下跳係數庫站對站表）；寫出哪一版；沒填起訖站時依公斤數推算的站對＋該年適用版本 */
+function cmThsrKgCell(r,st){ const e=cme(r), y=facY(W7.year), vY=window.thsrVerForYear?thsrVerForYear(y):null, so=thsrSt(e['起站']), sd=thsrSt(e['迄站']), kgC=cmn(e['每趟kg']);
+  if(so&&sd&&vY)return thsrA(vY.ver,so,sd,y,cmf(st.kg,0),'C07')+'<span class="fmini"> kg/趟</span><div class="fmini" style="color:#1f4e79;white-space:nowrap">站間表 '+cmesc(vY.ver)+' 年版</div>'+(kgC!=null&&Math.abs(kgC-st.kg)>=0.005?'<div class="fmini" style="color:#b8860b;white-space:nowrap">收集表 '+cmf(kgC,0)+'</div>':'');
+  const hit=[]; (window.THSR_VERS||[]).forEach(v=>v.stations.forEach((a,i)=>v.stations.forEach((b,j)=>{ if(j>i&&Math.abs(+v.matrix[i][j]-(+st.kg))<0.005)hit.push({v:v,a:a,b:b}); })));
+  if(hit.length===1){ const h=hit[0], x=vY?thsrKgV(vY,h.a,h.b):null;
+    return thsrA(h.v.ver,h.a,h.b,y,cmf(st.kg,0),'C07')+'<span class="fmini"> kg/趟</span><div class="fmini" style="color:#1f4e79;white-space:nowrap">＝'+cmesc(h.v.ver)+' 年版 '+cmesc(h.a)+'↔'+cmesc(h.b)+'（推算）</div>'
+      +(vY&&vY!==h.v&&x!=null?'<div class="fmini" style="color:#b8860b;white-space:nowrap" title="起訖站是依每趟公斤數推算的（收集表沒填），推算不能當根據，系統照收集表的每趟公斤數">'+y+' 適用 '+cmesc(vY.ver)+' 年版＝'+x+'·照收集表</div>':''); }
+  return cmf(st.kg,0)+'<span class="fmini"> kg/趟</span>'; }
 function cmStCells(r,canRow,st){   /* V111-2：高鐵站間：單程欄＝起站→迄站、來回欄＝每趟公斤數 */
   const e=cme(r), k=cmesc(r.record_id);
   const sel=(f,v,ph)=>'<select data-k="'+k+'" data-f="'+f+'" style="font-size:12px;width:100%;padding:0 2px"><option value="">'+ph+'</option>'+CM_THSR.map(x=>'<option'+(x===v?' selected':'')+'>'+x+'</option>').join('')+(v&&CM_THSR.indexOf(v)<0?'<option selected>'+cmesc(v)+'</option>':'')+'</select>';
   const P0=(!e['起站']&&!e['迄站']&&window.thsrPairs)?thsrPairs(cmn(e['每趟kg'])):[];   /* V129-87：沒填起訖站，依每趟 kg 在站間表只對到一組＝推算 */
   const od=(e['起站']||e['迄站'])?cmesc((e['起站']||'？')+' → '+(e['迄站']||'？')):(P0.length===1?'<span style="color:#1f4e79" title="'+cmesc((e['起訖站說明']||'收集表沒填起站、迄站')+'；依每趟 '+e['每趟kg']+' kg 在'+thsrVerShort()+'只對到這一組（推算，不是收集表原填）')+'">推算：'+cmesc(P0[0])+' <span style="font-size:10px;border:1px solid #1f4e7955;border-radius:999px;padding:0 4px">推算</span></span>':'<span style="color:#a9b8b0" title="'+cmesc(e['起訖站說明']||'沒有填起站、迄站')+'">起訖站未填</span>');
   return '<td class="tl fmini" title="'+cmesc(CM_STN_TIP)+'">'+(canRow?sel('so',e['起站'],'起站')+sel('sd',e['迄站'],'迄站'):od)+'</td>'
-    +'<td class="R" title="選起站、迄站後系統照台灣高鐵官網站間碳足跡表（114 年版，ESG 261006 確認）自動帶一趟的公斤數；每年量化時查官網有無更新">'+(canRow?'<span class="uin"><input data-k="'+k+'" data-f="kg" value="'+cmesc(e['每趟kg']==null?'':e['每趟kg'])+'" placeholder="'+(window.THSR_CF&&THSR_CF.on?'選站自動帶':'')+'" style="text-align:right"><span class="uu">kg/趟</span></span>':(st.kg==null?'—':cmf(st.kg,0)+'<span class="fmini"> kg/趟</span>'))+(e['站間表']?'<div class="fmini" style="color:#1f4e79" title="'+cmesc(e['站間表'])+'">站間表</div>':'')+'</td>'; }
+    +'<td class="R" title="選起站、迄站後系統照台灣高鐵官網站間碳足跡表自動帶一趟的公斤數（該年適用版本：系統啟用日 ≤ 該年 1/1；員工通勤沒有單趟車票日期，照年度）；每年量化時查官網有無更新">'+(canRow?'<span class="uin"><input data-k="'+k+'" data-f="kg" value="'+cmesc(e['每趟kg']==null?'':e['每趟kg'])+'" placeholder="'+(window.THSR_CF&&THSR_CF.on?'選站自動帶':'')+'" style="text-align:right"><span class="uu">kg/趟</span></span>':(st.kg==null?'—':cmThsrKgCell(r,st)))   /* V129-91 */+(e['站間表']?'<div class="fmini" style="color:#1f4e79" title="'+cmesc(e['站間表'])+'">站間表</div>':'')+'</td>'; }
 /* V127-3：延人公里 0（或空白）但距離與工作天數都有＝收集表刻意不計的人 → 標「不計」＋原因（收集表備註）；公司車輛再說明為什麼不計 */
 const CM_COVEH=/大巴|交通車|交通车|班車|班车|商務車|商务车|公務車|公务车|公司車|公司车/;
 function cmZeroTag(r){ const e=cme(r), c=cmrow(r); if(cmStn(r)||e['推估'])return '';
@@ -11185,7 +11211,7 @@ function cmEdit(k,f,v){
   if(f==='so')setE('起站',String(v||'').trim()||null);   /* V111-2 */
   if(f==='sd')setE('迄站',String(v||'').trim()||null);
   if(f==='kg'){ setE('每趟kg',cmn(v)); delete r.extra['站間表']; }
-  if((f==='so'||f==='sd')&&window.THSR_CF&&THSR_CF.on){ const kg=thsrKg(r.extra['起站'],r.extra['迄站']); if(kg!=null){ setE('每趟kg',kg); setE('站間表',THSR_CF.ver); } }   /* V112 */
+  if((f==='so'||f==='sd')&&window.THSR_CF&&THSR_CF.on){ const vY=window.thsrVerForYear?thsrVerForYear(facY(W7.year)):null, kg=vY?thsrKgV(vY,r.extra['起站'],r.extra['迄站']):thsrKg(r.extra['起站'],r.extra['迄站']); if(kg!=null){ setE('每趟kg',kg); setE('站間表',vY?(vY.label||vY.ver+' 年版'):THSR_CF.ver); } }   /* V112；V129-91 照該年適用版本 */
   if(cmStn(r)){ const dd=cmn(r.extra['工作天數']); setE('趟數',dd!=null?+(dd*2).toFixed(6):null); const st=cmStn(r);
     r.quantity=st.tr==null?0:st.tr; r.quantity_unit=st.tr==null?'-':'趟'; delete r.extra['延人公里']; r._chg=true; cmReagg(cmblk(r)); cmRender(); return; }
   const d1=cmn(r.extra['單程km']), d2=cmn(r.extra['來回km']), days=cmn(r.extra['工作天數']);
