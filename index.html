@@ -302,7 +302,7 @@ function facChg(on){ return '<span class="fchg'+(on?'':' off')+'">🟡</span>'; 
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-84</b> · 2026/11/01</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-84-1</b> · 2026/11/02</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -6877,9 +6877,9 @@ function fuelDeclView(BL,gs,gmap,GASES,GC,needDens,showLoc,rg){   /* V129-74：�
   const no=i=>'<span style="display:inline-block;min-width:18px;height:18px;line-height:18px;border-radius:50%;background:var(--p);color:#fff;font-size:11px;text-align:center;margin-right:5px">'+(i+1)+'</span>';
   const hv=k=>' data-fdk="'+k+'" onmouseenter="fdHl(\''+k+'\',1)" onmouseleave="fdHl(\''+k+'\',0)"';
   const qc=(v,u)=>nf(v,4)+(normU(u)!==uL?' <span class="fmini">'+esc(normU(u))+'</span>':'');
-  h+='<style>#s101wrap table.fdt{width:100%;table-layout:fixed;border-collapse:collapse}#s101wrap table.fdt th{white-space:normal;line-height:1.25;vertical-align:bottom}#s101wrap table.fdt td,#s101wrap table.fdt th{overflow:hidden;text-overflow:ellipsis}#s101wrap table.fdt td.tl{white-space:normal}#s101wrap table.fdt td.x{background:#fde7b8;color:#7a4b00;font-weight:700}#s101wrap table.fdt tr.fdhl td{background:#fff3bf!important}#s101wrap table.fdt tr.fdtot td{font-weight:700;background:#eef4f0;border-top:1px solid #cfdcd5}#s101wrap table.fdt tr.fdadj td{background:#fff7e3}#s101wrap .fdh{margin:10px 0 3px;font-size:13.5px;font-weight:700;color:var(--d)}#s101wrap .fdh span{font-weight:400;font-size:12px;color:#5f7268}</style>';
+  h+='<style>#s101wrap table.fdt{width:100%;table-layout:fixed;border-collapse:collapse}#s101wrap table.fdt th{white-space:normal;line-height:1.25;vertical-align:bottom}#s101wrap table.fdt td,#s101wrap table.fdt th{overflow:hidden;text-overflow:ellipsis}#s101wrap table.fdt td.tl{white-space:normal}#s101wrap table.fdt td.x{background:#fde7b8;color:#7a4b00;font-weight:700}#s101wrap table.fdt tr.fdhl td{background:#fff3bf!important}#s101wrap table.fdt tr.fdtot td{font-weight:700;background:#eef4f0;border-top:1px solid #cfdcd5}#s101wrap table.fdt tr.fdadj td{background:#fff7e3}#s101wrap .fdh{margin:10px 0 3px;font-size:13.5px;font-weight:700;color:var(--d)}#s101wrap .fdh span{font-weight:400;font-size:12px;color:#5f7268}#s101wrap .fdh.fdup{background:#E7F4EC;border-left:5px solid #2F9A63;border-radius:4px;padding:5px 10px;color:#1E6B43}#s101wrap .fdh.fddn{background:#E6EFFA;border-left:5px solid #2B6CB0;border-radius:4px;padding:5px 10px;color:#2B5B9A;margin-top:24px;position:relative}#s101wrap .fdh.fddn::before{content:"";position:absolute;left:0;right:0;top:-13px;border-top:2px dashed #b9c8c0}</style>';
   // 上表
-  h+='<div class="fdwrap"><div class="fdh">上表　① 系統算 <span>用量 × 係數庫係數（'+esc(code())+'）</span></div><table class="fdt" id="fd_up">'+CG
+  h+='<div class="fdwrap"><div class="fdh fdup">上表　① 系統算 <span>用量 × 係數庫係數（'+esc(code())+'）</span></div><table class="fdt" id="fd_up">'+CG
     +'<tr class="cols fhd" style="background:#fafcfb"><th class="tl">'+(C.elec?'電號':(C.water?'水號':'設備'))+' ／ 月</th><th>'+qH+'</th><th>'+kH('係數')+'</th>'+GC.map(g=>'<th class="R">'+gn(g)+' 碳排</th>').join('')+'<th class="R">排放當量 t'+sm('系統算'+(showLoc?'·市場基礎':''))+'</th>'+(showLoc?'<th class="R">位置基礎 t'+sm('不比對')+'</th>':'')+'<th>對到下表</th></tr>';
   let T1=0,TQ=0; const TG={}; GC.forEach(g=>TG[g]=0); let TL=0;
   B.forEach((o,i)=>{ const b=o.b, op=!!F.dopen[b.name]; T1+=o.t; TQ+=o.qs; GC.forEach(g=>{ TG[g]+=o.tG[g]||0; }); TL+=o.loc||0;
@@ -6888,7 +6888,7 @@ function fuelDeclView(BL,gs,gmap,GASES,GC,needDens,showLoc,rg){   /* V129-74：�
     if(op)o.D.forEach(x=>{ const r=x.r; h+='<tr'+hv('b'+i)+'><td class="tl" style="padding-left:40px">'+(r.data_month!=null?r.data_month+' 月':'全年')+(x.miss?' <span class="fmini" style="color:#b8860b" title="'+esc(x.e['清冊沒有這一列'])+'">清冊沒有</span>':'')+'</td><td>'+qc(x.qv,x.ru)+'</td><td>'+(x.ok?fvA(lfid,k10(x.kU*1000)):'—')+'</td>'+GC.map(g=>'<td class="R">'+(x.tG[g]==null?'—':nf(x.tG[g],4))+'</td>').join('')+'<td class="R">'+nf(x.t,4)+(x.ok?'':' <span class="fmini" style="color:#b8860b">照存的數</span>')+'</td>'+(showLoc?'<td class="R">'+(x.loc==null?'—':nf(x.loc,4))+'</td>':'')+'<td></td></tr>'; }); });
   h+='<tr class="fdtot"><td class="tl">合計 ＝ ①</td><td>'+nf(TQ,4)+'</td><td></td>'+GC.map(g=>'<td class="R">'+nf(TG[g],4)+'</td>').join('')+'<td class="R">'+nf(T1,4)+'</td>'+(showLoc?'<td class="R">'+nf(TL,4)+'</td>':'')+'<td></td></tr></table></div>';   // 標題跟表包在一起，頁首折疊程式才不會把標題收進「算法說明」
   // 下表
-  h+='<div class="fdwrap"><div class="fdh">下表　② 收割數字怎麼來 <span>清冊收割進來的列，照清冊記錄的係數'+(gOK&&G.hv!=null?'；全集團頁換回當初收割的數字':'')+'</span></div><table class="fdt" id="fd_dn">'+CG
+  h+='<div class="fdwrap"><div class="fdh fddn">下表　② 收割數字怎麼來 <span>清冊收割進來的列，照清冊記錄的係數'+(gOK&&G.hv!=null?'；全集團頁換回當初收割的數字':'')+'</span></div><table class="fdt" id="fd_dn">'+CG
     +'<tr class="cols fhd" style="background:#fafcfb"><th class="tl">'+(C.elec?'電號':(C.water?'水號':'設備'))+'</th><th>'+qH+'</th><th>'+kH('清冊係數')+'</th>'+GC.map(g=>'<th class="R">'+gn(g)+' 碳排</th>').join('')+'<th class="R">排放當量 t'+sm('存的數')+'</th>'+(showLoc?'<th class="R">位置基礎 t'+sm('存的數')+'</th>':'')+'<th class="R">跟上表差</th></tr>';
   let T2=0,T2L=0; const RG={}; GC.forEach(g=>RG[g]=0);
   B.forEach((o,i)=>{ const b=o.b; T2+=o.S; T2L+=o.Sl||0; GC.forEach(g=>{ RG[g]+=o.rG[g]||0; }); const dd=o.t-o.S;
@@ -8328,10 +8328,10 @@ function c12DeclView(cc){   /* V129-77：已申報年度（2022–2025）新畫�
   const CG='<colgroup><col style="width:7.36em"><col style="width:11em"><col style="width:6.6em"><col style="width:7.68em"><col style="width:5.28em"><col style="width:8.48em"><col style="width:7.4em"><col style="width:6.72em"><col style="width:7.04em"><col></colgroup>';
   const no=i=>'<span style="display:inline-block;min-width:18px;height:18px;line-height:18px;border-radius:50%;background:var(--p);color:#fff;font-size:11px;text-align:center;margin-right:5px">'+(i+1)+'</span>';
   const th=t=>'<th style="text-align:right">'+t+'</th>', thl=t=>'<th style="text-align:left">'+t+'</th>';
-  let h='<style>#src_form table.c12t td,#src_form table.c12t th{padding-left:6px;padding-right:6px}#src_form table.c12t th{white-space:normal;line-height:1.25;vertical-align:bottom}#src_form tr.c12hl td{background:#fff3c4!important}#src_form table.c12t td.x{background:#fde7b8;color:#7a4b00;font-weight:700}#src_form .c12h{margin:10px 0 3px;font-size:13.5px;font-weight:700;color:var(--d)}#src_form .c12h span{font-weight:400;font-size:12px;color:#5c7568}</style>';
+  let h='<style>#src_form table.c12t td,#src_form table.c12t th{padding-left:6px;padding-right:6px}#src_form table.c12t th{white-space:normal;line-height:1.25;vertical-align:bottom}#src_form tr.c12hl td{background:#fff3c4!important}#src_form table.c12t td.x{background:#fde7b8;color:#7a4b00;font-weight:700}#src_form .c12h{margin:10px 0 3px;font-size:13.5px;font-weight:700;color:var(--d)}#src_form .c12h span{font-weight:400;font-size:12px;color:#5c7568}#src_form .c12h.c12up{background:#E7F4EC;border-left:5px solid #2F9A63;border-radius:4px;padding:5px 10px;color:#1E6B43}#src_form .c12h.c12dn{background:#E6EFFA;border-left:5px solid #2B6CB0;border-radius:4px;padding:5px 10px;color:#2B5B9A;margin-top:24px;position:relative}#src_form .c12h.c12dn::before{content:"";position:absolute;left:0;right:0;top:-13px;border-top:2px dashed #b9c8c0}</style>';
   h+=c12BsrcNote();
   if(!why0||(C12.bsrc&&cc.tot>0)){
-    h+='<div class="c12h">上表　① 系統算 <span>C1 全部類別依「C12 材質對照」分四大類求占比 × 出貨總重量 × 係數（處理方式照該廠 '+esc(y)+' 年記錄，係數取係數庫 C12-材質-處理）</span></div>'
+    h+='<div class="c12h c12up">上表　① 系統算 <span>C1 全部類別依「C12 材質對照」分四大類求占比 × 出貨總重量 × 係數（處理方式照該廠 '+esc(y)+' 年記錄，係數取係數庫 C12-材質-處理）</span></div>'
       +'<table class="fsm c12t" style="width:100%;min-width:70em;table-layout:fixed;font-size:12.5px">'+CG
       +'<thead><tr>'+thl('種類')+thl('代號')+'<th style="text-align:left" title="照該廠當年清冊用的係數（各廠歷年處理方式記錄；6.41061 回收、燃燒同值分不出）">當年處理方式</th>'+th('C1 重量<br>公噸')+th('占比')+'<th style="text-align:right" title="出貨總重量 × 占比">分配重量<br>公噸</th>'+th('係數')+thl('係數單位')+th('碳排 tCO₂e<br><span class="fmini" style="font-weight:400">系統算</span>')+th('對到下表')+'</tr></thead><tbody>';
     K.forEach(o=>{ const kd=o.kd, c=o.c||{}; const z=!(c.cw>0);
@@ -8349,7 +8349,7 @@ function c12DeclView(cc){   /* V129-77：已申報年度（2022–2025）新畫�
     h+=c12MatsHtml(cc);
     h+='<div class="fmini" style="font-size:12px;margin:3px 0 6px;color:#5f7268">係數點一下看係數代號、點兩下跳到係數庫那一條；代號 ↗ 開係數庫 C12 表。</div>'; }
   // 下表
-  h+='<div class="c12h">下表　② 收割數字怎麼來 <span>當初清冊收割進來的列（照原資料）'+man.length+' 筆；欄位跟上表對齊</span></div>';
+  h+='<div class="c12h c12dn">下表　② 收割數字怎麼來 <span>當初清冊收割進來的列（照原資料）'+man.length+' 筆；欄位跟上表對齊</span></div>';
   if(!man.length&&!(gOK&&Math.abs(G.g)>=0.00005)){ h+='<div class="msg" style="margin:4px 0 8px">'+esc(F.site)+' '+esc(y)+' 沒有 C12 清冊的列。</div>'; return {box:box,body:h}; }
   h+='<table class="fsm c12t" style="width:100%;min-width:70em;table-layout:fixed;font-size:12.5px">'+CG
     +'<thead><tr>'+thl('種類')+thl('清冊寫法')+'<th style="text-align:left" title="從清冊用的係數判讀（6.41061 回收、燃燒同值分不出）">處理方式</th>'+th('C1 重量<br>公噸')+th('占比')+th('重量<br>公噸')+th('係數')+thl('係數單位')+th('碳排 tCO₂e<br><span class="fmini" style="font-weight:400">清冊存的數</span>')+th('跟上表差')+'</tr></thead><tbody>';
@@ -13259,9 +13259,9 @@ function rfDeclView(rows){   /* V129-75：冷媒已申報年度（2022–2025）
   const no=i=>'<span style="display:inline-block;min-width:18px;height:18px;line-height:18px;border-radius:50%;background:var(--p);color:#fff;font-size:11px;text-align:center;margin-right:5px">'+(i+1)+'</span>';
   const hv=k=>' data-fdk="'+k+'" onmouseenter="fdHl(\''+k+'\',1)" onmouseleave="fdHl(\''+k+'\',0)"';
   const gtip=g=>RF_ZH[g]?' title="'+rfesc(g+'：'+RF_ZH[g][1]+(RF_ZH[g][2]?'；不計入：'+RF_ZH[g][2]:''))+'"':'';
-  h+='<style>#s101wrap table.fdt{width:100%;table-layout:fixed;border-collapse:collapse}#s101wrap table.fdt th{white-space:normal;line-height:1.25;vertical-align:bottom}#s101wrap table.fdt td,#s101wrap table.fdt th{overflow:hidden;text-overflow:ellipsis}#s101wrap table.fdt td.tl{white-space:normal}#s101wrap table.fdt td.x{background:#fde7b8;color:#7a4b00;font-weight:700}#s101wrap table.fdt tr.fdhl td{background:#fff3bf!important}#s101wrap table.fdt tr.fdtot td{font-weight:700;background:#eef4f0;border-top:1px solid #cfdcd5}#s101wrap table.fdt tr.fdadj td{background:#fff7e3}#s101wrap .fdh{margin:10px 0 3px;font-size:13.5px;font-weight:700;color:var(--d)}#s101wrap .fdh span{font-weight:400;font-size:12px;color:#5f7268}</style>';
+  h+='<style>#s101wrap table.fdt{width:100%;table-layout:fixed;border-collapse:collapse}#s101wrap table.fdt th{white-space:normal;line-height:1.25;vertical-align:bottom}#s101wrap table.fdt td,#s101wrap table.fdt th{overflow:hidden;text-overflow:ellipsis}#s101wrap table.fdt td.tl{white-space:normal}#s101wrap table.fdt td.x{background:#fde7b8;color:#7a4b00;font-weight:700}#s101wrap table.fdt tr.fdhl td{background:#fff3bf!important}#s101wrap table.fdt tr.fdtot td{font-weight:700;background:#eef4f0;border-top:1px solid #cfdcd5}#s101wrap table.fdt tr.fdadj td{background:#fff7e3}#s101wrap .fdh{margin:10px 0 3px;font-size:13.5px;font-weight:700;color:var(--d)}#s101wrap .fdh span{font-weight:400;font-size:12px;color:#5f7268}#s101wrap .fdh.fdup{background:#E7F4EC;border-left:5px solid #2F9A63;border-radius:4px;padding:5px 10px;color:#1E6B43}#s101wrap .fdh.fddn{background:#E6EFFA;border-left:5px solid #2B6CB0;border-radius:4px;padding:5px 10px;color:#2B5B9A;margin-top:24px;position:relative}#s101wrap .fdh.fddn::before{content:"";position:absolute;left:0;right:0;top:-13px;border-top:2px dashed #b9c8c0}</style>';
   // 上表
-  h+='<div class="fdwrap"><div class="fdh">上表　① 系統算 <span>逐台清單依「冷媒 × 設備類型」加總；充填量 × 逸散率（依設備類型）× GWP（依冷媒）÷ 1000，逸散率、GWP 取係數庫 '+rfesc(W10.year)+' 年</span></div><table class="fdt" id="rf_up">'+CG
+  h+='<div class="fdwrap"><div class="fdh fdup">上表　① 系統算 <span>逐台清單依「冷媒 × 設備類型」加總；充填量 × 逸散率（依設備類型）× GWP（依冷媒）÷ 1000，逸散率、GWP 取係數庫 '+rfesc(W10.year)+' 年</span></div><table class="fdt" id="rf_up">'+CG
     +'<tr class="cols fhd" style="background:#fafcfb"><th class="tl">冷媒</th><th class="tl">設備類型</th><th>台數</th><th>充填量'+sm('公斤')+'</th><th>逸散率</th><th>GWP</th><th class="R">排放當量 t'+sm('系統算')+'</th><th>對到下表</th></tr>';
   let TN=0,TK=0;
   GG.forEach(o=>{ const k='rf'+o.i;
@@ -13275,7 +13275,7 @@ function rfDeclView(rows){   /* V129-75：冷媒已申報年度（2022–2025）
     +'<div class="fmini" style="margin:3px 0 6px;color:#5f7268">點設備類型那一列展開逐台（設備名稱、資產編號、台數、充填量）。逸散率、GWP 點一下看係數代號、點兩下跳到係數庫那一條。</div></div>';
   // 下表
   const G=W10.grp||{}, gOK=!G.err&&G.g!=null;
-  h+='<div class="fdwrap"><div class="fdh">下表　② 收割數字怎麼來 <span>當初清冊收割進來的列（10/16 逐台補入前的原樣），照清冊記錄的逸散率、GWP</span></div>';
+  h+='<div class="fdwrap"><div class="fdh fddn">下表　② 收割數字怎麼來 <span>當初清冊收割進來的列（10/16 逐台補入前的原樣），照清冊記錄的逸散率、GWP</span></div>';
   if(!HR){ h+='<div class="msg" style="margin:4px 0 8px">讀不到當初清冊的列（'+rfesc(W10.hrErr||'')+'）。② 收割數字照全集團頁，差額照常；差異原因要等讀得到當初清冊的列才拆得出來。</div></div>'; }
   else{
     h+='<table class="fdt" id="rf_dn">'+CG+'<tr class="cols fhd" style="background:#fafcfb"><th class="tl">冷媒</th><th class="tl">清冊寫的設備</th><th>台數</th><th>充填量'+sm('公斤')+'</th><th>逸散率</th><th>GWP</th><th class="R">排放當量 t'+sm('清冊存的數')+'</th><th class="R">跟上表差</th></tr>';
