@@ -10309,10 +10309,10 @@ window.ensureTHSR=async function(){ if(window.THSR_DB!==null)return window.THSR_
 window.thsrPairs=function(kg){ const r=[], S=THSR_CF.st, M=THSR_CF.m; if(kg==null||!isFinite(+kg))return r; S.forEach((a,i)=>S.forEach((b,j)=>{ if(j>i&&Math.abs(M[i][j]-(+kg))<0.005)r.push(a+'↔'+b); })); return r; };
 window.thsrVerShort=function(){ const d=THSR_CF.db; return d?(d.label||'站間表'):'站間表 114 年版（內建）'; };
 /* 一趟的每趟 kg 跟現行站間表比：一樣／不同（寫現行值）／站名不在台灣高鐵表 */
-window.thsrCmpTag=function(kg,o,d){ const so=thsrSt(o), sd=thsrSt(d); const vs=thsrVerShort();
-  if(!so&&!sd&&(o||d))return '<div class="fmini" style="color:#a33" title="起訖站不在台灣高鐵 12 站裡（例如中國的站名），這一趟照收集表；應該歸在長途鐵路（中國高鐵），要不要改歸類待確認">站名不在台灣高鐵表・應屬長途鐵路（待確認）</div>';
-  const t=thsrKg(o,d); if(t==null||kg==null)return ''; if(Math.abs(+kg-t)<0.005)return '<div class="fmini" style="color:#1f6b45" title="跟'+vs+'同一格">＝'+vs+'</div>';
-  return '<div class="fmini" style="color:#b8860b" title="收集表這一趟 '+kg+' kg，'+vs+'是 '+t+' kg；2022–2024 收集表用的是較舊的一版（數字約大 9%，版本出處待 ESG 提供）；已申報年度照收集表">跟'+vs+'不同（現行 '+t+' kg）</div>'; };
+window.thsrCmpTag=function(kg,o,d){ const so=thsrSt(o), sd=thsrSt(d); const vs=thsrVerShort(), vt=(THSR_CF.db&&THSR_CF.db.ver)?THSR_CF.db.ver+' 年版':'114 年版';
+  if(!so&&!sd&&(o||d))return '<div class="fmini" style="color:#a33" title="起訖站不在台灣高鐵 12 站裡（例如中國的站名），這一趟照收集表；應該歸在長途鐵路（中國高鐵），要不要改歸類待確認">非台灣高鐵站・待確認</div>';
+  const t=thsrKg(o,d); if(t==null||kg==null)return ''; if(Math.abs(+kg-t)<0.005)return '<div class="fmini" style="color:#1f6b45" title="跟'+vs+'同一格">＝'+vt+'</div>';
+  return '<div class="fmini" style="color:#b8860b" title="收集表這一趟 '+kg+' kg，'+vs+'是 '+t+' kg；2022–2024 收集表用的是較舊的一版（數字約大 9%，版本出處待 ESG 提供）；已申報年度照收集表">≠'+vt+'（現行 '+t+'）</div>'; };
 const BT_DIRECT={'航空':1,'高鐵(台灣)':1,'客船':1};                    /* 直查型：碳排逐趟填 */
 const BT_RAIL={'鐵路(台灣)':1,'捷運':1,'鐵路(海外)':1};                 /* 軌道型：pkm×係數 */
 const BT_LAND={'陸運':1,'陸運(中國)':1};                              /* 陸運型：碳排在彙總列 */
