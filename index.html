@@ -302,7 +302,7 @@ function facChg(on){ return '<span class="fchg'+(on?'':' off')+'">🟡</span>'; 
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-91</b> · 2026/11/02</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-92</b> · 2026/11/02</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -4569,12 +4569,109 @@ window.THSR_KM=THSR_KM;
 function thsrDist(a,b){ const x=THSR_KM[a], y=THSR_KM[b]; if(!x||!y||x.km==null||y.km==null)return null; return {km:+Math.abs(y.km-x.km).toFixed(1),est:x.src==='收集表'||y.src==='收集表'}; }
 /* 用官方／座標站的實際里程反算每公里公克（只用 100 km 以上的站對，減少小數四捨五入影響） */
 function thsrPerKm(v){ let kg=0,km=0; v.stations.forEach((a,i)=>v.stations.forEach((b,j)=>{ if(j<=i)return; const x=THSR_KM[a], y=THSR_KM[b]; if(!x||!y||x.km==null||y.km==null||x.src==='收集表'||y.src==='收集表')return; const d=Math.abs(y.km-x.km); if(d<100)return; kg+=+v.matrix[i][j]; km+=d; })); return km?kg/km*1000:null; }
-function facThsrPanel(code){   /* V129-88：年版切換（109／114…），預設現行 */
+/* V129-92：ESG 在網站維護台灣高鐵站間表（使用者 261102「接著做」）——新增年版／修改還沒用到已申報年度的年版；
+   系統啟用日落在已申報年度＝已用在申報數字 → 鎖住；寫 ghg_thsr_cf（RLS：admin／esg 可寫），寫完回讀 */
+function thsrCan(){ return !!(typeof curGhgUser!=='undefined'&&curGhgUser&&!(typeof READONLY!=='undefined'&&READONLY)&&(curGhgUser.role==='esg'||curGhgUser.role==='admin')); }
+function thsrDeclEnd(){ const d=(typeof YLOCKS!=='undefined'&&YLOCKS&&YLOCKS._declMax)?+YLOCKS._declMax:null; return d?d+'-12-31':null; }
+function thsrLocked(v){ const e=thsrDeclEnd(), s=window.thsrStart?thsrStart(v):String(v.use_from||v.valid_from||''); return !!(v._built||!e||(s&&s<=e)); }   /* 讀不到已申報年度＝一律鎖（fail-closed） */
+const THSR_ST12=['南港','台北','板橋','桃園','新竹','苗栗','台中','彰化','雲林','嘉義','台南','左營'];
+window._thsrEd=null;
+function thsrRedraw(){ const el=document.getElementById('thsr_panel'); if(el)el.outerHTML=facThsrPanel(window._thsrCode||'C06'); }
+function thsrEdBtns(sel,code){ if(!thsrCan()||window._thsrEd)return '';
+  const b=(lab,on,tip)=>'<button type="button" onclick="'+on+'" title="'+facEsc(tip)+'" style="padding:2px 12px;margin-left:6px;border-radius:999px;border:1px dashed #1f4e79;background:#fff;color:#1f4e79;font-weight:700;cursor:pointer">'+lab+'</button>';
+  let h=b('＋ 新增年版','thsrEdOpen(&#39;new&#39;)','官網公布新版站間表時，在這裡新增（ESG 小組／系統管理）');
+  if(!thsrDeclEnd())h+='<span class="fmini" style="margin-left:8px;color:#a33">讀不到已申報年度，暫時只能新增、不能修改</span>';
+  else if(sel&&!thsrLocked(sel))h+=b('✎ 修改 '+facEsc(sel.ver)+' 年版','thsrEdOpen(&#39;edit&#39;)','這一版還沒用在已申報年度，可以修改');
+  else if(sel)h+='<span class="fmini" style="margin-left:8px;color:#7a8f84" title="系統啟用日 '+facEsc(window.thsrStart?thsrStart(sel):'')+' 落在已申報年度（到 '+facEsc(thsrDeclEnd()||'')+'），已用在申報數字">🔒 '+facEsc(sel.ver)+' 年版已用在已申報年度，不能改（有錯請找 DTO）</span>';
+  return h; }
+window.thsrEdOpen=async function(mode){ if(!thsrCan())return; try{ if(typeof ensureYLocks==='function')await ensureYLocks(); }catch(e){} const V=window.THSR_VERS||[], sel=V.find(v=>v.ver===window._thsrVer)||V[0];
+  if(mode==='edit'){ if(!sel||thsrLocked(sel))return; window._thsrEd={mode:'edit',id:sel.id,ver:sel.ver,per_km_g:sel.per_km_g,cert_no:sel.cert_no||'',valid_from:sel.valid_from||'',valid_to:sel.valid_to||'',use_from:sel.use_from||'',captured:sel.captured||'',source:sel.source||'',note:sel.note||'',status:sel.status||'啟用',m:THSR_ST12.map((a,i)=>THSR_ST12.map((b,j)=>{ const x=thsrKgV(sel,a,b); return i===j?0:(x==null?null:x); })),msg:''}; }
+  else window._thsrEd={mode:'new',ver:'',per_km_g:'',cert_no:'',valid_from:'',valid_to:'',use_from:'',captured:'',source:'',note:'',status:'啟用',m:THSR_ST12.map((a,i)=>THSR_ST12.map((b,j)=>i===j?0:null)),msg:''};
+  thsrRedraw(); };
+window.thsrEdSet=function(f,v){ if(window._thsrEd)window._thsrEd[f]=String(v==null?'':v).trim(); };
+window.thsrEdCell=function(i,j,v){ const E=window._thsrEd; if(!E)return; const s=String(v).trim(), x=s===''?null:+s; const val=(s===''||!isFinite(x))?null:x; E.m[i][j]=val; E.m[j][i]=val; const c=document.getElementById('thsr_c_'+j+'_'+i); if(c)c.textContent=val==null?'':String(val); };
+window.thsrEdCancel=function(){ window._thsrEd=null; thsrRedraw(); };
+/* 貼上官網表格：整張（含或不含站名、對角線）、上三角或下三角都可以 */
+window.thsrEdPaste=function(){ const E=window._thsrEd; if(!E)return; const ta=document.getElementById('thsr_paste'); const txt=ta?ta.value:''; const N=12;
+  const rows=[]; txt.split(/\r?\n/).forEach(l=>{ const tk=l.trim().split(/[\t,，\s]+/).filter(Boolean); if(!tk.length)return; const nums=tk.filter(x=>/^\d+(\.\d+)?$/.test(x)||/^[—－\-–]$/.test(x)); if(nums.length&&nums.length>=tk.length-1)rows.push(nums.map(x=>/^\d/.test(x)?+x:null)); });
+  const L=rows.map(r=>r.length), put=(i,j,v)=>{ if(i===j||v==null)return; E.m[i][j]=v; E.m[j][i]=v; };
+  let how='';
+  if(rows.length===N&&L.every(n=>n===N)){ rows.forEach((r,i)=>r.forEach((v,j)=>{ if(j>i)put(i,j,v); })); how='整張表'; }
+  else if(rows.length===N&&L.every(n=>n===N-1)){ rows.forEach((r,i)=>{ const f=r.slice(0,i).concat([null]).concat(r.slice(i)); f.forEach((v,j)=>{ if(j>i)put(i,j,v); }); }); how='整張表（不含對角線）'; }
+  else if(rows.length===N&&L.every((n,i)=>n===N-i)){ rows.forEach((r,i)=>r.forEach((v,k)=>put(i,i+k,v))); how='上三角（含對角線）'; }
+  else if(rows.length===N&&L.every((n,i)=>n===i+1)){ rows.forEach((r,i)=>r.forEach((v,j)=>put(i,j,v))); how='下三角（含對角線）'; }
+  else if(rows.length===N-1&&L.every((n,i)=>n===N-1-i)){ rows.forEach((r,i)=>r.forEach((v,k)=>put(i,i+1+k,v))); how='上三角（不含對角線）'; }
+  else if(rows.length===N-1&&L.every((n,i)=>n===i+1)){ rows.forEach((r,i)=>r.forEach((v,j)=>put(i+1,j,v))); how='下三角（不含對角線）'; }
+  E.msg=how?('✓ 已帶入（'+how+'），請對一下下面的表，再按「檢查」'):('✗ 讀不出來：讀到 '+rows.length+' 列數字（每列 '+L.join('／')+' 個），要 12 站的整張表或三角表；也可以直接在下面的格子裡打');
+  thsrRedraw(); };
+function thsrEdCheck(){ const E=window._thsrEd, err=[], warn=[]; if(!E)return {err:['沒有在編輯'],warn:[]};
+  const D=window.THSR_DB||[], de=thsrDeclEnd(), dOk=s=>/^\d{4}-\d{2}-\d{2}$/.test(s);
+  if(!de)err.push('讀不到已申報年度（年度鎖），不能存；請重新整理頁面再試');
+  if(!/^\d{2,4}$/.test(E.ver))err.push('年版要填數字（例：116）');
+  else if(E.mode==='new'&&D.some(x=>x.ver===E.ver))err.push(E.ver+' 年版已經有了；要改請選那一版按「修改」');
+  if(!(+E.per_km_g>0))err.push('每人每公里公克數要填大於 0 的數字');
+  if(!dOk(E.valid_from))err.push('官方有效期間「起」要填日期');
+  if(E.valid_to&&(!dOk(E.valid_to)||E.valid_to<E.valid_from))err.push('官方有效期間「迄」要是日期，而且不能早於「起」');
+  const uf=E.use_from||E.valid_from;
+  if(E.use_from&&!dOk(E.use_from))err.push('系統啟用日要填日期（空白＝官方生效日）');
+  else if(uf&&E.valid_from&&uf<E.valid_from)err.push('系統啟用日不能早於官方生效日');
+  if(de&&uf&&uf<=de)err.push('系統啟用日 '+uf+' 落在已申報年度（到 '+de+'），會改到已申報數字；請填 '+(+de.slice(0,4)+1)+'-01-01 以後');
+  const N=12, miss=[]; for(let i=0;i<N;i++)for(let j=i+1;j<N;j++){ const v=E.m[i][j]; if(v==null||!(v>0))miss.push(THSR_ST12[i]+'↔'+THSR_ST12[j]); }
+  if(miss.length)err.push('站間表有 '+miss.length+' 格沒填或不是正數'+(miss.length<=6?'：'+miss.join('、'):''));
+  if(!miss.length){ const bad=[]; for(let i=0;i<N;i++)for(let j=i+1;j<N;j++)for(let k=j+1;k<N;k++){ if(Math.abs(E.m[i][k]-(E.m[i][j]+E.m[j][k]))>0.03)bad.push(THSR_ST12[i]+'→'+THSR_ST12[k]+' '+E.m[i][k]+' ≠ '+THSR_ST12[i]+'→'+THSR_ST12[j]+' '+E.m[i][j]+' ＋ '+THSR_ST12[j]+'→'+THSR_ST12[k]+' '+E.m[j][k]); }
+    if(bad.length)warn.push('有 '+bad.length+' 組「中間停一站」加起來跟直達對不上（差超過 0.03 kg），可能打錯：'+bad.slice(0,3).join('；')+(bad.length>3?'…':''));
+    const pk=window.thsrPerKm?thsrPerKm({stations:THSR_ST12,matrix:E.m}):null; if(pk!=null&&+E.per_km_g>0&&Math.abs(pk/+E.per_km_g-1)>0.05)warn.push('用實際里程反算每公里約 '+pk.toFixed(1)+' g，跟填的 '+E.per_km_g+' g 差超過 5%，請對一下');
+  }
+  return {err:err,warn:warn}; }
+window.thsrEdCheckShow=function(){ const r=thsrEdCheck(), E=window._thsrEd; if(!E)return; E.msg=r.err.length?('✗ '+r.err.join('｜')):('✓ 檢查通過'+(r.warn.length?'（提醒：'+r.warn.join('｜')+'）':'')); thsrRedraw(); };
+window.thsrEdSave=function(){ const E=window._thsrEd; if(!E)return; const r=thsrEdCheck(); if(r.err.length){ E.msg='✗ '+r.err.join('｜'); thsrRedraw(); return; }
+  const uf=E.use_from||E.valid_from;
+  ghgDlg((E.mode==='new'?'新增':'修改')+'台灣高鐵站間表 '+E.ver+' 年版',
+    '<div class="item">每人每公里 '+facEsc(E.per_km_g)+' g；'+facEsc(E.cert_no||'（沒填證號）')+'；官方有效 '+facEsc(E.valid_from)+'～'+facEsc(E.valid_to||'')+'；<b>系統啟用日 '+facEsc(uf)+'</b>'+(E.use_from&&E.use_from!==E.valid_from?'（特例）':'')+'；狀態 '+facEsc(E.status)+'</div>'
+    +'<div class="item">台北↔台中 '+E.m[1][6]+' kg、台北↔左營 '+E.m[1][11]+' kg、台中↔左營 '+E.m[6][11]+' kg</div>'
+    +(r.warn.length?'<div class="item" style="color:#b8860b">提醒：'+facEsc(r.warn.join('｜'))+'</div>':'')
+    +'<div class="item fmini">車票日期在系統啟用日以後的台灣高鐵趟次，系統會改用這一版算（商務旅行照車票日期、員工通勤照年度）；已申報年度不受影響。寫入後會回讀確認。</div>',
+    '<button onclick="fuelClose()">取消</button> <button class="pri" onclick="thsrEdGo()">確定寫入</button>'); };
+window.thsrEdGo=async function(){ const E=window._thsrEd; const d=document.getElementById('s101dlg'); const list=document.getElementById('s101list'); const foot=d?d.querySelector('.foot'):null;
+  if(!E||!d)return; d.querySelector('h3').textContent='寫入中…'; foot.style.display='none'; list.innerHTML='<div style="padding:16px 4px;font-size:14px;color:#14603F">⏳ 正在寫入資料庫，請稍候…</div>';
+  const who=curGhgUser?(curGhgUser.emp_id+' '+curGhgUser.name):'';
+  const row={ver:E.ver,label:'台灣高鐵站間表 '+E.ver+' 年版',per_km_g:+E.per_km_g,cert_no:E.cert_no||null,valid_from:E.valid_from,valid_to:E.valid_to||null,use_from:E.use_from||E.valid_from,
+    captured:E.captured||null,source:E.source||null,note:E.note||null,status:E.status||'啟用',stations:THSR_ST12.slice(),matrix:E.m.map(r=>r.map(x=>x==null?0:+x)),updated_by:who,updated_at:new Date().toISOString()};
+  let ok=false, msg='';
+  try{ let q; if(E.mode==='new'){ row.created_by=who; q=await sb.from('ghg_thsr_cf').insert(row).select('id,ver'); } else q=await sb.from('ghg_thsr_cf').update(row).eq('id',E.id).select('id,ver');
+    if(q.error)throw q.error; if(!q.data||!q.data.length)throw new Error('沒有寫進去（權限不足？）'); ok=true; msg=E.ver+' 年版已寫入並回讀（id '+q.data[0].id+'）'; }
+  catch(e){ msg=e.message||String(e); console.error(e); }
+  if(ok){ window.THSR_DB=null; window.THSR_VERS=null; if(window.ensureTHSR)await ensureTHSR(); window._thsrVer=E.ver; window._thsrEd=null; }
+  thsrRedraw();
+  d.querySelector('h3').textContent=ok?'✅ 寫入完成':'⚠ 沒有寫入';
+  list.innerHTML='<div style="font-size:15px;font-weight:800;padding:8px 2px;color:'+(ok?'#14603F':'#a33')+'">'+facEsc(msg)+'</div>'+(ok?'<div class="item fmini">資料登錄頁重新選一次廠區或年度就會用新的站間表。</div>':'');
+  foot.style.display='flex'; foot.innerHTML='<button onclick="fuelClose()">關閉</button>'; };
+function thsrEdHTML(){ const E=window._thsrEd; if(!E)return ''; const de=thsrDeclEnd();
+  const inp=(f,lab,ph,w,type)=>'<label style="display:inline-block;margin:0 10px 6px 0;font-size:12px">'+lab+'<br><input'+(type?' type="'+type+'"':'')+' value="'+facEsc(E[f]==null?'':E[f])+'"'+(ph?' placeholder="'+facEsc(ph)+'"':'')+(E.mode==='edit'&&f==='ver'?' disabled':'')+' onchange="thsrEdSet(&#39;'+f+'&#39;,this.value)" style="width:'+(w||120)+'px;font-size:12px"></label>';
+  let h='<div style="margin:8px 0;padding:10px 12px;border:1px dashed #1f4e79;border-radius:8px;background:#f7fafd">'
+    +'<div style="font-weight:800;color:#1f4e79;margin-bottom:6px">'+(E.mode==='new'?'＋ 新增年版':'✎ 修改 '+facEsc(E.ver)+' 年版')+'　<span class="fmini" style="font-weight:400">照高鐵官網「環境永續－高速鐵路旅客運輸服務碳足跡」頁填；已申報年度（到 '+facEsc(de||'—')+'）用到的年版不能改</span></div>'
+    +inp('ver','年版＊','116',70)+inp('per_km_g','每人每公里 g＊','29',80)+inp('cert_no','碳標籤證號','碳標字第…號',200)
+    +inp('valid_from','官方有效 起＊','',140,'date')+inp('valid_to','官方有效 迄','',140,'date')+inp('use_from','系統啟用日（空白＝官方生效日）','',140,'date')
+    +'<label style="display:inline-block;margin:0 10px 6px 0;font-size:12px">狀態<br><select onchange="thsrEdSet(&#39;status&#39;,this.value)" style="font-size:12px">'+['啟用','停用'].map(s=>'<option'+(E.status===s?' selected':'')+'>'+s+'</option>').join('')+'</select></label><br>'
+    +inp('captured','擷取說明','官網 2027-xx-xx 擷取',220)+inp('source','來源網址','https://www.thsrc.com.tw/…',300)+inp('note','備註','',300)
+    +'<div class="fmini" style="color:#4a5f55;margin:2px 0 6px">系統啟用日：平常跟官方生效日一樣；如果新版發行時那一年已經盤查完（像 114 年版 2025-12-17 發行），就填隔年 1/1。</div>'
+    +'<div style="margin:6px 0"><textarea id="thsr_paste" rows="3" placeholder="把官網站間表整張複製貼上（含站名也可以；整張、上三角、下三角都讀得懂），再按「帶入」" style="width:100%;font-size:12px"></textarea>'
+    +'<button type="button" onclick="thsrEdPaste()" style="margin-top:4px">帶入</button></div>'
+    +'<div style="overflow-x:auto"><table style="border-collapse:collapse;font-size:11px;width:100%;table-layout:fixed"><tr><th style="padding:2px;background:#eef5f1;text-align:left">起＼迄</th>'+THSR_ST12.map(s=>'<th style="padding:2px;background:#eef5f1">'+s+'</th>').join('')+'</tr>';
+  THSR_ST12.forEach((a,i)=>{ h+='<tr><th style="padding:2px;background:#eef5f1;text-align:left">'+a+'</th>'+THSR_ST12.map((b,j)=>{ const v=E.m[i][j];
+      if(i===j)return '<td style="text-align:center;color:#bbb;background:#f3f6f4">—</td>';
+      if(j>i)return '<td style="padding:1px"><input value="'+(v==null?'':v)+'" onchange="thsrEdCell('+i+','+j+',this.value)" style="width:100%;box-sizing:border-box;font-size:11px;text-align:right;padding:1px 2px"></td>';
+      return '<td id="thsr_c_'+i+'_'+j+'" style="text-align:right;color:#7a8f84;padding:1px 3px">'+(v==null?'':v)+'</td>'; }).join('')+'</tr>'; });
+  h+='</table></div><div class="fmini" style="color:#7a8f84;margin-top:2px">只要填右上半（白格），左下半自動對稱。</div>'
+    +(E.msg?'<div class="fmini" style="margin-top:6px;color:'+(/^✓/.test(E.msg)?'#1f6b45':'#a33')+'">'+facEsc(E.msg)+'</div>':'')
+    +'<div style="margin-top:8px"><button type="button" onclick="thsrEdCheckShow()">檢查</button> <button type="button" class="pri" onclick="thsrEdSave()">儲存（先確認）</button> <button type="button" onclick="thsrEdCancel()">取消</button></div></div>';
+  return h; }
+function facThsrPanel(code){   /* V129-88：年版切換（109／114…），預設現行 */ window._thsrCode=code;
   const V=(window.THSR_VERS&&window.THSR_VERS.length)?window.THSR_VERS:(window.THSR_CF&&THSR_CF.st?[{ver:'114',label:'台灣高鐵站間表 114 年版（網頁內建）',per_km_g:29,cert_no:'碳標字第2014910001-01號',valid_from:'2025-12-17',valid_to:'2027-12-16',stations:THSR_CF.st,matrix:THSR_CF.m}]:[]);
   if(!V.length)return ''; const sel=V.find(v=>v.ver===window._thsrVer)||V[0], S=sel.stations, M=sel.matrix;
   const btn=v=>'<button type="button" onclick="facThsrSetVer(&#39;'+facEsc(v.ver)+'&#39;,&#39;'+facEsc(code)+'&#39;)" style="padding:2px 12px;margin-right:6px;border-radius:999px;border:1px solid '+(v===sel?'var(--p)':'#cfe0d6')+';background:'+(v===sel?'var(--p)':'#fff')+';color:'+(v===sel?'#fff':'var(--d)')+';font-weight:700;cursor:pointer">'+facEsc(v.ver)+' 年版'+(v===V[0]?'（現行）':'')+'</button>';
   let h='<div id="thsr_panel" style="margin-top:10px;border:1px solid #cfe0d6;border-radius:6px;padding:8px 10px;background:#fbfdfc"><div style="font-weight:800;color:var(--d)">台灣（TW）＝台灣高鐵站對站碳足跡　<span class="fmini" style="font-weight:400">每人單程 kgCO₂e；碳排＝每趟公斤數 × 趟數 ÷ 1000（不用延人公里）</span></div>'
-    +'<div style="margin:6px 0 4px">'+V.map(btn).join('')+'</div>'
+    +'<div style="margin:6px 0 4px">'+V.map(btn).join('')+thsrEdBtns(sel,code)+'</div>'+(window._thsrEd?thsrEdHTML():'')   /* V129-92 */
     +'<div class="fmini" style="margin:2px 0 6px;line-height:1.6"><b>'+facEsc(sel.label||'')+'</b>：每人每公里 '+facEsc(sel.per_km_g)+' gCO₂e；'+facEsc(sel.cert_no||'')+'；有效 '+facEsc(sel.valid_from||'')+'～'+facEsc(sel.valid_to||'')+'；<b>系統啟用日 '+facEsc((window.thsrStart?thsrStart(sel):sel.valid_from)||'')+'</b>'+(sel.use_from&&sel.use_from!==sel.valid_from?'（特例）':'')+(sel.captured?'；'+facEsc(sel.captured):'')+(sel.note?'；'+facEsc(sel.note):'')+'。</div>'
     +'<div class="fmini" style="margin:0 0 6px;line-height:1.6;color:#4a5f55"><b>規則（使用者 261102 定）：照車票日期認版本（系統啟用日 ≤ 車票日期的最新一版）；114 年版因 2025 已盤查完、新版近年底發行，系統啟用日訂 2026-01-01（官方 2025-12-17 起），所以 2025 以前用 109 年版、2026 起用 114 年版；以後新版在年中發布，系統啟用日＝官方生效日</b>；系統算照規則，收集表、全集團明細、查證、申報都不動，算出來不同的在資料登錄頁寫差異原因。2022–2024 收集表用 109 年版（高鐵官網 2024-05-27 存檔逐格對過）；2025 收集表有些用了 114 年版。商務旅行（C06-R02·TW）與員工通勤（C07-R02·TW）共用。'+(code==='C07'?'員工通勤另有一條「高鐵碳足跡2020」每延人公里 0.032（＝109 年版每公里值；台北總公司 2023、2024 彙總用）。':'')+'</div>'
     +(()=>{ const pk=thsrPerKm(sel);   /* V129-91 */
