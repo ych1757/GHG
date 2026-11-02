@@ -69,6 +69,7 @@ th:last-child>.colrz{right:0!important}   /* V88-4：最右欄把手不突出表
 .permwrap table.permt>thead>tr>th,.permwrap table.permt>tbody>tr>td:not([colspan]){white-space:nowrap!important;width:1%}
 .permwrap table.permt>thead>tr>th:last-child,.permwrap table.permt>tbody>tr>td:last-child:not([colspan]){width:auto}
 .permwrap table.permt>tbody>tr>td.pemail{max-width:0!important;width:14%!important}
+.permwrap table.permt>thead>tr>th,.permwrap table.permt>tbody>tr>td:not([colspan]){padding-left:5px!important;padding-right:5px!important}
 .qfixed td{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .qfixed th{white-space:nowrap;overflow:visible}
 .qfixed thead tr.fltrow th select{max-width:100%}
@@ -1957,7 +1958,7 @@ function extPanelHtml(n){   /* V129-84-2：自建名單接在權限名單同一�
     const ok=extValid(x); const st=x.active===false?'<span style="color:#c0392b">停用</span>':(ok?'<span style="color:#2f855a">啟用</span>':'<span style="color:#b7791f">已到期</span>');
     const scope=(x.scope&&x.scope.length===1&&x.scope[0]==='*')?'全部廠區':(x.scope||[]).join(', ');
     s+='<tr class="extrow" style="background:#fcfaff">'
-      +'<td style="padding:4px 10px"><span style="font-size:11px;background:#ede9fe;color:#553c9a;border-radius:8px;padding:1px 7px;white-space:nowrap" title="GHG 自建名單（外部查核人員／顧問·OMS 名單沒有的人）">GHG 自建</span></td>'
+      +'<td style="padding:4px 10px"><span style="font-size:11px;background:#ede9fe;color:#553c9a;border-radius:8px;padding:1px 7px;white-space:nowrap" title="GHG 自建名單（外部查核人員／顧問·OMS 名單沒有的人）">自建</span></td>'
       +'<td style="text-align:left;padding:4px 10px">'+nil+'</td>'
       +'<td style="text-align:left;padding:4px 10px;white-space:nowrap"><b>'+facEsc(x.name||'')+'</b></td>'
       +'<td style="text-align:left;padding:4px 8px;white-space:nowrap;max-width:90px;overflow:hidden;text-overflow:ellipsis" title="單位：'+facEsc(x.org||'')+'">'+facEsc(x.org||'')+'</td>'
