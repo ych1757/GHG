@@ -302,7 +302,7 @@ function facChg(on){ return '<span class="fchg'+(on?'':' off')+'">🟡</span>'; 
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-85</b> · 2026/11/02</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-86</b> · 2026/11/02</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -4558,7 +4558,7 @@ function facTrnRender(code){
   return h+'</div>'; }
 
 function facVehRender(code){
-  if((code==='C04'||code==='C09')&&typeof facTrnRender==='function'){ try{ return facTrnRender(code); }catch(e){ console.error(e); return '<div class="msg err">運輸係數表（V129-71 新版面）產生失敗：'+facEsc(e.message||e)+'，下面先用舊版面</div>'+facVehRenderOld(code); } }
+  /* V129-86：C04／C09 比照 C07（代號一塊、區域分列、年度當欄）；V129-71 統一車種對照表收在最下面（facVehRenderOld 裡） */
   return facVehRenderOld(code); }
 function facVehRenderOld(code){   /* V103-7 交通工具型；V103-11 泛化成中分類型（C04／C08／C09／C15 用 facMidOf 的細碼） */
   const kind=(FSM_ITEM[code]||{}).kind;
@@ -4582,13 +4582,17 @@ function facVehRenderOld(code){   /* V103-7 交通工具型；V103-11 泛化成�
   let h='<div class="ftitle" style="margin-bottom:2px">'+title+'<span class="fmini" style="margin-left:8px">係數（中分類 × 區域 × 年度）·唯讀</span></div>'+(code==='C09'?'<div class="msg" style="background:#fff6dc;border:1px solid #f0cf7a;border-left:6px solid #d99a00;font-size:14px;margin:6px 0 8px;padding:8px 12px;line-height:1.6">🔗 <b style="color:#7a4f00">係數來源＝C04 上游運輸的共用運輸表</b>　<a href="javascript:void(0)" onclick="facGoSrc(&#39;C04&#39;)" style="font-size:12.5px;font-weight:700;color:var(--p)">到 C04 看 →</a>'+'<div style="font-size:12px;color:#5d4a1f;margin-top:2px">同一批條目，代號前綴換成 C09；以 C04 為主維護，這裡自動跟著動。2022～2024 歸戶的歷史條目另列在各車種底下，不再維護。</div></div>':'')
     +'<div style="font-size:11.5px;color:var(--g);margin-bottom:6px;line-height:1.65">每個地區先只顯示<b>合成當量</b>，點地區那一列（▸）展開明細，表頭可以「全部展開」。這一類一個中分類一張表；代號＝中分類·區域·年度（例 <b>'+facEsc(keys[0]+'·'+rgOf(f0)+'·2025')+'</b>＝'+facEsc(nm(keys[0]))+'·'+facEsc(FSM_RG[rgOf(f0)]||rgOf(f0))+'·2025），每個年度各自一個代號、係數來源沒變就沿用數值。資料登錄頁依「年度 × 廠區所在區域 × 中分類」自動找到這一格，跟登錄頁一一對得上。格＝係數（固定 10 位）；🟡＝與前一年不同；適用廠區＝條目記錄用到這個代號的廠。</div>'
     +'<div style="font-size:12px;margin-bottom:6px;line-height:1.9">'+keys.map(k=>'<a href="javascript:void(0)" onclick="var e=document.getElementById(&#39;fveh_'+k+'&#39;);if(e)e.scrollIntoView({block:&#39;start&#39;})" style="margin-right:14px;white-space:nowrap;color:var(--p)"><b>'+facEsc(k)+'</b> '+facEsc(nm(k))+'</a>').join('')+'</div>';
+  const TRNG=(code==='C04'||code==='C09'); let lastMd=null;   /* V129-86：運輸照 陸運／海運／空運 分組 */
+  if(TRNG)h+='<div style="font-size:11.5px;color:var(--g);margin:2px 0 4px;line-height:1.65">區域：<b>CN</b> 中國；<b>ALL</b>＝陸運是台灣、中國以外（越南、泰國…，英國柴油貨車係數）、海運空運是台灣以外（中國、越南、泰國同值）；<b>TW</b> 台灣。陸運噸位：中國四級照 ESG 係數表跟其他國家同一格配對（中國國標 GA 802：微型 ≤1.8 噸、輕型 &lt;4.5 噸、中型 4.5～12 噸、重型 ≥12 噸）；台灣依道路交通安全規則第 3 條，總重 3.5 公噸以下＝小貨車、以上＝大貨車。</div>';
   keys.forEach(k=>{
+    if(TRNG){ const md=(String(k).split('-')[1]||'')[0]; if(md!==lastMd){ lastMd=md; h+='<div style="font-size:16px;font-weight:800;color:var(--d);margin:20px 0 0;padding:4px 2px;border-bottom:3px solid var(--p)">'+({L:'陸運',S:'海運',A:'空運'}[md]||'')+'</div>'; } }
     const m=facSrcModel(code,f=>keyOf2(f)===k,code==='C09'?pool9:undefined);
     m.blocks.forEach(b=>{ const st=new Set(); items[k].filter(f=>rgOf(f)===b.rg).forEach(f=>sitesOf(f).forEach(x=>st.add(x))); b.sites=[...st]; });
     m.comboReady=true;
     h+='<div id="fveh_'+k+'" style="margin-top:14px;padding-top:6px;border-top:2px solid #cfe0d6">'+facSrcRender(m,{sub:true,midKey:k,siteNote:'（條目沒記錄用在哪些廠；實際用到的廠看「年度使用總覽」）',title:'<span class="ncode">'+facEsc(k)+'</span> '+facEsc(nm(k))})+'</div>';
   });
   h+='<div style="font-size:11px;color:var(--g);padding:8px 2px">挑係數的規則與資料登錄相同：依年度、廠區所在區域與中分類自動判定。</div>';
+  if(TRNG&&typeof facTrnRender==='function'){ try{ h+='<details style="margin-top:10px;border:1px solid #cfe0d6;border-radius:6px;padding:6px 10px;background:#fbfdfc"><summary style="cursor:pointer;font-weight:700;color:var(--d)">登錄頁怎麼挑：這一段在哪國 × 統一車種（微型／輕型／中型／重型）對照表</summary><div class="fmini" style="margin:4px 0">運輸登錄頁照這張表挑係數（V129-71，使用者 261030 定）：台灣小貨車對應微型、輕型，台灣大貨車對應中型、重型；台灣、中國以外的 3.5~7.5T 對應微型、輕型。</div>'+facTrnRender(code)+'</details>'; }catch(e){ console.error(e); } }   /* V129-86 */
   const oldN=(FACALL||[]).filter(f=>f.category_id===code&&!keyOf(f)).length;   /* 沒編中分類代號的條目 */
   if(oldN)h+='<div class="msg" style="background:#fff8e1;font-size:12px;margin-top:4px">另有 <b>'+oldN+'</b> 條沒有編中分類代號的條目（舊格式）沒列在上面，可在「範疇類別／全庫搜尋」查；資料登錄頁以上面有代號的條目為準。</div>';
   return h;
@@ -14132,7 +14136,7 @@ window.xpGo=async function(){
     ['範疇一','範疇二','範疇三'].forEach(sc=>K.push([sc,{t:'n',f:'SUMIFS(排放源彙總!$G$2:$G$'+M+',排放源彙總!$B$2:$B$'+M+',"'+sc+'")',v:+(tot[sc]||0).toFixed(10)}]));
     const kr=K.length; K.push(['合計',{t:'n',f:'SUM(B'+(kr-2)+':B'+kr+')',v:+((tot['範疇一']||0)+(tot['範疇二']||0)+(tot['範疇三']||0)).toFixed(10)}]);
     K.push([],['說明'],['・排放源彙總、本頁合計都是公式，加總「逐筆明細」。'],['・逐筆明細「碳排怎麼來」寫「公式」的列，碳排＝活動量 × 係數 × GWP ÷ 1000，可以直接驗算；其他列（航空 ICAO、高鐵站間、多氣體、單位換算過的）照系統存的數字，換算過程在「換算說明」。'],
-      ['・範疇二外購電力：市場基礎與位置基礎分兩欄（太陽能／綠電市場基礎 0）。'],['・新編碼·區域·年度可以在「係數表」找到數值與出處；金額法的美金依「匯率表」換算。'],['・「新編碼」＝我們給 ESG 的那套編碼（例：資本商品 C02-01～C02-43、採購服務 C01-02-01～45、天然氣 A01-01），以係數庫為準：有連到係數庫的列寫該係數的新編碼；空白＝這筆沒有連到有新編碼的係數（例如用收集表自帶的係數，或該類別還沒有逐項的新編碼）。'],['・沒連係數的列「補判」新編碼（只補標籤，碳排不變）：①這一類在係數庫只有一個新編碼就用它（例：化糞池 A04-03）；②員工通勤、商務旅行的逐人逐趟列，用同廠同年同車種彙總列的新編碼（碳排記在彙總列）；③同廠同年有名稱完全一樣、已有新編碼的列就借用；④營運廢棄物的運輸列，碳排是用上游運輸共用表的係數算的，新編碼就寫共用表那一種的編碼（例：中型貨車 C04-L06）；⑤商務旅行的航空（每趟用 ICAO 查）寫 C06-A01、台灣高鐵（每趟用高鐵站間碳足跡）寫 C06-R05，這兩種沒有固定係數。對到兩個以上新編碼的不補，留空白。']);
+      ['・範疇二外購電力：市場基礎與位置基礎分兩欄（太陽能／綠電市場基礎 0）。'],['・新編碼·區域·年度可以在「係數表」找到數值與出處；金額法的美金依「匯率表」換算。'],['・「新編碼」＝我們給 ESG 的那套編碼（例：資本商品 C02-01～C02-43、採購服務 C01-02-01～45、天然氣 A01-01），以係數庫為準：有連到係數庫的列寫該係數的新編碼；空白＝這筆沒有連到有新編碼的係數（例如用收集表自帶的係數，或該類別還沒有逐項的新編碼）。'],['・沒連係數的列「補判」新編碼（只補標籤，碳排不變）：①這一類在係數庫只有一個新編碼就用它（例：化糞池 A04-03）；②員工通勤、商務旅行的逐人逐趟列，用同廠同年同車種彙總列的新編碼（碳排記在彙總列）；③同廠同年有名稱完全一樣、已有新編碼的列就借用；④營運廢棄物的運輸列，碳排是用上游運輸共用表的係數算的，新編碼就寫共用表那一種的編碼（例：中型貨車 C04-L03）；⑤商務旅行的航空（每趟用 ICAO 查）寫 C06-A01、台灣高鐵（每趟用高鐵站間碳足跡）寫 C06-R05，這兩種沒有固定係數。對到兩個以上新編碼的不補，留空白。']);
     /* ── 係數表 ── */
     const fm={}; FF.forEach(f=>fm[f.factor_id]=f);
     const C=[['新編碼·區域·年度','新編碼','年度','區域','氣體','數值','單位','GWP','名稱／說明','出處']];   /* V129-58-2 */   /* V119-13：加「新編碼」欄 */
