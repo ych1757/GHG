@@ -4597,7 +4597,7 @@ function facVehRenderOld(code){   /* V103-7 交通工具型；V103-11 泛化成�
     const m=facSrcModel(code,f=>keyOf2(f)===k,code==='C09'?pool9:undefined);
     m.blocks.forEach(b=>{ const st=new Set(); items[k].filter(f=>rgOf(f)===b.rg).forEach(f=>sitesOf(f).forEach(x=>st.add(x))); b.sites=[...st]; });
     m.comboReady=true;
-    h+='<div id="fveh_'+k+'" style="margin-top:14px;padding-top:6px;border-top:2px solid #cfe0d6">'+facSrcRender(m,{sub:true,midKey:k,siteNote:'（條目沒記錄用在哪些廠；實際用到的廠看「年度使用總覽」）',title:'<span class="ncode">'+facEsc(k)+'</span> '+facEsc(nm(k))})+((k==='C06-R02'||k==='C07-R02')&&typeof facThsrPanel==='function'?facThsrPanel(code):'')+'</div>';
+    h+='<div id="fveh_'+k+'" style="margin-top:14px;padding-top:6px;border-top:2px solid #cfe0d6">'+facSrcRender(m,{sub:true,midKey:k,siteNote:'（條目沒記錄用在哪些廠；實際用到的廠看「年度使用總覽」）',title:'<span class="ncode">'+facEsc(k)+'</span> '+facEsc(nm(k))})+((k==='C07-R02'||k===((typeof btRailNew==='function'&&!btRailNew())?'C06-R01':'C06-R02'))&&typeof facThsrPanel==='function'?facThsrPanel(code):'')+'</div>';
   });
   h+='<div style="font-size:11px;color:var(--g);padding:8px 2px">挑係數的規則與資料登錄相同：依年度、廠區所在區域與中分類自動判定。</div>';
   if(TRNG&&typeof facTrnRender==='function'){ try{ h+='<details style="margin-top:10px;border:1px solid #cfe0d6;border-radius:6px;padding:6px 10px;background:#fbfdfc"><summary style="cursor:pointer;font-weight:700;color:var(--d)">登錄頁怎麼挑：這一段在哪國 × 統一車種（微型／輕型／中型／重型）對照表</summary><div class="fmini" style="margin:4px 0">運輸登錄頁照這張表挑係數（V129-71，使用者 261030 定）：台灣小貨車對應微型、輕型，台灣大貨車對應中型、重型；台灣、中國以外的 3.5~7.5T 對應微型、輕型。</div>'+facTrnRender(code)+'</details>'; }catch(e){ console.error(e); } }   /* V129-86 */
