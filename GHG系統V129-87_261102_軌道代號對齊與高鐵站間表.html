@@ -10309,10 +10309,10 @@ window.ensureTHSR=async function(){ if(window.THSR_DB!==null)return window.THSR_
 window.thsrPairs=function(kg){ const r=[], S=THSR_CF.st, M=THSR_CF.m; if(kg==null||!isFinite(+kg))return r; S.forEach((a,i)=>S.forEach((b,j)=>{ if(j>i&&Math.abs(M[i][j]-(+kg))<0.005)r.push(a+'↔'+b); })); return r; };
 window.thsrVerShort=function(){ const d=THSR_CF.db; return d?(d.label||'站間表'):'站間表 114 年版（內建）'; };
 /* 一趟的每趟 kg 跟現行站間表比：一樣／不同（寫現行值）／站名不在台灣高鐵表 */
-window.thsrCmpTag=function(kg,o,d){ const so=thsrSt(o), sd=thsrSt(d); const vs=thsrVerShort(), vt=(THSR_CF.db&&THSR_CF.db.ver)?THSR_CF.db.ver+' 年版':'114 年版';
-  if(!so&&!sd&&(o||d))return '<div class="fmini" style="color:#a33" title="起訖站不在台灣高鐵 12 站裡（例如中國的站名），這一趟照收集表；應該歸在長途鐵路（中國高鐵），要不要改歸類待確認">非台灣高鐵站・待確認</div>';
-  const t=thsrKg(o,d); if(t==null||kg==null)return ''; if(Math.abs(+kg-t)<0.005)return '<div class="fmini" style="color:#1f6b45" title="跟'+vs+'同一格">＝'+vt+'</div>';
-  return '<div class="fmini" style="color:#b8860b" title="收集表這一趟 '+kg+' kg，'+vs+'是 '+t+' kg；2022–2024 收集表用的是較舊的一版（數字約大 9%，版本出處待 ESG 提供）；已申報年度照收集表">≠'+vt+'（現行 '+t+'）</div>'; };
+window.thsrCmpTag=function(kg,o,d){ const so=thsrSt(o), sd=thsrSt(d); const vs=thsrVerShort(), vt=((THSR_CF.db&&THSR_CF.db.ver)||'114')+'版';
+  if(!so&&!sd&&(o||d))return '<span class="fmini" style="color:#a33;white-space:nowrap;margin-left:4px" title="起訖站不在台灣高鐵 12 站裡（例如中國的站名），這一趟照收集表；應該歸在長途鐵路（中國高鐵），要不要改歸類待確認">非台灣站</span>';
+  const t=thsrKg(o,d); if(t==null||kg==null)return ''; if(Math.abs(+kg-t)<0.005)return '<span class="fmini" style="color:#1f6b45;white-space:nowrap;margin-left:4px" title="跟'+vs+'同一格">＝'+vt+'</span>';
+  return '<span class="fmini" style="color:#b8860b;white-space:nowrap;margin-left:4px" title="收集表這一趟 '+kg+' kg，'+vs+'是 '+t+' kg；2022–2024 收集表用的是較舊的一版（數字約大 9%，版本出處待 ESG 提供）；已申報年度照收集表">≠'+vt+' '+t+'</span>'; };
 const BT_DIRECT={'航空':1,'高鐵(台灣)':1,'客船':1};                    /* 直查型：碳排逐趟填 */
 const BT_RAIL={'鐵路(台灣)':1,'捷運':1,'鐵路(海外)':1};                 /* 軌道型：pkm×係數 */
 const BT_LAND={'陸運':1,'陸運(中國)':1};                              /* 陸運型：碳排在彙總列 */
@@ -10569,7 +10569,7 @@ function btTr(r,bk,ed){
     +'<td class="tl fmini"><span class="cl2" title="'+btesc(route)+'">'+(canRow?(tin('o',o1,'起點')+'<span class="fmini">→</span>'+tin('t',o2,'終點')):btesc(route))+'</span></td>'
     +'<td class="tl fmini">'+(canRow&&bk==='高鐵(台灣)'&&window.THSR_CF&&THSR_CF.on?'<select data-k="'+btesc(r.record_id)+'" data-f="v" style="font-size:12px;width:100%"><option value="1">單程</option><option value="2"'+(+(bte(r)['單趟來回'])===2?' selected':'')+'>來回</option></select>'+(bte(r)['站間表']?'<div class="fmini" style="color:#1f4e79" title="'+btesc(bte(r)['站間表'])+'">站間表 '+btf(bte(r)['碳足跡KG'],0)+' kg</div>':''):(canRow&&land?btVehSel(r,veh):canRow&&!direct?tin('v',veh,'車種'):(canRow?tin('v',veh,'艙等'):(bk==='高鐵(台灣)'?(()=>{ const n=+e['單趟來回']||1; return '<span title="收集表「單趟來回」欄＝這一列算幾趟">'+(n===1?'單程 1 趟':'× '+btf(n,0)+' 趟')+'</span>'; })():btesc(veh)))))+'</td>'
     +'<td class="R">'+(canRow?tin('q',c.pkm==null?'':c.pkm,'pkm',1):(c.pkm==null&&bk==='高鐵(台灣)'?'<span class="fmini" style="color:#7a8f84" title="台灣高鐵照站對站碳足跡算（每趟公斤數 × 趟數），不用延人公里">—</span>':c.pkm==null?(direct?'<span class="fmini" style="color:#7a8f84;cursor:help" title="'+btesc(bk==='高鐵(台灣)'?'高鐵收集表只填起訖站與單程／來回，碳排直接查高鐵碳足跡站距表，沒有公里數':'收集表這一趟沒填公里數；碳排是逐趟直接填的')+'">收集表沒填</span>':'—'):btf(c.pkm,1)))+'</td>'
-    +(bk==='高鐵(台灣)'&&!canRow?(()=>{ const kg=btn2(e['碳足跡KG']); return '<td class="R sysv" title="台灣高鐵站對站碳足跡：碳排＝每趟公斤數 × 趟數 ÷ 1000">'+(kg==null?'<span class="fmini" style="color:#7a8f84">逐趟直查</span>':btf(kg,2)+'<span class="fmini"> kg/趟</span>')+(window.thsrCmpTag?thsrCmpTag(kg,e['起點'],e['終點']):'')+'</td>'; })()   /* V129-87 */
+    +(bk==='高鐵(台灣)'&&!canRow?(()=>{ const kg=btn2(e['碳足跡KG']); return '<td class="R sysv" title="台灣高鐵站對站碳足跡：碳排＝每趟公斤數 × 趟數 ÷ 1000">'+'<span style="white-space:nowrap">'+(kg==null?'<span class="fmini" style="color:#7a8f84">逐趟直查</span>':btf(kg,2)+'<span class="fmini"> kg/趟</span>')+(window.thsrCmpTag?thsrCmpTag(kg,e['起點'],e['終點']):'')+'</span></td>'; })()   /* V129-87 */
     :direct&&c.ef==null?(()=>{ const kg=btn2(e['CO2KG'])!=null?btn2(e['CO2KG']):(btn2(e['碳足跡KG'])!=null?btn2(e['碳足跡KG']):(c.co?+(c.co*1000).toFixed(4):null));   /* V105：直查型沒有係數，寫清楚（使用者 261001「這些沒有數據嗎?」） */
         const how=bk==='航空'?'國際民航組織（ICAO）碳排計算器逐趟查航線':(bk==='高鐵(台灣)'?'台灣高鐵碳足跡站距表':'請款單／船公司資料');
         const ref=(c.pkm>0&&c.co>0)?c.co*1000/c.pkm:null;
