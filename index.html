@@ -307,7 +307,7 @@ function facChg(on){ return '<span class="fchg'+(on?'':' off')+'">🟡</span>'; 
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-97</b> · 2026/11/03</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-98</b> · 2026/11/04</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -10122,49 +10122,150 @@ function w5css(){ if(document.getElementById('w5css'))return; const st=document.
    +'#s101wrap table.c5t .cl2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.3}'
    +'#s101wrap table.c5t td.edit input{font-size:12px}'+'#s101wrap table.w5why td{border:0;background:none;vertical-align:top}'; document.head.appendChild(st); }
 
-/* ── 已申報年度面板（V129-66）：① 系統算 對 ② 收割數字（＝全集團頁那一格）；差異原因逐項帶金額，加起來＝差額 ── */
+/* ── 已申報年度面板（V129-66）：① 系統算 對 ② 收割數字（＝全集團頁那一格）；差異原因逐項帶金額，加起來＝差額 ──
+   V129-98：頁首改用共用 entryDeclBox 大字三格（同燃料電力、冷媒、C12）；差異原因改白話；「收集表自己算的碳排對不上」那類，程式自己判斷是幾倍
+   （使用者 261104：東莞冠皇 2025 運輸 4 筆收集表公式少除一次 1000，畫面要看得出來） */
+function w5ratio(st,ex){   /* 收集表存的碳排 ÷ 用收集表自己的數字照表頭算出來的 → 分類 */
+  if(!(Math.abs(ex)>1e-12)) return Math.abs(st)>1e-12?'z':'n';
+  const r=st/ex; if(r===0) return '0'; if(Math.abs(r-1)<0.01) return 'n';
+  for(const k of [3,-3,6,-6,2,-2,1,-1]){ if(Math.abs(r/Math.pow(10,k)-1)<0.02) return 'p'+k; }
+  return 'x'; }
+function w5tSplit(c,et,st){   /* 運輸分上下游時，看是不是只有其中一段少除 1000（例：東莞冠皇 2025 存的數＝延噸公里×（下游＋上游÷1000）） */
+  const a=w5n(et['運輸係數TTW']), b=w5n(et['運輸係數WTT']); if(a==null||b==null||!c.tkm)return null;
+  const near=v=>Math.abs(st-v)<=Math.max(0.00005,Math.abs(v)*0.005);
+  if(a&&b&&near(c.tkm*(a+b/1000)))return 'dT'; if(a&&b&&near(c.tkm*(a/1000+b)))return 'dW'; return null; }
+function w5rTxt(cls,what,mn,mx){
+  const P={p3:'是'+what+'的約 1000 倍（收集表公式少除一次 1000）','p-3':'只有'+what+'的約千分之一（收集表公式多除一次 1000）',
+    p6:'是'+what+'的約 100 萬倍（收集表公式少除兩次 1000）','p-6':'只有'+what+'的約百萬分之一（收集表公式多除兩次 1000）',
+    p2:'是'+what+'的約 100 倍','p-2':'只有'+what+'的約百分之一',p1:'是'+what+'的約 10 倍','p-1':'只有'+what+'的約十分之一'};
+  if(P[cls]) return '收集表算的碳排'+P[cls];
+  const g=v=>String(Number((+v).toPrecision(2))), rg=isFinite(mn)?g(mn)+(isFinite(mx)&&g(mx)!==g(mn)?'～'+g(mx):''):'';
+  if(cls==='dT'||cls==='dW') return '收集表標「'+(cls==='dT'?'下游 TTW':'上游 WTT')+'」那一欄少除一次 1000，算出的碳排變成應有的'+(rg?'約 '+rg+' 倍':'很多倍');
+  if(cls==='0') return '收集表碳排填 0，但'+what+'不是 0';
+  if(cls==='z') return what+'是 0，收集表卻填了碳排';
+  if(cls==='n') return '收集表算的碳排跟'+what+'只差不到 1%';
+  return '收集表算的碳排跟'+what+'對不上（約 '+(rg||'?')+' 倍）'; }
 function w5declPanel(){
   if(!w5decl())return '';
-  const A={}, add=(k,v)=>{ const o=A[k]=A[k]||{n:0,t:0}; o.t+=v; o.n++; };
+  const A={}, add=(k,v,rt)=>{ const o=A[k]=A[k]||{n:0,t:0,mn:Infinity,mx:-Infinity}; o.t+=v; o.n++; if(rt!=null&&isFinite(rt)){ o.mn=Math.min(o.mn,rt); o.mx=Math.max(o.mx,rt); } };
   /* 一段的「系統算−存的數」r：不到 0.00005 t 歸「小數位」；否則拆成係數不同 p 與算式對不上 r−p（其中一塊不到 0.00005 就整段歸另一塊，不出現「0 列」） */
-  const two=(r,p,kp,kf)=>{ if(Math.abs(r)<0.00005){ if(r!==0)add('rd',r); return; } if(p==null||Math.abs(p)<0.00005)add(kf,r); else if(Math.abs(r-p)<0.00005)add(kp,r); else { add(kp,p); add(kf,r-p); } };
-  let q1=0,S=0,n4=0,n0=0;
+  const two=(r,p,kp,kf,rt)=>{ if(Math.abs(r)<0.00005){ if(r!==0)add('rd',r); return; } if(p==null||Math.abs(p)<0.00005)add(kf,r,rt); else if(Math.abs(r-p)<0.00005)add(kp,r); else { add(kp,p); add(kf,r-p,rt); } };
+  let q1=0,S=0,n4=0,n0=0,nd=0;
   W5.lines.forEach(l=>{
     const c=w5line(l), fl=w5flags(l).map(x=>x[0]);
     if(fl.indexOf('標')>=0||fl.indexOf('E')>=0)n4++;
+    if(Math.abs(w5sysTot(l,c)-c.tot)>=0.00005)nd++;
     if(l.w){ const sv=w5sysW(l,c); q1+=sv; S+=c.wc;
-      if(c.wCalc!=null){ const r=sv-c.wc; if(c.efL!=null)two(r,c.wt*(c.ef-c.efL)/1000,'pc','pf'); else two(r,null,'pc','pn'); }
+      if(c.wCalc!=null){ const r=sv-c.wc;
+        if(c.efL!=null){ const ex=c.wt*c.efL/1000; two(r,c.wt*(c.ef-c.efL)/1000,'pc','pf:'+w5ratio(c.wc,ex),ex?c.wc/ex:null); }
+        else two(r,null,'pc','pn'); }
       else n0++; }
     if(l.t){ const sv=w5sysT(l,c); q1+=sv; S+=c.tc;
       if(c.tCalc!=null){ const r=sv-c.tc;
         if(c.tc===0&&Math.abs(r)>=0.00005) add('t0',r);
-        else if(c.tefL!=null) two(r,c.tkm*(c.tef-c.tefL)/1000,'tc','tf');
+        else if(c.tefL!=null){ const ex=c.tkm*c.tefL/1000; two(r,c.tkm*(c.tef-c.tefL)/1000,'tc','tf:'+(w5tSplit(c,w5e(l.t),c.tc)||w5ratio(c.tc,ex)),ex?c.tc/ex:null); }
         else two(r,null,'tc','tn'); }
       else n0++; }
   });
-  const G=W5.grp||{}, ok=!G.err&&G.g!=null, q2=ok?G.g:null;
-  let h='<div style="margin:0 0 6px;padding:4px 10px;border:1px solid #cfe0d6;background:#f6fbf8;border-radius:8px;font-size:12.5px;line-height:1.5">'
-    +'<b title="過去年度照原資料，不改數字；差異只在這裡標示" style="cursor:help">'+W5.year+' 已申報，只看不改。</b>　<span class="nwrap" title="每列照表頭算式算：處理＝重量 × 係數庫該年主值；運輸＝延噸公里 × 共用運輸係數表（照運輸工具）；沒有係數算不出的段照存的數" style="cursor:help">① 系統算 <b>'+w5f(q1,4)+' t</b></span>'
-    +'　｜　<span class="nwrap" title="'+(ok&&G.hv!=null?'全集團頁這一格＝當初收割的數字（收割原值）':'全集團頁這一格＝明細加總（這一格沒有另存收割原值）')+'" style="cursor:help">② 收割數字（全集團頁） <b>'+(ok?w5f(q2,4)+' t':'—')+'</b></span>';
-  if(!ok){ h+='<div class="msg err" style="margin:3px 0 0">② 讀不到：'+w5esc(G.err||'沒有讀取結果')+'。先不比對，免得拿 0 當收割數字。</div></div>'; return h; }
-  const rx=v=>+w5f(v,4).replace(/,/g,'')+0, d=+(rx(q1)-rx(q2)).toFixed(4)+0;   /* V129-70：同 entryDeclBox，用畫面上顯示的數字相減 */
-  h+=(d===0?'　✓ 一致':'　｜　<b style="color:#b8860b">差 '+(d>0?'+':'')+w5f(d,4)+' t</b>');
-  const T={pc:'列處理係數：收集表填的跟係數庫該年主值不同（系統用係數庫值）',pn:'列收集表沒填處理係數（系統用係數庫該年主值算）',pf:'列收集表自己的「重量×係數」跟填的碳排對不上（存的數照收集表）',
-    t0:'列有運輸距離但收集表沒算運輸（存的數記 0，系統照延噸公里算）',tc:'段運輸係數：收集表填的跟共用運輸係數表（照運輸工具）不同',tn:'段收集表沒填運輸係數（系統照運輸工具帶共用運輸係數表）',tf:'段收集表自己的「延噸公里×係數」跟填的運輸碳排對不上（存的數照收集表）',
-    rd:'段只差不到 0.00005 t（小數位）'};
-  const sg=v=>(v>0?'+':'')+w5f(v,4)+' t', it=[];
-  ['pc','pn','pf','t0','tc','tn','tf','rd'].forEach(k=>{ const o=A[k]; if(o&&o.n&&(k!=='rd'||Math.abs(o.t)>=0.00005)) it.push([o.n+' '+T[k],o.t]); });
-  const C=S-q2; if(Math.abs(C)>=0.00005) it.push(['本頁存的數合計 '+w5f(S,4)+' t 跟'+(G.hv!=null?'收割原值':'全集團頁')+' '+w5f(q2,4)+' t 不同'+(n4?'（本頁 '+n4+' 列有「標」「E」徽章＝照標準／ESG 更正重算過）':'')+(W5.note?'；原因說明點頁首「⚠ 差異說明」看':''),C]);
-  const r4=v=>Math.round(v*1e4)/1e4+0, D4=r4(d); let s4=0; it.forEach(x=>{ x[2]=r4(x[1]); s4+=x[2]; });   /* V129-67：四捨五入的尾差併進金額最大的那一項 */
-  if(it.length||D4!==0){ const res=r4(D4-s4);   /* V129-72：各項都併掉了但畫面差 ±0.0001 時也補尾差一項 */ if(res!==0){ const ord=it.map((x,i)=>i).sort((a,b)=>Math.abs(it[b][1])-Math.abs(it[a][1])); const k=ord.find(i=>r4(it[i][2]+res)!==0);
-      if(k!=null)it[k][2]=r4(it[k][2]+res); else it.push(['四捨五入尾差',res,res]); } }   /* V129-69：C05 同一套 */
-  if(it.length) h+='<div style="margin-top:1px"><b>差異原因</b>（金額＝系統算減掉存的數，加起來＝差額；各項四捨五入到小數 4 位）<table class="w5why" style="width:auto;border-collapse:collapse;margin:1px 0 0;font-size:12.5px">'
-    +it.map(x=>'<tr><td style="padding:0 12px 0 0">・'+w5esc(x[0])+'</td><td class="R" style="padding:0;white-space:nowrap">'+sg(x[2])+'</td></tr>').join('')
-    +'<tr><td style="padding:1px 12px 0 0;text-align:right;border-top:1px solid #cfdcd5">合計＝差額</td><td class="R" style="padding:1px 0 0;border-top:1px solid #cfdcd5;white-space:nowrap"><b>'+sg(D4)+'</b></td></tr></table></div>';
-  if(n0) h+='<div class="fmini" style="color:#7a8f84">另有 '+n0+' 段沒有係數算不出，系統算照存的數（格子下面標「照存的數」）。</div>';
-  h+='</div>';
-  return h;
+  const T={pc:['處理','：收集表填的處理係數跟係數庫該年不同（系統用係數庫）'],pn:['處理','：收集表沒填處理係數（系統用係數庫該年）'],
+    t0:['運輸','：收集表有運輸距離，但沒算運輸碳排（存 0；系統照延噸公里算）'],tc:['運輸','：收集表填的運輸係數跟共用運輸係數表不同（系統照運輸工具用共用表）'],
+    tn:['運輸','：收集表沒填運輸係數（系統照運輸工具帶共用運輸係數表）'],rd:['','：只差不到 0.00005 t（小數位）']};
+  const lab=(k,o)=>{ const m=k.match(/^(pf|tf):(.+)$/);
+    if(m) return (m[1]==='pf'?'處理 ':'運輸 ')+o.n+' 筆：'+w5rTxt(m[2],m[1]==='pf'?'重量×係數':'延噸公里×係數',o.mn,o.mx)+'（存的數照收集表）';
+    const t=T[k]; return (t[0]?t[0]+' ':'')+o.n+' 筆'+t[1]; };
+  const ord=k=>{ const b=k.split(':')[0]; return ['pc','pn','pf','t0','tc','tn','tf','rd'].indexOf(b); };
+  const it=[]; Object.keys(A).sort((x,y)=>ord(x)-ord(y)||(x<y?-1:x>y?1:0)).forEach(k=>{ const o=A[k]; if(o&&o.n&&(k!=='rd'||Math.abs(o.t)>=0.00005)) it.push([lab(k,o),o.t]); });
+  const G=W5.grp||{}, ok=!G.err&&G.g!=null, rx=v=>+w5f(v,4).replace(/,/g,'')+0;
+  let foot='';
+  if(n0) foot+='<div class="fmini" style="color:#7a8f84">另有 '+n0+' 段沒有係數算不出，系統算照存的數（格子下面標「照存的數」）。</div>';
+  if(ok&&rx(q1)===rx(G.g)&&nd) foot+='<div class="fmini" style="color:#7a8f84">總數一致，但有 '+nd+' 筆上下表不一樣、互相抵掉了：看下表最後一欄「跟上表差」。</div>';
+  return entryDeclBox({yr:W5.year,q1:q1,S:S,grp:W5.grp,items:it,note:!!W5.note,big:true,cellTip:'全集團頁「C05 營運廢棄物」那一格',
+    hint:n4?'本頁 '+n4+' 列有「標」「E」徽章＝照標準／ESG 更正重算過':'',
+    q1tip:'每筆照表頭算式算：處理＝重量 × 係數庫該年主值；運輸＝延噸公里 × 共用運輸係數表（照運輸工具）；沒有係數算不出的段照存的數',foot:foot});
 }
+window.w5Hl=function(k,on){ document.querySelectorAll('#src_form tr[data-fdk="'+k+'"]').forEach(tr=>tr.classList.toggle('fdhl',!!on)); };
+/* V129-98：已申報年度上表 ① 系統算／下表 ② 收割數字怎麼來（每一筆照當初收割進來的原資料：收集表填的係數、存的碳排）；兩表同一組欄寬、同一筆游標一起亮 */
+function w5declView(blocks){
+  const G=W5.grp||{}, gOK=!G.err&&G.g!=null;
+  const bks=Object.keys(blocks).sort(), many=bks.length>1;
+  let N=0; const BX=bks.map((bk,bi)=>({bk:bk,bi:bi,op:W5.open[bk]!==false,L:blocks[bk].map(l=>({l:l,c:w5line(l),i:N++}))}));
+  const CG='<colgroup>'+[6,13,6,8,8,7,6,6,8,7,8,9,8].map(w=>'<col style="width:'+w+'%">').join('')+'</colgroup>';   /* 運輸係數分下游 TTW／上游 WTT 兩欄（使用者 261104「這個系統畫面要分別將分開上游跟下游的運輸係數」） */
+  const sm=t=>'<br><span class="fmini" style="font-weight:400">'+t+'</span>';
+  const hv=k=>' data-fdk="'+k+'" onmouseenter="w5Hl(\''+k+'\',1)" onmouseleave="w5Hl(\''+k+'\',0)"';
+  const sg=v=>(v>0?'+':'')+w5f(v,4), rd4=v=>+w5f(v,4).replace(/,/g,'')+0, r4=v=>Math.round(v*1e4)/1e4+0;
+  const no=i=>'<span style="display:inline-block;min-width:18px;height:18px;line-height:18px;border-radius:50%;background:var(--p);color:#fff;font-size:11px;text-align:center;margin-right:4px;padding:0 2px">'+(i+1)+'</span>';
+  const tg=bk=>' style="background:#eef6f1;cursor:pointer" title="點一下收起／展開這一類（上下表一起）" onclick="wstToggle('+JSON.stringify(bk).replace(/"/g,'&quot;')+')"';
+  /* 表頭兩列：第一列中文標題靠上對齊，第二列代號／單位（使用者 261104「請保持中文在上面對齊 下面是代號或是單位」）。
+     中文格尾巴的 <br> 是給共用欄寬程式看的（有 <br> 才照整行寬量，中文才不會被擠到折行），畫面上不多一行 */
+  const head=(src,k4,last)=>{ const S=src?[src]:[];
+    const C=[['tl','清運日期',[]],['tl','廢棄物名稱',[]],['','重量',['公噸']],['tl','處理地點',[]],['tl','運輸工具',['／距離 km']],['','延噸公里',['＝重量','×距離']],
+      ['','下游係數',['EF'].concat(S,['TTW','kgCO₂e','／延噸公里'])],['','上游係數',['EF'].concat(S,['WTT','kgCO₂e','／延噸公里'])],['R','運輸碳排放量',['Emissions','tCO₂e']],
+      ['','處理係數',['EF'].concat(S,['kgCO₂e','／公噸'])],['R','處理碳排放量',['Emissions','tCO₂e']],['R','總碳排放量',['Emissions','tCO₂e',k4]],['R',last,[]]];
+    return '<tr class="cols fhd w5h1" style="background:#fafcfb">'+C.map(c=>'<th class="'+c[0]+'">'+c[1]+'<br></th>').join('')+'</tr>'
+      +'<tr class="fhd w5h2" style="background:#fafcfb">'+C.map(c=>'<th class="'+c[0]+'"><span class="fmini" style="font-weight:400">'+c[2].join('<br>')+'</span></th>').join('')+'</tr>'; };
+  const fix=(x,es,et)=>{ const nm=(x.l.w&&x.l.w.equipment_name)||es['廢棄物名稱']||'', pl=es['處理地點']||et['處理地點']||'', vh=et['運輸工具']||'';
+    return '<td class="tl fmini">'+w5esc(es['清運日期']||et['清運日期']||'')+(x.l.w&&x.l.w.data_month?' <span class="fmini">'+x.l.w.data_month+'月</span>':'')+'</td>'
+      +'<td class="tl"><span class="cl2" title="'+w5esc(nm)+'">'+no(x.i)+w5esc(w5short(nm))+'</span>';   /* 名稱欄後面各表自己補 */ };
+  const mid=(x,es,et)=>{ const c=x.c, pl=es['處理地點']||et['處理地點']||'', vh=et['運輸工具']||'';
+    return '<td class="R">'+w5f(c.wt,4)+'</td><td class="tl fmini"><span class="cl2" title="'+w5esc(pl)+'">'+w5esc(w5short(pl))+'</span></td>'
+      +'<td class="tl fmini"><span class="cl2" title="'+w5esc(vh)+'">'+w5esc(w5short(vh))+'</span>'+(c.km==null?'':'<span class="fmini" style="color:#7a8f84">／'+w5f(c.km,2)+' km</span>')+'</td>'; };
+  // 每筆「跟上表差」取 4 位；四捨五入剩下的併進金額最大那格，加起來＝上表合計 － 下表各筆合計
+  const ALL=[].concat(...BX.map(o=>o.L));
+  let q1=0,S=0; ALL.forEach(x=>{ x.sys=w5sysTot(x.l,x.c); x.st=x.c.tot; q1+=x.sys; S+=x.st; x.d=rd4(x.sys-x.st); });
+  { const res=r4(r4(rd4(q1)-rd4(S))-r4(ALL.reduce((a,x)=>a+x.d,0))); if(res){ const k=ALL.slice().sort((a,b)=>Math.abs(b.d)-Math.abs(a.d)).find(x=>r4(x.d+res)!==0); if(k)k.d=r4(k.d+res); } }
+  let h='<style>'+'<style>#s101wrap table.fdt{width:100%;table-layout:fixed;border-collapse:collapse}#s101wrap table.fdt th{white-space:normal;line-height:1.25;vertical-align:bottom}#s101wrap table.fdt td,#s101wrap table.fdt th{overflow:hidden;text-overflow:ellipsis}#s101wrap table.fdt td.tl{white-space:normal}#s101wrap table.fdt td.x{background:#fde7b8;color:#7a4b00;font-weight:700}#s101wrap table.fdt tr.fdhl td{background:#fff3bf!important}#s101wrap table.fdt tr.fdtot td{font-weight:700;background:#eef4f0;border-top:1px solid #cfdcd5}#s101wrap table.fdt tr.fdadj td{background:#fff7e3}#s101wrap .fdh{margin:10px 0 3px;font-size:13.5px;font-weight:700;color:var(--d)}#s101wrap .fdh span{font-weight:400;font-size:12px;color:#5f7268}#s101wrap .fdh.fdup{background:#E7F4EC;border-left:5px solid #2F9A63;border-radius:4px;padding:5px 10px;color:#1E6B43}#s101wrap .fdh.fddn{background:#E6EFFA;border-left:5px solid #2B6CB0;border-radius:4px;padding:5px 10px;color:#2B5B9A;margin-top:24px;position:relative}#s101wrap .fdh.fddn::before{content:"";position:absolute;left:0;right:0;top:-13px;border-top:2px dashed #b9c8c0}</style>'.replace(/^<style>|<\/style>$/g,'')+'#s101wrap table.fdt td{vertical-align:top}#s101wrap table.fdt tr.w5h1 th{vertical-align:top;padding-bottom:0;border-bottom:0}#s101wrap table.fdt tr.w5h2 th{vertical-align:top;padding-top:1px}#s101wrap table.fdt .cl2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.3}</style>';
+  // 上表
+  h+='<div class="fdwrap"><div class="fdh fdup">上表　① 系統算 <span>處理＝重量 × 係數庫 '+w5esc(w5rg(W5.site))+' '+facY(W5.year)+' 年主值；運輸＝延噸公里 × 共用運輸係數表（照運輸工具）</span></div><table class="fdt" id="w5_up">'+CG
+    +head('','① 系統算','對到下表');
+  const up2=(l,c,et)=>{ const f=c.tM&&c.tM.f&&c.tM.f.factor_id, tt=c.tM?' title="'+w5esc(c.tM.veh)+'：合計 '+w5g6(c.tef)+'"':'';
+    if(c.tM) return '<td class="R"'+tt+'>'+fvA(f,w5g6(c.tM.ttw))+'</td><td class="R"'+tt+'>'+fvA(f,w5g6(c.tM.wtt))+'</td>';
+    if(c.tef==null) return '<td class="R" colspan="2">'+(l.t?'<span class="fmini">未帶</span>':'—')+'</td>';
+    const a=w5n(et['運輸係數TTW']), b=w5n(et['運輸係數WTT']), nt='<div class="fmini" style="color:#7a8f84" title="運輸工具對不到共用運輸係數表，照收集表的係數">照收集表</div>';
+    if(a!=null&&b!=null&&Math.abs(a+b-c.tef)<=Math.max(1e-9,Math.abs(c.tef)*1e-6)) return '<td class="R">'+w5g6(a)+nt+'</td><td class="R">'+w5g6(b)+'</td>';
+    return '<td class="R" colspan="2">合計 '+w5g6(c.tef)+nt+'</td>'; };
+  let UW=0,UT=0,UP=0;
+  BX.forEach(o=>{ let bw=0,bt=0,bp=0; o.L.forEach(x=>{ bw+=x.c.wt; bt+=w5sysT(x.l,x.c)||0; bp+=w5sysW(x.l,x.c)||0; }); UW+=bw; UT+=bt; UP+=bp;
+    h+='<tr class="s101blk"'+hv('b'+o.bi)+tg(o.bk)+'><td class="tl" colspan="12" title="'+w5esc(o.bk)+'"><b>'+(o.op?'▾':'▸')+w5esc(w5short(o.bk))+'</b> <span class="fmini">'+o.L.length+' 筆</span></td><td class="fmini" style="text-align:right">↓ 下表</td></tr>';
+    if(o.op)o.L.forEach(x=>{ const l=x.l, c=x.c, es=w5e(l.w||{}), et=w5e(l.t||{});
+      h+='<tr'+hv('w'+x.i)+'>'+fix(x,es,et)+'</td>'+mid(x,es,et)
+        +'<td class="R">'+(c.tkm==null?'—':w5f(c.tkm,2))+'</td>'
+        +up2(l,c,et)
+        +'<td class="R">'+w5one(w5sysT(l,c),!!(l.t&&c.tCalc==null))+'</td>'
+        +'<td class="R">'+(c.ef==null?(l.w?'<span class="fmini">未填</span>':'—'):fvA((c.lib&&c.lib.fid)||(l.w&&l.w.factor_id),w5g6(c.ef)))+(!c.lib&&c.efL!=null?'<div class="fmini" style="color:#a33" title="係數庫沒有這一年這一種的主值，照收集表">係數庫沒有</div>':'')+'</td>'
+        +'<td class="R">'+w5one(w5sysW(l,c),!!(l.w&&c.wCalc==null))+'</td>'
+        +'<td class="R">'+w5one(x.sys,false,1)+'</td><td class="fmini" style="text-align:right">↓ '+(x.i+1)+'</td></tr>'; });
+    if(many&&o.L.length>1)h+='<tr'+hv('b'+o.bi)+'><td class="tl fmini" colspan="2" style="text-align:right;color:#4a5f55">小計　'+w5esc(w5short(o.bk))+'</td><td class="R"><b>'+w5f(bw,2)+'</b></td><td colspan="5"></td><td class="R">'+w5f(bt,4)+'</td><td></td><td class="R">'+w5f(bp,4)+'</td><td class="R"><b>'+w5f(bt+bp,4)+'</b></td><td></td></tr>'; });
+  h+='<tr class="fdtot"><td class="tl" colspan="2">合計 ＝ ①　<span class="fmini" style="font-weight:400">'+bks.length+' 類 '+N+' 筆</span></td><td class="R">'+w5f(UW,2)+'</td><td colspan="5"></td><td class="R">'+w5f(UT,4)+'</td><td></td><td class="R">'+w5f(UP,4)+'</td><td class="R">'+w5f(q1,4)+'</td><td></td></tr></table></div>';
+  // 下表
+  h+='<div class="fdwrap"><div class="fdh fddn">下表　② 收割數字怎麼來 <span>當初收割進來的每一筆，照原資料（收集表填的係數、存的碳排）'+(gOK&&G.hv!=null?'；全集團頁換回當初收割的數字':'')+'</span></div><table class="fdt" id="w5_dn">'+CG
+    +head('收集表','② 存的數','跟上表差');
+  const dif=(a,b)=>a!=null&&b!=null&&Math.abs(a-b)>Math.max(1e-9,Math.abs(b)*1e-6);
+  const dn2=(l,c,et)=>{ if(!l.t) return '<td class="R">—</td><td class="R">—</td>';
+    const a=w5n(et['運輸係數TTW']), b=w5n(et['運輸係數WTT']), M=c.tM, nf='<span class="fmini">未填</span>';
+    if(a!=null||b!=null){ const xa=!!M&&(a==null||dif(a,M.ttw)), xb=!!M&&(b==null||dif(b,M.wtt));
+      return '<td class="R'+(xa?' x':'')+'">'+(a==null?nf:w5g6(a))+'</td><td class="R'+(xb?' x':'')+'">'+(b==null?nf:w5g6(b))+'</td>'; }
+    const x=c.tef!=null&&(c.tefL==null||dif(c.tefL,c.tef));
+    return '<td class="R'+(x?' x':'')+'" colspan="2">'+(c.tefL==null?nf:'合計 '+w5g6(c.tefL)+'<div class="fmini" style="color:#7a8f84;font-weight:400">收集表沒分上下游</div>')+'</td>'; };
+  let DT=0,DP=0;
+  BX.forEach(o=>{ let bw=0,bt=0,bp=0,bd=0; o.L.forEach(x=>{ bw+=x.c.wt; bt+=x.l.t?x.c.tc:0; bp+=x.l.w?x.c.wc:0; bd+=x.d; }); DT+=bt; DP+=bp; bd=r4(bd);
+    h+='<tr class="s101blk"'+hv('b'+o.bi)+tg(o.bk)+'><td class="tl" colspan="12" title="'+w5esc(o.bk)+'"><b>'+(o.op?'▾':'▸')+w5esc(w5short(o.bk))+'</b> <span class="fmini">'+o.L.length+' 筆</span></td><td class="R'+(bd?' x':'')+'">'+(bd?sg(bd):'0')+'</td></tr>';
+    if(o.op)o.L.forEach(x=>{ const l=x.l, c=x.c, es=w5e(l.w||{}), et=w5e(l.t||{}), fl=w5flags(l);
+      const sT=w5sysT(l,c), sW=w5sysW(l,c);
+      const xW=!!l.w&&c.ef!=null&&(c.efL==null||dif(c.efL,c.ef));
+      const xt=!!l.t&&Math.abs(sT-c.tc)>=0.00005, xw=!!l.w&&Math.abs(sW-c.wc)>=0.00005, xa=Math.abs(x.sys-x.st)>=0.00005;
+      h+='<tr'+hv('w'+x.i)+(fl.length?' style="background:#fffdf5"':'')+'>'+fix(x,es,et)+fl.map(w5badge).join('')+'</td>'+mid(x,es,et)
+        +'<td class="R">'+(l.t?w5f(+l.t.quantity||0,2):'—')+'</td>'
+        +dn2(l,c,et)
+        +'<td class="R'+(xt?' x':'')+'">'+(l.t?w5f(c.tc,4):'—')+'</td>'
+        +'<td class="R'+(xW?' x':'')+'">'+(l.w?(c.efL==null?'<span class="fmini">未填</span>':w5g6(c.efL)):'—')+'</td>'
+        +'<td class="R'+(xw?' x':'')+'">'+(l.w?w5f(c.wc,4):'—')+'</td>'
+        +'<td class="R'+(xa?' x':'')+'"><b>'+w5f(x.st,4)+'</b></td><td class="R'+(x.d?' x':'')+'">'+(x.d?sg(x.d):'0')+'</td></tr>'; });
+    if(many&&o.L.length>1)h+='<tr'+hv('b'+o.bi)+'><td class="tl fmini" colspan="2" style="text-align:right;color:#4a5f55">小計　'+w5esc(w5short(o.bk))+'</td><td class="R"><b>'+w5f(bw,2)+'</b></td><td colspan="5"></td><td class="R">'+w5f(bt,4)+'</td><td></td><td class="R">'+w5f(bp,4)+'</td><td class="R"><b>'+w5f(bt+bp,4)+'</b></td><td class="R'+(bd?' x':'')+'">'+(bd?sg(bd):'0')+'</td></tr>'; });
+  const adj=gOK?G.g-S:0;
+  if(gOK&&Math.abs(adj)>=0.00005)h+='<tr class="fdadj"'+hv('adj')+'><td class="tl" colspan="11">換回當初收割的數字：全集團頁用收割原值 '+w5f(G.hv!=null?G.hv:G.g,4)+' t'+(W5.note?'（原因看頁首「⚠ 差異說明」）':'')+'</td><td class="R x">'+sg(adj)+'</td><td class="R x">'+sg(-adj)+'</td></tr>';
+  h+='<tr class="fdtot"><td class="tl" colspan="2">合計 ＝ ②　<span class="fmini" style="font-weight:400">'+bks.length+' 類 '+N+' 筆</span></td><td class="R">'+w5f(UW,2)+'</td><td colspan="5"></td><td class="R">'+w5f(DT,4)+'</td><td></td><td class="R">'+w5f(DP,4)+'</td><td class="R">'+(gOK?w5f(G.g,4):w5f(S,4)+' <span class="fmini">（② 讀不到，這是存的數）</span>')+'</td><td class="R">'+(gOK?sg(+(rd4(q1)-rd4(G.g)).toFixed(4)+0):'—')+'</td></tr></table>';
+  h+='<div class="fmini" style="margin:3px 0 6px;color:#5f7268">游標移到任一列，上下表同一筆一起亮；點分類那一列收起／展開（上下表一起）。橘底＝跟上表不一樣；「跟上表差」＝上表減下表，加起來＝差額。下表照當初收割進來的原資料；黃底列有徽章（「標」「E」＝存的數照標準／ESG 更正重算過），徽章滑過去看說明。上表係數點一下看係數代號、點兩下跳到係數庫那一條。</div></div>';
+  return h; }
 
 /* ── 畫面 ── */
 function wstRender(){
@@ -10190,6 +10291,7 @@ function wstRender(){
   const blocks={};
   W5.lines.forEach(l=>{const k=w5blk(l); (blocks[k]=blocks[k]||[]).push(l);});
   let GW=0,GT=0,GS=0,GN=0; const DC=w5decl();
+  if(DC){ h+=w5declView(blocks)+w5foot(true); box.innerHTML=h; wstBind(); return; }   /* V129-98：已申報年度＝上表／下表對照 */
   h+='<div class="s101zone"><table class="wtbl c5t" style="width:100%;table-layout:fixed">'
     +'<colgroup>'+[7,12,7,10,10,7,8,9,9,9,12].map(w=>'<col style="width:'+w+'%">').join('')+'</colgroup>'
     +'<thead><tr class="cols" style="background:#fafcfb">'
@@ -10238,11 +10340,15 @@ function wstRender(){
   h+='<tr class="s101blk" style="background:#eef6f1"><td class="tl" colspan="2"><b>合計</b> <span class="fmini">'+Object.keys(blocks).length+' 個分類 '+GN+' 筆清運</span></td>'
     +'<td class="R"><b>'+w5f(GW,2)+'</b></td><td colspan="7"></td><td class="R">'+(DC?w5one(GS,false,1):'<b>'+w5f(GT,4)+'</b>')+'</td></tr>';
   h+='</tbody></table></div>';
-  let nAu=0; W5.lines.forEach(l=>{ const c=w5line(l); const au=String(w5e(l.w||{})['係數出處']||''); if(l.w&&l.w.ef_value!=null&&/待 ESG/.test(au))nAu++; });
-  if(nAu)h+='<div class="msg" style="background:#fff8e6;border:1px solid #f0d9a0;color:#7a5a00;margin:6px 12px">本頁有 '+nAu+' 列的處理係數查不到文獻出處（各廠收集表沿用值），數字照原資料、待 ESG 確認；查得到出處的已在係數庫標明（CPCD 參考表／環境部碳足跡庫／ESG 回覆）。</div>';
-  h+='<div class="s101legend">一列＝一筆清運（資料庫存成「處理」與「運輸」兩列，畫面併成一行）　｜　運輸排放用延噸公里（＝重量 × 運輸距離）× 運輸係數（kgCO2e／延噸公里）÷ 1000；處理排放用重量 × 處理係數（kgCO2e／公噸）÷ 1000；總排放＝兩段相加　｜　已申報年度每格只有「系統算」（照表頭算式）；跟收割數字（全集團頁）的比對與差異原因在上方　｜　＊灰底＝系統算　｜　處理係數來自係數庫代號 C05-＜大類＞＜處理方式＞（大類 A 生活／B 事業工業／C 有害危險／D 有價／E 汙水廢水／F 汙泥；處理 01 焚化／02 焚化飛灰／03 掩埋／04 回收／05 熱處理／06 物理／07 汙水處理／08 混合垃圾平均／09 工業廢水平均／10 金屬酸洗／11 收集貯存）　｜　運輸係數＝C04／C09 共用運輸係數表，照「運輸工具」選的車種帶（ESG 261014「C4/C5/C9 的運輸係數共用來源」）；已申報年度照原資料　｜　黃底列＝有疑點，徽章滑過去看說明</div></div>';
+  h+=w5foot(false);
   box.innerHTML=h; wstBind();
 }
+function w5foot(dc){   /* V129-98：表格下方的出處提示＋圖例（已申報年度圖例改講上表／下表） */
+  let h='';
+  let nAu=0; W5.lines.forEach(l=>{ const c=w5line(l); const au=String(w5e(l.w||{})['係數出處']||''); if(l.w&&l.w.ef_value!=null&&/待 ESG/.test(au))nAu++; });
+  if(nAu)h+='<div class="msg" style="background:#fff8e6;border:1px solid #f0d9a0;color:#7a5a00;margin:6px 12px">本頁有 '+nAu+' 列的處理係數查不到文獻出處（各廠收集表沿用值），數字照原資料、待 ESG 確認；查得到出處的已在係數庫標明（CPCD 參考表／環境部碳足跡庫／ESG 回覆）。</div>';
+  h+='<div class="s101legend">一列＝一筆清運（資料庫存成「處理」與「運輸」兩列，畫面併成一行）　｜　運輸排放用延噸公里（＝重量 × 運輸距離）× 運輸係數（kgCO2e／延噸公里）÷ 1000；處理排放用重量 × 處理係數（kgCO2e／公噸）÷ 1000；總排放＝兩段相加　｜　'+(dc?'已申報年度：上表＝系統算（照表頭算式）、下表＝當初收割進來的原資料，逐筆對照；跟收割數字（全集團頁）的差額與差異原因在頁首':'已申報年度每格只有「系統算」（照表頭算式）；跟收割數字（全集團頁）的比對與差異原因在上方')+'　｜　＊灰底＝系統算　｜　處理係數來自係數庫代號 C05-＜大類＞＜處理方式＞（大類 A 生活／B 事業工業／C 有害危險／D 有價／E 汙水廢水／F 汙泥；處理 01 焚化／02 焚化飛灰／03 掩埋／04 回收／05 熱處理／06 物理／07 汙水處理／08 混合垃圾平均／09 工業廢水平均／10 金屬酸洗／11 收集貯存）　｜　運輸係數＝C04／C09 共用運輸係數表，照「運輸工具」選的車種帶（ESG 261014「C4/C5/C9 的運輸係數共用來源」）；已申報年度照原資料　｜　黃底列＝有疑點，徽章滑過去看說明</div></div>';
+  return h; }
 function wstAddSame(bk){
   const l=W5.lines.find(x=>w5blk(x)===bk); if(!l)return;
   const ew=w5e(l.w||{}), code=String(ew['係數代號']||'').split('·')[0];
