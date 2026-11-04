@@ -307,7 +307,7 @@ function facChg(on){ return '<span class="fchg'+(on?'':' off')+'">🟡</span>'; 
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-98</b> · 2026/11/04</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-99</b> · 2026/11/04</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -9475,6 +9475,101 @@ function trnRoutePanel(){   /* 「🛣 本廠用過的路線」清單：可以�
       +(can?'<td><a href="javascript:void(0)" onclick="trnTplUse('+i+')" title="用這條路線新增一列（帶入各段公里數與車種，再填對象與重量）" style="color:var(--p);text-decoration:none;font-weight:700">＋ 用</a></td>':'')+'</tr>'; });
   h+='</tbody></table>'+((L.length>40&&!TRTE_ALL)?'<a href="javascript:void(0)" onclick="trnRteAll(this)" style="display:inline-block;margin-top:4px;font-size:12px;color:var(--p)">顯示全部 '+L.length+' 種 ▾</a>':'')+'</div>';
   return h; }
+/* V129-99：運輸方式匯總（使用者 261104「請針對不同類型的運輸做一個匯總表 然後再將上游跟下游運輸係數也放在匯總表中」「系統目前有陸海空」「以後年度都用系統就不會有差異，也應該要考慮進去」；示意 GHG_C04C09運輸方式匯總表示意_261104-1）
+   一種運輸方式一列：段（陸運-1／空運／海運／陸運-2）× 共用運輸係數表那一種（陸運分車種＋區域）。
+   已申報年度＝① 系統算 對 ② 收集表；收集表數字用收割原值（批240 重算過的列用它存的「收割碳排／收割TTW／收割WTT／收割係數」）。可輸入年度＝只有系統算＋占比。 */
+function trnSumG(v){ return v==null||v===''?'':String(+(+v).toFixed(8)); }   /* 係數去尾 0 */
+function trnSumData(rows,decl){
+  const lib=trnLib(), sct=trnSiteCt(), G={}; let S2=0, q1=0;
+  const num=v=>(v==null||v==='')?null:(isFinite(+v)?+v:null);
+  const kOf=k=>TLEGS.indexOf(k)>=0?k:(/^_/.test(k)?k:'陸運-2');
+  const gp=(k,it)=>{ const kk=kOf(k), key=kk+'|'+(it?it.key:'?'); return G[key]=G[key]||{k:kk,it:it||null,n:0,tk:0,t1:0,t2:0,ff:{},r:{},fb:0}; };
+  const why=(g,c,d,ex)=>{ const o=g.r[c]=g.r[c]||{n:0,d:0,ex:{}}; o.n++; o.d+=d; if(ex)o.ex[ex]=(o.ex[ex]||0)+1; };
+  const near=(a,b)=>a!=null&&b!=null&&Math.abs(a-b)<=Math.max(1e-9,Math.abs(b)*0.002);
+  rows.forEach(rt=>{ if(TRET[rt.rid])return;   /* 只看不改的 C4-2 路線（在 C09 頁登錄、碳排算進 C04）也算，跟明細合計一致 */
+    if(!rt.old){ const c=trnCalc(rt); const t2=decl?(rt.rows||[]).reduce((a,r)=>a+(+r.co2e_draft||0),0):0;
+      if(decl){ const g=gp('_new',null); g.n++; g.t1+=(c.t!=null?c.t:t2); g.t2+=t2; q1+=(c.t!=null?c.t:t2); S2+=t2; const d=(c.t!=null?c.t:t2)-t2; if(Math.abs(d)>=0.0005)why(g,'oth',d); else if(d)why(g,'rd',d); return; }
+      Object.keys(c.legs||{}).forEach(k=>{ const x=c.legs[k]; const g=gp(k,x.it); g.n++; g.tk+=x.tk||0; if(x.t!=null){ g.t1+=x.t; q1+=x.t; } else { g.fb++; why(g,x.it?'nowt':'none',0); } }); return; }
+    const parts=rt.parts||[]; const linked=parts.some(p=>!p.noleg&&!p.mix&&p.r&&(p.r.extra||{})['清冊碳排在原列']);
+    parts.forEach(p=>{ const e=(p.r&&p.r.extra)||{}; const h240=e['批240']!=null; const t2h=(h240&&e['收割碳排']!=null)?(+e['收割碳排']||0):(+p.t2||0); S2+=t2h;
+      if(p.noleg||p.mix){ const g=gp(p.noleg?'_noleg':'_mix',null); g.n++; g.t2+=t2h; if(linked){ why(g,'linked',-t2h); return; } g.t1+=+p.t2||0; q1+=+p.t2||0; g.fb++; const d=(+p.t2||0)-t2h; if(Math.abs(d)>=0.00005)why(g,'oth',d); return; }
+      const mo=trnLegMode(p.k); const M=trnDeclMatch(mo,p,rt,sct);
+      const cT=num(h240?e['收割TTW']:e.TTW), cW=num(h240?e['收割WTT']:e.WTT), cE=num(h240?e['收割係數']:(p.r&&p.r.ef_value));
+      if(!M.it){ const g=gp(p.k,null); g.n++; g.tk+=p.q||0; g.t1+=+p.t2||0; q1+=+p.t2||0; g.t2+=t2h; g.fb++; why(g,'none',(+p.t2||0)-t2h,(p.veh||p.k)+'：'+(M.why||'認不出')); return; }
+      const it=M.it; const ef=p.agg?(p.part==='TTW'?it.ttw:it.wtt):(it.ttw+it.wtt); const nc=!!(e['收料廠不計']||e['收集表隱藏列']); const t1=nc?0:p.q*ef/1000;
+      const g=gp(p.k,it); g.n++; g.tk+=p.q||0; g.t1+=t1; q1+=t1; g.t2+=t2h;
+      const fk=(cT==null&&cW==null)?('E'+(cE==null?'':trnSumG(cE))):(String(cT)+'|'+String(cW)); const f=g.ff[fk]=g.ff[fk]||{t:cT,w:cW,e:(cT==null&&cW==null)?cE:null,n:0}; f.n++;
+      const d=t1-t2h; if(linked){ why(g,'linked',d); return; } if(nc){ if(Math.abs(d)>=0.00005)why(g,'nc',d); return; }
+      if(Math.abs(d)<0.0005){ if(d)why(g,'rd',d); return; }
+      if(e['清冊沒有這一列']){ why(g,'miss',d); return; }
+      if(Math.abs(t2h)<1e-12||e['收集表合計沒加這段']||e['收集表這段沒算碳排']){ why(g,'blank',d); return; }
+      if(p.agg){ why(g,'agg',d); return; }
+      const cs=(cT==null&&cW==null)?cE:((cT||0)+(cW||0)), ss=it.ttw+it.wtt;
+      if(cs!=null&&!near(cs,ss)){ const ten=[[cT,it.ttw,'下游'],[cT,it.wtt,'下游'],[cW,it.wtt,'上游'],[cW,it.ttw,'上游']].find(z=>z[0]!=null&&z[1]>0&&near(z[0],z[1]*10));
+        if(ten){ why(g,'x10',d,ten[2]+'|'+trnSumG(ten[0])+'|'+trnSumG(ten[1])); return; } why(g,'coef',d,(cT==null&&cW==null)?('合計 '+trnSumG(cE)):('下游 '+(cT==null?'空白':trnSumG(cT))+'＋上游 '+(cW==null?'空白':trnSumG(cW)))); return; }
+      if(cs!=null&&Math.abs(t2h-p.q*cs/1000)>Math.max(0.00005,Math.abs(t2h)*0.01)){ why(g,'formula',d); return; }
+      why(g,'oth',d); }); });
+  const iOrd={}; (lib.items||[]).forEach((x,i)=>{ iOrd[x.key]=i; });
+  const MO=TLEGS.concat(['_noleg','_mix','_new']);
+  const L=Object.values(G).sort((a,b)=>(MO.indexOf(a.k)-MO.indexOf(b.k))||((a.it?iOrd[a.it.key]:1e6)-(b.it?iOrd[b.it.key]:1e6)));
+  return {L:L,q1:q1,S2:S2}; }
+function trnSumName(g){ if(g.k==='_noleg')return '清冊只記碳排（沒有重量／距離／車種）'; if(g.k==='_mix')return '清冊只記多段合計延噸公里'; if(g.k==='_new')return '登錄頁輸入的路線';
+  if(!g.it)return '（車種或國別認不出）'; return g.it.mode==='L'?(g.it.veh+'（'+(TCTZH[g.it.ct]||g.it.ct)+'）'):(trnItemName(g.it)+'（'+(TCTZH[g.it.ct]||g.it.ct)+'）'); }
+function trnSumWhy(g){   /* 這一種「差在哪裡」：白話，金額大的先講 */
+  const R=g.r, out=[]; const ks=Object.keys(R).filter(k=>k!=='rd').sort((a,b)=>Math.abs(R[b].d)-Math.abs(R[a].d));
+  ks.forEach(k=>{ const o=R[k], n=o.n; const ex=Object.keys(o.ex);
+    if(k==='x10')ex.forEach(x=>{ const [w,c,sv]=x.split('|'); out.push('收集表'+w+'係數填 '+c+'，應為 '+sv+'（多了 10 倍）'); });
+    else if(k==='blank')out.push(n+' 段收集表碳排欄空白（沒算）');
+    else if(k==='miss')out.push(n+' 段清冊沒有這一列（收集表有、清冊沒算）');
+    else if(k==='coef')out.push(n+' 段收集表係數（'+ex.slice(0,2).join('／')+(ex.length>2?' 等':'')+'）跟共用運輸係數表不同');
+    else if(k==='formula')out.push(n+' 段收集表碳排跟「延噸公里 × 係數」對不上（收集表公式有誤）');
+    else if(k==='agg')out.push(n+' 筆清冊彙總列（只記下游或上游一半）');
+    else if(k==='nc')out.push(n+' 段不計（集團內進貨／收集表隱藏列）');
+    else if(k==='linked')out.push('清冊整列只記碳排、各段另補（'+n+' 段）');
+    else if(k==='none')out.push(n+' 段車種或國別認不出，系統算不出（照存的數）');
+    else if(k==='nowt')out.push(n+' 段缺重量，還算不出');
+    else out.push(n+' 段系統算跟收集表不同'); });
+  if(!out.length&&R.rd)out.push('小數位');
+  return out.join('；'); }
+function trnSumHTML(rows,decl){
+  if(!rows.some(rt=>!TRET[rt.rid]))return '';
+  const D=trnSumData(rows,decl), sg=v=>(v>0?'+':'')+nf(v,4), g6=trnSumG, g6x=v=>v==null?'—':trnSumG(v), f2=v=>Number(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const G=F.trGrp||{}, gOK=decl&&!G.err&&G.g!=null;
+  const sm=a=>'<span class="fmini" style="font-weight:400">'+a.join('<br>')+'</span>';
+  const fv=(it,v)=>(it&&it.f&&it.f.factor_id)?fvA(it.f.factor_id,g6(v)):g6(v);
+  let h='<style>#s101wrap table.trnsum{width:100%;table-layout:fixed;border-collapse:collapse;font-size:12.5px;margin:2px 0 4px}#s101wrap table.trnsum th,#s101wrap table.trnsum td{padding:3px 6px;border-bottom:1px solid #e6eee9;text-align:right;vertical-align:top;overflow:hidden;text-overflow:ellipsis}#s101wrap table.trnsum .tl{text-align:left}#s101wrap table.trnsum tr.h1 th{border-bottom:0;padding-bottom:0;vertical-align:top;color:var(--d)}#s101wrap table.trnsum tr.h2 th{padding-top:1px;vertical-align:top;line-height:1.3}#s101wrap table.trnsum tr.grp th{font-size:12px;text-align:center;border-bottom:1px solid #cfdcd5}#s101wrap table.trnsum tr.grp th.sys{background:#E7F4EC;color:#1E6B43}#s101wrap table.trnsum tr.grp th.col{background:#E6EFFA;color:#2B5B9A}#s101wrap table.trnsum tr.mode td{background:#eef4f0;font-weight:700;color:#2b4a3a;text-align:left}#s101wrap table.trnsum td.sv{background:#f4faf6}#s101wrap table.trnsum td.x{background:#fde7b8;color:#7a4b00;font-weight:700}#s101wrap table.trnsum tr.none td{color:#9aa8a1}#s101wrap table.trnsum tr.tot td{font-weight:700;background:#eef4f0;border-top:1px solid #cfdcd5}#s101wrap table.trnsum td.why{white-space:normal;text-align:left;line-height:1.35}#s101wrap .trnsumh{margin:8px 0 3px;font-size:13.5px;font-weight:700;padding:5px 10px;border-radius:4px;background:#FFF3D6;border-left:5px solid #E0A100;color:#7a5200}#s101wrap .trnsumh span{font-weight:400;font-size:12px;color:#5f7268}</style>';
+  h+='<div class="trnsumh">運輸方式匯總 <span>一種運輸方式（陸運再分車種）一列；'+(decl?'左邊系統照共用運輸係數表算、右邊收集表照原資料，':'系統算，')+'係數點一下看代號、點兩下跳到係數庫</span></div>';
+  const cols=decl?[15,4,10,6.5,6.5,6.5,8,6.5,6.5,8,7,15.5]:[17,5,12,8,8,8,10,8,24], NC=cols.length;
+  h+='<table class="trnsum"><colgroup>'+cols.map(w=>'<col style="width:'+w+'%">').join('')+'</colgroup>';
+  h+='<tr class="grp"><th colspan="3"></th><th class="sys" colspan="4">'+(decl?'① 系統算（共用運輸係數表）':'系統算（共用運輸係數表）')+'</th>'+(decl?'<th class="col" colspan="3">② 收集表（照原資料）</th><th colspan="2"></th>':'<th colspan="2"></th>')+'</tr>';
+  const H1=['運輸方式','段數','延噸公里','下游係數','上游係數','合計係數','碳排放量'].concat(decl?['下游係數','上游係數','碳排放量','跟系統差','差在哪裡']:['占比','提醒']);
+  const H2=[[],[],['公噸·公里'],['EF·TTW','kgCO₂e','／延噸公里'],['EF·WTT','kgCO₂e','／延噸公里'],['kgCO₂e','／延噸公里'],['Emissions','tCO₂e']].concat(decl?[['EF·TTW','收集表'],['EF·WTT','收集表'],['Emissions','tCO₂e'],['tCO₂e','系統－收集表'],[]]:[['%'],[]]);
+  h+='<tr class="h1">'+H1.map((t,i)=>'<th class="'+(i===0||i===H1.length-1?'tl':'')+'">'+t+'<br></th>').join('')+'</tr>';
+  h+='<tr class="h2">'+H2.map((a,i)=>'<th class="'+(i===0||i===H2.length-1?'tl':'')+'">'+sm(a)+'</th>').join('')+'</tr>';
+  const MOD={'陸運-1':'陸運-1','空運':'空運','海運':'海運','陸運-2':'陸運-2','_noleg':'系統算不出（照存的數）','_mix':'系統算不出（照存的數）','_new':'登錄頁輸入的路線'};
+  let T1=0,T2=0,TK=0,TN=0, last=null; const seen={};
+  const modes=TLEGS.concat(D.L.map(g=>g.k).filter((k,i,a)=>TLEGS.indexOf(k)<0&&a.indexOf(k)===i));
+  modes.forEach(m=>{ const gs=D.L.filter(g=>g.k===m); const lab=MOD[m]||m; if(seen[lab]&&!gs.length)return; if(!seen[lab]){ h+='<tr class="mode"><td colspan="'+NC+'">'+esc(lab)+'</td></tr>'; seen[lab]=1; }
+    if(!gs.length){ h+='<tr class="none"><td class="tl">　'+esc(m)+'</td><td>0</td>'+Array(NC-3).fill('<td>—</td>').join('')+'<td class="tl">本年沒有</td></tr>'; return; }
+    gs.forEach(g=>{ T1+=g.t1; T2+=g.t2; TK+=g.tk; TN+=g.n; const it=g.it, dd=g.t1-g.t2, dx=Math.abs(dd)>=0.00005;
+      const sysC=it?'<td class="sv">'+fv(it,it.ttw)+'</td><td class="sv">'+fv(it,it.wtt)+'</td><td class="sv">'+g6(it.ttw+it.wtt)+'</td>':'<td class="sv">—</td><td class="sv">—</td><td class="sv">—</td>';
+      let row='<tr><td class="tl" title="'+esc(it?trnCode(it,F.cat,F.year):'')+'">　'+esc(trnSumName(g))+'</td><td>'+g.n+'</td><td>'+(g.tk?f2(g.tk):'—')+'</td>'+sysC+'<td class="sv">'+nf(g.t1,4)+(g.fb?'<div class="fmini" style="color:#7a8f84" title="這一種有段系統算不出，照存的數">含照存的數</div>':'')+'</td>';
+      if(decl){ const F0=Object.values(g.ff); const nNo=F0.filter(f=>f.t==null&&f.w==null&&f.e==null).reduce((a,f)=>a+f.n,0); let F2=F0.filter(f=>!(f.t==null&&f.w==null&&f.e==null)); { const sumOf=f=>f.e!=null?f.e:((f.t||0)+(f.w||0)); const pr=F2.filter(f=>f.e==null); const s0=F2.length?sumOf(F2[0]):null; const prK=[...new Set(pr.map(f=>String(f.t)+'|'+String(f.w)))];
+          if(F2.length>1&&F2.every(f=>Math.abs(sumOf(f)-s0)<1e-9)&&prK.length<=1){ const n=F2.reduce((a,f)=>a+f.n,0); F2=[pr.length?Object.assign({},pr[0],{n:n}):Object.assign({},F2[0],{n:n})]; } }
+          let cTd, cWd, xT=false, xW=false;
+        if(!F2.length){ cTd='<span class="fmini" title="收集表（清冊）這幾段只記碳排、沒記係數">（沒記）</span>'; cWd=cTd; }
+        else if(F2.length>1){ const tip=F2.map(f=>(f.e!=null?'合計 '+g6(f.e):'下游 '+g6x(f.t)+'＋上游 '+g6x(f.w))+' × '+f.n+' 段').join('；'); cTd='<span title="'+esc(tip)+'" style="cursor:help;text-decoration:underline dotted">依段</span>'; cWd=cTd; xT=xW=!!it&&F2.some(f=>f.e==null&&(!(f.t!=null&&Math.abs(f.t-it.ttw)<1e-9)||!(f.w!=null&&Math.abs(f.w-it.wtt)<1e-9))); }
+        else { const f=F2[0]; if(f.e!=null){ cTd='合計 '+g6(f.e); cWd=''; xT=!!it&&Math.abs(f.e-(it.ttw+it.wtt))>1e-9; } else { cTd=f.t==null?'（空白）':g6(f.t); cWd=f.w==null?'（空白）':g6(f.w); xT=!!it&&!(f.t!=null&&Math.abs(f.t-it.ttw)<1e-9)&&!(f.t==null&&it.ttw===0); xW=!!it&&!(f.w!=null&&Math.abs(f.w-it.wtt)<1e-9)&&!(f.w==null&&it.wtt===0); } }
+        if(nNo&&F2.length){ const tp=' title="另 '+nNo+' 段收集表（清冊）只記碳排、沒記係數"'; cTd='<span'+tp+' style="cursor:help">'+cTd+'<sup class="fmini">*</sup></span>'; if(cWd)cWd='<span'+tp+' style="cursor:help">'+cWd+'<sup class="fmini">*</sup></span>'; }
+        if(cWd===''&&F2.length===1&&F2[0].e!=null)row+='<td class="'+(xT?'x':'')+'" colspan="2">'+cTd+'</td>'; else row+='<td class="'+(xT?'x':'')+'">'+cTd+'</td><td class="'+(xW?'x':'')+'">'+cWd+'</td>';
+        row+='<td class="'+(dx?'x':'')+'">'+nf(g.t2,4)+'</td><td class="'+(dx?'x':'')+'">'+(Math.abs(dd)<0.00005?'0':sg(dd))+'</td><td class="why"'+(dx?' style="color:#7a4b00"':'')+'>'+esc(dx?(trnSumWhy(g)||'系統算跟收集表不同'):'一致')+'</td>'; }
+      else { row+='<td data-p="'+g.t1+'"></td><td class="why">'+esc(trnSumWhy(g))+'</td>'; }
+      h+=row+'</tr>'; }); });
+  if(decl&&gOK){ const adj=G.g-T2; if(Math.abs(adj)>=0.00005)h+='<tr><td class="tl" colspan="9">換回當初收割的數字：全集團頁用收割原值 '+nf(G.hv!=null?G.hv:G.g,4)+' t'+(F.trNote?'（原因看頁首「⚠ 差異說明」）':'')+'</td><td class="x">'+sg(adj)+'</td><td class="x">'+sg(-adj)+'</td><td></td></tr>'; }
+  h+='<tr class="tot"><td class="tl">合計</td><td>'+TN+'</td><td>'+f2(TK)+'</td><td></td><td></td><td></td><td>'+nf(T1,4)+'</td>'+(decl?'<td></td><td></td><td>'+(gOK?nf(G.g,4):nf(T2,4))+'</td><td>'+(gOK?sg(+(+nf(T1,4).replace(/,/g,'')-+nf(G.g,4).replace(/,/g,'')).toFixed(4)+0):sg(T1-T2))+'</td><td class="tl" style="font-weight:400">'+(gOK?'＝頁首差額':'')+'</td>':'<td>100%</td><td></td>')+'</tr></table>';
+  if(!decl)h=h.replace(/<td data-p="([^"]*)"><\/td>/g,(m,v)=>'<td>'+(T1>0?(+v/T1*100).toFixed(2)+'%':'—')+'</td>');
+  h+='<div class="fmini" style="margin:2px 2px 8px;color:#5f7268;line-height:1.55">'+(decl?'左邊＝系統照「運輸工具＋這一段在哪一國」對共用運輸係數表（ESG「C4/C5/C9 運輸係數共用」）挑的係數；右邊＝收集表填的係數與碳排，照原資料不改。橘底＝跟系統不一樣；同一種裡收集表填了不只一種係數時寫「依段」，滑過去看。':'2026 起沒有收集表可比，碳排一律系統算；匯入收集表時，預覽畫面會比對收集表自己算的碳排。')+'</div>';
+  return h; }
 function trnRender(){
   const box=document.getElementById('src_form'); const C=tcfg(); const Y=F.year;
   const decl=trnDecl(Y), canEdit=trnCanEdit(), lk=(typeof yearLocked==='function')&&yearLocked(Y); const lib=trnLib();
@@ -9494,7 +9589,7 @@ function trnRender(){
       +'<button class="sec" '+(canEdit?'':'disabled')+' onclick="trnImpPick()" title="匯入 ESG 收集表「'+esc(C.form)+'」（先預覽，按儲存才寫入）">⬆ 匯入</button>'
       +'<button class="'+(canEdit?'':'sec')+'" '+(canEdit?'':'disabled')+' onclick="trnAsk()">💾 儲存</button>')});
   h+=entryNoteHTML(F.trNote);   /* V129-18 */
-  h+='<div id="s101wrap" data-k="'+esc(F.cat+'|'+F.site+'|'+Y)+'">'+(decl?trnDeclPanel(trnRows()):'')+'<div class="s101zone" style="overflow-x:hidden">';   /* V129-69：已申報年度頁首 ① 對 ② */
+  h+='<div id="s101wrap" data-k="'+esc(F.cat+'|'+F.site+'|'+Y)+'">'+(decl?trnDeclPanel(trnRows()):'')+trnSumHTML(trnRows(),decl)+'<div class="s101zone" style="overflow-x:hidden">';   /* V129-99：運輸方式匯總 */   /* V129-69：已申報年度頁首 ① 對 ② */
   if(TFAC)h+=trnFacPanel();
   if(TRTE)h+=trnRoutePanel();
   h+='<div style="padding:8px 12px;font-size:12px;color:var(--d);background:#eef4f0;border-bottom:1px solid #d7e5dd;display:flex;gap:14px 22px;flex-wrap:wrap;align-items:flex-end">'
@@ -9641,24 +9736,13 @@ function trnOldNote(rt){   /* 收割列不是一段一段的：說明清冊記�
   return ''; }
 /* V129-69：已申報年度頁首（共用 entryDeclBox）。每條路線「系統算−存的數」＝各段原因（trnOldCalc 的 why）＋剩下的尾差；算不出的段照存的數、不算差異 */
 function trnSys(rt){ const c=trnCalc(rt), t2=rt.old?rt.t2:(rt.rows||[]).reduce((a,r)=>a+(+r.co2e_draft||0),0); return {c:c,t2:t2,t1:c.t!=null?c.t:t2,fb:c.t==null?1:((c.fb||[]).length)}; }
-function trnDeclPanel(rows){
-  const A={}, add=(k,v,ex,w)=>{ const o=A[k]=A[k]||{n:0,t:0,w:w||'',ex:{}}; o.t+=v; o.n++; if(ex){ const x=(o.ex[ex]=o.ex[ex]||{n:0,d:0}); x.n++; x.d+=v; } };
-  let q1=0,S=0; const FB={};
-  rows.forEach(rt=>{ if(TRET[rt.rid])return; const z=trnSys(rt); q1+=z.t1; S+=z.t2;
-    if(z.c.t==null)FB.route=(FB.route||0)+1; (z.c.fb||[]).forEach(k=>{ FB[k]=(FB[k]||0)+1; });
-    const D=z.t1-z.t2; let sm=0;
-    if(rt.old)(z.c.why||[]).forEach(p=>{ if(Math.abs(p.d)<(p.w?0.00005:0.0005)){ if(p.d)add('rd',p.d); } else add('ef|'+(p.w||''),p.d,p.ex,p.w); sm+=p.d; });
-    const rem=D-sm; if(Math.abs(rem)<1e-12)return; if(Math.abs(rem)<0.0005)add('rd',rem); else add(rt.old?'oth':'new',rem,trnNmParts(rt).party||rt.nm); });
-  const sg=d=>(d>0?'+':'')+nf(d,4)+' t';
-  const exj=g=>{ const L=Object.entries(g.ex).sort((a,b)=>Math.abs(b[1].d)-Math.abs(a[1].d)); return L.length?'。例：'+L.slice(0,3).map(([t,x])=>t+(x.n>1?' ×'+x.n:'')+' '+sg(x.d)).join('；')+(L.length>3?'；…等 '+L.length+' 種':''):''; };
-  const items=[];
-  Object.keys(A).sort((a,b)=>(a==='rd'?1:b==='rd'?-1:a<b?-1:1)).forEach(k=>{ const g=A[k];
-    if(k==='rd')items.push([g.n+' 項各差不到 0.0005 t（小數位差）',g.t]);
-    else if(k==='oth')items.push([g.n+' 條路線系統算跟存的數不同（各段原因以外）'+exj(g),g.t]);
-    else if(k==='new')items.push([g.n+' 條登錄頁輸入的路線，系統算跟存的數不同'+exj(g),g.t]);
-    else items.push([g.n+(/^清冊這一列只記碳排/.test(g.w)?' 條路線：':' 段')+(g.w||'清冊係數跟運輸係數表不一樣')+exj(g),g.t]); });
+function trnDeclPanel(rows){   /* V129-99：差異原因改照「運輸方式匯總」一種一句（原本照原因類別分；使用者 261104 看示意後「照這樣做」） */
+  const Dd=trnSumData(rows,true); let q1=0; const FB={};
+  rows.forEach(rt=>{ if(TRET[rt.rid])return; const z=trnSys(rt); q1+=z.t1; if(z.c.t==null)FB.route=(FB.route||0)+1; (z.c.fb||[]).forEach(k=>{ FB[k]=(FB[k]||0)+1; }); });
+  const items=[]; Dd.L.forEach(g=>{ const d=g.t1-g.t2; if(!d)return; const w=trnSumWhy(g)||'小數位'; items.push([((g.it&&g.it.mode==='L'&&TLEGS.indexOf(g.k)>=0)?g.k+' ':'')+trnSumName(g)+' '+g.n+' 段：'+w,d]); });
+  items.sort((x,y)=>Math.abs(y[1])-Math.abs(x[1]));
   const fb=[['noleg','段清冊只記碳排（沒有重量／距離／車種）'],['mix','段清冊只記多段合計延噸公里'],['none','段車種認不出（運輸係數表沒有對應）'],['route','條路線算不出']].filter(x=>FB[x[0]]).map(x=>FB[x[0]]+' '+x[1]);
-  return entryDeclBox({yr:F.year,q1:q1,S:S,grp:F.trGrp,items:items,note:!!F.trNote,
+  return entryDeclBox({yr:F.year,q1:q1,S:Dd.S2,grp:F.trGrp,items:items,note:!!F.trNote,big:true,cellTip:'全集團頁「'+F.cat+'」那一格',
     q1tip:'每一段：延噸公里 ×（TTW＋WTT）÷ 1000，係數用運輸係數表（照車種、國別）；算不出的段照存的數',
     foot:fb.length?'<div class="fmini" style="color:#7a8f84">另有 '+esc(fb.join('、'))+'，系統算不出，照存的數（格子下面標「照存的數」）。</div>':''}); }
 function trnWhyLabel(p){ return p.k==='noleg'?'清冊只有碳排':(p.k==='mix'?'清冊只記多段合計延噸公里':(p.k==='none'?'車種認不出':(p.w||'清冊係數不同'))); }
