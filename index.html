@@ -307,7 +307,7 @@ function facChg(on){ return '<span class="fchg'+(on?'':' off')+'">🟡</span>'; 
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-101-1</b> · 2026/11/04</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-102</b> · 2026/11/04</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -10341,8 +10341,13 @@ function w5declView(blocks){
   const dif=(a,b)=>a!=null&&b!=null&&Math.abs(a-b)>Math.max(1e-9,Math.abs(b)*1e-6);
   const dn2=(l,c,et)=>{ if(!l.t) return '<td class="R">—</td><td class="R">—</td>';
     const a=w5n(et['運輸係數TTW']), b=w5n(et['運輸係數WTT']), M=c.tM, nf='<span class="fmini">未填</span>';
-    if(a!=null||b!=null){ const xa=!!M&&(a==null||dif(a,M.ttw)), xb=!!M&&(b==null||dif(b,M.wtt));
-      return '<td class="R'+(xa?' x':'')+'">'+(a==null?nf:w5g6(a))+'</td><td class="R'+(xb?' x':'')+'">'+(b==null?nf:w5g6(b))+'</td>'; }
+    if(a!=null||b!=null){ let A=a, B=b, sw=false;
+      /* V129-102：收集表欄名對調（2022～2024 多數廠標「WTT」的欄填下游值、標「TTW」的欄填上游值）→ 照意思放回，數字不改 */
+      if(M){ const ok=(v,m)=>v!=null&&!dif(v,m); const st=(ok(a,M.ttw)?1:0)+(ok(b,M.wtt)?1:0), sx=(ok(b,M.ttw)?1:0)+(ok(a,M.wtt)?1:0);
+        if(sx>st&&Math.abs(M.ttw-M.wtt)>1e-9){ A=b; B=a; sw=true; } }
+      const xa=!!M&&(A==null||dif(A,M.ttw)), xb=!!M&&(B==null||dif(B,M.wtt));
+      const swn=sw?'<div class="fmini" style="color:#7a8f84;font-weight:400" title="收集表把下游值填在標「WTT（上游）」的欄、上游值填在標「TTW（下游）」的欄；這裡照意思放回下游／上游，數字沒改，碳排不受影響">收集表欄名對調</div>':'';
+      return '<td class="R'+(xa?' x':'')+'">'+(A==null?nf:w5g6(A))+swn+'</td><td class="R'+(xb?' x':'')+'">'+(B==null?nf:w5g6(B))+'</td>'; }
     const x=c.tef!=null&&(c.tefL==null||dif(c.tefL,c.tef));
     return '<td class="R'+(x?' x':'')+'" colspan="2">'+(c.tefL==null?nf:'合計 '+w5g6(c.tefL)+'<div class="fmini" style="color:#7a8f84;font-weight:400">收集表沒分上下游</div>')+'</td>'; };
   let DT=0,DP=0;
