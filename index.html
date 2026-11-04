@@ -307,7 +307,7 @@ function facChg(on){ return '<span class="fchg'+(on?'':' off')+'">🟡</span>'; 
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-99</b> · 2026/11/04</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-101-1</b> · 2026/11/04</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -9477,21 +9477,21 @@ function trnRoutePanel(){   /* 「🛣 本廠用過的路線」清單：可以�
   return h; }
 /* V129-99：運輸方式匯總（使用者 261104「請針對不同類型的運輸做一個匯總表 然後再將上游跟下游運輸係數也放在匯總表中」「系統目前有陸海空」「以後年度都用系統就不會有差異，也應該要考慮進去」；示意 GHG_C04C09運輸方式匯總表示意_261104-1）
    一種運輸方式一列：段（陸運-1／空運／海運／陸運-2）× 共用運輸係數表那一種（陸運分車種＋區域）。
-   已申報年度＝① 系統算 對 ② 收集表；收集表數字用收割原值（批240 重算過的列用它存的「收割碳排／收割TTW／收割WTT／收割係數」）。可輸入年度＝只有系統算＋占比。 */
+   已申報年度＝① 系統算 對 ② 收集表；收集表數字用收割原值（批240 重算過的列用它存的「收割碳排／收割TTW／收割WTT／收割係數」）。V129-101：不只批240，有存「收割碳排」的段（批245／244／296／316…重算過）一律用收割原值。可輸入年度＝只有系統算＋占比。 */
 function trnSumG(v){ return v==null||v===''?'':String(+(+v).toFixed(8)); }   /* 係數去尾 0 */
 function trnSumData(rows,decl){
   const lib=trnLib(), sct=trnSiteCt(), G={}; let S2=0, q1=0;
   const num=v=>(v==null||v==='')?null:(isFinite(+v)?+v:null);
   const kOf=k=>TLEGS.indexOf(k)>=0?k:(/^_/.test(k)?k:'陸運-2');
-  const gp=(k,it)=>{ const kk=kOf(k), key=kk+'|'+(it?it.key:'?'); return G[key]=G[key]||{k:kk,it:it||null,n:0,tk:0,t1:0,t2:0,ff:{},r:{},fb:0}; };
+  let curRt=null; const gp=(k,it)=>{ const kk=kOf(k), key=kk+'|'+(it?it.key:'?'); const g=G[key]=G[key]||{key:key,k:kk,it:it||null,n:0,tk:0,t1:0,t2:0,ff:{},r:{},fb:0,rids:new Set()}; if(curRt)g.rids.add(curRt.rid); return g; };   /* V129-100：記下這一種有哪些路線（點匯總表一列篩明細用） */
   const why=(g,c,d,ex)=>{ const o=g.r[c]=g.r[c]||{n:0,d:0,ex:{}}; o.n++; o.d+=d; if(ex)o.ex[ex]=(o.ex[ex]||0)+1; };
   const near=(a,b)=>a!=null&&b!=null&&Math.abs(a-b)<=Math.max(1e-9,Math.abs(b)*0.002);
-  rows.forEach(rt=>{ if(TRET[rt.rid])return;   /* 只看不改的 C4-2 路線（在 C09 頁登錄、碳排算進 C04）也算，跟明細合計一致 */
+  rows.forEach(rt=>{ if(TRET[rt.rid])return; curRt=rt;   /* 只看不改的 C4-2 路線（在 C09 頁登錄、碳排算進 C04）也算，跟明細合計一致 */
     if(!rt.old){ const c=trnCalc(rt); const t2=decl?(rt.rows||[]).reduce((a,r)=>a+(+r.co2e_draft||0),0):0;
       if(decl){ const g=gp('_new',null); g.n++; g.t1+=(c.t!=null?c.t:t2); g.t2+=t2; q1+=(c.t!=null?c.t:t2); S2+=t2; const d=(c.t!=null?c.t:t2)-t2; if(Math.abs(d)>=0.0005)why(g,'oth',d); else if(d)why(g,'rd',d); return; }
       Object.keys(c.legs||{}).forEach(k=>{ const x=c.legs[k]; const g=gp(k,x.it); g.n++; g.tk+=x.tk||0; if(x.t!=null){ g.t1+=x.t; q1+=x.t; } else { g.fb++; why(g,x.it?'nowt':'none',0); } }); return; }
     const parts=rt.parts||[]; const linked=parts.some(p=>!p.noleg&&!p.mix&&p.r&&(p.r.extra||{})['清冊碳排在原列']);
-    parts.forEach(p=>{ const e=(p.r&&p.r.extra)||{}; const h240=e['批240']!=null; const t2h=(h240&&e['收割碳排']!=null)?(+e['收割碳排']||0):(+p.t2||0); S2+=t2h;
+    parts.forEach(p=>{ const e=(p.r&&p.r.extra)||{}; const h240=e['收割碳排']!=null; const t2h=h240?(+e['收割碳排']||0):(+p.t2||0);   /* V129-101：有存收割原值就用（原本只認批240） */ S2+=t2h;
       if(p.noleg||p.mix){ const g=gp(p.noleg?'_noleg':'_mix',null); g.n++; g.t2+=t2h; if(linked){ why(g,'linked',-t2h); return; } g.t1+=+p.t2||0; q1+=+p.t2||0; g.fb++; const d=(+p.t2||0)-t2h; if(Math.abs(d)>=0.00005)why(g,'oth',d); return; }
       const mo=trnLegMode(p.k); const M=trnDeclMatch(mo,p,rt,sct);
       const cT=num(h240?e['收割TTW']:e.TTW), cW=num(h240?e['收割WTT']:e.WTT), cE=num(h240?e['收割係數']:(p.r&&p.r.ef_value));
@@ -9531,7 +9531,20 @@ function trnSumWhy(g){   /* 這一種「差在哪裡」：白話，金額大的�
     else out.push(n+' 段系統算跟收集表不同'); });
   if(!out.length&&R.rd)out.push('小數位');
   return out.join('；'); }
+let TSUMF=null, TSUMG={}, TSUMK='';   /* V129-100：匯總表選中的那一種（換廠區／年度／類別就清掉） */
+window.trnSumF=function(k){ TSUMF=(TSUMF===k?null:k); trnSumApply(); };
+function trnSumApply(){ const set=TSUMF?TSUMG[TSUMF]:null; const W=document.getElementById('s101wrap'); if(!W)return;
+  W.querySelectorAll('table.trnsum tr[data-g]').forEach(tr=>{ const on=tr.dataset.g===TSUMF; tr.style.outline=on?'2px solid #E0A100':''; tr.style.outlineOffset=on?'-2px':''; });
+  const tb=W.querySelector('table.trnt tbody'); if(!tb)return; let shown=0;
+  tb.querySelectorAll('tr').forEach(tr=>{ let hide=false; const i=tr.getAttribute('data-i'), x=tr.getAttribute('data-x');
+    if(i!=null){ const rt=TRT[+i]; hide=!!set&&!(rt&&set.has(rt.rid)); if(!hide)shown++; } else if(x!=null){ const rt=TRT[+x]; hide=!!set&&!(rt&&set.has(rt.rid)); }
+    else if(!tr.classList.contains('tot')&&!tr.classList.contains('rosep'))hide=!!set;   /* 小計列篩選時先藏起來 */
+    tr.style.display=hide?'none':''; });
+  let bn=document.getElementById('trnsumf'); if(bn){ bn.classList.remove('fxhid'); delete bn.dataset.cl; } if(!bn){   /* V129-101-1：別被頁首整理收進「算法說明」 */ bn=document.createElement('div'); bn.id='trnsumf'; const t=W.querySelector('table.trnt'); if(t)t.parentNode.insertBefore(bn,t); }
+  if(set){ const tr=W.querySelector('table.trnsum tr[data-g="'+CSS.escape(TSUMF)+'"]'); const nm=tr?tr.cells[0].textContent.replace(/\s+/g,' ').trim():'';   /* V129-101-1：textContent（innerText 會受畫面狀態影響） */ bn.style.cssText='padding:5px 12px;font-size:12.5px;background:#FFF3D6;border:1px solid #E0A100;border-radius:6px;margin:4px 0;color:#7a5200'; bn.innerHTML='下面明細只顯示「<b>'+esc(nm)+'</b>」的 '+shown+' 條路線（合計列仍是全部）　<a href="javascript:void(0)" onclick="trnSumF(TSUMF_K())">全部顯示</a>'; } else { bn.style.cssText='display:none'; bn.innerHTML=''; } }
+window.TSUMF_K=function(){ return TSUMF; };
 function trnSumHTML(rows,decl){
+  { const pk=F.cat+'|'+F.site+'|'+F.year; if(TSUMK!==pk){ TSUMK=pk; TSUMF=null; } TSUMG={}; }
   if(!rows.some(rt=>!TRET[rt.rid]))return '';
   const D=trnSumData(rows,decl), sg=v=>(v>0?'+':'')+nf(v,4), g6=trnSumG, g6x=v=>v==null?'—':trnSumG(v), f2=v=>Number(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
   const G=F.trGrp||{}, gOK=decl&&!G.err&&G.g!=null;
@@ -9553,7 +9566,8 @@ function trnSumHTML(rows,decl){
     if(!gs.length){ h+='<tr class="none"><td class="tl">　'+esc(m)+'</td><td>0</td>'+Array(NC-3).fill('<td>—</td>').join('')+'<td class="tl">本年沒有</td></tr>'; return; }
     gs.forEach(g=>{ T1+=g.t1; T2+=g.t2; TK+=g.tk; TN+=g.n; const it=g.it, dd=g.t1-g.t2, dx=Math.abs(dd)>=0.00005;
       const sysC=it?'<td class="sv">'+fv(it,it.ttw)+'</td><td class="sv">'+fv(it,it.wtt)+'</td><td class="sv">'+g6(it.ttw+it.wtt)+'</td>':'<td class="sv">—</td><td class="sv">—</td><td class="sv">—</td>';
-      let row='<tr><td class="tl" title="'+esc(it?trnCode(it,F.cat,F.year):'')+'">　'+esc(trnSumName(g))+'</td><td>'+g.n+'</td><td>'+(g.tk?f2(g.tk):'—')+'</td>'+sysC+'<td class="sv">'+nf(g.t1,4)+(g.fb?'<div class="fmini" style="color:#7a8f84" title="這一種有段系統算不出，照存的數">含照存的數</div>':'')+'</td>';
+      TSUMG[g.key]=g.rids; const sel=TSUMF===g.key;
+      let row='<tr data-g="'+esc(g.key)+'" onclick="trnSumF(this.dataset.g)" style="cursor:pointer'+(sel?';outline:2px solid #E0A100;outline-offset:-2px':'')+'" title="點一下，下面明細只留這一種的 '+g.rids.size+' 條路線；再點一次全部顯示"><td class="tl">　'+esc(trnSumName(g))+'</td><td>'+g.n+'</td><td>'+(g.tk?f2(g.tk):'—')+'</td>'+sysC+'<td class="sv">'+nf(g.t1,4)+(g.fb?'<div class="fmini" style="color:#7a8f84" title="這一種有段系統算不出，照存的數">含照存的數</div>':'')+'</td>';
       if(decl){ const F0=Object.values(g.ff); const nNo=F0.filter(f=>f.t==null&&f.w==null&&f.e==null).reduce((a,f)=>a+f.n,0); let F2=F0.filter(f=>!(f.t==null&&f.w==null&&f.e==null)); { const sumOf=f=>f.e!=null?f.e:((f.t||0)+(f.w||0)); const pr=F2.filter(f=>f.e==null); const s0=F2.length?sumOf(F2[0]):null; const prK=[...new Set(pr.map(f=>String(f.t)+'|'+String(f.w)))];
           if(F2.length>1&&F2.every(f=>Math.abs(sumOf(f)-s0)<1e-9)&&prK.length<=1){ const n=F2.reduce((a,f)=>a+f.n,0); F2=[pr.length?Object.assign({},pr[0],{n:n}):Object.assign({},F2[0],{n:n})]; } }
           let cTd, cWd, xT=false, xW=false;
@@ -9693,6 +9707,7 @@ function trnRender(){
   if(fs)fs.onchange=async()=>{F.site=fs.value; F.year=+fy.value; TEXP={}; await trnLoad();};
   if(fy)fy.onchange=async()=>{F.year=+fy.value; TEXP={}; await trnLoad();};
   trnBind(box);
+  if(TSUMF)trnSumApply();   /* V129-100：重畫後照舊篩選 */
   if(TFOC){ const fo=TFOC; TFOC=null; const L=[...box.querySelectorAll('#s101wrap input[data-rid],#s101wrap select[data-rid]')]; const i=L.findIndex(x=>x.dataset.rid===String(fo.rid)&&x.dataset.f===fo.f); const nx=i>=0?L[fo.at?i:i+(fo.back?-1:1)]:null; if(nx){ nx.focus(); if(nx.select&&nx.tagName==='INPUT')nx.select(); } }
   const q=document.getElementById('trn_rteq'); if(q&&TRTE_Q){ q.value=TRTE_Q; trnRteQ(TRTE_Q); }
 }
@@ -15151,7 +15166,7 @@ body.ghgfocus #src_form .ehead>.fxfocus{background:#1B8A60;border-color:#1B8A60;
   function clip(el,k){ if(el.dataset.cl)return; el.dataset.cl='1'; el.classList.add('fxclip'); const a=document.createElement('a'); a.href='javascript:void(0)'; a.className='fxmore'; a.title='點一下看完整內容／收起';
     const set=on=>{ el.classList.toggle('fxopen',on); a.textContent=on?'收起':'展開'; }; set(!!FXO[k]);
     a.onclick=e=>{ e.preventDefault(); e.stopPropagation(); FXO[k]=!el.classList.contains('fxopen'); set(FXO[k]); req(); }; el.appendChild(a); }
-  const isData=el=>el.tagName==='TABLE'||el.tagName==='STYLE'||el.tagName==='SCRIPT'||el.classList.contains('s101zone')||el.id==='s101wrap'||!!el.querySelector('table,input,select,textarea,.s101zone');
+  const isData=el=>el.tagName==='TABLE'||el.tagName==='STYLE'||el.tagName==='SCRIPT'||el.classList.contains('s101zone')||el.id==='s101wrap'||el.id==='trnsumf'||!!el.querySelector('table,input,select,textarea,.s101zone');
   function squeeze(b){ const eh=b.querySelector('.ehead'); const t=eh&&eh.querySelector('.eh-t'); let n=0; const wrapOn=!!b.querySelector('#s101wrap'); const grp=[];   /* 舊版表單頁只收灰字、不收框 */
     const cand=[]; [...b.children].forEach(c=>{ if(c!==eh)cand.push(c); });
     const w=b.querySelector('#s101wrap'); if(w){ for(const c of w.children){ if(c.classList.contains('s101zone'))break; cand.push(c); } }
