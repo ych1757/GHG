@@ -307,7 +307,7 @@ function facChg(on){ return '<span class="fchg'+(on?'':' off')+'">🟡</span>'; 
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-102</b> · 2026/11/04</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-102-1</b> · 2026/11/04</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -10038,6 +10038,7 @@ function w5blk(l){ const e=l.w?w5e(l.w):w5e(l.t); const k=String(e['廢棄物種
    區域照廠區所在國別（中國＝中國貨車、台灣＝台灣、其他＝全球），跟運輸頁同一套；對車種也用運輸頁那一支（先看係數值、再看名稱）。 */
 function w5trnRg(site){ const st=(FAC_SITES||[]).find(x=>x.site_id===(site||W5.site))||{}; return window.trnXp?trnXp.rgOf(st.country):'ALL'; }
 function w5trnItems(site){ try{ const rg=w5trnRg(site), L=trnXp.lib().items.filter(x=>x.mode==='L'); return L.filter(x=>x.ct===rg).concat(L.filter(x=>x.ct!==rg)); }catch(e){ return []; } }
+function w5swRef(a,b){ try{ if(a==null||b==null||Math.abs(a-b)<1e-9)return false; const eq=(x,y)=>Math.abs(x-y)<=Math.max(1e-9,Math.abs(y)*1e-6); const L=trnXp.lib().items.filter(x=>x.mode==='L'); return L.some(x=>eq(b,x.ttw)&&eq(a,x.wtt))&&!L.some(x=>eq(a,x.ttw)&&eq(b,x.wtt)); }catch(e){ return false; } }   /* V129-102-1：收集表 TTW 欄＝a、WTT 欄＝b；共用表有一種是 b 下游＋a 上游（且沒有反過來的）→ 欄名對調 */
 function w5fuelRec(it,vh,ef){ try{ if(!it||it.mode!=='L'||ef==null||!isFinite(+ef)||/汽油|柴油|gasoline|diesel/i.test(String(vh||'')))return it; const base=String(it.veh||'').replace(/[（(].*$/,''); if(!base)return it; const hit=trnXp.lib().items.filter(x=>x.mode==='L'&&x.ct===it.ct&&String(x.veh||'').replace(/[（(].*$/,'')===base&&Math.abs((x.ttw+x.wtt)-(+ef))<=Math.max(1e-6,Math.abs(+ef)*1e-6)); return hit.length===1?hit[0]:it; }catch(e){ return it; } }   /* 261030：沒寫燃料時照收集表用的係數認燃料（記錄）；對不到才用統一規則（取汽油） */
 function w5trnMatch(veh,ef,ttw,wtt){ try{ let it=trnXp.std(veh,w5trnRg()); if(it&&ef==null&&ttw!=null&&wtt!=null)ef=(+ttw)+(+wtt); it=w5fuelRec(it,veh,ef); return it?{it:it,how:'std'}:null; }catch(e){ return null; } }   /* V129-71：照廠區區域＋統一車種，不看檔案係數值 */
 function w5trnSet(t,it){ const ef=+(it.ttw+it.wtt).toFixed(10); t.ef_value=ef; t.ef_unit='kgCO2e/tkm'; t.factor_id=it.f.factor_id; t.ef_source=it.f.factor_source||'C04／C09 共用運輸係數表';
@@ -10320,7 +10321,8 @@ function w5declView(blocks){
     if(c.tM) return '<td class="R"'+tt+'>'+fvA(f,w5g6(c.tM.ttw))+'</td><td class="R"'+tt+'>'+fvA(f,w5g6(c.tM.wtt))+'</td>';
     if(c.tef==null) return '<td class="R" colspan="2">'+(l.t?'<span class="fmini">未帶</span>':'—')+'</td>';
     const a=w5n(et['運輸係數TTW']), b=w5n(et['運輸係數WTT']), nt='<div class="fmini" style="color:#7a8f84" title="運輸工具對不到共用運輸係數表，照收集表的係數">照收集表</div>';
-    if(a!=null&&b!=null&&Math.abs(a+b-c.tef)<=Math.max(1e-9,Math.abs(c.tef)*1e-6)) return '<td class="R">'+w5g6(a)+nt+'</td><td class="R">'+w5g6(b)+'</td>';
+    if(a!=null&&b!=null&&Math.abs(a+b-c.tef)<=Math.max(1e-9,Math.abs(c.tef)*1e-6)){ const sw=w5swRef(a,b);   /* V129-102-1 */
+      return '<td class="R">'+w5g6(sw?b:a)+nt+(sw?'<div class="fmini" style="color:#7a8f84;font-weight:400" title="收集表把下游值填在標「WTT（上游）」的欄、上游值填在標「TTW（下游）」的欄；這裡照意思放回下游／上游，數字沒改，碳排不受影響">收集表欄名對調</div>':'')+'</td><td class="R">'+w5g6(sw?a:b)+'</td>'; }
     return '<td class="R" colspan="2">合計 '+w5g6(c.tef)+nt+'</td>'; };
   let UW=0,UT=0,UP=0;
   BX.forEach(o=>{ let bw=0,bt=0,bp=0; o.L.forEach(x=>{ bw+=x.c.wt; bt+=w5sysT(x.l,x.c)||0; bp+=w5sysW(x.l,x.c)||0; }); UW+=bw; UT+=bt; UP+=bp;
@@ -10345,6 +10347,7 @@ function w5declView(blocks){
       /* V129-102：收集表欄名對調（2022～2024 多數廠標「WTT」的欄填下游值、標「TTW」的欄填上游值）→ 照意思放回，數字不改 */
       if(M){ const ok=(v,m)=>v!=null&&!dif(v,m); const st=(ok(a,M.ttw)?1:0)+(ok(b,M.wtt)?1:0), sx=(ok(b,M.ttw)?1:0)+(ok(a,M.wtt)?1:0);
         if(sx>st&&Math.abs(M.ttw-M.wtt)>1e-9){ A=b; B=a; sw=true; } }
+      else if(w5swRef(a,b)){ A=b; B=a; sw=true; }   /* V129-102-1：對不到車種時比共用表全部陸運 */
       const xa=!!M&&(A==null||dif(A,M.ttw)), xb=!!M&&(B==null||dif(B,M.wtt));
       const swn=sw?'<div class="fmini" style="color:#7a8f84;font-weight:400" title="收集表把下游值填在標「WTT（上游）」的欄、上游值填在標「TTW（下游）」的欄；這裡照意思放回下游／上游，數字沒改，碳排不受影響">收集表欄名對調</div>':'';
       return '<td class="R'+(xa?' x':'')+'">'+(A==null?nf:w5g6(A))+swn+'</td><td class="R'+(xb?' x':'')+'">'+(B==null?nf:w5g6(B))+'</td>'; }
