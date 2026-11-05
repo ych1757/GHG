@@ -307,7 +307,7 @@ function facChg(on){ return '<span class="fchg'+(on?'':' off')+'">🟡</span>'; 
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-103-2</b> · 2026/11/05</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-103-3</b> · 2026/11/05</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -10059,6 +10059,13 @@ function w5trnItems(site){ try{ const rg=w5trnRg(site), L=trnXp.lib().items.filt
 function w5swRef(a,b){ try{ if(a==null||b==null||Math.abs(a-b)<1e-9)return false; const eq=(x,y)=>Math.abs(x-y)<=Math.max(1e-9,Math.abs(y)*1e-6); const L=trnXp.lib().items.filter(x=>x.mode==='L'); return L.some(x=>eq(b,x.ttw)&&eq(a,x.wtt))&&!L.some(x=>eq(a,x.ttw)&&eq(b,x.wtt)); }catch(e){ return false; } }   /* V129-102-1：收集表 TTW 欄＝a、WTT 欄＝b；共用表有一種是 b 下游＋a 上游（且沒有反過來的）→ 欄名對調 */
 function w5fuelRec(it,vh,ef){ try{ if(!it||it.mode!=='L'||ef==null||!isFinite(+ef)||/汽油|柴油|gasoline|diesel/i.test(String(vh||'')))return it; const base=String(it.veh||'').replace(/[（(].*$/,''); if(!base)return it; const hit=trnXp.lib().items.filter(x=>x.mode==='L'&&x.ct===it.ct&&String(x.veh||'').replace(/[（(].*$/,'')===base&&Math.abs((x.ttw+x.wtt)-(+ef))<=Math.max(1e-6,Math.abs(+ef)*1e-6)); return hit.length===1?hit[0]:it; }catch(e){ return it; } }   /* 261030：沒寫燃料時照收集表用的係數認燃料（記錄）；對不到才用統一規則（取汽油） */
 function w5trnMatch(veh,ef,ttw,wtt){ try{ let it=trnXp.std(veh,w5trnRg()); if(it&&ef==null&&ttw!=null&&wtt!=null)ef=(+ttw)+(+wtt); it=w5fuelRec(it,veh,ef); return it?{it:it,how:'std'}:null; }catch(e){ return null; } }   /* V129-71：照廠區區域＋統一車種，不看檔案係數值 */
+function w5coefIt(et,ef){ try{   /* V129-103-3：已申報年度車種沒寫清楚 → 照收集表運輸係數認共用表陸運哪一種（同上游運輸頁 V129-103） */
+  const L=trnXp.lib().items.filter(x=>x.mode==='L'); const eq=(a,b)=>a!=null&&Math.abs(a-b)<=Math.max(1e-7,Math.abs(b)*1e-5);
+  const tw=w5n(et['運輸係數TTW']), wt=w5n(et['運輸係數WTT']);
+  if(tw!=null&&wt!=null){ let h=L.filter(x=>eq(tw,x.ttw)&&eq(wt,x.wtt)); if(h.length===1)return {it:h[0],txt:'收集表 TTW '+w5g6(tw)+'＋WTT '+w5g6(wt)};
+    if(!h.length){ h=L.filter(x=>eq(tw,x.wtt)&&eq(wt,x.ttw)); if(h.length===1)return {it:h[0],txt:'收集表 TTW '+w5g6(tw)+'＋WTT '+w5g6(wt)+'（兩欄對調）'}; } }
+  const tot=(tw!=null&&wt!=null)?tw+wt:ef; if(tot!=null&&tot>0){ const h=L.filter(x=>eq(tot,x.ttw+x.wtt)); if(h.length===1)return {it:h[0],txt:'收集表合計 '+w5g6(tot)}; }
+  return null; }catch(e){ return null; } }
 function w5trnSet(t,it){ const ef=+(it.ttw+it.wtt).toFixed(10); t.ef_value=ef; t.ef_unit='kgCO2e/tkm'; t.factor_id=it.f.factor_id; t.ef_source=it.f.factor_source||'C04／C09 共用運輸係數表';
   t.extra=t.extra||{}; t.extra['運輸係數代號']=trnXp.code(it,'C04',W5.year); t.extra['運輸係數車種']=it.veh; t.extra['係數說明']='運輸係數＝C04／C09 共用運輸係數表（TTW '+it.ttw+'＋WTT '+it.wtt+'）'; delete t.extra['收集表沒有運輸係數']; delete t.extra['與收集表係數不同']; }
 function w5vehSel(id,vh){ const L=w5trnItems(), rg=w5trnRg(), ZH={CN:'中國',ALL:'全球',TW:'台灣'}; const has=L.some(x=>x.veh===vh);
@@ -10202,13 +10209,14 @@ function w5line(l){
   const tkm=t?(+t.quantity||0):(km!=null?+(wt*km).toFixed(6):null);
   const tefL=t?w5n(t.ef_value):null;
   const vh=String(et['運輸工具']||'').trim(); let tM=null; if(t&&vh){ try{ const it=w5fuelRec(trnXp.std(vh,w5trnRg()),vh,tefL); if(it)tM=it;   /* V129-71；261030 沒寫燃料照記錄 */ }catch(x){} }   /* V129-58-5：運輸段照「運輸工具」名稱查共用運輸係數表 */
+  let tHow='', tTxt='', tWhy=''; if(t&&!tM&&w5decl()){ const cm=w5coefIt(et,tefL); if(cm){ tM=cm.it; tHow='coef'; tTxt=cm.txt; } else tWhy='運輸工具「'+(vh||'空白')+'」看不出車種、收集表係數也對不到共用運輸係數表'; }   /* V129-103-3（使用者 261105「照這樣改」） */
   const tef=tM?+(tM.ttw+tM.wtt).toFixed(10):tefL; const tefD=(tM&&tefL!=null&&Math.abs(tefL-tef)>Math.max(1e-9,tef*1e-6))?tefL:null;
   const code=String(ew['係數代號']||'').split('·')[0];
   const lib=W5.fac?W5.fac[code+'|'+w5rg(W5.site)+'|'+facY(W5.year)]:null;
   const efL=w?w5n(w.ef_value):null; const ef=(lib&&lib.v!=null)?+lib.v:efL;   /* V129-58-5：處理段 ① 用係數庫主值；收集表值只比對 */
   const efD=(lib&&lib.v!=null&&efL!=null&&Math.abs(efL-lib.v)>Math.max(1e-9,Math.abs(lib.v)*1e-6))?efL:null;
   const wc=w?(+w.co2e_draft||0):0, tc=t?(+t.co2e_draft||0):0;
-  return {wt:wt,km:km,tkm:tkm,tef:tef,tefL:tefL,tefD:tefD,tM:tM,ef:ef,efL:efL,efD:efD,lib:lib,code:code,
+  return {wt:wt,km:km,tkm:tkm,tef:tef,tefL:tefL,tefD:tefD,tM:tM,tHow:tHow,tTxt:tTxt,tWhy:tWhy,ef:ef,efL:efL,efD:efD,lib:lib,code:code,
           wCalc:ef!=null?+(wt*ef/1000).toFixed(10):null, tCalc:(tkm!=null&&tef!=null)?+(tkm*tef/1000).toFixed(10):null,
           wc:wc,tc:tc,tot:wc+tc};
 }
@@ -10336,9 +10344,10 @@ function w5declView(blocks){
   h+='<div class="fdwrap"><div class="fdh fdup">上表　① 系統算 <span>處理＝重量 × 係數庫 '+w5esc(w5rg(W5.site))+' '+facY(W5.year)+' 年主值；運輸＝延噸公里 × 共用運輸係數表（照運輸工具）</span></div><table class="fdt" id="w5_up">'+CG
     +head('','① 系統算','對到下表');
   const up2=(l,c,et)=>{ const f=c.tM&&c.tM.f&&c.tM.f.factor_id, tt=c.tM?' title="'+w5esc(c.tM.veh)+'：合計 '+w5g6(c.tef)+'"':'';
-    if(c.tM) return '<td class="R"'+tt+'>'+fvA(f,w5g6(c.tM.ttw))+'</td><td class="R"'+tt+'>'+fvA(f,w5g6(c.tM.wtt))+'</td>';
+    const cn=c.tHow==='coef'?'<div class="fmini" style="color:#7a8f84;font-weight:400" title="運輸工具「'+w5esc(String(et['運輸工具']||'空白'))+'」看不出車種；'+w5esc(c.tTxt)+' 對到共用運輸係數表「'+w5esc(c.tM.veh)+'」（2022–2025 照收集表係數認車種）">照收集表係數認 '+w5esc(c.tM.veh)+'</div>':'';   /* V129-103-3 */
+    if(c.tM) return '<td class="R"'+tt+'>'+fvA(f,w5g6(c.tM.ttw))+cn+'</td><td class="R"'+tt+'>'+fvA(f,w5g6(c.tM.wtt))+'</td>';
     if(c.tef==null) return '<td class="R" colspan="2">'+(l.t?'<span class="fmini">未帶</span>':'—')+'</td>';
-    const a=w5n(et['運輸係數TTW']), b=w5n(et['運輸係數WTT']), nt='<div class="fmini" style="color:#7a8f84" title="運輸工具對不到共用運輸係數表，照收集表的係數">照收集表</div>';
+    const a=w5n(et['運輸係數TTW']), b=w5n(et['運輸係數WTT']), nt=c.tWhy?'<div class="fmini" style="color:#a33" title="'+w5esc(c.tWhy)+'；系統算先照存的數，待 ESG 確認車種">車種認不出（待 ESG）</div>':'<div class="fmini" style="color:#7a8f84" title="運輸工具對不到共用運輸係數表，照收集表的係數">照收集表</div>';   /* V129-103-3 */
     if(a!=null&&b!=null&&Math.abs(a+b-c.tef)<=Math.max(1e-9,Math.abs(c.tef)*1e-6)){ const sw=w5swRef(a,b);   /* V129-102-1 */
       return '<td class="R">'+w5g6(sw?b:a)+nt+(sw?'<div class="fmini" style="color:#7a8f84;font-weight:400" title="收集表把下游值填在標「WTT（上游）」的欄、上游值填在標「TTW（下游）」的欄；這裡照意思放回下游／上游，數字沒改，碳排不受影響">收集表欄名對調</div>':'')+'</td><td class="R">'+w5g6(sw?a:b)+'</td>'; }
     return '<td class="R" colspan="2">合計 '+w5g6(c.tef)+nt+'</td>'; };
@@ -10454,7 +10463,7 @@ function wstRender(){
         +(ed?'<span class="fmini">／'+tin('km',c.km,'km')+'</span>':(c.km==null?'':'<span class="fmini" style="color:#7a8f84">／'+w5f(c.km,2)+' km</span>'))+'</td>'
         +'<td class="R sysv">'+(c.tkm==null?'—':w5f(c.tkm,2))+'</td>'
         +'<td class="R sysv"'+(c.tM?' title="'+w5esc(c.tM.veh)+'：下游 TTW '+w5g6(c.tM.ttw)+'＋上游 WTT '+w5g6(c.tM.wtt)+'"':'')+'>'+(c.tef==null?(l.t?'<span class="fmini">未帶</span>':'—'):fvA(c.tM&&c.tM.f&&c.tM.f.factor_id,w5g6(c.tef)))
-          +(c.tefD!=null?'<div class="fmini" style="color:#b8860b" title="收集表填的運輸係數（WTT＋TTW）；系統算用共用運輸係數表">收集表 '+w5g6(c.tefD)+'</div>':'')+'</td>'
+          +(c.tefD!=null?'<div class="fmini" style="color:#b8860b" title="收集表填的運輸係數（WTT＋TTW）；系統算用共用運輸係數表">收集表 '+w5g6(c.tefD)+'</div>':'')+(c.tHow==='coef'?'<div class="fmini" style="color:#7a8f84" title="運輸工具看不出車種；'+w5esc(c.tTxt)+' 對到「'+w5esc(c.tM.veh)+'」">照收集表係數認 '+w5esc(c.tM.veh)+'</div>':'')+(c.tWhy?'<div class="fmini" style="color:#a33" title="'+w5esc(c.tWhy)+'；系統算先照存的數">車種認不出（待 ESG）</div>':'')+'</td>'   /* V129-103-3 */
         +'<td class="R sysv">'+(DC?w5one(w5sysT(l,c),!!(l.t&&c.tCalc==null)):((l.t?w5f(c.tc,4):'—')+((et['收集表沒算這段運輸']||et['與收集表算式不符'])?'<br><span class="fmini" style="color:#b8860b">算 '+w5f(c.tCalc,4)+'</span>':'')))+'</td>'
         +'<td class="R sysv">'+(c.ef==null?'<span class="fmini">未填</span>':fvA((c.lib&&c.lib.fid)||(l.w&&l.w.factor_id),w5g6(c.ef)))+(c.efD!=null?'<div class="fmini" style="color:#b8860b" title="收集表填的處理係數；系統算用係數庫主值">收集表 '+w5g6(c.efD)+'</div>':'')+(!c.lib&&c.efL!=null?'<div class="fmini" style="color:#a33" title="係數庫沒有這一年這一種的主值，照收集表">係數庫沒有</div>':'')+'</td>'
         +'<td class="R sysv">'+(DC?w5one(w5sysW(l,c),!!(l.w&&c.wCalc==null)):(w5f(c.wc,4)+(ew['與收集表算式不符']?'<br><span class="fmini" style="color:#b8860b">算 '+w5f(c.wCalc,4)+'</span>':'')))+'</td>'
