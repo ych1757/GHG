@@ -307,7 +307,7 @@ function facChg(on){ return '<span class="fchg'+(on?'':' off')+'">🟡</span>'; 
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-103</b> · 2026/11/04</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-103-2</b> · 2026/11/05</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -9186,20 +9186,24 @@ function trnCoefIt(p){   /* V129-103：一段原收集表的係數 → 共用表
     if(!h.length){ h=L.filter(x=>eq(tw,x.wtt)&&eq(wt,x.ttw)); if(h.length===1)return {it:h[0],txt:'TTW '+g6(tw)+'＋WTT '+g6(wt)+'（兩欄對調）'}; } }
   const tot=(tw!=null&&wt!=null)?tw+wt:s; if(tot!=null&&tot>0){ const h=L.filter(x=>eq(tot,x.ttw+x.wtt)); if(h.length===1)return {it:h[0],txt:'合計 '+g6(tot)}; }
   return null; }
+const TRN_ESG_VEH={   /* V129-103-2：已申報年度車種沒寫清楚、收集表係數也對不到，ESG 回覆指定車種的段（record_id → 統一車種）；不動資料庫 */
+  172994:{lv:'重型',note:'ESG 回覆題 C1：收集表寫「貨車」＝重型'}   /* 蘇州富鴻齊 2023 上游運輸 HP非保 陸運-1（使用者 261105「C1套重型」） */
+};
 function trnDeclMatch(mo,p,rt,sct){   /* 已申報年度：一段 → 係數表哪一格（不看清冊值） */
   const lib=trnLib(); const L=trnLegRg(p,rt,sct);
   if(mo!=='L'){ if(!L.rg)return {it:null,how:'',why:'出發地判斷不出（待 ESG）'}; const rg=L.rg==='TW'?'TW':'ALL'; const it=lib.items.find(x=>x.mode===mo&&x.ct===rg)||null; return {it:it,how:'std',why:'出發地＝'+(L.rg==='TW'?'台灣':'台灣以外')}; }
   let u=trnUni(p.veh), unote='', cIt=null;
+  { const ev=(!u.lv&&p.r)?TRN_ESG_VEH[p.r.record_id]:null; if(ev)u={lv:ev.lv,fuel:u.fuel,note:ev.note,esg:ev.note}; }   /* V129-103-2：ESG 回覆指定車種優先於收集表係數 */
   if(!u.lv&&!p.agg){ const cm=trnCoefIt(p);   /* V129-103：車種沒寫清楚 → 照原收集表係數認車種（使用者 261104「如果2022-2025原收集表係數能對應成功 就按原收集表上面係數認定貨車種類」） */
     if(cm&&L.rg){ const vt='收集表係數 '+cm.txt+' 對到「'+trnItemName(cm.it)+'」';
       if(cm.it.ct===L.rg){ cIt=cm.it; unote='車種沒寫清楚，照'+vt; }
       else{ const lvs=String(trnUniOfKey(cm.it.key)||'').split('／').filter(Boolean); const ks=[...new Set(lvs.map(l=>trnUniKey(L.rg,l,u.fuel)))]; if(lvs.length&&ks.length===1&&ks[0]){ u={lv:lvs[0],fuel:u.fuel}; unote='車種沒寫清楚，照'+vt+'（'+lvs.join('／')+'）'; } } } }
-  if(!u.lv&&!cIt){ const e0=(p.r&&p.r.extra)||{}; const sib=(typeof TREC!=='undefined'?TREC:[]).find(x=>x!==p.r&&((x.extra||{})['起點']||'')===(e0['起點']||'')&&e0['起點']&&trnUni((x.extra||{})['交通工具']).lv); if(sib){ u=trnUni(sib.extra['交通工具']); unote='車種沒寫，照同供應商同年另一列「'+sib.extra['交通工具']+'」'; } }   /* 收集表係數也對不到時的退路（使用者還沒定留不留） */
+  /* V129-103-1：收集表係數也對不到 → 標待 ESG，不借同起點另一列的車種（使用者 261104 晚：不要用猜的） */
   if(!L.rg)return {it:null,how:'',why:'這一段在哪國判斷不出（待 ESG）'};
   if(cIt)return {it:cIt,how:'std',lv:(trnUniOfKey(cIt.key)||'').split('／')[0],why:'這段在'+({TW:'台灣',CN:'中國',ALL:'中國台灣以外'}[L.rg])+'（依'+L.how+'）・'+unote};
   if(!u.lv)return {it:null,how:'',why:'車種認不出（待 ESG）'};
   const k=trnUniKey(L.rg,u.lv,u.fuel); const it=k?lib.by[k]:null;
-  return {it:it||null,how:'std',lv:u.lv,why:'這段在'+({TW:'台灣',CN:'中國',ALL:'中國台灣以外'}[L.rg])+'（依'+L.how+'）・統一車種 '+u.lv+(u.note?'（'+u.note+'）':'')+(unote?'；'+unote:'')+(L.rg==='TW'&&(u.lv==='微型'||u.lv==='輕型')&&!u.fuel?'；沒寫燃料取汽油（係數較高，不低估）':'')}; }
+  return {it:it||null,how:'std',lv:u.lv,esg:u.esg||'',why:'這段在'+({TW:'台灣',CN:'中國',ALL:'中國台灣以外'}[L.rg])+'（依'+L.how+'）・統一車種 '+u.lv+(u.note?'（'+u.note+'）':'')+(unote?'；'+unote:'')+(L.rg==='TW'&&(u.lv==='微型'||u.lv==='輕型')&&!u.fuel?'；沒寫燃料取汽油（係數較高，不低估）':'')}; }
 
 function trnMatch(mode,veh,o){   /* 一段 → 係數表哪一種：先看數值（TTW＋WTT 或合計；清冊／檔案用的是哪一格），再看車種名稱；o＝{ttw,wtt,ef,part,ct} */
   o=o||{}; const lib=trnLib(), sct=o.ct||trnSiteCt(); const pool=lib.items.filter(x=>x.mode===mode); const nameC=mode==='L'?trnVehCands(veh,sct):[];
@@ -9266,7 +9270,7 @@ function trnOldCalc(rt){
     const ef=p.agg?(p.part==='TTW'?M.it.ttw:M.it.wtt):(M.it.ttw+M.it.wtt); const nc=!!(p.r&&((p.r.extra||{})['收料廠不計']||(p.r.extra||{})['收集表隱藏列'])); const t1=nc?0:p.q*ef/1000; t+=t1;   /* V98-1：批162 集團內公司進貨＝收料廠不計，系統算的也不算 */
     const d=t1-p.t2; if(!linked&&!nc&&Math.abs(d)>=0.00005){ const x0=(p.r&&p.r.extra)||{}; const efImp=(p.q>0)?p.t2*1000/p.q:null; const incons=!p.agg&&!p.tol&&p.ef!=null&&efImp!=null&&Math.abs(p.t2-p.q*p.ef/1000)>Math.max(0.00005,Math.abs(p.t2)*0.01);   /* 收集表這段的碳排格不等於「延噸公里 × 係數」（公式錯） */
     const w=p.agg?'':(x0['清冊沒有這一列']?'清冊沒有這一列（收集表有，碳排記 0；清冊數字不變）':x0['清冊記0']?'清冊這一列記 0（收集表算得出碳排，清冊沒算或四捨五入成 0）':(Math.abs(p.t2)<1e-12||x0['收集表合計沒加這段']||x0['收集表這段沒算碳排'])?'清冊這一段沒算碳排（收集表碳排欄空白、或總排放量沒加這段）':(incons?'收集表這段碳排跟「延噸公里 × 係數」對不起來（收集表公式有誤，清冊照抄）':((p.tol&&p.tol>ef*0.05)?'延噸公里很小，清冊碳排只記到小數第 4 位（看不出清冊用哪個係數）':trnEfWhy(p.ef,M.it,p.tol)))); why.push({k:'ef',d:d,ex:(p.veh||trnItemName(M.it))+(incons?' '+nf(p.q,1)+' 延噸公里 × '+g6(p.ef)+'＝'+nf(p.q*p.ef/1000,4)+' t、清冊記 '+nf(p.t2,4)+' t':' '+(p.tol?(+p.ef).toFixed(4):g6(p.ef))+' → '+g6(ef)),w:w}); }
-    const o=legs[p.k]||{t1:0,t2:0}; legs[p.k]={km:(o.km||0)+(p.km||0)||null,veh:p.veh||o.veh,it:M.it,how:M.how,t1:o.t1+t1,t2:o.t2+p.t2,nc:nc||o.nc,ef:p.ef,sys:ef,agg:!!p.agg||o.agg,sum:!!p.sum||o.sum,part:p.part,diff:(o.diff||Math.abs(d)>=0.00005)}; });
+    const o=legs[p.k]||{t1:0,t2:0}; legs[p.k]={km:(o.km||0)+(p.km||0)||null,veh:p.veh||o.veh,it:M.it,how:M.how,t1:o.t1+t1,t2:o.t2+p.t2,nc:nc||o.nc,ef:p.ef,sys:ef,agg:!!p.agg||o.agg,sum:!!p.sum||o.sum,part:p.part,diff:(o.diff||Math.abs(d)>=0.00005),esg:M.esg||o.esg||''}; });
   if(linked){ const t2=rt.parts.reduce((a,p)=>a+(+p.t2||0),0); const d=t-t2; if(Math.abs(d)>=0.00005)why.push({k:'ef',d:d,ex:(trnNmParts(rt).party||rt.nm)+'（清冊 '+nf(t2,4)+'、各段合計 '+nf(t,4)+'）',w:'清冊這一列只記碳排，跟收集表這一列各段合計對不起來（照原資料不改；各段另外補進系統）'}); }
   rt._c={legs:legs,t:FB?t:(ok?t:(t||null)),ok:ok,why:why,linked:linked,fb:fb}; return rt._c; }
 function trnFromRows(rows){   /* 列 → 路線（新登錄的列用 extra 還原輸入；收割的列用 parts 顯示） */
@@ -9689,8 +9693,8 @@ function trnRender(){
           return '<td class="edit'+sep+(chg('leg:'+k)?' chgd':'')+'"><input data-rid="'+rt.rid+'" data-f="km:'+k+'" value="'+(L.km==null||L.km===''?'':esc(+(+L.km).toFixed(4)))+'" placeholder="km"'+(L.kmFile!=null?' title="收集表這一列合併好幾批貨：平均距離＝延噸公里 ÷ 重量（原填 '+esc(L.kmFile)+' km）" style="color:#8a6400"':'')+'>'+sel+'<div class="lt" title="'+esc(it?(trnCode(it,trnCatOf(rt.cls),Y)+'　TTW '+g6(it.ttw)+'＋WTT '+g6(it.wtt)+(lc&&lc.tk!=null?'　延噸公里 '+nf(lc.tk,4):'')):'')+'">'+lt+'</div>'+(it?'<div class="lt" style="color:var(--g)" title="這一段的係數＝下游 TTW＋上游 WTT（共用運輸表）">'+trnFacA(it,it.ttw+it.wtt)+'＝'+g6(it.ttw)+'＋'+g6(it.wtt)+'</div>':'')+extra+'</td>'; }   /* V121 */
         if(rt.old){ const lc=(c.legs||{})[k]; const xs=k==='陸運-2'?Object.keys(c.legs||{}).filter(x=>TLEGS.indexOf(x)<0):[];
           const one=(kk,x)=>{ if(!x)return ''; const ttl=(x.it?trnCode(x.it,rt.cat,Y)+' '+TCTZH[x.it.ct]+' '+trnItemName(x.it)+'　係數表 '+g6(x.sys)+(x.ef!=null?'　清冊 '+g6(x.ef):''):'車種認不出，系統算不出')+(x.agg?'（清冊彙總列 '+x.part+'）':'');
-            const ttl2=ttl+((x.it&&!x.none)?'　係數 '+g6(x.sys)+'＝下游 TTW '+g6(x.it.ttw)+'＋上游 WTT '+g6(x.it.wtt):'')+((!x.none&&!x.nc&&x.t1!=null)?'　這一段系統算 '+nf(x.t1,4)+' t':'');   /* V129-62-1：該段碳排放提示 */
-            return '<div title="'+esc(ttl2)+'" style="line-height:1.35">'+(kk!==k?'<span class="lv">'+esc(kk)+'</span> ':'')+(x.km?nf(x.km,x.km>=100?0:1)+'<span class="fmini"> km</span>':(x.sum?'<span class="fmini">彙總'+(x.part?' '+esc(x.part):'')+'</span>':'<span class="dash">—</span>'))+' <span class="lv" style="display:inline">'+esc((x.it&&x.it.mode!=='L')?TCTZH[x.it.ct]:(x.veh||trnItemName(x.it)||''))+'</span><br><span class="lt" style="'+(x.none?'color:#a33':(x.diff?'color:#b8860b':''))+'">'+(x.none?'認不出':((x.it?trnFacA(x.it,x.sys)+'＝'+g6(x.it.ttw)+'＋'+g6(x.it.wtt):'')+(x.nc?' 不計':'')))+'</span></div>'; };   /* V129-62-1：兩行（km·車種／係數）；261030 係數後放回 ＝下游 TTW＋上游 WTT（V121）；該段碳排放游標提示（使用者：碳排後面就有計算結果） */
+            const ttl2=ttl+((x.it&&!x.none)?'　係數 '+g6(x.sys)+'＝下游 TTW '+g6(x.it.ttw)+'＋上游 WTT '+g6(x.it.wtt):'')+((!x.none&&!x.nc&&x.t1!=null)?'　這一段系統算 '+nf(x.t1,4)+' t':'')+(x.esg?'　'+x.esg:'');   /* V129-62-1：該段碳排放提示；V129-103-2：ESG 指定車種 */
+            return '<div title="'+esc(ttl2)+'" style="line-height:1.35">'+(kk!==k?'<span class="lv">'+esc(kk)+'</span> ':'')+(x.km?nf(x.km,x.km>=100?0:1)+'<span class="fmini"> km</span>':(x.sum?'<span class="fmini">彙總'+(x.part?' '+esc(x.part):'')+'</span>':'<span class="dash">—</span>'))+' <span class="lv" style="display:inline">'+esc((x.it&&x.it.mode!=='L')?TCTZH[x.it.ct]:(x.veh||trnItemName(x.it)||''))+'</span><br><span class="lt" style="'+(x.none?'color:#a33':(x.diff?'color:#b8860b':''))+'">'+(x.none?'認不出':((x.it?trnFacA(x.it,x.sys)+'＝'+g6(x.it.ttw)+'＋'+g6(x.it.wtt):'')+(x.nc?' 不計':'')))+'</span>'+(x.esg?'<br><span class="fmini" style="color:#7a8f84">ESG 回覆指定車種</span>':'')+'</div>'; };   /* V129-62-1：兩行（km·車種／係數）；261030 係數後放回 ＝下游 TTW＋上游 WTT（V121）；該段碳排放游標提示（使用者：碳排後面就有計算結果） */
           return '<td class="'+sep.trim()+'" style="vertical-align:top">'+one(k,lc)+xs.map(x=>one(x,c.legs[x])).join('')+'</td>'; }
         const L=rt.legs[k]; const lc=c.legs[k]; if(!L||!lc)return '<td class="'+sep.trim()+'"><span class="dash">—</span></td>';
         const it=lc.it; return '<td class="'+sep.trim()+'"'+(lc.t!=null?' title="這一段系統算 '+nf(lc.t,4)+' t"':'')+'><div>'+nf(lc.km,lc.km>=100?0:1)+' <span class="fmini">km</span></div><div class="lv">'+esc(trnItemName(it)||L.veh||'')+(it&&it.mode!=='L'?' '+TCTZH[it.ct]:'')+'</div><div class="lt">'+(it?trnFacA(it,it.ttw+it.wtt):'—')+'</div></td>'; }).join('');   /* V129-62-1：第三行改係數 */
