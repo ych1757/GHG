@@ -307,7 +307,7 @@ function facChg(on){ return '<span class="fchg'+(on?'':' off')+'">🟡</span>'; 
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-103-4</b> · 2026/11/09</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-103-5</b> · 2026/11/09</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -9162,7 +9162,7 @@ const TRN_PL=[   /* 地點文字 → 區域（TW／CN／ALL）；由清查用的
   ['ALL',/越南|vietnam|viet nam|ha nam|hanoi|河內|河内|海防|haiphong|hai phong|bac ninh|北寧|quang ninh|dong van|友谊口岸|友誼口岸|syncmold vn|越南信|同奈|dong ?nai|đồng ?nai|long ?thành|long ?thanh|隆城|cửu long|cuu long|hoa khoa|cuong anh|qisda +vn|yuke vn|vnt\(b\)|泰國|泰国|thailand|bangkok|曼谷|chachoengsao|bangpakong|laem chabang|林查班|samut ?prak|chon ?buri|rayong|prachin|nakhon|ฉะเชิงเทรา|หมู่|syncmold enterprise \(thailand\)|泰国信锦|thai|samut|ratchaburi|นนทบุรี|จังหวัด|馬來西亞|马来西亚|malaysia|penang|selangor|johor|bukit|新加坡|singapore|robinson road|美國|美国|united states|\busa\b|u\.s\.a|\bus\b|el paso|\btx\b|california|\bca \d|ontario, ca|georgia|\bga \d|\bmi ?\d|\bmo \d|\bnm \d|newark|hawthorne|santa teresa|lavonia|wixom|fenton|, ?wa,? \d|, ?il \d|ninth avenue|墨西哥|mexico|tijuana|juarez|chihuahua|日本|japan|kanagawa|shizuoka|aichi|ishikawa|yokohama|mie\b|yokkaichi|印度|india|tamil ?nadu|chennai|sriperumbudur|kanchip|波蘭|波兰|poland|lodz|荷蘭|荷兰|netherlands|venlo|意大利|義大利|italy|milano|slovak|斯洛伐克|加拿大|canada|vancouver|vacouver|colombia|哥倫比亞|哥伦比亚|bogota|德國|德国|germany|munich|慕尼黑|法國|法国|france|paris|巴黎|韓國|韩国|korea|菲律賓|菲律宾|philippines|捷克|czech|匈牙利|hungary|巴西|brazil|澳大利亞|澳大利亚|australia|悉尼|英國|英国|united kingdom|伦敦|倫敦|london/i],
   ['CN',/中國|中国|china|大陸|大陆|省|苏州|蘇州|上海|昆山|太仓|太倉|吳江|吴江|相城|東莞|东莞|深圳|广州|廣州|中山市|中山富|福州|福清|重庆|重慶|厦门|廈門|宁波|寧波|天津|北京|武汉|武漢|成都|合肥|南京|无锡|無錫|杭州|青岛|青島|威海|淄博|常熟|嘉兴|嘉興|莆田|宁德|寧德|闽侯|閩侯|鄂州|巢湖|临汾|臨汾|河源|樟木頭|樟木头|璧山|西永|巴南|弇山|张浦|張浦|xiamen|鴻嘉駿|鸿嘉骏|富鸿齐|富鴻齊|冠皇|富群|冠華|冠华|福清冠|kh\(b\)|fuqing|zs\(b\)|longsheng|rongshuo|xinchang|福建|fujian|广东|廣東|江苏|江蘇|浙江|江西|惠州|珠海|常州|镇江|鎮江|句容|张家港|張家港|泰興|泰兴|兴化|興化|南通|天门|天門|瑞安|鹤山|鶴山|火炬开发区|火炬開發區|南朗鎮|浦东|浦東|ningbo|suzhou|吳中|吴中|北海|博羅|博罗|陶朱|鹽田|盐田|shanghai|cnsha|yantian|shenzhen|虎门|虎門|深圳港|廈門港|厦门港|上海港|洋山|江阴|江陰|沙边路|沙邊路|珠江路|金枫路|金楓路|马运路|馬運路|聚峰路|宏路|阳下|陽下|洪宽|洪寬/i],
   ['TW',/new taipei|taichung|北市|鶯歌|台北|臺北|新北|桃園|桃园|新竹|hsinchu|苗栗|miao-?li|台中|臺中|彰化|南投|雲林|嘉義|台南|臺南|高雄|屏東|宜蘭|花蓮|台東|基隆|keelung|觀音區|观音区|龜山|龟山|林口|中壢|中坜|zhongli|汐止|汐止|土城|內湖|内湖|三重|中和|新莊|新庄|泰山區|樹林|楊梅|杨梅|湖口|竹南|chu-nan|豐原|丰原|大里|南屯|深坑|taoyuan|dayuan|luchu|syncmold tw|敬得\(觀音\)|陸合\(台中\)|信鋐/i]]
-const TRN_ALIAS={'yuke':'CN','yuke_b':'CN','dengsheng':'CN'};   /* YUKE＝2023 年「馭科」（路徑 馭科→鹽田港→海防港）；DENGSHENG＝2023 年「東莞登生」 */
+const TRN_ALIAS={'yuke':'CN','yuke_b':'CN','dengsheng':'CN','hao chen':'CN'};   /* V129-103-5：HAO CHEN＝FUQING HAOCHEN（福清），ESG 回覆網站題 B9「從中國福清出發到港口再到越南」 */   /* YUKE＝2023 年「馭科」（路徑 馭科→鹽田港→海防港）；DENGSHENG＝2023 年「東莞登生」 */
 const TRN_OWN=/^\s*(syncmold|敬得科技|敬得|越南信錦|越南信锦|信錦|信锦|commuwell|信錦同奈|信锦同奈|syncmold dong nai)\s*$/i;   /* V129-83：加 DN 信錦同奈 */
 function trnPlRg(s){ s=String(s==null?'':s).trim(); if(!s)return null; for(const [rg,re] of TRN_PL){ if(re.test(s))return rg; } const a=TRN_ALIAS[s.toLowerCase()]; return a||null; }
 function trnPathFr(p){ return String(p||'').split(/→|->|=>|-|－|：|:|\s{2,}/).map(x=>x.replace(/[（）()]/g,' ').trim()).filter(x=>x&&!/^(陸運|陆运|海運|海运|空運|空运|海运\d*|陆运\d*)\s*\d*$/.test(x)&&x.toLowerCase()!=='port'); }
@@ -11299,6 +11299,11 @@ function cmPiiChip(){
 }
 /* ── 已申報年度面板：①系統（照收集表算）／②申報／差異原因 ── */
 /* ── 彙總列：① 系統算＝延人公里 × 係數庫（C07 一物一號，區域×年度）；收集表當年的係數／碳排另存 X 欄只比對 ── */
+const CM_ESG_NC={   /* V129-103-5：ESG 回覆指定「不計入員工通勤」的交通工具（廠|年|交通工具 → 原因）；只改系統算，不動資料庫 */
+  'SF|2022|公車／公交車（柴油）':'ESG 11/04 回覆網站題 C8：2022～2024 蘇州富鴻齊租的大巴已算在上游租賃（承租大巴），加油也是租賃公司負擔，員工通勤不重複算',
+  'SF|2023|公車／公交車（柴油）':'ESG 11/04 回覆網站題 C8：2022～2024 蘇州富鴻齊租的大巴已算在上游租賃（承租大巴），加油也是租賃公司負擔，員工通勤不重複算',
+  'SF|2024|公車／公交車（電動）':'ESG 11/04 回覆網站題 C8：2022～2024 蘇州富鴻齊租的大巴已算在上游租賃（承租大巴），加油也是租賃公司負擔，員工通勤不重複算'
+};
 function cmSumRows(blocks,order,byRow){
   const out=[];
   order.forEach(bk=>{
@@ -11315,6 +11320,7 @@ function cmSumRows(blocks,order,byRow){
         o.noLib=km&&!zero&&!lib&&o.efX!=null; o.coS=zero?0:+(kmCo+o.st.co).toFixed(10); }
       else { o.noLib=!zero&&!lib&&o.efX!=null;
       o.coS=zero?0:((lib&&o.pk!=null)?+(o.pk*lib.v/1000).toFixed(10):o.coX); }   /* 係數庫沒有這一年條目→照收集表 */
+      { const nc=CM_ESG_NC[W7.site+'|'+W7.year+'|'+bk]; if(nc&&!zero){ o.esgNc=nc; o.coS=0; if(o.fl)o.fl.push(['ESG：不計入','#1f4e79',nc]); } }   /* V129-103-5 */
       out.push(o); };
     if(ags.length){
       const mIx=ags.findIndex(x=>!cme(x)['推估']);
@@ -11347,6 +11353,7 @@ function cmdeclPanel(S){
   S.forEach(o=>{ q1+=o.coS; X+=(o.coX||0);
     const r=o.coS-(o.coX||0); if(Math.abs(r)<0.00005){ if(r!==0)items.push([o.bk+'：小數位',r]); return; }
     if(o.zero){ items.push([o.bk+'：零排放交通工具，系統記 0（存的數不是 0）',r]); return; }
+    if(o.esgNc){ items.push([o.bk+'：'+o.esgNc+'，系統記 0',r]); return; }   /* V129-103-5 */
     if(o.efS==null){ items.push([o.bk+'：系統算跟存的數不同（係數庫沒有這一年條目）',r]); return; }
     let fp=(o.efX!=null&&o.pkX!=null)?o.pkX*(o.efS-o.efX)/1000:0, pp=(o.pk!=null&&o.pkX!=null)?(o.pk-o.pkX)*o.efS/1000:0;
     if(Math.abs(fp)<0.00005)fp=0; if(Math.abs(pp)<0.00005)pp=0;
