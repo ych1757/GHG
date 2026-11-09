@@ -307,7 +307,7 @@ function facChg(on){ return '<span class="fchg'+(on?'':' off')+'">🟡</span>'; 
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-104</b> · 2026/11/09</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-104-1</b> · 2026/11/09</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -4264,8 +4264,8 @@ function trnrFigs(){ const im=(f,alt)=>'<img alt="'+alt+'" src="'+f+'" loading="
   const op=i=>(TRNRV.fig[i]?' open':'')+' ontoggle="TRNRV.fig['+i+']=this.open"';
   return '<details class="figs"'+op(0)+'><summary>📖 說明圖（點一下收起／展開）</summary>'
     +'<details'+op(1)+'><summary>圖 3　集團之間的運輸怎麼歸（A 廠、B 廠、三角貿易、12 種貿易條件分段）</summary>'+im('GHG_運輸歸屬定義圖3集團之間_261109.png','集團之間的運輸怎麼歸')+'</details>'
-    +'<details'+op(2)+'><summary>圖 2　出貨依貿易條件切段：哪一段算 C4-2、哪一段算 C9</summary>'+im('GHG_運輸歸屬定義圖2出貨貿易條件_261109.png','出貨依貿易條件切段')+'</details>'
-    +'<details'+op(3)+'><summary>圖 1　運輸碳排歸屬總覽：哪種路線算哪一類</summary>'+im('GHG_運輸歸屬定義圖1總覽_261109.png','運輸碳排歸屬總覽')+'</details></details>'; }
+    +'<details'+op(2)+'><summary>圖 2　出貨依貿易條件切段：哪一段算 C4-2、哪一段算 C9</summary>'+im('GHG_運輸歸屬定義圖2出貨貿易條件_261109-1.png','出貨依貿易條件切段')+'</details>'
+    +'<details'+op(3)+'><summary>圖 1　運輸碳排歸屬總覽：哪種路線算哪一類</summary>'+im('GHG_運輸歸屬定義圖1總覽_261109-1.png','運輸碳排歸屬總覽')+'</details></details>'; }
 function trnrPaint(){
   const pane=document.getElementById('fsrcpane'); if(!pane||FAC_CUR!=='TRNRULE')return;
   const V=TRNR.V||{}, A=TRNR.A||{}, can=TRNR.can(), dm=(typeof declMaxY==='function')?declMaxY():2025;
