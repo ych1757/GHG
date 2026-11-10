@@ -307,7 +307,7 @@ function facChg(on){ return '<span class="fchg'+(on?'':' off')+'">🟡</span>'; 
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-104-5</b> · 2026/11/10</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-105</b> · 2026/11/10</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -597,7 +597,7 @@ const ghgFetch=async(input,init)=>{
   const m=String((init&&init.method)||(input&&input.method)||'GET').toUpperCase();
   const url=String(typeof input==='string'?input:((input&&input.url)||input||''));
   const isW=/^(POST|PATCH|PUT|DELETE)$/.test(m)&&url.indexOf(SUPABASE_URL+'/rest/v1/')===0&&url.indexOf('/rest/v1/rpc/')<0;
-  if(m==='POST'&&(url.indexOf(SUPABASE_URL+'/rest/v1/rpc/ghg_verify_')===0||url.indexOf(SUPABASE_URL+'/rest/v1/rpc/ghg_site_sort_save')===0)){   /* V129-79-1：儲存廠區順序也要帶登入者憑證 */   /* V129-41-3：送查證／退回／定稿／撤銷定稿＝只開放登入的人（批261），要帶登入者自己的憑證 */
+  if(m==='POST'&&(url.indexOf(SUPABASE_URL+'/rest/v1/rpc/ghg_verify_')===0||url.indexOf(SUPABASE_URL+'/rest/v1/rpc/ghg_site_sort_save')===0||url.indexOf(SUPABASE_URL+'/rest/v1/rpc/ghg_recalc_apply')===0)   /* V129-105：係數／匯率存檔後自動重算（批395 ghg_recalc_apply）也要帶登入者憑證；原本兩項不變（使用者 261110「存檔後自動重算」） */){   /* V129-79-1：儲存廠區順序也要帶登入者憑證 */   /* V129-41-3：送查證／退回／定稿／撤銷定稿＝只開放登入的人（批261），要帶登入者自己的憑證 */
     const tk=await ghgJwtW();
     if(!tk){ const msg='沒有登入憑證（登入逾時，或這個分頁的登入已失效），這次的送查證／退回／定稿沒有送出——請登出後用工號＋密碼重新登入。';
       ghgWriteWarn(msg); return new Response(JSON.stringify({code:'GHG401',message:msg,details:null,hint:null}),{status:401,headers:{'Content-Type':'application/json'}}); }
@@ -14100,7 +14100,7 @@ async function frevPatch(fid,patch){
   const f=(FACALL||[]).find(x=>x.factor_id===fid); if(f)Object.assign(f,patch); if(typeof FMETA!=='undefined'&&FMETA&&FMETA[fid])Object.assign(FMETA[fid],patch);
   return '';
 }
-function frevPendAdj(y,d){ if(FPEND){ FPEND[+y]=Math.max(0,(FPEND[+y]||0)+d); } }
+function frevPendAdj(y,d){ if(FPEND){ FPEND[+y]=Math.max(0,(FPEND[+y]||0)+d); } if(typeof RC5!=='undefined')RC5.pend={}; }   /* V129-105：盤查總表待確認提示重讀 */
 async function frevConfirm(fid){
   const f=(FACALL||[]).find(x=>x.factor_id===fid); if(!f||!frevCan(f.factor_year))return;
   if(f.review_note&&!confirm('這一格前一年有好幾個版本或各廠用不同值：\n\n'+f.review_note+'\n\n確定就用現在這個值（'+frevNum(frevEq(fid))+'）當 '+f.factor_year+' 年的標準？\n（要換成別的版本請按「取消」，改按「修改」）'))return;
@@ -14204,6 +14204,7 @@ async function frevUnconfirm(fid){ const f=(FACALL||[]).find(x=>x.factor_id===fi
 async function frevSave(fid){
   const f=(FACALL||[]).find(x=>x.factor_id===fid); if(!f||!frevCan(f.factor_year))return;
   const gs=frevGases(fid), msg=t=>{ const m=document.getElementById('frev_msg'); if(m)m.textContent=t; };
+  if(typeof RC5!=='undefined'&&RC5.busy){ msg('自動重算還在跑，請等它跑完再存。'); return; }   /* V129-105 */
   const ups=[];
   for(let i=0;i<gs.length;i++){ const g=gs[i]; const vs=String((document.getElementById('frev_v_'+i)||{}).value||'').trim(), ws=String((document.getElementById('frev_g_'+i)||{}).value||'').trim();
     const v=Number(vs), w=ws===''?null:Number(ws);
@@ -14213,16 +14214,21 @@ async function frevSave(fid){
   const ns=String((document.getElementById('frev_src')||{}).value||'').trim();
   if(!ups.length&&ns===String(f.factor_source||'').trim()){ msg('沒有改任何東西；值不變請按「確認（值不變）」。'); return; }
   if(!confirm('儲存並確認 '+frevCode(f)+'？\n\n'+ups.map(u=>(u.g.gas_code||'')+'：'+frevIn(u.g.factor_value)+(u.g.gwp!=null?' ×'+frevIn(u.g.gwp):'')+' → '+frevIn(u.v)+(u.w!=null?' ×'+frevIn(u.w):'')).join('\n')+(ns!==String(f.factor_source||'').trim()?'\n來源：'+(f.factor_source||'（空）')+' → '+ns:'')+'\n\n合成當量 '+frevNum(frevEq(fid))+' → '+((document.getElementById('frev_eq')||{}).textContent||'')))return;
+  const rcB=frevGases(fid).map(g=>({gas:g.gas_code,v:+g.factor_value,g:g.gwp==null?null:+g.gwp}));   /* V129-105：改前的值（自動重算用） */
+  const rcGo=async()=>{ const newL=frevGases(fid).map(g=>({gas:g.gas_code,v:+g.factor_value,g:g.gwp==null?null:+g.gwp}));
+    if(rcB.every((o,i)=>newL[i]&&o.v===newL[i].v&&o.g===newL[i].g))return '';
+    msg('係數已存，自動重算用到這一條的明細中…'); const r=await rc5Run('fac',{fid,fy:f.factor_year,code:frevCode(f),oldL:rcB,newL}); return rc5Text(r); };
   for(const u of ups){ if(u.g.id==null){ msg('氣體列缺編號，請重新整理頁面再試'); return; }
     const {error,count}=await sb.from('ghg_emission_factor_gases').update({factor_value:u.v,gwp:u.w},{count:'exact'}).eq('id',u.g.id);
-    if(error||count!==1){ msg((u.g.gas_code||'')+' 沒有存進去：'+(error?error.message:'一筆都沒改到（可能沒有權限或年度已鎖住）')+'；其他還沒存的也停了。'); return; }
+    if(error||count!==1){ const rcT=await rcGo(); msg((u.g.gas_code||'')+' 沒有存進去：'+(error?error.message:'一筆都沒改到（可能沒有權限或年度已鎖住）')+'；其他還沒存的也停了。'+(rcT?'\n'+rcT:'')); if(rcT)alert(rcT); return; }
     u.g.factor_value=u.v; u.g.gwp=u.w; }
   const was=f.review_status==='已確認';
   const patch={review_status:'已確認',reviewed_by:frevWho(),reviewed_at:new Date().toISOString()}; if(ns!==String(f.factor_source||'').trim())patch.factor_source=ns;
+  const rcT=await rcGo();   /* V129-105：使用者 261110「存檔後自動重算」 */
   const e=await frevPatch(fid,patch);
-  if(e){ msg('係數值已存，但「已確認」沒有寫進去：'+e); return; }
+  if(e){ msg('係數值已存，但「已確認」沒有寫進去：'+e+(rcT?'\n'+rcT:'')); if(rcT)alert(rcT); return; }
   if(!was)frevPendAdj(f.factor_year,-1);
-  frevClose(); frevRender();
+  frevClose(); frevRender(); if(rcT)setTimeout(()=>alert(rcT),50);
 }
 /* 登錄頁：年度旁邊標「🟡 係數待確認 N 條」（只是提示；待確認的係數照樣拿來算） */
 async function frevPendLoad(){ try{ if(typeof sb==='undefined'||!sb)return; const {data,error}=await sb.from('ghg_emission_factors').select('factor_year').eq('review_status','待確認').limit(5000); if(error){FPEND={};return;} const m={}; (data||[]).forEach(r=>{m[+r.factor_year]=(m[+r.factor_year]||0)+1;}); FPEND=m; }catch(e){FPEND={};} }
@@ -14276,6 +14282,7 @@ async function frevFxPatch(id,patch){
   if(count!==1)return '一筆都沒改到（可能沒有權限、年度已鎖住，或登入逾時）';
   const r=frevFxFind(id); if(r)Object.assign(r,patch);
   try{ if(typeof FXR!=='undefined')FXR=null; }catch(e){}   /* 匯率快取清掉，登錄頁下次重抓 */
+  if(typeof RC5!=='undefined')RC5.pend={};   /* V129-105：盤查總表待確認提示重讀 */
   return '';
 }
 async function frevFxConfirm(id){ const r=frevFxFind(id); if(!r||!frevCan(r.rate_year))return;
@@ -14308,11 +14315,14 @@ function frevFxLive(id){ const r=frevFxFind(id); if(!r)return;
 async function frevFxSave(id){ const r=frevFxFind(id); if(!r||!frevCan(r.rate_year))return;
   const v=Number((document.getElementById('frev_fx_v')||{}).value), s=String((document.getElementById('frev_fx_src')||{}).value||'').trim();
   const msg=t=>{ const m=document.getElementById('frev_msg'); if(m)m.textContent=t; };
+  if(typeof RC5!=='undefined'&&RC5.busy){ msg('自動重算還在跑，請等它跑完再存。'); return; }   /* V129-105 */
   if(!(isFinite(v)&&v>0)){ msg('匯率要是大於 0 的數字'); return; }
   if(!confirm('儲存並確認 '+r.rate_type+' '+r.currency+'·'+r.rate_year+'？\n\n1 美元＝'+frevFxNum(frevFxPer(r))+' → '+frevFxNum(v)+' '+r.currency+(s!==String(r.source||'').trim()?'\n來源：'+(r.source||'（空）')+' → '+s:'')))return;
   const patch={to_usd:Number((1/v).toPrecision(8)),rate_src_disp:frevFxNum(v),review_status:'已確認',reviewed_by:frevWho(),reviewed_at:new Date().toISOString()}; if(s!==String(r.source||'').trim())patch.source=s;
+  const R0=Object.assign({},r);   /* V129-105：改前那一列（自動重算用） */
   const e=await frevFxPatch(r.id,patch); if(e){ msg('沒有存進去：'+e); return; }
-  frevClose(); frevRender(); }
+  let rcT=''; if(!(+R0.rate_src_disp===v&&+R0.to_usd===patch.to_usd)){ msg('匯率已存，自動重算用到這一筆匯率的明細中…'); rcT=rc5Text(await rc5Run('fx',{R0,R1:Object.assign({},R0,{rate_src_disp:v,to_usd:patch.to_usd})})); }
+  frevClose(); frevRender(); if(rcT)setTimeout(()=>alert(rcT),50); }
 async function frevFxUnconfirm(id){ const r=frevFxFind(id); if(!r)return;
   if(!confirm('把 '+r.rate_type+' '+r.currency+'·'+r.rate_year+' 改回「待確認」？'))return;
   const e=await frevFxPatch(r.id,{review_status:'待確認',reviewed_by:frevWho(),reviewed_at:new Date().toISOString()});
@@ -14389,32 +14399,27 @@ async function rcCheck(){
   }catch(e){ FRC.msg='讀明細失敗：'+(e.message||e); }
   FRC.busy=false; frevRender();
 }
-function rcHtml(can){
-  const Y=FREV.y; const head='<div style="display:flex;align-items:center;gap:8px;margin:4px 0 4px;white-space:nowrap"><b style="font-size:13px;color:var(--d)">🔁 '+Y+' 重算</b>'
-    +'<span title="已存的碳排是存檔當下用當時的係數／匯率算好的；係數或匯率改過之後，按「檢查」找出用舊值的明細，再按「重算」照比例更新（新碳排＝舊碳排 × 新值 ÷ 舊值）。只處理這個開帳年度。" style="cursor:help;color:var(--g)">ⓘ</span>';
-  if(FRC.y!==Y||(!FRC.res&&!FRC.busy&&!FRC.msg))return head+'<button class="sec" style="padding:2px 10px;font-size:12px" onclick="rcCheck()">檢查哪些要重算'+(lgScopeAll()?'':'（只查你權限內的廠）')+'</button><span style="font-size:11.5px;color:var(--g)">係數或匯率改過之後按一下</span></div>';
-  if(FRC.busy)return head+'<span style="font-size:12px;color:var(--g)">'+facEsc(FRC.msg||'處理中…')+'</span></div>';
-  if(FRC.msg&&!FRC.res)return head+'<span class="msg err" style="font-size:12px">'+facEsc(FRC.msg)+'</span><button class="sec" style="padding:2px 10px;font-size:12px" onclick="rcCheck()">再檢查一次</button></div>';
-  const ch=FRC.res.filter(x=>x.changed), mn=FRC.res.filter(x=>x.manual);
-  let h=head+'<span style="font-size:12px;color:var(--g)">'+Y+' 年明細 '+FRC.rows.length+' 筆：要重算 <b style="color:#856404">'+ch.length+'</b>、要手動 <b style="color:#8a1c1c">'+mn.length+'</b></span>'
-    +'<button class="sec" style="padding:2px 10px;font-size:12px" onclick="rcCheck()">重新檢查</button>';
-  const canRun=can&&rcOpen(Y)&&ch.length;
-  if(ch.length)h+=(canRun?'<button style="padding:2px 12px;font-size:12px" onclick="rcRun()">重算 '+ch.length+' 筆</button>':'<span style="font-size:11.5px;color:#8a1c1c">'+(can?(Y+' 年度沒有開放登錄（或已鎖住），資料庫不讓改明細；請先在⚙權限頁打開這個年度'):'只有 ESG 小組／系統管理可以重算')+'</span>');
-  h+=(FRC.msg?'<span style="font-size:12px;color:#1e6b43">'+facEsc(FRC.msg)+'</span>':'')+'</div>';
-  if(!ch.length&&!mn.length)return h+'<div style="font-size:12px;color:#1e6b43;margin:0 0 8px">✓ '+Y+' 年已存的碳排都是用目前的係數和匯率算的，不用重算。</div>';
-  const grp={}; ch.forEach(x=>{ const k=x.r.site_id+'|'+x.r.category_id; const g=grp[k]=grp[k]||{s:x.r.site_id,c:x.r.category_id,n:0,o:0,w:0,why:new Set()}; g.n++; g.o+=x.old; g.w+=x.nw; x.notes.forEach(w=>g.why.add(w)); });
-  const f4=v=>Number(v).toLocaleString('en-US',{minimumFractionDigits:4,maximumFractionDigits:4});
-  if(ch.length){ h+='<table style="width:100%;table-layout:fixed;font-size:12.5px;border-collapse:collapse;margin-bottom:6px"><colgroup><col style="width:16%"><col style="width:20%"><col style="width:7%"><col style="width:12%"><col style="width:12%"><col style="width:10%"><col style="width:23%"></colgroup>'
-      +'<thead><tr style="background:#eef5f1">'+['廠區','類別','筆數','目前合計 t','重算後 t','差 t','原因'].map((t,i)=>'<th style="padding:4px 6px;text-align:'+((i>=2&&i<=5)?'right':'left')+';white-space:nowrap">'+t+'</th>').join('')+'</tr></thead><tbody>';
-    Object.values(grp).sort((a,b)=>a.s.localeCompare(b.s)||a.c.localeCompare(b.c)).forEach(g=>{ const ct=frevCat({category_id:g.c});
-      h+='<tr style="border-bottom:1px solid #e5ede9"><td style="text-align:left;padding:4px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+facEsc(rcSiteNm(g.s))+'</td>'
-        +'<td style="text-align:left;padding:4px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><span class="ncode">'+facEsc(ct.c)+'</span>'+facEsc(ct.n)+'</td>'
-        +'<td style="padding:4px 6px;text-align:right">'+g.n+'</td><td style="padding:4px 6px;text-align:right">'+f4(g.o)+'</td><td style="padding:4px 6px;text-align:right;font-weight:700;background:#f3f6f5">'+f4(g.w)+'</td>'
-        +'<td style="padding:4px 6px;text-align:right">'+(g.w-g.o>=0?'+':'')+f4(g.w-g.o)+'</td>'
-        +'<td style="text-align:left;padding:4px 6px;font-size:11.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+facEsc([...g.why].join('；'))+'">'+facEsc([...g.why].join('；'))+'</td></tr>'; });
-    h+='</tbody></table>'; }
-  if(mn.length){ h+='<div style="font-size:12px;color:#8a1c1c;margin:0 0 4px"><b>要手動處理 '+mn.length+' 筆</b>（照比例算不出來；請到該登錄頁打開這一筆、重新儲存）：</div><div style="font-size:11.5px;color:#8a1c1c;margin:0 0 8px;line-height:1.6;white-space:normal;overflow-wrap:anywhere">'
-      +mn.slice(0,30).map(x=>facEsc(rcSiteNm(x.r.site_id)+' '+frevCat({category_id:x.r.category_id}).c+' #'+x.r.record_id+'：'+x.manual)).join('<br>')+(mn.length>30?'<br>…另 '+(mn.length-30)+' 筆':'')+'</div>'; }
+function rcHtml(can){   /* V129-105：「存檔後自動重算」的結果＋檢查（只看不改）＋照係數庫現值重算（補做）。
+     V110「檢查哪些要重算／重算 N 筆」拿掉：它拿明細存的係數跟係數庫整批照比例算，261110 用 2025 全部 14,119 筆明細實測會算錯
+     （冷媒×GWP 771～4,730 倍、SF6×25,200、R-22 變 0、匯率沒改也判要重算）。rcCheck／rcRun 留著不叫。 */
+  const Y=FREV.y, busy=RC5.busy||(RC5.chk&&RC5.chk.busy);
+  let h='<div style="display:flex;align-items:center;gap:8px;margin:4px 0 4px;white-space:nowrap"><b style="font-size:13px;color:var(--d)">🔁 '+Y+' 自動重算</b>'
+    +'<span title="係數或匯率按「儲存並確認」後，系統自動重算用到它的明細（只改碳排，各類審核狀態不動；已送第三方查證／已定稿的廠不動）。&#10;「檢查」只看不改：找出存的係數／匯率跟係數庫現在不一樣的明細（例：重算中斷、別人用舊畫面存的、查證退回後）；&#10;「照係數庫現值重算」把這些照係數庫現在的值補算（同樣只改碳排）。送查證時也會檢查，不一致會擋。" style="cursor:help;color:var(--g)">ⓘ</span>'
+    +'<button class="sec" style="padding:2px 10px;font-size:12px" onclick="rc5CheckView()"'+(busy?' disabled':'')+'>檢查跟係數庫不一致的明細</button>';
+  if(RC5.busy)h+='<span style="font-size:11.5px;color:var(--g)">重算中…</span>';
+  const L=RC5.last; if(L&&!RC5.busy){ const t=rc5Text(L); h+='<span style="font-size:11.5px;color:'+(L.err?'#8a1c1c':'var(--g)')+';overflow:hidden;text-overflow:ellipsis" title="'+facEsc(t)+'">上次'+facEsc(t.split('\n')[0])+(t.indexOf('\n')>=0?'（滑鼠移上來看全部）':'')+'</span>'; }
+  h+='</div>';
+  const C=RC5.chk; if(!C||C.y!==Y)return h;
+  if(C.busy)return h+'<div style="font-size:12px;color:var(--g);margin:0 0 8px">檢查中…</div>';
+  if(C.err)return h+'<div class="msg err" style="font-size:12px;margin:0 0 8px">檢查沒有做完：'+facEsc(C.err)+'</div>';
+  const nm=y=>(y===TRIAL_Y?y+' 試打':y+' 年');
+  const all=C.parts.flatMap(p=>p.bad), fixN=all.filter(x=>!x.c.manual).length, manN=all.length-fixN;
+  if(!all.length)return h+'<div style="font-size:12px;color:#1e6b43;margin:0 0 8px">✓ '+C.parts.map(p=>nm(p.y)+'明細 '+p.n+' 筆').join('、')+'，存的係數／匯率都跟係數庫現在一樣。</div>';
+  h+='<div style="font-size:12px;color:#8a1c1c;margin:0 0 4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap"><b>'+C.parts.map(p=>nm(p.y)+'明細 '+p.n+' 筆、不一致 '+p.bad.length+' 筆').join('；')+'</b>'
+    +(fixN?((can&&!busy)?'<button style="padding:2px 12px;font-size:12px" onclick="rc5FixView()">照係數庫現值重算 '+fixN+' 筆</button>':'<span style="font-size:11.5px">（只有 ESG 小組／系統管理、年度開放時可以補做）</span>'):'')
+    +(manN?'<span style="font-size:11.5px">要手動 '+manN+' 筆：照比例算不出來，請到該登錄頁打開、重新儲存</span>':'')+'</div>'
+    +'<div style="font-size:11.5px;color:#8a1c1c;margin:0 0 8px;line-height:1.6;white-space:normal;overflow-wrap:anywhere">'
+    +all.slice(0,40).map(x=>facEsc(nm(x.r.data_year)+' '+rcSiteNm(x.r.site_id)+' '+frevCat({category_id:x.r.category_id}).c+' #'+x.r.record_id+'：'+x.why)).join('<br>')+(all.length>40?'<br>…另 '+(all.length-40)+' 筆':'')+'</div>';
   return h;
 }
 async function rcRun(){
@@ -14434,6 +14439,230 @@ async function rcRun(){
   frevRender();
 }
 
+/* ══ V129-105：係數／匯率存檔後自動重算＋送查證前檢查（使用者 261110「存檔後自動重算」「只改碳排、狀態不動」「送查證前 應該是所有係數都已經經過確認」）
+   兩種重算，同一套「照比例換算」規則（rc5Rebase）：
+   ・存檔當下（event）：只重算用到「這一條係數／這一筆匯率」的明細；比例＝係數庫改後÷改前；明細存的值要等於改前（不等＝那筆不是用這一版算的，列「要手動」）。
+   ・補做（fix）：開帳確認頁「檢查」找出跟係數庫現在不一樣的明細，按「照係數庫現值重算」；比例＝係數庫現值÷明細存的值。中斷、分批失敗、別人用舊畫面存的，都用這個補。
+   ・送查證前的檢查也用同一套：能補做或要手動的明細＝不一致，會擋。
+   明細存法（261110 讀程式＋用線上 2025／2099 真實明細只算不寫驗過）：
+   ・多氣體（extra.gases[] 有 fid）：各氣體 co2e 照比例，總碳排＝存的總碳排 × 新各氣體合計 ÷ 舊合計（燃料總碳排存 4 位，不能直接相加）；改前是 0 的氣體用同一列別的氣體反推活動量（運輸 WTT 由 0 補上）。
+   ・C4-1A 集團供應不計：碳排存 0、系統算另存 extra['系統算(不計)']，重算只更新係數與系統算(不計)。
+   ・單一係數：冷媒／SF6 明細存的係數不含 GWP（GWP 另存在 gwp 欄），其他存合成當量；用量 0、碳排照收集表值的列（C06 匯入）不重算。
+   ・金額法：美元金額＝原幣×匯率（1÷顯示匯率取 10 位，同登錄頁）；C15 投資用「帳面金額／帳面幣別」與 C15前年版。
+   只處理開帳年度（> 最後申報年、年度開放）＋這個係數年度正好是試打係數年時的 2099 試打；查證中／已定稿的廠跳過；
+   寫回走資料庫功能 ghg_recalc_apply（批395：只准改碳排相關欄位、不動審核狀態、伺服器另留修改紀錄；改前值不符整批取消）。 ══ */
+const RC5={last:null,chk:null,pend:{},busy:false};
+const RC5_TOL=1e-5;   /* 「同一個值」：相對差 1e-5 以內（261110 實測：2099 試打明細存 14 位、係數庫 6 位，例 N2O 0.00002169432288 vs 0.0000216943＝1.3e-6） */
+function rc5Close(a,b){ a=+a; b=+b; if(!isFinite(a)||!isFinite(b))return false; return Math.abs(a-b)<=Math.max(1e-12,Math.max(Math.abs(a),Math.abs(b))*RC5_TOL); }
+function rc5Eq(L){ return (L||[]).reduce((a,g)=>a+(+g.v||0)*(g.g==null?1:+g.g),0); }
+function rc5R10(v){ return Math.round(v*1e10)/1e10; }
+function rc5DeclMax(){ return (typeof YLOCKS!=='undefined'&&YLOCKS&&!YLOCKS._err&&YLOCKS._declMax)||null; }   /* 不用 declMaxY()：它讀不到時退回 2025 */
+function rc5Years(fy){   /* 要重算的明細年度：係數年度本身（開帳年度、年度開放）＋（試打開著、而且試打用這一年的係數）2099 */
+  const out=[], dm=rc5DeclMax(); fy=+fy;
+  if(!dm||!isFinite(fy)||!(fy>dm))return out;
+  if(rcOpen(fy))out.push(fy);
+  if(typeof trialOpen==='function'&&trialOpen()&&typeof trialFacY==='function'&&+trialFacY()===fy)out.push(TRIAL_Y);
+  return out; }
+async function rc5Rows(y,site){ let all=[],from=0;
+  while(true){ let q=sb.from('ghg_activity_data').select('record_id,site_id,data_year,category_id,quantity,quantity_unit,co2e_draft,co2e_location,factor_id,ef_value,gwp,extra').eq('data_year',y);
+    if(site)q=q.eq('site_id',site);
+    const {data,error}=await q.order('record_id').range(from,from+999); if(error)throw new Error(error.message);
+    all=all.concat(data||[]); if(!data||data.length<1000)break; from+=1000; if(from>300000)break; }
+  return all; }
+async function rc5Frozen(y){ const {data,error}=await sb.from('ghg_verify_round').select('site_id,status').eq('data_year',y).in('status',['verifying','final']);
+  if(error)throw new Error('讀不到查證狀態：'+error.message); return new Set((data||[]).map(x=>x.site_id)); }
+function rc5Base(r){ const t0=+(r.co2e_draft||0), L0=(r.co2e_location==null?null:+r.co2e_location); return (t0===0&&L0!=null&&L0!==0)?{k:'co2e_location',v:L0}:{k:'co2e_draft',v:t0}; }
+function rc5Zero(r){ return !(+r.quantity)&&!(+r.co2e_draft)&&!(+r.co2e_location); }   /* 用量 0、碳排 0（逐月沒用量的月份、留痕列） */
+function rc5Log(e,old,nw,why,mode){
+  e['重算紀錄']=(Array.isArray(e['重算紀錄'])?e['重算紀錄']:[]).concat([{at:new Date().toISOString(),by:frevWho(),old:old,new:nw,why:why,auto:mode==='fix'?'補做':1}]);
+  e['重算']=new Date().toISOString().slice(0,10)+' 係數／匯率更新後'+(mode==='fix'?'補做':'自動')+'重算（'+why+'）；「換算」「換匯」說明是重算前的，到該頁重新儲存會更新'; }
+/* ── 係數：照比例換算一筆明細 ──
+   T(fid)＝目標（係數庫改後／現值）[{gas,v,g}]；O(fid)＝改前（event 才有，fix 給 null）；scope(fid)＝這個 fid 要不要處理。
+   回傳 null（不用改）／{manual}／{patch,old,nw,why} */
+function rc5Rebase(r,T,O,scope,mode){
+  if(rc5Zero(r))return null;
+  const e=JSON.parse(JSON.stringify(r.extra||{})), patch={}, why=[];
+  const find=(L,gas)=>L?(L.find(x=>x.gas===gas)||(L.length===1?L[0]:null)):null;
+  const G=Array.isArray(e.gases)?e.gases:null;
+  if(G&&G.some(g=>g&&g.fid&&scope(g.fid))){   /* ── 多氣體 ── */
+    const sumOld=G.reduce((a,g)=>a+(+((g&&g.co2e)||0)),0), efOld=G.reduce((a,g)=>a+(g&&g.ef!=null?(+g.ef)*(g.gwp==null?1:+g.gwp):0),0);
+    const kOf=()=>{ const x=G.find(g=>g&&+g.ef&&+g.co2e); return x?(+x.co2e)/((+x.ef)*(x.gwp==null?1:+x.gwp)):null; };   /* 同一列別的氣體反推「活動量×單位換算」 */
+    const k0=kOf(), nc=(rc5Base(r).v===0&&e['系統算(不計)']!=null); let any=false;   /* nc＝C4-1A 集團供應不計（各氣體 co2e 都存 0） */
+    for(const g of G){ if(!g||!g.fid||!scope(g.fid))continue;
+      const t=find(T(g.fid),g.gas); if(!t)return {manual:'係數 '+g.fid+' 找不到「'+g.gas+'」這個氣體'};
+      const o=O?find(O(g.fid),g.gas):null; if(O&&!o)return {manual:'係數 '+g.fid+' 改前找不到「'+g.gas+'」'};
+      const ef=(g.ef==null?null:+g.ef), gwF=(g.gwp==null?1:+g.gwp);
+      if(O&&ef!=null&&!rc5Close(ef,o.v))return {manual:'這筆的 '+g.gas+' 係數 '+frevIn(ef)+' 跟改前 '+frevIn(o.v)+' 不一樣（不是用這一版算的），請到開帳確認頁按「檢查」再「照係數庫現值重算」'};
+      const useG=O?(o.g!=null&&g.gwp!=null&&rc5Close(+g.gwp,o.g)):(t.g!=null&&t.g!==0&&t.g!==1&&g.gwp!=null);   /* 明細用的 GWP 是係數庫的才跟著換（係數庫 GWP 0／1／空＝明細另有 GWP 來源） */
+      const gwT=useG?(t.g==null?1:+t.g):gwF;
+      const fromV=O?o.v:ef; if(fromV==null)return {manual:'這筆的 '+g.gas+' 沒有存係數，不能照比例重算'};
+      const fromE=fromV*(useG&&O?o.g:gwF), toE=t.v*gwT;
+      if(O?(t.v===o.v&&gwT===(useG?o.g:gwF)):(rc5Close(ef,t.v)&&rc5Close(gwT,gwF)))continue;   /* event：係數庫這一格沒變；fix：明細已經是現值 */
+      any=true; why.push(g.fid+' '+g.gas+' '+frevIn(fromV)+'→'+frevIn(t.v)+(gwT!==gwF?'、GWP '+gwF+'→'+gwT:''));
+      if(nc)g.co2e=0;
+      else if(fromE!==0)g.co2e=rc5R10((+g.co2e||0)*toE/fromE);
+      else if(toE===0)g.co2e=0;
+      else if(k0!=null)g.co2e=rc5R10(k0*toE);
+      else return {manual:'改前係數是 0（'+g.fid+' '+g.gas+'），同一列也沒有別的氣體可以反推活動量，請到登錄頁重新儲存'};
+      g.ef=t.v; if(useG)g.gwp=gwT; }
+    if(!any)return null;
+    const efNew=G.reduce((a,g)=>a+(g&&g.ef!=null?(+g.ef)*(g.gwp==null?1:+g.gwp):0),0);
+    if(G.length===1&&r.ef_value!=null)patch.ef_value=+G[0].ef;
+    else if(r.ef_value!=null&&G.every(g=>g&&g.fid===G[0].fid)&&rc5Close(+r.ef_value,efOld))patch.ef_value=rc5R10(efNew);   /* 運輸：ef_value＝TTW＋WTT */
+    if(G.length===1&&r.gwp!=null&&G[0].gwp!=null&&+G[0].gwp!==+r.gwp)patch.gwp=+G[0].gwp;
+    const b=rc5Base(r), w=why.join('、');
+    if(nc){   /* C4-1A 集團供應不計：碳排照舊存 0，只更新係數與系統算(不計) */
+      if(efOld===0)return {manual:'C4-1A 不計入的列改前係數是 0，系統算(不計)不能照比例更新，請到運輸頁重新儲存'};
+      e['系統算(不計)']=rc5R10((+e['系統算(不計)'])*efNew/efOld); rc5Log(e,0,0,w+'（不計入，只更新系統算）',mode); patch.extra=e; return {patch,old:0,nw:0,why:w}; }
+    const sumNew=G.reduce((a,g)=>a+(+((g&&g.co2e)||0)),0);
+    const nw=sumOld?rc5R10(b.v*sumNew/sumOld):rc5R10(sumNew);
+    patch[b.k]=nw; rc5Log(e,b.v,nw,w,mode); patch.extra=e; return {patch,old:b.v,nw,why:w}; }
+  /* ── 單一係數 ── */
+  const fid=r.factor_id; if(!fid||!scope(fid))return null;
+  if(!(+r.quantity))return null;   /* 用量 0、碳排照收集表值（C06 匯入「照收集表值」）→ 不是用係數算的，不重算 */
+  const TL=T(fid), OL=O?O(fid):null; if(!TL||!TL.length)return {manual:'係數庫找不到 '+fid};
+  const ef=(r.ef_value==null?null:+r.ef_value), oneT=TL.length===1?TL[0]:null, oneO=OL&&OL.length===1?OL[0]:null;
+  let fromE, toE, efN, gwN=null, w;
+  /* 明細存的是「值」（冷媒逸散率、SF6：gwp 欄另存 GWP、係數庫這一條有真的 GWP）還是「合成當量」 */
+  const valSem=O?(oneO&&ef!=null&&r.gwp!=null&&rc5Close(ef,oneO.v)&&!rc5Close(ef,rc5Eq(OL))):(oneT&&ef!=null&&r.gwp!=null&&oneT.g!=null&&oneT.g!==1&&!rc5Close(ef,rc5Eq(TL)));
+  if(valSem){
+    const gwF=+r.gwp, useG=O?(oneO.g!=null&&rc5Close(gwF,oneO.g)):(oneT.g!==0), gwT=useG?(oneT.g==null?1:+oneT.g):gwF;
+    fromE=(O?oneO.v:ef)*(useG&&O?oneO.g:gwF); toE=oneT.v*gwT; efN=oneT.v; if(gwT!==gwF)gwN=gwT;
+    if(O?(oneT.v===oneO.v&&gwT===(useG?oneO.g:gwF)):(rc5Close(ef,oneT.v)&&gwT===gwF))return null;
+    w=fid+' '+frevIn(O?oneO.v:ef)+'→'+frevIn(oneT.v)+(gwN!=null?'、GWP '+gwF+'→'+gwT:'');
+  }else{
+    const eqT=rc5Eq(TL);
+    if(O){ const eqO=rc5Eq(OL); if(ef!=null&&!rc5Close(ef,eqO))return {manual:'這筆存的係數 '+frevIn(ef)+' 跟改前 '+frevIn(eqO)+' 不一樣（不是用這一版算的），請到開帳確認頁按「檢查」再「照係數庫現值重算」'};
+      if(eqT===eqO)return null; fromE=eqO; }
+    else{ if(ef==null)return null; if(rc5Close(ef,eqT))return null; fromE=ef; }
+    toE=eqT; efN=(ef!=null)?eqT:null; w=fid+' '+frevIn(fromE)+'→'+frevIn(eqT); }
+  if(fromE===0){ if(toE===0)return null; return {manual:'改前係數是 0（'+fid+'），不能照比例重算，請到登錄頁重新儲存'}; }
+  const b=rc5Base(r), stc=+(e['站間碳排']||0), nw=rc5R10((b.v-stc)*toE/fromE+stc);   /* C07 高鐵站間碳排不乘係數（同 V111-2） */
+  patch[b.k]=nw; if(efN!=null&&efN!==ef)patch.ef_value=efN; if(gwN!=null)patch.gwp=gwN;
+  if(valSem){ if(e['洩漏率%']!=null)e['洩漏率%']=+(efN*100).toFixed(6); if(e['GWP']!=null&&gwN!=null)e['GWP']=gwN; }
+  rc5Log(e,b.v,nw,w,mode); patch.extra=e; return {patch,old:b.v,nw,why:w}; }
+/* ── 匯率 ── */
+function rc5FxVal(R){ const d=+R.rate_src_disp; return (d>0)?+(1/d).toPrecision(10):+R.to_usd; }
+function rc5SiteCur(sid){ try{ const st=(FAC_SITES||[]).find(x=>x.site_id===sid)||{}; return (typeof RL_CUR!=='undefined'&&RL_CUR[st.country])||''; }catch(e){ return ''; } }
+function rc5Amt(r){   /* 用美元金額算碳排的列：原幣金額／幣別（C15 投資＝帳面金額／帳面幣別，舊資料沒寫幣別＝廠區當地幣，同 rlamt） */
+  const e=r.extra||{}; if(e['匯率(→USD)']==null)return null;
+  if(r.category_id==='C15'){ if(e['帳面金額']==null)return null; return {v:+e['帳面金額'],cur:(typeof rlCurOf==='function'&&rlCurOf(e['帳面幣別']))||rc5SiteCur(r.site_id),c15:1}; }
+  if(String(r.quantity_unit||'')!=='USD'||e['原幣金額']==null||!e['幣別'])return null;
+  return {v:+e['原幣金額'],cur:(typeof rlCurOf==='function'&&rlCurOf(e['幣別']))||String(e['幣別']),c15:0}; }
+function rc5FxPick(fx,cur,c15){ const typ=c15?['C15前年版']:['集團統一版','主流年版','定義值']; return typ.map(t=>(fx||[]).find(x=>x.rate_type===t&&x.currency===cur)).find(Boolean)||null; }
+/* R0＝改前那一列（event）或 null（fix：比明細存的匯率）；R1＝目標那一列 */
+function rc5FxRebase(r,R0,R1,mode){
+  if(rc5Zero(r))return null;
+  const a=rc5Amt(r); if(!a||!a.cur||a.cur==='USD'||!R1||a.cur!==R1.currency||(R1.rate_type==='C15前年版')!==!!a.c15)return null;
+  const e=r.extra||{}, st=+e['匯率(→USD)'], n=rc5FxVal(R1);
+  if(R0){ if(!(rc5Close(st,rc5FxVal(R0))||rc5Close(st,+R0.to_usd)))return null; if(rc5FxVal(R0)===n)return null; }   /* 這筆不是用這一列算的／這一列沒變 */
+  else if(rc5Close(st,n)||rc5Close(st,+R1.to_usd))return null;
+  const q0=+r.quantity||0, q1=Math.round(a.v*n*1e6)/1e6;
+  if(q0===0)return {manual:'美元金額是 0，不能照比例重算，請到登錄頁重新儲存'};
+  const x=JSON.parse(JSON.stringify(e)), patch={}, ratio=q1/q0;
+  if(Array.isArray(x.gases))x.gases.forEach(g=>{ if(g&&g.co2e!=null)g.co2e=rc5R10((+g.co2e)*ratio); });
+  const b=rc5Base(r), nw=rc5R10(b.v*ratio); patch[b.k]=nw; x['匯率(→USD)']=n; if(x['美元']!=null)x['美元']=q1; patch.quantity=q1;
+  const w='匯率 1 美元＝'+frevFxNum(1/st)+'→'+frevFxNum(R1.rate_src_disp||(1/R1.to_usd))+' '+a.cur+'（'+R1.rate_type+' '+R1.rate_year+'）';
+  rc5Log(x,b.v,nw,w,mode); patch.extra=x; return {patch,old:b.v,nw,why:w}; }
+/* ── 寫回：一次最多 2000 筆一個交易（ghg_recalc_apply 上限） ── */
+async function rc5Apply(y,items,note){ let ok=0, old=0, nw=0;
+  for(let i=0;i<items.length;i+=2000){ const bt=items.slice(i,i+2000);
+    const ch=bt.map(t=>({id:t.r.record_id,old:{co2e_draft:t.r.co2e_draft,co2e_location:t.r.co2e_location,quantity:t.r.quantity,ef_value:t.r.ef_value,gwp:t.r.gwp,extra:t.r.extra||{}},set:t.c.patch}));
+    const {data,error}=await sb.rpc('ghg_recalc_apply',{p_year:y,p_rows:ch,p_note:note});
+    if(error)return {ok,old,nw,err:String(error.message||error).replace(/^.*?GHG：/,'GHG：')};
+    ok+=(data&&data.updated)||bt.length; bt.forEach(t=>{ old+=t.c.old; nw+=t.c.nw; }); }
+  return {ok,old,nw}; }
+function rc5Res(what,mode){ return {mode,what,years:[],ok:0,old:0,nw:0,frozen:[],manual:[],err:null,at:new Date().toISOString()}; }
+async function rc5Go(res,y,rows,calc,note){   /* 共用：逐列算、查證中跳過、寫回 */
+  const fz=await rc5Frozen(y), items=[]; res.years.push(y);
+  rows.forEach(r=>{ const c=calc(r); if(!c)return; if(fz.has(r.site_id)){ res.frozen.push(r); return; } if(c.manual){ res.manual.push({r,why:c.manual}); return; } items.push({r,c}); });
+  if(!items.length)return true;
+  const a=await rc5Apply(y,items,note); res.ok+=a.ok; res.old+=a.old; res.nw+=a.nw; if(a.err){ res.err=y+' 年：'+a.err; return false; } return true; }
+/* 存檔當下：kind='fac' {fid,fy,code,oldL,newL}；kind='fx' {R0,R1} */
+async function rc5Run(kind,info){
+  const fy=kind==='fac'?+info.fy:+info.R0.rate_year, res=rc5Res(kind==='fac'?info.code:(info.R0.rate_type+' '+info.R0.currency+'·'+info.R0.rate_year),'event');
+  RC5.busy=true;
+  try{
+    try{ if(typeof ensureYLocks==='function')await ensureYLocks(); }catch(e){}   /* 從係數矩陣直接修改時，年度鎖可能還沒讀 */
+    if(!rc5DeclMax()){ res.err='讀不到最後申報年（年度鎖或官方總表讀取失敗），這次沒有重算；請重新整理後到「✅ 開帳確認」按「檢查」再「照係數庫現值重算」'; return res; }
+    const ys=rc5Years(fy); if(!ys.length){ res.none=(fy>rc5DeclMax())?(fy+' 年度還沒開放登錄，沒有明細要重算'):'已申報年度不重算'; return res; }
+    for(const y of ys){ const rows=await rc5Rows(y);
+      const calc=kind==='fac'?(r=>rc5Rebase(r,f=>f===info.fid?info.newL:null,f=>f===info.fid?info.oldL:null,f=>f===info.fid,'event'))
+                            :(r=>rc5FxRebase(r,info.R0,info.R1,'event'));
+      if(!(await rc5Go(res,y,rows,calc,'V129-105 存檔自動重算 '+res.what)))break; }
+  }catch(e){ res.err=String(e.message||e); }
+  finally{ RC5.busy=false; RC5.last=res; RC5.chk=null; }
+  return res; }
+function rc5Text(res){
+  if(!res)return ''; const f4=v=>Number(v).toLocaleString('en-US',{minimumFractionDigits:4,maximumFractionDigits:4});
+  const hd=(res.mode==='fix'?'補做重算':'自動重算');
+  if(res.none)return hd+'：'+res.none+'。';
+  let t=hd+'（'+res.what+(res.years.length?'；'+res.years.map(y=>(y===TRIAL_Y?y+' 試打':y)).join('、'):'')+'）：'+(res.ok?'已更新 '+res.ok+' 筆，碳排合計 '+f4(res.old)+' → '+f4(res.nw)+' t':(res.err?'沒有寫入':(res.mode==='fix'?'沒有要補的明細':'沒有明細用到這一條（或數值沒變），不用重算')));
+  if(res.frozen.length)t+='\n・已送第三方查證／已定稿的廠沒動：'+[...new Set(res.frozen.map(r=>rcSiteNm(r.site_id)))].join('、')+'（'+res.frozen.length+' 筆；退回後到「✅ 開帳確認」按「檢查」再「照係數庫現值重算」）';
+  if(res.manual.length)t+='\n・要手動處理 '+res.manual.length+' 筆：\n'+res.manual.slice(0,8).map(m=>'  '+rcSiteNm(m.r.site_id)+' '+frevCat({category_id:m.r.category_id}).c+' #'+m.r.record_id+'：'+m.why).join('\n')+(res.manual.length>8?'\n  …另 '+(res.manual.length-8)+' 筆':'');
+  if(res.err)t+='\n・⚠ 沒有做完：'+res.err+(res.ok?'（已寫入 '+res.ok+' 筆）':'')+'；問題排除後到「✅ 開帳確認」按「檢查」再「照係數庫現值重算」補做';
+  return t; }
+/* ── 跟係數庫現值比（檢查／補做／送查證共用） ── */
+async function rc5Lib(rows,fy){
+  const G={}; const ids=[...new Set(rows.flatMap(r=>[r.factor_id].concat(((r.extra||{}).gases||[]).map(g=>g&&g.fid))).filter(Boolean))];
+  for(let i=0;i<ids.length;i+=150){ const {data,error}=await sb.from('ghg_emission_factor_gases').select('factor_id,gas_code,factor_value,gwp').in('factor_id',ids.slice(i,i+150)); if(error)throw new Error('讀不到係數庫：'+error.message);
+    (data||[]).forEach(g=>{ (G[g.factor_id]=G[g.factor_id]||[]).push({gas:g.gas_code,v:+g.factor_value,g:g.gwp==null?null:+g.gwp}); }); }
+  const {data:fx,error:fe}=await sb.from('ghg_fx_rates').select('rate_year,rate_type,currency,to_usd,rate_src_disp').eq('rate_year',fy); if(fe)throw new Error('讀不到匯率表：'+fe.message);
+  return {G,fx:fx||[]}; }
+function rc5FixCalc(r,L){   /* 照係數庫現值：先係數、再匯率（兩個都要改就串起來） */
+  const c1=rc5Rebase(r,f=>L.G[f]||null,null,f=>!!f,'fix'); if(c1&&c1.manual)return c1;
+  const r2=c1?Object.assign({},r,c1.patch,{extra:c1.patch.extra||r.extra}):r;
+  const a=rc5Amt(r2), R=a?rc5FxPick(L.fx,a.cur,a.c15):null;
+  if(a&&a.cur&&a.cur!=='USD'&&!R)return {manual:'匯率表沒有 '+a.cur};
+  const c2=R?rc5FxRebase(r2,null,R,'fix'):null; if(c2&&c2.manual)return c2;
+  if(!c1)return c2; if(!c2)return c1;
+  return {patch:Object.assign({},c1.patch,c2.patch),old:c1.old,nw:c2.nw,why:c1.why+'；'+c2.why}; }
+async function rc5Consistency(y,site){   /* 回傳 {n,bad:[{r,why,c}]}；y＝明細年度（2099 用試打係數年） */
+  const fy=(typeof facY==='function')?facY(y):y, rows=await rc5Rows(y,site), L=await rc5Lib(rows,fy), bad=[];
+  rows.forEach(r=>{ const c=rc5FixCalc(r,L); if(c)bad.push({r,c,why:c.manual?('要手動：'+c.manual):c.why}); });
+  return {n:rows.length,bad,y}; }
+async function rc5PendCnt(y){   /* 該年度待確認的係數條數／匯率筆數（確認狀態有值、不是「已確認」）；讀不到就丟錯，不當 0 */
+  const a=await sb.from('ghg_emission_factors').select('factor_id',{count:'exact',head:true}).eq('factor_year',y).not('review_status','is',null).neq('review_status','已確認');
+  const b=await sb.from('ghg_fx_rates').select('id',{count:'exact',head:true}).eq('rate_year',y).not('review_status','is',null).neq('review_status','已確認');
+  if(a.error||b.error)throw new Error('讀不到待確認數：'+((a.error||b.error).message||'')); return {fac:a.count||0,fx:b.count||0}; }
+/* 送查證前（盤查總表 invSend 叫）：回傳要擋的原因文字，沒問題回 '' */
+async function rc5SendCheck(s,y){
+  try{
+    const msg=[];
+    if(!(typeof trialY==='function'&&trialY(y))){ const p=await rc5PendCnt(+y);   /* 2099 試打沒有自己的係數／匯率，照舊可以練習送（同資料庫批395） */
+      if(p.fac)msg.push('・'+y+' 年還有 '+p.fac+' 條係數待確認'); if(p.fx)msg.push('・'+y+' 年還有 '+p.fx+' 筆匯率待確認'); }
+    const c=await rc5Consistency(+y,s);
+    if(c.bad.length)msg.push('・有 '+c.bad.length+' 筆明細的係數／匯率跟係數庫現在的值不一樣，請 ESG 小組到「係數庫 → ✅ 開帳確認」按「檢查」再「照係數庫現值重算」（只改碳排、審核狀態不動）：\n'
+      +c.bad.slice(0,10).map(x=>'  '+frevCat({category_id:x.r.category_id}).c+' #'+x.r.record_id+'：'+x.why).join('\n')+(c.bad.length>10?'\n  …另 '+(c.bad.length-10)+' 筆':''));
+    return msg.join('\n');
+  }catch(e){ return '・檢查沒有做完（'+String(e.message||e)+'），先不送；請重新整理再試'; } }
+/* 盤查總表「📌 送查證」旁邊：還有待確認就先標出來（只是提示；真正擋在送查證檢查與資料庫批395）。30 秒內不重讀 */
+function rc5PendChip(y){ y=+y; if(typeof trialY==='function'&&trialY(y))return '';
+  const c=RC5.pend[y], now=Date.now();
+  if(!c||(!c.busy&&now-c.t>30000)){ RC5.pend[y]={busy:1,t:now};
+    rc5PendCnt(y).then(p=>{ RC5.pend[y]={p,t:Date.now()}; const g=document.getElementById('group'); if(g&&g.classList.contains('invmode')&&typeof invRender==='function')invRender(); })   /* 還在盤查總表才重畫（切到全集團就不蓋掉） */
+      .catch(e=>{ RC5.pend[y]={err:String(e.message||e),t:Date.now()}; }); return ''; }
+  if(c.err)return ' <span style="font-size:11.5px;color:#8a1c1c" title="'+facEsc(c.err)+'">⚠ 讀不到待確認數</span>';
+  if(!c.p||!(c.p.fac+c.p.fx))return '';
+  return ' <span title="送查證前，'+y+' 年的係數與匯率都要在「係數庫 → ✅ 開帳確認」確認完（使用者 261110）" style="display:inline-block;white-space:nowrap;background:#fff8e1;color:#8a6d00;border:1px solid #f0d58c;border-radius:999px;padding:2px 10px;font-size:11.5px;font-weight:700">🟡 還有 '+(c.p.fac?c.p.fac+' 條係數':'')+(c.p.fac&&c.p.fx?'、':'')+(c.p.fx?c.p.fx+' 筆匯率':'')+'待確認</span>'; }
+/* 開帳確認頁：檢查（只看不改）、照係數庫現值重算（補做） */
+async function rc5CheckView(){ const y=FREV.y; RC5.chk={y,busy:true}; frevRender();
+  try{ const ys=[+y]; try{ if(typeof ensureYLocks==='function')await ensureYLocks(); }catch(e){}
+    if(typeof trialOpen==='function'&&trialOpen()&&typeof trialFacY==='function'&&+trialFacY()===+y)ys.push(TRIAL_Y);
+    const parts=[]; for(const yy of ys)parts.push(await rc5Consistency(yy,null));
+    RC5.chk={y,busy:false,parts}; }catch(e){ RC5.chk={y,busy:false,err:String(e.message||e)}; }
+  frevRender(); }
+async function rc5FixView(){ const C=RC5.chk; if(!C||!C.parts||RC5.busy)return;
+  const todo=C.parts.map(p=>({y:p.y,list:p.bad.filter(x=>!x.c.manual)})).filter(p=>p.list.length);
+  const n=todo.reduce((a,p)=>a+p.list.length,0); if(!n)return;
+  if(!confirm('照係數庫現值重算 '+n+' 筆明細？\n\n只改碳排（各類審核狀態不動），每筆留「重算紀錄」；已送第三方查證／已定稿的廠不動。'))return;
+  const res=rc5Res('照係數庫現值','fix'); RC5.busy=true; frevRender();
+  try{ for(const p of todo){ if(!rcOpen(p.y)&&p.y!==TRIAL_Y){ res.err=p.y+' 年度沒有開放登錄，資料庫不讓改明細'; break; }
+      const m=new Map(p.list.map(x=>[x.r.record_id,x.c]));
+      if(!(await rc5Go(res,p.y,p.list.map(x=>x.r),r=>m.get(r.record_id),'V129-105 照係數庫現值補做重算')))break; } }
+  catch(e){ res.err=String(e.message||e); }
+  finally{ RC5.busy=false; RC5.last=res; }
+  alert(rc5Text(res)); await rc5CheckView(); }
 </script>
 <script>
 /* ══ V114：📊 填報進度（使用者 261004「按你建議」；參考「碳溯」App 的盤查進度清單）
@@ -16725,6 +16954,7 @@ body.ghgfocus #src_form .ehead>.fxfocus{background:#1B8A60;border-color:#1B8A60;
       if(k){ need.push(c); if(k!=='ok')bad.push(vCatNm(c)+'：'+((k==='no'&&p&&p.ref)?'還沒填（新廠第一年比照 '+p.ref+' 應填）':LB[k])); } });
     if(!need.length){ alert(nm+' '+y+' 年沒有任何應填類別，不能送查證。'); return; }
     if(bad.length){ alert(nm+' '+y+' 年還沒整廠通過，不能送查證：\n\n'+bad.join('\n')+'\n\n要全部「✓ 通過」才能送（可到「📋 審核進度」看）。'); return; }
+    { const chk=await rc5SendCheck(s,y); if(chk){ alert(nm+' '+y+' 年還不能送查證：\n\n'+chk+'\n\n（係數、匯率在「係數庫 → ✅ 開帳確認」確認；使用者 261110：送查證前係數與匯率都要確認過）'); return; } }   /* V129-105 */
     IV.live[y]=null; await loadLive(y); if(IV.lerr){ alert('讀不到明細：'+IV.lerr); return; }
     const V=liveGrid(s,y), rows=[]; Object.keys(V).forEach(rc=>{ if(rc[0]==='_')return; Object.keys(V[rc]).forEach(c=>rows.push({row_code:rc,col:c,value:V[rc][c]})); });
     const nv=(rounds(s,y).map(r=>r.version).sort((a,b)=>b-a)[0]||0)+1;
@@ -16769,7 +16999,7 @@ body.ghgfocus #src_form .ehead>.fxfocus{background:#1B8A60;border-color:#1B8A60;
     if(SYSY(IV.year)&&IV.pc!=='GRP'){ const rs=rounds(P2S(IV.pc),IV.year), cur=st.k==='live'?'live':String(st.ver);
       if(rs.length)vs='<select title="看哪一版（舊版只供查看）" onchange="IV.vsel=this.value;invRender()"><option value="live"'+(cur==='live'?' selected':'')+'>系統即時</option>'+rs.slice().reverse().map(r=>'<option value="'+r.version+'"'+(cur===String(r.version)?' selected':'')+'>第'+r.version+'版・'+({verifying:'查證中',final:'已定稿',returned:'查證退回'}[r.status]||r.status)+'</option>').join('')+'</select>';
       if(canV()){ const lr=liveR(P2S(IV.pc),IV.year), B=(t,f,ti,cl)=>'<button class="'+(cl||'')+'" style="padding:3px 12px;font-size:12.5px" onclick="'+f+'()" title="'+esc(ti)+'">'+t+'</button>';
-        if(!lr)vb=B('📌 送查證','invSend','這廠這年整廠通過後，把現在的數字存成第 N 版送第三方查證（送出後整廠凍結）');
+        if(!lr)vb=B('📌 送查證','invSend','這廠這年整廠通過後，把現在的數字存成第 N 版送第三方查證（送出後整廠凍結）')+rc5PendChip(IV.year);   /* V129-105 */
         else if(lr.status==='verifying')vb=B('↩ 退回','invReturn','查證退回：第三方有問題，勾類別、寫原因退回廠端（這一版留著可查）','sec')+' '+B('✅ 定稿','invFinal','第三方沒問題：這一版＝官方申報數');
         else if(vRole()==='admin')vb=B('撤銷定稿','invUnfinal','只限系統管理、要寫原因：回到查證中，ESG 才能退回','sec'); } }
     const SY_=SYSY(IV.year);   /* 2026 起控制列東西多：年度／廠區字樣收進下拉的滑鼠提示，1440 才放得下一行 */
