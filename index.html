@@ -307,7 +307,7 @@ function facChg(on){ return '<span class="fchg'+(on?'':' off')+'">🟡</span>'; 
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-104-1</b> · 2026/11/09</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-104-5</b> · 2026/11/10</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -4188,8 +4188,10 @@ function trnrNavCnt(){ const b=document.getElementById('ftrnrcnt'); if(!b)return
   const n=TRNR.pendN(); b.textContent=n; b.title='待 ESG 歸類的公司名稱'; b.style.background='#D42B3A'; b.style.display=n?'':'none'; }
 
 /* ── 係數庫 › 對照表 › 運輸規則（畫面照示意圖 GHG_運輸規則設定頁_示意圖_261109.html） ── */
-const TRNRV={v:'rules',pf:'all',nf:'all',lf:'all',pe:{},log:null,logErr:'',logBusy:false,fig:[true,true,false,false]};   /* fig＝說明圖四個收合區塊的開關（重畫時保留使用者的選擇） */
+const TRNRV={top:'rule',fsel:'2',v:'rules',pf:'all',nf:'all',lf:'all',pe:{},log:null,logErr:'',logBusy:false,fig:[true,true,false,false]};   /* fig＝說明圖四個收合區塊的開關（重畫時保留使用者的選擇） */
 const TRNR_CSS='<style>'
+  +'#trnr table.trt4{table-layout:fixed;width:100%}#trnr .trt4 td.t4{font-size:11px}#trnr .trt4 td.t4 b{font-size:14px;color:var(--ink);margin-right:6px}#trnr .trt4 td.t4 span{font-size:11px;color:var(--g)}#trnr .trt4 th .ssub{font-weight:400;font-size:11px;opacity:.85}#trnr .trt4 tbody tr:nth-child(even){background:#fafafa}#trnr .trt4 td.rc{padding:4px 5px;font-size:11px}'
+  +'#trnr .bar4{display:flex;gap:4px;border-radius:4px;font-weight:700;font-size:12px;white-space:nowrap;text-align:center;justify-content:center;color:#fff;padding:5px 4px;line-height:1.3}#trnr .bar4.g{background:#2E8B57}#trnr .bar4.o{background:#E8781E}#trnr .bar4.sp{padding:0;background:none}#trnr .bar4.sp>span{flex:1 1 auto;border-radius:4px;padding:5px 1px;font-size:10.5px;overflow:hidden;text-overflow:ellipsis}#trnr .bar4 span.g{background:#2E8B57}#trnr .bar4 span.o{background:#E8781E}#trnr .bar4.q{background:#fff;color:#a33;border:1.5px dashed #a33;padding:4px}#trnr .trt4 td.rc.chg{background:#fff3cd!important;box-shadow:inset 0 0 0 2px #e0c25a}'
   +'#trnr{font-size:13px;color:var(--ink)}#trnr .ttl{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px}#trnr .ttl h2{font-size:15px;margin:0;color:var(--d);border:none;padding:0}'
   +'#trnr .pill{display:inline-block;border-radius:9999px;padding:1px 9px;font-size:12px;font-weight:700;border:1.5px solid;white-space:nowrap}#trnr .pill.ver{border-color:var(--p);color:var(--d);background:#fff}#trnr .pill.bad{border-color:var(--w);color:var(--w);background:#fff}#trnr .pill.lock{border-color:#9aa9a1;color:#4d5f56;background:#f2f4f3}#trnr .pill.draft{border-color:#e0c25a;color:#8a5a00;background:#fff3cd}#trnr .pill.ro{border-color:#b9c7c0;color:var(--g);background:#fff;font-weight:400}'
   +'#trnr button.sm{padding:3px 10px;font-size:12px}#trnr button.warn{background:#fff;color:var(--w);border:1px solid var(--w)}#trnr button.warn:hover{background:#fdf3f2}'
@@ -4205,7 +4207,7 @@ const TRNR_CSS='<style>'
   +'#trnr .note{font-size:11.5px;color:var(--g)}#trnr .code{font-family:Consolas,"Courier New",monospace;font-weight:700}'
   +'#trnr .fp{display:inline-flex;gap:4px;flex-wrap:wrap}#trnr .fp button{background:#fff;color:var(--d);border:1px solid #b9d6c6;border-radius:9999px;padding:1px 10px;font-size:12px;font-weight:700}#trnr .fp button.on{background:var(--p);color:#fff;border-color:var(--p)}'
   +'#trnr .chips span{display:inline-block;border:1.5px solid #2f855a;color:#2f855a;border-radius:9999px;padding:0 10px;font-size:12px;margin:2px 3px 2px 0;background:#fff}'
-  +'#trnr .figs{margin:6px 0 8px;border:1px solid var(--l);border-radius:10px;background:#fff;padding:2px 12px}#trnr .figs summary{cursor:pointer;font-weight:700;color:var(--d);padding:5px 0}#trnr .figs details{margin:2px 0 4px 12px}#trnr .figs details summary{font-weight:600;color:var(--ink);font-size:13px}#trnr .figs img{width:100%;max-width:1500px;display:block;border:1px solid #e3e8ec;border-radius:6px;margin:4px 0 8px}'
+  +'#trnr .tsw{display:inline-flex;border:1px solid var(--p);border-radius:8px;overflow:hidden;margin-left:4px}#trnr .tsw button{background:#fff;color:var(--d);border:none;border-radius:0;padding:3px 14px;font-size:13px;font-weight:700;cursor:pointer}#trnr .tsw button+button{border-left:1px solid var(--p)}#trnr .tsw button.on{background:var(--p);color:#fff}#trnr .figone img{width:100%;max-width:1500px;display:block;border:1px solid #e3e8ec;border-radius:6px;margin:4px 0 8px}#trnr .figs{margin:6px 0 8px;border:1px solid var(--l);border-radius:10px;background:#fff;padding:2px 12px}#trnr .figs summary{cursor:pointer;font-weight:700;color:var(--d);padding:5px 0}#trnr .figs details{margin:2px 0 4px 12px}#trnr .figs details summary{font-weight:600;color:var(--ink);font-size:13px}#trnr .figs img{width:100%;max-width:1500px;display:block;border:1px solid #e3e8ec;border-radius:6px;margin:4px 0 8px}'
   +'#trnr .stepbar{display:flex;margin-bottom:8px}#trnr .stepbar div{flex:1;padding:5px 10px;font-size:12.5px;background:#fff;border:1px solid #d7e5dd;color:var(--g)}#trnr .stepbar div:first-child{border-radius:10px 0 0 10px}#trnr .stepbar div:last-child{border-radius:0 10px 10px 0}#trnr .stepbar div.done{background:#f2f8f5;color:var(--d)}#trnr .stepbar div.cur{background:var(--p);color:#fff;font-weight:700;border-color:var(--p)}#trnr .stepbar b{display:block;font-size:11px;opacity:.85}'
   +'#trnr .draftbar{position:sticky;bottom:0;background:#fff8d6;border:2px solid #e0c25a;border-radius:10px;padding:6px 10px;display:flex;align-items:center;gap:10px;font-size:13px;margin-top:8px;z-index:6}'
   +'#s101dlg .trpick{display:flex;gap:10px;margin:8px 0}#s101dlg .trpick button{flex:1;padding:10px;font-size:15px;border-radius:10px;border:2px solid transparent}#s101dlg .trpick .p42{background:#DFF0E8;color:#1E6B43;border-color:#1B8A60}#s101dlg .trpick .p9{background:#FDE8D8;color:#B4531A;border-color:#E07B24}#s101dlg .trpick .pct{background:#fff;color:#5b4a8a;border:2px dashed #9b8ccf}#s101dlg .trpick button.cur{box-shadow:0 0 0 3px #e0c25a}#s101dlg .trpick button small{display:block;font-weight:400;font-size:12px}#s101dlg .trf{display:grid;grid-template-columns:120px 1fr;gap:6px 10px;align-items:center;font-size:12.5px;margin:6px 0}#s101dlg .trf input,#s101dlg .trf select,#s101dlg textarea.trta{width:100%;border:1px solid #d6e0db;border-radius:6px;padding:4px 8px;font-size:13px;font-family:inherit}#s101dlg .req{color:var(--w)}'
@@ -4215,6 +4217,16 @@ function trnrB(v,t,i){   /* 規則格徽章 */
   if(v==='C9')return '<span class="b c9">C9</span>';
   if(v==='合約'){ const c=TRNR.ctInfo(t,i); return '<span class="b ct" title="'+facEsc(c.opt.map(o=>o[0]+'→'+o[1]).join('；'))+'">'+facEsc(c.lab)+'</span>'; }
   return '<span class="b q" title="這一格沒有設定，系統不猜">待補</span>'; }
+function trnrBar(v,t,i){   /* V129-104-4：規則表的格子＝整條色條（同說明圖 3 下半部） */
+  if(v==='C4-2')return '<span class="bar4 g">C4-2（本廠付）</span>';
+  if(v==='C9')return '<span class="bar4 o">C9（客戶付）</span>';
+  if(v==='合約'){ const c=TRNR.ctInfo(t,i); return '<span class="bar4 sp" title="'+facEsc(c.lab)+'">'+c.opt.map(o=>'<span class="'+(o[1]==='C9'?'o':'g')+'">'+facEsc(o[0])+' → '+facEsc(o[1])+'</span>').join('')+'</span>'; }
+  return '<span class="bar4 q" title="這一格沒有設定，系統不猜">待補</span>'; }
+const TRNR_NOTE4={EXW:'客戶到本廠提貨',FCA:'付到合約寫的交貨地',FAS:'付到出口港（船邊）',FOB:'付到出口港裝船',CFR:'付到目的港',CIF:'付到目的港',CPT:'付到合約寫的目的地',CIP:'付到合約寫的目的地',DAP:'付到客戶指定地點',DPU:'付到指定地點並卸貨',DDP:'本廠送到客戶手上',DDU:'付到目的地（現叫 DAP）'};   /* 說明圖 3 原句 */
+const TRNR_DEF4={EXW:['C9','C9','C9'],FCA:['合約','C9','C9'],FAS:['C4-2','C9','C9'],FOB:['C4-2','C9','C9'],CFR:['C4-2','C4-2','C9'],CIF:['C4-2','C4-2','C9'],CPT:['C4-2','C4-2','合約'],CIP:['C4-2','C4-2','合約'],DAP:['C4-2','C4-2','C4-2'],DPU:['C4-2','C4-2','C4-2'],DDP:['C4-2','C4-2','C4-2'],DDU:['C4-2','C4-2','C4-2']};   /* 第 1 版定案（SQL 678）＝原句對應的分段 */
+function trnrNote4(rules,t){   /* 規則跟定案一樣＝用原句；ESG 改過＝照規則算（trnrTermNote） */
+  const d=TRNR_DEF4[t]; if(d&&TRNR_NOTE4[t]&&[0,1,2].every(i=>TRNR.ruleCell(rules,t,i)===d[i]))return TRNR_NOTE4[t];
+  return trnrTermNote(rules,t); }
 function trnrPlain(v,t,i){ return v==='合約'?TRNR.ctInfo(t,i).lab:(v||'未設定'); }
 function trnrTermNote(rules,t){   /* 說明欄：照當版規則產生（不寫死，ESG 改了格子說明跟著變） */
   const a=[0,1,2].map(i=>TRNR.ruleCell(rules,t,i)); const pre=TRNR.TNOTE[t]?TRNR.TNOTE[t]+'；':'';
@@ -4260,25 +4272,28 @@ async function trnrShow(pane){
   try{ if(typeof siteMasterLoad==='function')await siteMasterLoad(); }catch(e){}
   if(FAC_CUR!=='TRNRULE')return;
   TRNRV.pe={}; TRNRV.log=null; TRNRV.logErr=''; TRNRV.ap=null; trnrNavCnt(); trnrPaint(); }
-function trnrFigs(){ const im=(f,alt)=>'<img alt="'+alt+'" src="'+f+'" loading="lazy" onerror="this.outerHTML=&#39;<div class=&quot;note&quot; style=&quot;padding:4px 0 8px&quot;>這張說明圖載入不到（'+f+'，要跟網頁放在同一個資料夾）。</div>&#39;">';
-  const op=i=>(TRNRV.fig[i]?' open':'')+' ontoggle="TRNRV.fig['+i+']=this.open"';
-  return '<details class="figs"'+op(0)+'><summary>📖 說明圖（點一下收起／展開）</summary>'
-    +'<details'+op(1)+'><summary>圖 3　集團之間的運輸怎麼歸（A 廠、B 廠、三角貿易、12 種貿易條件分段）</summary>'+im('GHG_運輸歸屬定義圖3集團之間_261109.png','集團之間的運輸怎麼歸')+'</details>'
-    +'<details'+op(2)+'><summary>圖 2　出貨依貿易條件切段：哪一段算 C4-2、哪一段算 C9</summary>'+im('GHG_運輸歸屬定義圖2出貨貿易條件_261109-1.png','出貨依貿易條件切段')+'</details>'
-    +'<details'+op(3)+'><summary>圖 1　運輸碳排歸屬總覽：哪種路線算哪一類</summary>'+im('GHG_運輸歸屬定義圖1總覽_261109-1.png','運輸碳排歸屬總覽')+'</details></details>'; }
+function trnrFigs(){   /* V129-104-5：說明圖一次一張，上方小按鈕切換（使用者 261110「不要目前上下的方式」）；V129-104-3 起只剩兩張 */
+  const im=(f,alt)=>'<img alt="'+alt+'" src="'+f+'" onerror="this.outerHTML=&#39;<div class=&quot;note&quot; style=&quot;padding:4px 0 8px&quot;>這張說明圖載入不到（'+f+'，要跟網頁放在同一個資料夾）。</div>&#39;">';
+  const F=[['2','圖 2　集團之間的運輸怎麼歸（A 廠、B 廠、三角貿易）','GHG_運輸歸屬定義圖3集團之間_261110.png','集團之間的運輸怎麼歸'],
+           ['1','圖 1　運輸碳排歸屬總覽：哪種路線算哪一類','GHG_運輸歸屬定義圖1總覽_261110.png','運輸碳排歸屬總覽']];
+  const f=F.find(x=>x[0]===TRNRV.fsel)||F[0];
+  return '<div class="vs">'+F.map(x=>'<button class="'+(x[0]===f[0]?'on':'')+'" onclick="TRNRV.fsel=&#39;'+x[0]+'&#39;;trnrPaint()">'+x[1]+'</button>').join('')+'</div>'
+    +'<div class="figone">'+im(f[2],f[3])+'</div>'; }
 function trnrPaint(){
   const pane=document.getElementById('fsrcpane'); if(!pane||FAC_CUR!=='TRNRULE')return;
   const V=TRNR.V||{}, A=TRNR.A||{}, can=TRNR.can(), dm=(typeof declMaxY==='function')?declMaxY():2025;
   const dr=V.draft||null, act=V.active||null, nd=(dr&&act)?trnrDiff(act.rules,dr.rules).length:(dr?36:0);
-  let h=TRNR_CSS+'<div id="trnr"><div class="ttl"><h2>🚚 運輸規則（C04 上游運輸／C09 下游運輸 怎麼歸類）</h2>';
+  let h=TRNR_CSS+'<div id="trnr"><div class="ttl"><h2>🚚 運輸規則（C04／C09 怎麼歸類）</h2>';
   if(!V._missing&&!V._err)h+=act?'<span class="pill ver">生效中：第 '+act.ver+' 版</span>':'<span class="pill bad">沒有生效中的版本</span>';
   h+='<span class="pill lock">🔒 2022～'+dm+' 不套用</span>';
   if(dr)h+='<span class="pill draft">草稿（還沒生效）・'+nd+' 處修改</span>';
   if(!can)h+='<span class="pill ro">'+((typeof curGhgUser!=='undefined'&&curGhgUser)?(curGhgUser.roleName||'目前身分')+'：只能看':'未登入：只能看')+'</span>';
+  h+='<span class="tsw">'+[['rule','📋 規則'],['fig','📖 說明圖']].map(x=>'<button class="'+(TRNRV.top===x[0]?'on':'')+'" onclick="trnrTop(&#39;'+x[0]+'&#39;)">'+x[1]+'</button>').join('')+'</span>';   /* V129-104-5：標題列切換 */
   h+='<span style="flex:1"></span>';
   const bad=V._missing||V._err;
-  if(can&&!bad&&!dr)h+='<button class="sm" onclick="trnrAskOpen()">✎ 修改規則（開草稿）</button>';
-  h+='</div>'+trnrFigs();
+  if(can&&!bad&&!dr&&TRNRV.top!=='fig')h+='<button class="sm" onclick="trnrAskOpen()">✎ 修改規則（開草稿）</button>';
+  h+='</div>';
+  if(TRNRV.top==='fig'){ pane.innerHTML=h+trnrFigs()+'</div>'; return; }   /* V129-104-5：說明圖跟規則分開，不上下排 */
   const miss=TRNR.missMsg(), err=TRNR.errMsg();
   if(miss)h+='<div class="msg" style="background:#fff8e1;border:1px solid #e0c25a;color:#7a5a00;margin:4px 0 8px">⚠ '+facEsc(miss)+'</div>';
   if(err)h+='<div class="msg err" style="margin:4px 0 8px">⚠ '+facEsc(err)+'（這不是「沒有資料」，是讀不到；請重新整理再試）</div>';
@@ -4300,7 +4315,8 @@ function trnrPaint(){
   if(v==='log'&&!TRNRV.log&&!TRNRV.logErr&&!TRNRV.logBusy)trnrLogLoad();
 }
 window.trnrView=function(v){ TRNRV.v=v; trnrPaint(); };
-window.trnRuleGo=async function(v){ try{ FAC_TRACE=null; }catch(e){} window._facLoaded=true; const tb=document.querySelector('.tab[data-t="fac"]'); if(tb)tb.click(); FAC_CUR='TRNRULE'; if(v)TRNRV.v=v; await facMode('src'); };   /* 從登錄頁跳過來（例：待歸類） */
+window.trnrTop=function(v){ TRNRV.top=v; trnrPaint(); };   /* V129-104-5 */
+window.trnRuleGo=async function(v){ try{ FAC_TRACE=null; }catch(e){} window._facLoaded=true; const tb=document.querySelector('.tab[data-t="fac"]'); if(tb)tb.click(); FAC_CUR='TRNRULE'; if(v){ TRNRV.v=v; TRNRV.top='rule'; } await facMode('src'); };   /* 從登錄頁跳過來（例：待歸類） */
 function trnrBadHtml(){ const V=TRNR.V||{}; if(V._missing)return '<div class="note" style="padding:8px 0">表還沒建，請先跑 SQL 678。</div>'; if(V._err)return '<div class="msg err">規則讀不到：'+facEsc(V._err)+'</div>'; return ''; }
 function trnrRulesHtml(can){
   const V=TRNR.V||{}; const b=trnrBadHtml(); const dm=(typeof declMaxY==='function')?declMaxY():2025;
@@ -4313,12 +4329,13 @@ function trnrRulesHtml(can){
   const src=ed?dr.rules:(act?act.rules:null);
   if(!src)return h+'<div class="warnbar">沒有生效中的版本，系統不會自動判斷 C4-2／C9（登錄頁一律「待補」）。'+(can?'請到「版本與修改紀錄」用舊版開草稿，套用後才會有生效中的版本。':'請通知 ESG 小組。')+'</div>';
   h+='<div class="note" style="margin-bottom:4px">圖例：<span class="b c42">C4-2</span> 本廠付，併入本廠 C04 上游運輸　<span class="b c9">C9</span> 客戶付，C09 下游運輸　<span class="b ct">依合約</span> 照客戶合約預設（沒有預設時，填表的人選一次）　<span class="b q">待補</span> 系統不猜'+(ed?'　<span class="tg dr">黃底＝草稿改過</span>':'')+(dr&&!can?'　<span class="tg dr">ESG 正在改草稿（還沒生效），下表是生效中的規則</span>':'')+'</div>';
-  h+='<div class="zone'+(ed?' editing':'')+'"><table class="trt"><colgroup><col style="width:8%"><col style="width:13%"><col style="width:15%"><col style="width:15%"><col style="width:15%"><col></colgroup><thead><tr><th>貿易條件</th><th>中文名</th>'+TRNR.SEGS.map(s=>'<th class="c">'+s+'＊</th>').join('')+'<th>說明</th></tr><tr class="sub"><th>代號</th><th></th>'+TRNR.SEGSUB.map(s=>'<th class="c">'+s+'</th>').join('')+'<th></th></tr></thead><tbody>';
+  /* V129-104-4：表格畫成跟說明圖 3 下半部一樣（整條色條、依合約拆兩半、說明用原句） */
+  h+='<div class="zone'+(ed?' editing':'')+'"><table class="trt trt4"><colgroup><col style="width:14%"><col style="width:22.5%"><col style="width:22.5%"><col style="width:22.5%"><col></colgroup><thead><tr><th>貿易條件</th>'+TRNR.SEGS.map(s=>'<th class="c">'+s+'</th>').join('')+'<th>說明</th></tr><tr class="sub"><th></th>'+TRNR.SEGSUB.map(s=>'<th class="c">'+s+'</th>').join('')+'<th></th></tr></thead><tbody>';   /* 起訖放第二列表頭（同原表；放同格會換行、被共用欄寬重排） */
   TRNR.TERMS.forEach(([t,zh])=>{ let rowChg=false;
-    h+='<tr><td class="code">'+t+'</td><td>'+zh+'</td>';
+    h+='<tr><td class="t4"><b>'+t+'</b><span>'+zh+'</span></td>';
     for(let i=0;i<3;i++){ const v=TRNR.ruleCell(src,t,i), a=act?TRNR.ruleCell(act.rules,t,i):null, chg=ed&&act&&v!==a; if(chg)rowChg=true;
-      h+='<td class="rc'+(chg?' chg':'')+'"'+(ed?' onclick="trnrCell(&#39;'+t+'&#39;,'+i+')"':'')+' title="'+(chg?'草稿：生效中是 '+facEsc(trnrPlain(a,t,i)):(ed?'點一下改草稿':''))+'">'+trnrB(v,t,i)+'</td>'; }
-    const nt=trnrTermNote(src,t);
+      h+='<td class="rc'+(chg?' chg':'')+'"'+(ed?' onclick="trnrCell(&#39;'+t+'&#39;,'+i+')"':'')+' title="'+(chg?'草稿：生效中是 '+facEsc(trnrPlain(a,t,i)):(ed?'點一下改草稿':''))+'">'+trnrBar(v,t,i)+'</td>'; }
+    const nt=trnrNote4(src,t);
     h+='<td class="note" title="'+facEsc(nt)+'">'+(rowChg?'<span class="tg dr">草稿已改</span> ':'')+facEsc(nt)+'</td></tr>'; });
   h+='</tbody></table></div>';
   h+='<div class="note">申報加總：C4 上游運輸 ＝ <span class="code">C4-1B</span> ＋ <span class="code">C4-2</span>；C9 下游運輸 ＝ 客戶付的段。C4-2 的段存到出貨廠自己的 C04，C9 的段存出貨廠自己的 C09。收集表寫的不是這 12 種（例如「客户自提」或空白）→ 登錄頁標「待補」，請填表的人選一種。</div>';
