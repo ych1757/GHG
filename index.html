@@ -307,7 +307,7 @@ function facChg(on){ return '<span class="fchg'+(on?'':' off')+'">🟡</span>'; 
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-105-1</b> · 2026/11/10</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-105-2</b> · 2026/11/10</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -4191,6 +4191,7 @@ function trnrNavCnt(){ const b=document.getElementById('ftrnrcnt'); if(!b)return
 const TRNRV={top:'rule',fsel:'2',v:'rules',pf:'all',nf:'all',lf:'all',pe:{},log:null,logErr:'',logBusy:false,fig:[true,true,false,false]};   /* fig＝說明圖四個收合區塊的開關（重畫時保留使用者的選擇） */
 const TRNR_CSS='<style>'
   +'#trnr table.trt4{table-layout:fixed;width:100%;min-width:950px}#trnr .zone.zone4{overflow-x:auto;width:0;min-width:100%}#trnr .trt4 td.t4{font-size:11px}#trnr .trt4 td.t4 b{font-size:14px;color:var(--ink);margin-right:6px}#trnr .trt4 td.t4 span{font-size:11px;color:var(--g)}#trnr .trt4 th .ssub{font-weight:400;font-size:11px;opacity:.85}#trnr .trt4 tbody tr:nth-child(even){background:#fafafa}#trnr .trt4 td.rc{padding:4px 5px;font-size:11px}#trnr .trt4 td.note>.nt{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}'   /* V129-105-1：這張表欄寬固定比例，table 帶 data-gfit="off" 不讓共用自動欄寬重排（草稿改過的長說明會把三段改成不等寬）；說明放不下由 .nt 截成…（title 有全文）；窄螢幕表格最小寬 950px、外框 .zone4 內左右滑（同係數表 .fyw）。使用者 261110「照修法甲」「請全部完成」 */
+  +'#trnr .vcard{border:1px solid #d7e5dd;border-left:5px solid #b9c7c0;border-radius:10px;background:#fff;padding:7px 12px;margin-bottom:8px;font-size:13px;line-height:1.7}#trnr .vcard.cur{border-color:#1B8A60;border-left-color:#1B8A60}#trnr .vcard .vh{display:flex;gap:8px;align-items:center;flex-wrap:wrap}#trnr .vcard .vh>b{font-size:14.5px;color:var(--d)}#trnr .vcard .vp{color:var(--g)}#trnr .vcard .vr{display:flex;gap:8px;align-items:baseline}#trnr .vcard .vl{flex:0 0 62px;color:var(--g);font-size:12px}#trnr .vcard .vv{flex:1;min-width:0;white-space:normal;word-break:break-word}#trnr .vcard .vchg{display:inline-block;margin-right:14px}#trnr .vcard .vchg.blk{display:block;margin-right:0}#trnr details.vlog{border:1px dashed #b9c7c0;border-radius:10px;background:#fff;padding:5px 12px;margin-top:4px}#trnr details.vlog>summary{cursor:pointer;font-weight:700;color:var(--d);font-size:13px;padding:2px 0}#trnr details.vlog[open]>summary{margin-bottom:6px}#trnr table.trtlog{min-width:820px}#trnr table.trtlog tbody tr[onclick]{cursor:pointer}#trnr table.trtlog tbody tr[onclick]:hover td{background:#f2f8f5}#trnr .vs .vgrp{display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap;max-width:100%}#trnr .vs .vgrp+.vgrp{border-left:2px solid #b9c7c0;padding-left:12px;margin-left:6px}#trnr .vs .vg{font-size:12.5px;font-weight:700;color:var(--d);white-space:nowrap}#trnr .vs .vg small{font-weight:400;color:var(--g);font-size:11px}#trnr .oldbar{background:#f2f4f3;border-left:4px solid #9aa9a1;border-radius:8px;padding:5px 10px;font-size:12.5px;margin:0 0 6px;color:#3d4f46}@media(max-width:768px){#trnr .vcard .vr{display:block}#trnr .vcard .vl{display:block}#trnr .vs .vgrp+.vgrp{border-left:none;padding-left:0;margin-left:0}}'   /* V129-105-2：改版紀錄卡片（.vcard）＋完整操作紀錄收合區（details.vlog）＋紀錄表（.trtlog：欄寬固定比例、data-gfit="off"、窄螢幕框內左右滑、點列看全文）＋分頁兩組（.vgrp）＋舊版提示條（.oldbar） */
   +'#trnr .bar4{display:flex;gap:4px;border-radius:4px;font-weight:700;font-size:12px;white-space:nowrap;text-align:center;justify-content:center;color:#fff;padding:5px 4px;line-height:1.3}#trnr .bar4.g{background:#2E8B57}#trnr .bar4.o{background:#E8781E}#trnr .bar4.sp{padding:0;background:none}#trnr .bar4.sp>span{flex:1 1 auto;border-radius:4px;padding:5px 1px;font-size:10.5px;overflow:hidden;text-overflow:ellipsis}#trnr .bar4 span.g{background:#2E8B57}#trnr .bar4 span.o{background:#E8781E}#trnr .bar4.q{background:#fff;color:#a33;border:1.5px dashed #a33;padding:4px}#trnr .trt4 td.rc.chg{background:#fff3cd!important;box-shadow:inset 0 0 0 2px #e0c25a}'
   +'#trnr{font-size:13px;color:var(--ink)}#trnr .ttl{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px}#trnr .ttl h2{font-size:15px;margin:0;color:var(--d);border:none;padding:0}'
   +'#trnr .pill{display:inline-block;border-radius:9999px;padding:1px 9px;font-size:12px;font-weight:700;border:1.5px solid;white-space:nowrap}#trnr .pill.ver{border-color:var(--p);color:var(--d);background:#fff}#trnr .pill.bad{border-color:var(--w);color:var(--w);background:#fff}#trnr .pill.lock{border-color:#9aa9a1;color:#4d5f56;background:#f2f4f3}#trnr .pill.draft{border-color:#e0c25a;color:#8a5a00;background:#fff3cd}#trnr .pill.ro{border-color:#b9c7c0;color:var(--g);background:#fff;font-weight:400}'
@@ -4300,7 +4301,8 @@ function trnrPaint(){
   if(V.warn)h+='<div class="warnbar">⚠ '+facEsc(V.warn)+'，請通知系統管理。</div>';
   const pn=(A&&A.list)?TRNR.pendN():0;
   const vb=(v,lab)=>'<button data-v="'+v+'" class="'+(TRNRV.v===v?'on':'')+'" onclick="trnrView(&#39;'+v+'&#39;)">'+lab+'</button>';
-  h+='<div class="vs">'+vb('rules','貿易條件對應')+vb('names','集團公司名單')+vb('pend','待歸類'+(pn?' <span style="display:inline-block;background:#D42B3A;color:#fff;border-radius:10px;font-size:10.5px;padding:0 6px;margin-left:4px">'+pn+'</span>':''))+vb('draft','草稿與套用')+vb('log','版本與修改紀錄')+'</div>';
+  h+='<div class="vs"><span class="vgrp"><span class="vg">出貨<small>（分版本）</small></span>'+vb('rules','貿易條件對應')+vb('draft','草稿與套用')+vb('log','版本與修改紀錄')+'</span>'
+    +'<span class="vgrp"><span class="vg">進貨<small>（不分版本）</small></span>'+vb('names','集團公司名單')+vb('pend','待歸類'+(pn?' <span style="display:inline-block;background:#D42B3A;color:#fff;border-radius:10px;font-size:10.5px;padding:0 6px;margin-left:4px">'+pn+'</span>':''))+'</span></div>';   /* V129-105-2：分頁排成兩組（使用者 261110「五個分頁其實是兩組…請重新排列順序」）——出貨的貿易條件規則（分版本）／進貨的集團公司名單（不分版本） */
   const v=TRNRV.v;
   if(v==='rules')h+=trnrRulesHtml(can);
   else if(v==='names')h+=trnrNamesHtml(can);
@@ -4322,7 +4324,7 @@ function trnrBarFit(){   /* V129-105-1：「依合約」拆兩半的色條（.ba
 window.addEventListener('resize',()=>{ clearTimeout(trnrBarFit._t); trnrBarFit._t=setTimeout(()=>{ if(typeof FAC_CUR!=='undefined'&&FAC_CUR==='TRNRULE')trnrBarFit(); },300); });
 window.trnrView=function(v){ TRNRV.v=v; trnrPaint(); };
 window.trnrTop=function(v){ TRNRV.top=v; trnrPaint(); };   /* V129-104-5 */
-window.trnRuleGo=async function(v){ try{ FAC_TRACE=null; }catch(e){} window._facLoaded=true; const tb=document.querySelector('.tab[data-t="fac"]'); if(tb)tb.click(); FAC_CUR='TRNRULE'; if(v){ TRNRV.v=v; TRNRV.top='rule'; } await facMode('src'); };   /* 從登錄頁跳過來（例：待歸類） */
+window.trnRuleGo=async function(v){ try{ FAC_TRACE=null; }catch(e){} window._facLoaded=true; const tb=document.querySelector('.tab[data-t="fac"]'); if(tb)tb.click(); FAC_CUR='TRNRULE'; if(v){ TRNRV.v=v; TRNRV.top='rule'; TRNRV.rv=null; } await facMode('src'); };   /* 從登錄頁跳過來（例：待歸類） */
 function trnrBadHtml(){ const V=TRNR.V||{}; if(V._missing)return '<div class="note" style="padding:8px 0">表還沒建，請先跑 SQL 678。</div>'; if(V._err)return '<div class="msg err">規則讀不到：'+facEsc(V._err)+'</div>'; return ''; }
 function trnrRulesHtml(can){
   const V=TRNR.V||{}; const b=trnrBadHtml(); const dm=(typeof declMaxY==='function')?declMaxY():2025;
@@ -4331,10 +4333,22 @@ function trnrRulesHtml(can){
     +'<div class="stp"><span class="lk">✎ 下表可改</span><span class="no">2</span><b>出貨</b>（C09 下游運輸）以<b>實際出貨的廠區</b>為主體：不管客戶是不是集團公司、是不是三角貿易，一律照下表的貿易條件把每段切成 <span class="b c42">C4-2</span> 或 <span class="b c9">C9</span>；接單的公司不算這段運輸。2022～'+dm+' 照原申報，不套用。'
     +'<div class="route">🏭 本廠 <i>─陸運-1→</i> ⚓ 出口港／機場 <i>─海運／空運→</i> ⚓ 目的港 <i>─陸運-2→</i> 🏢 客戶</div></div></div>';
   if(b)return h+b;
-  const dr=V.draft, act=V.active, ed=!!(can&&dr);
-  const src=ed?dr.rules:(act?act.rules:null);
+  const dr=V.draft, act=V.active;
+  /* V129-105-2：版次切換（使用者 261110「在貿易條件的頁面中，是不是會有不同版次的點選產生不同對應?」→「要加」）。
+     TRNRV.rv＝要看哪一版：數字＝生效過的版本、'draft'＝草稿、空＝預設（能改且有草稿看草稿，否則看生效中）。只有草稿能點格子改，其他版次唯讀。 */
+  const HV=trnrVerHist(); let rv=TRNRV.rv;
+  if(rv==='draft'&&!(can&&dr))rv=null; if(typeof rv==='number'&&!HV.some(o=>+o.x.ver===rv))rv=null;
+  if(rv==null)rv=(can&&dr)?'draft':(act?+act.ver:null);
+  const ed=rv==='draft', vo=ed?null:(HV.find(o=>+o.x.ver===rv)||null), vx=ed?dr:(vo?vo.x:act), old=!ed&&!!vx&&vx.status!=='active';
+  const src=vx?vx.rules:null;
   if(!src)return h+'<div class="warnbar">沒有生效中的版本，系統不會自動判斷 C4-2／C9（登錄頁一律「待補」）。'+(can?'請到「版本與修改紀錄」用舊版開草稿，套用後才會有生效中的版本。':'請通知 ESG 小組。')+'</div>';
-  h+='<div class="note" style="margin-bottom:4px">圖例：<span class="b c42">C4-2</span> 本廠付，併入本廠 C04 上游運輸　<span class="b c9">C9</span> 客戶付，C09 下游運輸　<span class="b ct">依合約</span> 照客戶合約預設（沒有預設時，填表的人選一次）　<span class="b q">待補</span> 系統不猜'+(ed?'　<span class="tg dr">黃底＝草稿改過</span>':'')+(dr&&!can?'　<span class="tg dr">ESG 正在改草稿（還沒生效），下表是生效中的規則</span>':'')+'</div>';
+  if(HV.length+((can&&dr)?1:0)>1){   /* 只有一個版本、又沒有草稿時不顯示這一排 */
+    h+='<div class="ttl" style="margin-bottom:4px"><span class="note" style="font-weight:700;color:var(--d)">版次</span><span class="fp">'
+      +HV.map(o=>'<button class="'+(rv===+o.x.ver?'on':'')+'" onclick="TRNRV.rv='+(+o.x.ver)+';trnrPaint()">第 '+o.x.ver+' 版'+(o.x.status==='active'?'（生效中）':'')+'</button>').join('')
+      +((can&&dr)?'<button class="'+(ed?'on':'')+'" onclick="TRNRV.rv=&#39;draft&#39;;trnrPaint()">第 '+dr.ver+' 版草稿（修改中）</button>':'')+'</span><span class="note">點一版看當時的整張對應表</span></div>';
+    if(old)h+='<div class="oldbar">🔒 這是<b>已停用的第 '+vx.ver+' 版</b>（'+facEsc(trnrT(vx.applied_at||vx.created_at).slice(0,10))+' ～ '+facEsc(trnrT((vo&&vo.next)?(vo.next.applied_at||vo.next.created_at):vx.updated_at).slice(0,10))+' 生效），只能看。'+(act?'現在生效的是第 '+act.ver+' 版。':'現在沒有生效中的版本。')+'</div>';
+    else if(!ed&&can&&dr)h+='<div class="oldbar">這是<b>生效中的第 '+vx.ver+' 版</b>，只能看；要改請點「第 '+dr.ver+' 版草稿（修改中）」。</div>'; }
+  h+='<div class="note" style="margin-bottom:4px">圖例：<span class="b c42">C4-2</span> 本廠付，併入本廠 C04 上游運輸　<span class="b c9">C9</span> 客戶付，C09 下游運輸　<span class="b ct">依合約</span> 照客戶合約預設（沒有預設時，填表的人選一次）　<span class="b q">待補</span> 系統不猜'+(ed?'　<span class="tg dr">黃底＝草稿改過</span>':'')+(dr&&!can&&!old?'　<span class="tg dr">ESG 正在改草稿（還沒生效），下表是生效中的規則</span>':'')+'</div>';
   /* V129-104-4：表格畫成跟說明圖 3 下半部一樣（整條色條、依合約拆兩半、說明用原句） */
   h+='<div class="zone zone4'+(ed?' editing':'')+'"><table class="trt trt4" data-gfit="off"><colgroup><col style="width:14%"><col style="width:22.5%"><col style="width:22.5%"><col style="width:22.5%"><col></colgroup><thead><tr><th>貿易條件</th>'+TRNR.SEGS.map(s=>'<th class="c">'+s+'</th>').join('')+'<th>說明</th></tr><tr class="sub"><th></th>'+TRNR.SEGSUB.map(s=>'<th class="c">'+s+'</th>').join('')+'<th></th></tr></thead><tbody>';   /* 起訖放第二列表頭（同原表；放同格會換行、被共用欄寬重排） */
   TRNR.TERMS.forEach(([t,zh])=>{ let rowChg=false;
@@ -4379,7 +4393,7 @@ window.trnrOpenDraft=async function(baseVer){   /* 開草稿＝新增一列 ver�
   const nv=(+V.maxVer||0)+1;
   const r=await sb.from('ghg_trn_rule_ver').insert([{ver:nv,rules:JSON.parse(JSON.stringify(base.rules||{})),status:'draft',based_on:+base.ver}]).select('ver,status');
   if(r.error||!r.data||r.data.length!==1){ ghgDlg('⚠ 草稿沒有開成',r.error?trnrErrItem(r.error):'<div class="item" style="color:#a33">沒有新增到（權限不足？）</div>','<button onclick="fuelClose()">關閉</button>'); await TRNR.ensure(true); trnrPaint(); return; }
-  await TRNR.ensure(true); TRNRV.v=(baseVer!=null)?'draft':'rules'; trnrPaint();
+  await TRNR.ensure(true); TRNRV.rv=null; TRNRV.v=(baseVer!=null)?'draft':'rules'; trnrPaint();   /* V129-105-2：開了草稿就回到預設版次（看草稿） */
   if(baseVer!=null)ghgDlg('✅ 已用第 '+base.ver+' 版開草稿（第 '+nv+' 版）','<div class="item">草稿<b>還沒生效</b>，數字沒動。看過下面「草稿改了什麼」，再到套用（寫原因、確認）才會生效。</div><div class="item">集團公司名單不分版本，不會跟著回到第 '+base.ver+' 版。</div>','<button onclick="fuelClose()">知道了</button>'); };
 window.trnrAskOpen=function(){   /* 審核修正：開草稿會寫進資料庫（不能刪、同時只能一份）→ 先確認 */
   const V=TRNR.V; if(!TRNR.can()||!V)return; if(V.draft||!V.active){ trnrOpenDraft(); return; }
@@ -4563,34 +4577,55 @@ function trnrLogWhat(r){ const b=r.before||null, a=r.after||null, t=String(r.tbl
     return '「'+(o.alias||r.key||'')+'」'+(L.length?'：'+L.join('；'):''); }
   if(/contract/.test(t)){ const o=a||b||{}; return trnrSiteNm(o.site_id)+'・'+(o.cust_name||o.cust_key||'')+'・'+(o.term||'')+'：'+(b?b.choice:'—')+' → '+(a?a.choice:'刪除'); }
   return String(r.key||''); }
+function trnrVerHist(){   /* V129-105-2：真的生效過的版本（生效中／已停用），照套用先後排；prev＝前一個生效版（比對改了哪幾格）、next＝後一個（它的套用時間＝這一版停用的時間）。草稿、已捨棄的草稿不算。 */
+  const V=TRNR.V||{}; const tm=x=>+new Date(x.applied_at||x.created_at||0)||0;
+  const L=(V.list||[]).filter(x=>x.status==='active'||x.status==='retired').slice().sort((a,b)=>(tm(a)-tm(b))||(a.ver-b.ver));
+  return L.map((x,k)=>({x:x,prev:k?L[k-1]:null,next:L[k+1]||null})); }
 function trnrLogHtml(can){
+  /* V129-105-2（使用者 261110：「版本的內容紀錄，有點雜，我們這個規則主要是要區分C4-2 跟C9，是怕萬一以後認定上如果改了，可能會歸屬到不同類別…現在記這些內容感覺方向有點偏離了」「這個畫面不能左右，看不到全部內容」→ 看示意後「照示意改」）：
+     這一頁只回答「C4-2／C9 的規則什麼時候、為什麼、改了哪幾格」＝真的生效過的版本一版一張卡（原因全文、自動換行）；
+     開草稿／改草稿／捨棄草稿、集團公司名單、客戶合約預設的逐筆紀錄收進下面「看完整操作紀錄」（預設收起來；每列可點看完整內容）。資料庫照舊每筆都記（ghg_trn_rule_log），只改畫法。 */
   const V=TRNR.V||{}; let h='';
-  h+='<div class="say">每次動到規則、名單、客戶合約預設，資料庫都自動留一筆，<b>紀錄只能新增、不能改也不能刪</b>；捨棄的草稿也留著。要回到舊版按「↶ 用這版開草稿」：系統用那一版建新草稿，一樣要看預覽、寫原因、確認，舊紀錄全部保留。</div>';
+  h+='<div class="say">這一頁只看一件事：<b>C4-2／C9 的規則，什麼時候、為什麼、改了哪幾格</b>。只列真的生效過的版本；草稿怎麼改、捨棄的草稿不列。要看某一版當時的整張對應表，按「看這一版的對應表」。'+(can?'要回到舊版，按那一版的「↶ 用這版開草稿」：系統用它建新草稿，一樣要看預覽、寫原因、確認才生效。':'')+'</div>';
   const b=trnrBadHtml();
   if(b)h+=b;
-  else{ const L=(V.list||[]).slice().sort((a,b)=>b.ver-a.ver);
-    h+='<div class="sechead">版本</div><div class="zone"><table class="trt"><colgroup><col style="width:8%"><col style="width:13%"><col><col style="width:10%"><col style="width:15%"><col style="width:15%">'+(can?'<col style="width:132px">':'')+'</colgroup><thead><tr><th>版本</th><th>狀態</th><th>原因</th><th>以哪版為底</th><th>建立（誰・何時）</th><th>套用（誰・何時）</th>'+(can?'<th></th>':'')+'</tr></thead><tbody>';
-    if(!L.length)h+='<tr><td colspan="'+(can?7:6)+'" class="note" style="text-align:center">還沒有任何版本（SQL 678 應該建好第 1 版；沒有就是還沒跑或跑失敗）</td></tr>';
-    L.forEach(x=>{ const st=x.status==='active'?'<span class="tg ok">生效中</span>':(x.status==='draft'?'<span class="tg dr">草稿</span>':'<span class="tg gr">'+facEsc(TRNR.STZH[x.status]||x.status)+'</span>');
-      const cw=trnrWhoCell(x.created_by,x.created_at), aw=trnrWhoCell(x.applied_by,x.applied_at);
-      const rb=can&&!V.draft&&(x.status==='retired'||x.status==='discarded');
-      h+='<tr><td><b>第 '+x.ver+' 版</b></td><td>'+st+'</td><td title="'+facEsc(x.reason||'')+'">'+facEsc(x.reason||'—')+'</td><td>'+(x.based_on!=null?'第 '+x.based_on+' 版':'—')+'</td><td class="note" title="'+facEsc(cw.tip)+'">'+facEsc(cw.t||'—')+'</td><td class="note" title="'+facEsc(aw.tip)+'">'+facEsc(aw.t||'—')+'</td>'
-        +(can?'<td>'+(rb?'<button class="sec sm" onclick="trnrAskRb('+(+x.ver)+')">↶ 用這版開草稿</button>':(x.status==='draft'?'<button class="sec sm" onclick="trnrView(&#39;draft&#39;)">看草稿</button>':''))+'</td>':'')+'</tr>'; });
-    h+='</tbody></table></div>'; }
-  h+='<div class="sechead">修改紀錄 <span class="note" style="font-weight:400">最近 100 筆，新的在上面</span></div>';
-  if(TRNRV.logErr)return h+'<div class="msg err">'+facEsc(TRNRV.logErr)+'</div>';
-  if(!TRNRV.log)return h+'<div class="msg" style="background:var(--t)">讀取修改紀錄…</div>';
-  const G=TRNRV.log; const kind=r=>trnrLogTbl(r.tbl);
-  const cnt={all:G.length,'規則版本':G.filter(r=>kind(r)==='規則版本').length,'集團公司名單':G.filter(r=>kind(r)==='集團公司名單').length,'客戶合約預設':G.filter(r=>kind(r)==='客戶合約預設').length};
-  const fb=(f,lab)=>'<button class="'+(TRNRV.lf===f?'on':'')+'" onclick="TRNRV.lf=&#39;'+f+'&#39;;trnrPaint()"'+(cnt[f]?'':' style="opacity:.45"')+'>'+lab+' '+cnt[f]+'</button>';
-  h+='<div class="ttl"><span class="fp">'+fb('all','全部')+fb('規則版本','規則版本')+fb('集團公司名單','集團公司名單')+fb('客戶合約預設','客戶合約預設')+'</span><span style="flex:1"></span><button class="sec sm" onclick="TRNRV.log=null;TRNRV.logErr=&#39;&#39;;trnrPaint()">↻ 重新讀取</button></div>';
-  const S=G.filter(r=>TRNRV.lf==='all'||kind(r)===TRNRV.lf);
-  h+='<div class="zone"><table class="trt"><colgroup><col style="width:12%"><col style="width:15%"><col style="width:11%"><col style="width:9%"><col><col style="width:18%"></colgroup><thead><tr><th>時間</th><th>誰</th><th>哪裡</th><th>動作</th><th>改了什麼（原本 → 改成）</th><th>原因</th></tr></thead><tbody>';
-  if(!S.length)h+='<tr><td colspan="6" class="note" style="text-align:center">還沒有紀錄</td></tr>';
-  S.forEach(r=>{ const w=trnrLogWhat(r);
-    h+='<tr><td class="note">'+facEsc(trnrT(r.at))+'</td><td title="'+facEsc(r.by_email||'')+'">'+facEsc(trnrWho(r.by_email)||'—')+'</td><td>'+facEsc(kind(r))+'</td><td>'+facEsc(trnrLogAct(r))+'</td><td title="'+facEsc(w)+'">'+facEsc(w)+'</td><td title="'+facEsc(r.reason||'')+'">'+facEsc(r.reason||'—')+'</td></tr>'; });
-  h+='</tbody></table></div><div class="note">滑鼠移到「改了什麼」看全文。</div>';
+  else{ const H=trnrVerHist().reverse(); const zv=v=>v==='C4-2'?' 本廠付':(v==='C9'?' 客戶付':'');
+    h+='<div class="sechead">規則改版紀錄 <span class="note" style="font-weight:400">新的在上面</span></div>';
+    if(V.draft)h+='<div class="note" style="margin-bottom:6px">第 '+V.draft.ver+' 版是草稿，還沒生效，不列在這裡。'+(can?'<a href="javascript:void(0)" onclick="trnrView(&#39;draft&#39;)">到「草稿與套用」看</a>':'')+'</div>';
+    if(!H.length)h+='<div class="warnbar">還沒有任何生效過的版本（SQL 678 應該建好第 1 版；沒有就是還沒跑或跑失敗）。</div>';
+    H.forEach(o=>{ const x=o.x, cur=x.status==='active';
+      const from=trnrT(x.applied_at||x.created_at).slice(0,10), to=trnrT(o.next?(o.next.applied_at||o.next.created_at):x.updated_at).slice(0,10);
+      let what;
+      if(!o.prev)what='最初定案（12 種貿易條件 × 3 段）';
+      else{ const ds=trnrDiff(o.prev.rules,x.rules);
+        what=ds.length?ds.map(d=>{ const zh=(TRNR.TERMS.find(z=>z[0]===d.t)||[])[1]||''; return '<span class="vchg'+(ds.length>1?' blk':'')+'"><b>'+d.t+(zh?' '+facEsc(zh):'')+'・'+TRNR.SEGS[d.i]+'</b>　'+trnrB(d.from,d.t,d.i)+zv(d.from)+' → '+trnrB(d.to,d.t,d.i)+zv(d.to)+'</span>'; }).join('')+'<span class="note">（跟第 '+o.prev.ver+' 版比，其他 '+(36-ds.length)+' 格不變）</span>'
+          :'內容跟第 '+o.prev.ver+' 版相同'; }
+      const w0=trnrWho(x.applied_by), who=(w0.replace(/（.*$/,'').trim()||w0), wt=[who,trnrT(x.applied_at)].filter(Boolean).join('・');
+      const rb=can&&!V.draft&&!cur;
+      h+='<div class="vcard'+(cur?' cur':'')+'"><div class="vh"><b>第 '+x.ver+' 版</b>'+(cur?'<span class="tg ok">生效中</span>':'<span class="tg gr">已停用</span>')+'<span class="vp">'+facEsc(from||'—')+(cur?' 起':' ～ '+facEsc(to||'—'))+'</span><span style="flex:1"></span><button class="sec sm" onclick="TRNRV.rv='+(+x.ver)+';trnrView(&#39;rules&#39;)">看這一版的對應表</button>'+(rb?'<button class="sec sm" onclick="trnrAskRb('+(+x.ver)+')">↶ 用這版開草稿</button>':'')+'</div>'
+        +'<div class="vr"><span class="vl">改了什麼</span><span class="vv">'+what+'</span></div>'
+        +'<div class="vr"><span class="vl">為什麼改</span><span class="vv">'+facEsc(x.reason||'—')+'</span></div>'
+        +'<div class="vr"><span class="vl">誰套用</span><span class="vv note" title="'+facEsc([String(x.applied_by||''),trnrT(x.applied_at)].filter(Boolean).join('　'))+'">'+facEsc(wt||'—')+'</span></div></div>'; }); }
+  const G=TRNRV.log;
+  h+='<details class="vlog"'+(TRNRV.logOpen?' open':'')+' ontoggle="TRNRV.logOpen=this.open"><summary>看完整操作紀錄'+(G?'（最近 '+G.length+' 筆）':'')+' <span class="note" style="font-weight:400">平常收起來，追查時才點開：開草稿、改草稿、捨棄草稿、集團公司名單、客戶合約預設的每一筆都在這裡</span></summary>';
+  if(TRNRV.logErr)h+='<div class="msg err">'+facEsc(TRNRV.logErr)+'</div>';
+  else if(!G)h+='<div class="msg" style="background:var(--t)">讀取修改紀錄…</div>';
+  else{ const kind=r=>trnrLogTbl(r.tbl);
+    const cnt={all:G.length,'規則版本':G.filter(r=>kind(r)==='規則版本').length,'集團公司名單':G.filter(r=>kind(r)==='集團公司名單').length,'客戶合約預設':G.filter(r=>kind(r)==='客戶合約預設').length};
+    const fb=(f,lab)=>'<button class="'+(TRNRV.lf===f?'on':'')+'" onclick="TRNRV.lf=&#39;'+f+'&#39;;trnrPaint()"'+(cnt[f]?'':' style="opacity:.45"')+'>'+lab+' '+cnt[f]+'</button>';
+    h+='<div class="ttl"><span class="fp">'+fb('all','全部')+fb('規則版本','規則版本')+fb('集團公司名單','集團公司名單')+fb('客戶合約預設','客戶合約預設')+'</span><span style="flex:1"></span><button class="sec sm" onclick="TRNRV.log=null;TRNRV.logErr=&#39;&#39;;trnrPaint()">↻ 重新讀取</button></div>';
+    const S=G.filter(r=>TRNRV.lf==='all'||kind(r)===TRNRV.lf);
+    h+='<div class="zone zone4"><table class="trt trtlog" data-gfit="off"><colgroup><col style="width:12%"><col style="width:15%"><col style="width:11%"><col style="width:9%"><col><col style="width:18%"></colgroup><thead><tr><th>時間</th><th>誰</th><th>哪裡</th><th>動作</th><th>改了什麼（原本 → 改成）</th><th>原因</th></tr></thead><tbody>';
+    if(!S.length)h+='<tr><td colspan="6" class="note" style="text-align:center">還沒有紀錄</td></tr>';
+    S.forEach(r=>{ const w=trnrLogWhat(r);
+      h+='<tr onclick="trnrLogShow('+(+r.id)+')" title="點一下看這一筆的完整內容"><td class="note">'+facEsc(trnrT(r.at))+'</td><td>'+facEsc(trnrWho(r.by_email)||'—')+'</td><td>'+facEsc(kind(r))+'</td><td>'+facEsc(trnrLogAct(r))+'</td><td>'+facEsc(w)+'</td><td>'+facEsc(r.reason||'—')+'</td></tr>'; });
+    h+='</tbody></table></div><div class="note">點一列看那一筆的完整內容。最近 100 筆，新的在上面；資料庫自動記，只能新增、不能改也不能刪。</div>'; }
+  h+='</details>';
   return h; }
+window.trnrLogShow=function(id){   /* V129-105-2：完整操作紀錄點一列 → 這一筆的全文（表格裡放不下會截成…） */
+  const r=(TRNRV.log||[]).find(x=>+x.id===+id); if(!r)return;
+  const it=(k,v)=>'<div class="item" style="white-space:normal;display:flex;gap:10px;font-size:13px"><span style="flex:0 0 64px;color:var(--g)">'+k+'</span><span style="flex:1;min-width:0;word-break:break-word">'+v+'</span></div>';
+  ghgDlg('操作紀錄（完整內容）',it('時間',facEsc(trnrT(r.at)))+it('誰',facEsc(trnrWho(r.by_email)||'—'))+it('哪裡',facEsc(trnrLogTbl(r.tbl)))+it('動作',facEsc(trnrLogAct(r)))+it('改了什麼',facEsc(trnrLogWhat(r)))+it('原因',facEsc(r.reason||'—')),'<button onclick="fuelClose()">關閉</button>'); };
 /* ── V129-104 第 3 棒：套用（預覽 → 原因必填＋勾「我已看過預覽」→ ①草稿→生效 ②退回審核 ③逐列改明細）──
    範圍：data_year > 最後申報年（declMaxY）、年度沒鎖（yearLocked）的所有廠；試打 2099 也算，但不動審核狀態。
    只看本系統新登錄的運輸列（input_method 以 V95 開頭或 extra 有「路線」；歸零留痕的不看）。
