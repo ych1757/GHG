@@ -307,7 +307,7 @@ function facChg(on){ return '<span class="fchg'+(on?'':' off')+'">🟡</span>'; 
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-105-3</b> · 2026/11/10</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-106</b> · 2026/11/11</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -1818,9 +1818,9 @@ const ROLECAP={input:{e:1,f:0,a:0,p:0},esg:{e:1,f:1,a:1,p:0},view:{e:0,f:0,a:0,p
 const permScopeLabel=(r,p)=>{const s=(r&&r.scope)||null; if(!s||!s.length)return p&&p.factory_code?p.factory_code:'—'; return (s.length===1&&s[0]==='*')?'全部廠區':s.join(', ');};
 // ===== V55 帳號管理(照MHR名單管理模式):走 drfqo Edge Function ghg-admin-users(service_role在EF,前端只帶JWT) =====
 const GHG_EF_URL='https://drfqoraijhzvvllncbei.supabase.co/functions/v1/ghg-admin-users';
-const GHG_DEFAULT_PWD_H='b91882a46357a3dc318a706d0d0579c8a2b203680d17d3422acbf10aa627bf09';   // V129：初始密碼不放在網頁（DTO 另行告知）；這裡只放 SHA-256 核對碼（小寫後算），用來檢查管理員輸入的初始密碼有沒有打錯、首次改密碼不能沿用
-async function ghgPwdHash(p){ const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(String(p||'').toLowerCase())); return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join(''); }
-async function ghgAskDefaultPwd(msg){ const p=prompt(msg+'\n\n請輸入集團統一的初始密碼（由 DTO 告知，網頁上不顯示）：'); if(p==null)return null; const v=String(p).trim(); if(!v)return null; if(await ghgPwdHash(v)!==GHG_DEFAULT_PWD_H){ alert('初始密碼不對，沒有送出。請向 DTO 確認後再試。'); return null; } return v; }
+/* V129-106（使用者 261111「可以，開始改」）：網頁裡不再有初始密碼、也不再有它的核對碼（原 GHG_DEFAULT_PWD_H／ghgPwdHash／ghgAskDefaultPwd 拿掉）。
+   初始密碼只存在後端（ghg-admin-users 讀後台設定 SYNCHUB_DEFAULT_PWD，跟 OMS 共用）；重設／建帳號時網頁不帶密碼，管理員也不用輸入。
+   「首次改密碼不能沿用初始密碼」改由登入系統本身擋（新密碼跟目前密碼一樣會被退回 same_password）——見 lgChangePwd。 */
 async function ghgAdmin(action,payload){
   const tok=sessionStorage.getItem('ghg_jwt'); if(!tok) return {ok:false,error:'需以密碼登入(管理員)後才能操作帳號'};
   try{
@@ -1843,8 +1843,8 @@ function permAcctCell(p){   /* V124：帳號只從 SyncHub（OMS）授權頁開�
   return '<span style="color:#b7791f;font-size:11.5px" title="這個人還沒有 SyncHub 帳號，不能登入 GHG。帳號只從 SyncHub「系統資料授權」頁開通（把人加入名單就會自動開帳號）。">尚未開通（到 SyncHub 授權頁）</span>';
 }
 async function permResetPwd(email,name){
-  const pw=await ghgAskDefaultPwd('確定把外部查核帳號「'+name+'（'+email+'）」的密碼重設為初始密碼？\n他下次登入時需重新設定新密碼。'); if(!pw)return;   /* V124：這顆只剩外部查核自建名單在用（內部同仁到 SyncHub 授權頁重設） */
-  const r=await ghgAdmin('resetPassword',{email,password:pw});
+  if(!confirm('確定把外部查核帳號「'+name+'（'+email+'）」的密碼重設為集團統一的初始密碼？\n他下次登入時需重新設定新密碼。\n\n（初始密碼由 DTO 另行告知，網頁上不顯示）'))return;   /* V124：這顆只剩外部查核自建名單在用（內部同仁到 SyncHub 授權頁重設）。V129-106：不再請管理員輸入初始密碼，後端自己帶 */
+  const r=await ghgAdmin('resetPassword',{email});
   if(!r.ok){alert('重設失敗：'+(r.error||''));return;}
   alert(r.message||'已重設'); permLoadAcctStatus();
 }
@@ -1887,7 +1887,7 @@ function extPanelHtml(n){   /* V129-84-2：自建名單接在權限名單同一�
         +'<button class="sec" style="padding:6px 12px;font-size:12px" onclick="permResetPwd(\''+facEsc(cur.email)+'\',\''+facEsc(cur.name||'')+'\')">🔑 重設密碼</button> '
         +'<button class="sec" style="padding:6px 12px;font-size:12px" onclick="extToggle(\''+facEsc(cur.email)+'\','+(cur.active===false?'true':'false')+')">'+(cur.active===false?'啟用':'停用')+'</button> '
         +'<button class="sec" style="padding:6px 12px;font-size:12px;color:#c0392b" onclick="extRevoke(\''+facEsc(cur.email)+'\',\''+facEsc(cur.name||'')+'\')">移出名單</button>'))
-      +(isNew?'<span style="font-size:11.5px;color:var(--g);margin-left:10px">系統自動判斷：Email 已有帳號＝只加入名單（密碼沿用）／全新＝建帳號（初始密碼由 DTO 告知，建立時會請您輸入；首次登入須改）</span>':'')+'</div></div>';
+      +(isNew?'<span style="font-size:11.5px;color:var(--g);margin-left:10px">系統自動判斷：Email 已有帳號＝只加入名單（密碼沿用）／全新＝建帳號（密碼＝集團統一的初始密碼，由 DTO 另行告知；首次登入須改）</span>':'')+'</div></div>';
   }
   if(!E.length&&!ed){ s+='<div style="font-size:12px;color:var(--g);margin-top:6px">尚無自建人員。外部查核期間按「＋ 新增人員」核發帳號，用完停用或設到期日。</div>'; }
   s+='</td></tr>';
@@ -1933,8 +1933,8 @@ async function extSave(){
   if(!email||!/@/.test(email)){alert('請填正確 Email');return;}
   if(!name){alert('請填姓名');return;}
   if(isNew && (window._lgAll||[]).some(p=>String(p.email||'').toLowerCase()===email)){alert('此 Email 是集團內部人員（OMS 名單），請改由 OMS「系統資料授權」勾選 GHG，不需自建');return;}
-  let pw=null; if(isNew){ pw=await ghgAskDefaultPwd('建立外部查核帳號「'+name+'（'+email+'）」？'); if(!pw)return; }
-  const r=isNew?await ghgAdmin('createExt',{email,name,org,scope,expires_at:exp,note,password:pw})
+  if(isNew && !confirm('建立外部查核帳號「'+name+'（'+email+'）」？\n\n全新的 Email 會建帳號，密碼＝集團統一的初始密碼（由 DTO 另行告知，網頁上不顯示），首次登入須改。'))return;   /* V129-106：不再請管理員輸入初始密碼，後端自己帶 */
+  const r=isNew?await ghgAdmin('createExt',{email,name,org,scope,expires_at:exp,note})
                :await ghgAdmin('updateExt',{email,name,org,scope,expires_at:exp,note});
   if(!r.ok){alert((isNew?'建立失敗：':'儲存失敗：')+(r.error||''));return;}
   alert(r.message||'完成'); window._extEdit=null; window._extScopeTmp=null; window._extNewScope=null; window._extUsers=null; await loadExtUsers(); permRender();
@@ -2511,13 +2511,15 @@ async function lgChangePwd(){
   const p1=(document.getElementById('cg_p1')||{}).value||'', p2=(document.getElementById('cg_p2')||{}).value||'';
   if(!lgPwdValid(p1)){lgErr('密碼至少 8 碼，且需含英文與數字');return;}
   if(p1!==p2){lgErr('兩次輸入的密碼不一致');return;}
-  if(await ghgPwdHash(p1)===GHG_DEFAULT_PWD_H){lgErr('不能使用預設密碼，請另設');return;}
   const tok=sessionStorage.getItem('ghg_jwt'); if(!tok){lgErr('登入逾時，請重新登入');_lgPanel('lg_normal');return;}
   lgErr('');
   try{
     const r=await fetch(AUTH_URL+'/auth/v1/user',{method:'PUT',headers:{apikey:AUTH_KEY,Authorization:'Bearer '+tok,'Content-Type':'application/json'},body:JSON.stringify({password:p1,data:{must_change:false}})});
     const d=await r.json().catch(()=>({}));
-    if(!r.ok){lgErr(d.msg||d.error_description||'密碼設定失敗');return;}
+    if(!r.ok){   /* V129-106：新密碼跟目前的（初始）密碼一樣 → 登入系統退回 same_password，換成中文講 */
+      const em=[d.error_code,d.code,d.msg,d.message,d.error_description].filter(x=>typeof x==='string').join(' ');
+      lgErr(/same_password|different from the old password/i.test(em)?'新密碼不能跟初始密碼一樣，請另設':(d.msg||d.error_description||'密碼設定失敗'));return;
+    }
   }catch(e){lgErr('網路錯誤，請稍後再試');return;}
   const p=window._lgPending; window._lgPending=null;
   if(p){ await lgLogin(p,false); }
