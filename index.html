@@ -307,7 +307,7 @@ function facChg(on){ return '<span class="fchg'+(on?'':' off')+'">🟡</span>'; 
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-106</b> · 2026/11/11</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-107</b> · 2026/11/12</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -2645,6 +2645,7 @@ function lgCanNote(){return !!(curGhgUser&&(curGhgUser.role==='esg'||curGhgUser.
 function lgFillBy(){const b=document.getElementById('e_by'); if(b&&curGhgUser){b.value=curGhgUser.emp_id+' '+curGhgUser.name; b.readOnly=true; b.style.background='#eef6f1'; b.title='登入自動帶入';}}
 function lgApply(){
   const u=curGhgUser; if(!u)return;
+  try{ if(typeof ESGR!=='undefined')ESGR.ensure(); }catch(e){}   /* V129-107：ESG 個案決定（批400）登入後先讀 */
   const chip=document.getElementById('lg_chip');
   chip.style.display='';
   chip.innerHTML='👤 <b>'+facEsc(u.name)+'</b>（'+facEsc(u.roleName)+'·'+facEsc(lgScopeAll()?'全部廠區':(u.scope||[]).join(','))+'）　<a href="javascript:void(0)" onclick="lgLogout()" style="color:#c0392b;font-weight:700">登出</a>　<a href="https://ych1757.github.io/HUB/" style="color:var(--d);font-weight:700;text-decoration:none">回 SyncHub</a>';
@@ -3632,7 +3633,7 @@ function facSrcTree(){   // 與 buildNav 同一棵樹（SRC 定義），葉節�
       sib.forEach(x=>{ h+=`<div class="navi t3 fsrc" data-c="${grp[0].c}" onclick="window.FAC_SIBNOTE='${x.code}';facPickSrc('${grp[0].c}')" title="${(x.note||'')}；併在 ${r0.code} 的係數表"><span class="ncode">${x.code}</span>${x.name}<span class="fmini" style="margin-left:4px;color:#7a8f84">併於 ${r0.code}</span></div>`; });
       h+='</div>';});
     h+='</div>';});
-  h+=`<div class="t1" id="fnscmap_t" onclick="tg('fnscmap')">▾ 對照表</div><div id="fnscmap" style="display:block"><div class="navi t2 fsrc" data-c="C12MAP" onclick="facPickSrc('C12MAP')" title="材質 → C12 大類（ESG 維護）"><span class="ncode">C12</span>材質對照 <span id="fc12mapcnt" style="display:none;background:#D42B3A;color:#fff;border-radius:9px;padding:0 6px;font-size:10.5px" title="待 ESG 歸類">0</span></div><div class="navi t2 fsrc" data-c="TRNRULE" onclick="facPickSrc('TRNRULE')" title="運輸怎麼歸 C4-2／C9、進貨集團公司名單（ESG 維護）"><span class="ncode">C04/C09</span>運輸規則 <span id="ftrnrcnt" style="display:none;background:#D42B3A;color:#fff;border-radius:9px;padding:0 6px;font-size:10.5px" title="待 ESG 歸類的公司名稱">0</span></div></div>`;   /* V129-42；V129-104：加運輸規則 */
+  h+=`<div class="t1" id="fnscmap_t" onclick="tg('fnscmap')">▾ 對照表</div><div id="fnscmap" style="display:block"><div class="navi t2 fsrc" data-c="C12MAP" onclick="facPickSrc('C12MAP')" title="材質 → C12 大類（ESG 維護）"><span class="ncode">C12</span>材質對照 <span id="fc12mapcnt" style="display:none;background:#D42B3A;color:#fff;border-radius:9px;padding:0 6px;font-size:10.5px" title="待 ESG 歸類">0</span></div><div class="navi t2 fsrc" data-c="TRNRULE" onclick="facPickSrc('TRNRULE')" title="運輸怎麼歸 C4-2／C9、進貨集團公司名單（ESG 維護）"><span class="ncode">C04/C09</span>運輸規則 <span id="ftrnrcnt" style="display:none;background:#D42B3A;color:#fff;border-radius:9px;padding:0 6px;font-size:10.5px" title="待 ESG 歸類的公司名稱">0</span></div><div class="navi t2 fsrc" data-c="ESGRULE" onclick="facPickSrc('ESGRULE')" title="ESG 回覆指定的個案怎麼處理（員工通勤不計入、收集表係數更正、運輸地點算哪一區…）"><span class="ncode">ESG</span>個案決定</div></div>`;   /* V129-42；V129-104：加運輸規則 */
   return h;
 }
 async function facSrcView(){
@@ -3660,9 +3661,10 @@ function facPickSrc(code){
   FAC_CUR=code;
   document.querySelectorAll('#fsrcnav .fsrc').forEach(el=>el.classList.toggle('on',el.dataset.c===code));
   const pane=document.getElementById('fsrcpane'); if(!pane)return;
-  pane.style.overflow=(code==='C12MAP'||code==='TRNRULE')?'visible':'';   /* V129-42-2：材質對照表頭要凍結——右側框自己 overflow:auto 會讓表頭黏在框上（框不會捲），改成跟著外框捲 */
+  pane.style.overflow=(code==='C12MAP'||code==='TRNRULE'||code==='ESGRULE')?'visible':'';   /* V129-42-2：材質對照表頭要凍結——右側框自己 overflow:auto 會讓表頭黏在框上（框不會捲），改成跟著外框捲 */
   if(code==='C12MAP'){ c12MapShow(pane); return; }   /* V129-42 */
   if(code==='TRNRULE'){ trnrShow(pane); return; }   /* V129-104：運輸規則 */
+  if(code==='ESGRULE'){ esgrShow(pane); return; }   /* V129-107：ESG 個案決定 */
   if(typeof FSM_ITEM!=='undefined'&&FSM_ITEM[code]){ facItemShow(code,pane); return; }   // V76：品項型（冷媒）走兩張品項表，不用區域×年度矩陣
   try{ pane.innerHTML=facSrcRender(facSrcModel(code)); }catch(e){ pane.innerHTML='<div class="msg err">矩陣產生失敗：'+facEsc(e.message||e)+'</div>'; }
   if(window.FAC_SIBNOTE){ const sn=window.FAC_SIBNOTE; window.FAC_SIBNOTE=null; const b=document.createElement('div'); b.className='msg'; b.style.cssText='background:#fff8e1;font-size:12px;margin:0 0 6px;line-height:1.7'; b.innerHTML=facSibNote(sn,code); pane.insertBefore(b,pane.firstChild); }   /* V89-1：點「併於」的兄弟列（B01-02）→ 同一張表上方說明，不然畫面不動像點不進去 */
@@ -4063,6 +4065,44 @@ function facC12TreatOverview(R){   /* 係數庫 C12：各廠 × 2022–2025 × �
   SS.forEach(s=>{ h+='<tr><td style="text-align:left;white-space:normal;vertical-align:top">'+facEsc(nm(s))+'</td>'+YS.map(y=>'<td style="text-align:left;white-space:normal;line-height:1.5;vertical-align:top">'+C12_KINDS.map(kd=>{ const st=M[s+'|'+y+'|'+kd.k]; if(!st)return ''; const vs=[...st]; const ts=[...new Set(vs.map(v=>c12TreatOf(kd.k,v)))]; const df=ts.some(t=>t!==mode[y+'|'+kd.k]); return '<div'+(df?' style="background:#fff2b3;border-radius:4px;padding:0 3px"':'')+' title="'+facEsc(kd.name+' 係數 '+vs.join('／'))+'">'+kd.name+'：'+facEsc(ts.join('／'))+'</div>'; }).join('')+'</td>').join('')+'</tr>'; });
   return h+'</tbody></table>'; }
 function facNavC12Cnt(){ const b=document.getElementById('fc12mapcnt'); if(!b)return; const n=c12MapPendN(); b.textContent=n; b.style.display=n?'':'none'; }
+/* ══ V129-107：ESG 個案決定 ESGR（批400 SQL 700：ghg_esg_ruling 個案決定／ghg_esg_ruling_log 修改紀錄）══
+   使用者 261112「現在應該資料都是存在SUPABASE資料庫，有沒有資料是被存在程式中」→ 清查、提案 →「可以，一起做」。
+   原本寫死在程式裡的 9 條改讀這張表：員工通勤不計（原 CM_ESG_NC）、營運廢棄物收集表係數 1.31→0.131、運輸地點歸區域（原 TRN_ALIAS）、匯率適用範圍「蘇州系」。
+   ・只讀啟用中的列；種類 kind＝cm_nc／wst_ef_fix／trn_place_region／fx_scope_group／cm_bus_fuel（公司大巴的油是誰加的）。
+   ・讀不到＝fail-closed：ESGR.D＝{_missing:true}（表還沒建）或 {_err:'訊息'}；各頁上方顯示紅字，不當成「沒有個案」。
+   ・登入後先讀一次（lgApply），各登錄頁開頁、匯率表、重算檢查前再等它讀完。 */
+const ESGR={ D:null, P:null,
+  isMissing(err){ const m=String((err&&(err.message||err))||'')+' '+String((err&&err.code)||''); return (m.indexOf('ghg_esg_ruling')>=0&&/does not exist|could not find|schema cache/i.test(m))||/42P01|PGRST205/.test(m); },
+  async ensure(force){
+    if(ESGR.D&&!ESGR.D._err&&!ESGR.D._missing&&!force)return ESGR.D;
+    if(ESGR.P)return ESGR.P;
+    ESGR.P=(async()=>{ try{
+      if(typeof sb==='undefined'||!sb){ ESGR.D={_err:'還沒連上資料庫'}; return ESGR.D; }
+      let r; try{ r=await sbAll(()=>sb.from('ghg_esg_ruling').select('*').eq('status','active').order('id')); }catch(e){ r={error:e}; }
+      if(r.error){ ESGR.D=ESGR.isMissing(r.error)?{_missing:true}:{_err:String(r.error.message||r.error)}; return ESGR.D; }
+      const D={list:r.data||[],nc:{},wst:[],place:{},fx:{},bus:{}};
+      D.list.forEach(x=>{ const v=x.value||{};
+        if(x.kind==='cm_nc')D.nc[x.site_id+'|'+x.data_year+'|'+x.subject]=x;
+        else if(x.kind==='wst_ef_fix'){ if(v.from!=null&&v.to!=null&&isFinite(+v.from)&&isFinite(+v.to))D.wst.push({from:+v.from,to:+v.to,row:x}); }
+        else if(x.kind==='trn_place_region'){ if(v.region)D.place[String(x.subject||'').toLowerCase()]=String(v.region); }
+        else if(x.kind==='fx_scope_group'){ if(Array.isArray(v.sites))D.fx[String(x.subject||'')]=v.sites.map(String); }
+        else if(x.kind==='cm_bus_fuel')D.bus[x.site_id+'|'+x.data_year]=x; });
+      ESGR.D=D; return D;
+    } finally{ ESGR.P=null; try{ ESGR.paint(); }catch(e){} } })();
+    return ESGR.P; },
+  ok(){ return !!(ESGR.D&&!ESGR.D._missing&&!ESGR.D._err); },
+  badMsg(){ const D=ESGR.D; if(!D)return 'ESG 個案決定還沒讀到'; if(D._missing)return 'ESG 個案決定的資料表還沒建（請先跑 SQL 700，批400）'; if(D._err)return 'ESG 個案決定讀取失敗：'+D._err; return ''; },
+  warnHtml(){ const m=ESGR.badMsg(); if(!m)return ''; const e=String(m).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return '<div class="item" style="color:#a33;background:#fdf3f2;border:1px solid #e7b9b4;border-radius:6px;padding:6px 10px;margin:6px 0;white-space:normal;font-size:13px">⚠ '+e+'。讀到之前，系統不會套用 ESG 指定的個案（員工通勤不計入、收集表係數更正、運輸地點歸哪一區、匯率適用範圍），這一頁系統算的數可能不對。請重新整理；一直這樣請洽 DTO。</div>'; },
+  paint(){ const f=document.getElementById('src_form'); if(!f||!f.parentNode)return; let b=document.getElementById('esgrwarn');
+    if(!b){ b=document.createElement('div'); b.id='esgrwarn'; f.parentNode.insertBefore(b,f); } b.innerHTML=ESGR.ok()?'':ESGR.warnHtml(); },
+  nc(site,year,bk){ return ESGR.ok()?(ESGR.D.nc[site+'|'+year+'|'+bk]||null):null; },
+  wstFix(tot){ if(!ESGR.ok()||tot==null||!isFinite(+tot))return null; return ESGR.D.wst.find(w=>Math.abs((+tot)-w.from)<1e-9)||null; },
+  place(s){ return ESGR.ok()?(ESGR.D.place[String(s==null?'':s).trim().toLowerCase()]||null):null; },
+  fxSites(txt){ if(!ESGR.ok())return []; const t=String(txt||''), out=[]; Object.keys(ESGR.D.fx).forEach(k=>{ if(k&&t.indexOf(k)>=0)ESGR.D.fx[k].forEach(c=>{ if(out.indexOf(c)<0)out.push(c); }); }); return out; },
+  bus(site,year){ return ESGR.ok()?(ESGR.D.bus[site+'|'+year]||null):null; }
+};
+window.ESGR=ESGR;
 /* ══ V129-104：運輸規則共用模組 TRNR（批389 SQL 678：ghg_trn_rule_ver 規則版本／ghg_trn_group_alias 集團公司名單／ghg_trn_contract_default 客戶合約預設／ghg_trn_rule_log 修改紀錄）══
    使用者 261105＋ESG 261109 定案（規則記憶 ghg-transport-upstream-downstream-rule）：
    ・出貨以「實際出貨的廠區」為主體；任何出貨（含送集團公司、三角貿易）都照貿易條件把三段切成 C4-2（本廠付，存本廠 C04）或 C9（客戶付，存 C09）。
@@ -4268,6 +4308,90 @@ function trnrErrTxt(e){   /* 審核修正：資料庫錯誤 → 白話；英文�
   if(/failed to fetch|networkerror|network request/i.test(m))return {t:'連線失敗，請檢查網路後重新整理再試',tip:m};
   return {t:'資料庫回覆錯誤，請重新整理再試；一直這樣請通知系統管理',tip:m}; }
 function trnrErrItem(e){ const o=trnrErrTxt(e); return '<div class="item" style="color:#a33"'+(o.tip?' title="'+facEsc(o.tip)+'"':'')+'>'+facEsc(o.t)+'</div>'; }
+/* ── V129-107：係數庫 › 對照表 › ESG 個案決定（示意＝待討論確認\程式寫死資料_搬資料庫提案\GHG_程式寫死資料搬資料庫_示意_1_261112.png；使用者 261112「可以，一起做」） ── */
+const ESGRV={f:'active',all:null,err:'',log:null,logErr:'',logOpen:false};
+const ESGR_KZH={cm_nc:['員工通勤','指定不計入'],wst_ef_fix:['營運廢棄物','收集表運輸係數更正'],trn_place_region:['上游運輸、下游運輸','地點算哪一區'],fx_scope_group:['匯率','適用範圍的群組'],cm_bus_fuel:['員工通勤','公司大巴的油（電）是誰加的']};
+const ESGR_RGZH={TW:'台灣',CN:'中國',ALL:'其他（全球表）'};
+function esgrCan(){ return !!(typeof curGhgUser!=='undefined'&&curGhgUser&&(curGhgUser.role==='admin'||curGhgUser.role==='esg')&&!(typeof READONLY!=='undefined'&&READONLY)); }
+function esgrE(v){ return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+async function esgrLoadAll(){ ESGRV.all=null; ESGRV.err='';
+  try{ const r=await sbAll(()=>sb.from('ghg_esg_ruling').select('*').order('id')); if(r.error)throw r.error; ESGRV.all=r.data||[]; }
+  catch(e){ ESGRV.err=ESGR.isMissing(e)?'ESG 個案決定的資料表還沒建（請先跑 SQL 700，批400）':('讀取失敗：'+String((e&&e.message)||e)); } }
+async function esgrShow(pane){
+  pane.innerHTML='<div class="msg" style="background:var(--t)">載入 ESG 個案決定…</div>';
+  await Promise.all([ESGR.ensure(true),esgrLoadAll(),(async()=>{ try{ if(typeof loadOmsRoster==='function'&&!window._omsRoster)await loadOmsRoster(); }catch(e){} })()]);
+  try{ if(typeof siteMasterLoad==='function')await siteMasterLoad(); }catch(e){}
+  if(FAC_CUR!=='ESGRULE')return; ESGRV.log=null; ESGRV.logErr=''; esgrPaint(); }
+function esgrPaint(){
+  const pane=document.getElementById('fsrcpane'); if(!pane||FAC_CUR!=='ESGRULE')return;
+  const can=esgrCan(), A=ESGRV.all||[], nA=A.filter(x=>x.status==='active').length, nD=A.length-nA;
+  let h='<style>#esgr table.wtbl th,#esgr table.wtbl td{text-align:left;vertical-align:top}</style><div id="esgr" style="font-size:13px;color:var(--ink)"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px"><h2 style="font-size:15px;margin:0;color:var(--d);border:none;padding:0">📌 ESG 個案決定</h2>'
+    +(ESGRV.err?'':'<span style="display:inline-block;border-radius:9999px;padding:1px 9px;font-size:12px;font-weight:700;border:1.5px solid var(--p);color:var(--d);background:#fff;white-space:nowrap">啟用中 '+nA+' 條</span>')
+    +(can&&!ESGRV.err?'<button class="sm" style="padding:3px 10px;font-size:12px;margin-left:auto" onclick="esgrAdd()">＋ 新增一條</button>':'')+'</div>'
+    +'<div class="fmini" style="margin:0 0 8px;line-height:1.5;white-space:normal">ESG 回覆指定的個案怎麼處理，都記在這裡；登錄頁照這張表算。'+(can?'ESG 小組、系統管理可以新增、停用；':'只有 ESG 小組、系統管理可以新增、停用；')+'不能刪除，每次變更都留紀錄。「公司大巴的油是誰加的」請到員工通勤頁上方回答。</div>';
+  if(ESGRV.err){ pane.innerHTML=h+'<div class="msg err" style="white-space:normal">⚠ '+esgrE(ESGRV.err)+'。這一頁現在不知道有哪些個案決定，登錄頁上方也會出現紅字提醒。</div></div>'; return; }
+  const fb=(k,t,n)=>'<button class="sec" style="padding:2px 10px;font-size:12px;'+(ESGRV.f===k?'background:var(--p);color:#fff;border-color:var(--p)':'')+'" onclick="ESGRV.f=&#39;'+k+'&#39;;esgrPaint()">'+t+' '+n+'</button>';
+  h+='<div style="display:flex;gap:6px;margin-bottom:6px">'+fb('active','啟用中',nA)+fb('disabled','已停用',nD)+fb('all','全部',A.length)+'</div>';
+  const L=A.filter(x=>ESGRV.f==='all'||x.status===ESGRV.f);
+  h+='<div class="zone"><table class="wtbl" style="width:100%;table-layout:fixed;font-size:12.5px"><colgroup>'+[13,12,6,19,13,23,14].map(w=>'<col style="width:'+w+'%">').join('')+'</colgroup>'
+    +'<thead><tr class="cols" style="background:#fafcfb"><th class="tl">類別</th><th class="tl">廠區</th><th style="text-align:center">年度</th><th class="tl">對象</th><th class="tl">怎麼處理</th><th class="tl">出處／原因</th><th class="tl">狀態・誰・何時</th></tr></thead><tbody>';
+  if(!L.length)h+='<tr><td colspan="7" class="tl" style="color:#7a8f84">（這個篩選底下沒有資料）</td></tr>';
+  L.forEach(x=>{ const kz=ESGR_KZH[x.kind]||[x.kind,''], on=x.status==='active';
+    const who=(typeof trnrWho==='function')?trnrWho(x.updated_by||x.created_by):String(x.updated_by||x.created_by||''), at=(typeof trnrT==='function')?trnrT(x.updated_at||x.created_at):String(x.updated_at||x.created_at||'').slice(0,10);
+    const btn=(can&&x.kind!=='cm_bus_fuel')?(on?' <a href="javascript:void(0)" onclick="esgrSet('+x.id+',&#39;disabled&#39;)" style="color:#a33;font-size:11.5px;white-space:nowrap">停用</a>':' <a href="javascript:void(0)" onclick="esgrSet('+x.id+',&#39;active&#39;)" style="color:#14603F;font-size:11.5px;white-space:nowrap">重新啟用</a>'):'';
+    h+='<tr'+(on?'':' style="color:#8a9690;background:#f7f8f7"')+'><td class="tl" style="white-space:normal"><b>'+esgrE(kz[0])+'</b><div class="fmini">'+esgrE(kz[1])+'</div></td>'
+      +'<td class="tl" style="white-space:normal">'+(x.site_id?esgrE((typeof trnrSiteNm==='function')?trnrSiteNm(x.site_id):x.site_id):'全部')+'</td>'
+      +'<td style="text-align:center">'+(x.data_year==null?'全部':esgrE(x.data_year))+'</td>'
+      +'<td class="tl" style="white-space:normal">'+esgrE(x.subject)+'</td>'
+      +'<td class="tl" style="white-space:normal"><b>'+esgrE(x.action)+'</b></td>'
+      +'<td class="tl" style="white-space:normal"><b>'+esgrE(x.esg_source||'（沒有寫出處）')+'</b>'+(x.reason?'<div class="fmini" style="white-space:normal">'+esgrE(x.reason)+'</div>':'')+'</td>'
+      +'<td class="tl" style="white-space:normal"><span style="display:inline-block;border-radius:999px;padding:0 7px;font-size:11px;border:1px solid '+(on?'#1f6b4566;background:#1f6b4514;color:#1f6b45':'#7a8f8466;background:#7a8f8418;color:#4a5f55')+'">'+(on?'啟用中':'已停用')+'</span>'+btn+'<div class="fmini" style="white-space:normal">'+esgrE(who)+'　'+esgrE(at)+'</div></td></tr>'; });
+  h+='</tbody></table></div>';
+  h+='<div style="margin-top:10px"><a href="javascript:void(0)" onclick="esgrLogTg()" style="color:var(--p);font-weight:700;text-decoration:none;font-size:12.5px">'+(ESGRV.logOpen?'▾':'▸')+' 修改紀錄</a></div>';
+  if(ESGRV.logOpen){
+    if(ESGRV.logErr)h+='<div class="msg err" style="white-space:normal">修改紀錄讀取失敗：'+esgrE(ESGRV.logErr)+'</div>';
+    else if(!ESGRV.log)h+='<div class="fmini">載入中…</div>';
+    else { const byId={}; A.forEach(x=>{ byId[x.id]=x; });
+      h+='<div class="zone"><table class="wtbl" style="width:100%;table-layout:fixed;font-size:12px"><colgroup>'+[17,16,10,57].map(w=>'<col style="width:'+w+'%">').join('')+'</colgroup><thead><tr class="cols" style="background:#fafcfb"><th class="tl">何時</th><th class="tl">誰</th><th class="tl">動作</th><th class="tl">哪一條</th></tr></thead><tbody>'
+        +(ESGRV.log.length?ESGRV.log.map(g=>{ const x=byId[g.ruling_id]||g.after||g.before||{}, kz=ESGR_KZH[x.kind]||[x.kind||'',''];
+            return '<tr><td class="tl">'+esgrE((typeof trnrT==='function')?trnrT(g.at):g.at)+'</td><td class="tl">'+esgrE((typeof trnrWho==='function')?trnrWho(g.by_email):g.by_email)+'</td><td class="tl">'+esgrE(g.action)+'</td><td class="tl" style="white-space:normal">'+esgrE(kz[0]+'・'+kz[1]+(x.site_id?'・'+x.site_id:'')+(x.data_year!=null?'・'+x.data_year:'')+'・'+(x.subject||'')+' → '+(x.action||''))+'</td></tr>'; }).join(''):'<tr><td colspan="4" class="tl">（沒有紀錄）</td></tr>')
+        +'</tbody></table></div><div class="fmini">最多顯示最近 200 筆。</div>'; } }
+  pane.innerHTML=h+'</div>'; }
+async function esgrLogTg(){ ESGRV.logOpen=!ESGRV.logOpen; esgrPaint(); if(ESGRV.logOpen&&!ESGRV.log){ ESGRV.logErr='';
+  try{ const r=await sb.from('ghg_esg_ruling_log').select('*').order('id',{ascending:false}).limit(200); if(r.error)throw r.error; ESGRV.log=r.data||[]; }catch(e){ ESGRV.logErr=String((e&&e.message)||e); } esgrPaint(); } }
+async function esgrAfterWrite(){ await Promise.all([ESGR.ensure(true),esgrLoadAll()]); ESGRV.log=null; if(ESGRV.logOpen){ ESGRV.logOpen=false; await esgrLogTg(); } else esgrPaint(); }
+async function esgrSet(id,st){ if(!esgrCan())return; const x=(ESGRV.all||[]).find(z=>z.id===id); if(!x||x.kind==='cm_bus_fuel')return; const kz=ESGR_KZH[x.kind]||[x.kind,''];
+  const what=kz[0]+'・'+kz[1]+'：'+(x.site_id?x.site_id+' ':'')+(x.data_year!=null?x.data_year+' ':'')+x.subject+' → '+x.action;
+  if(!confirm((st==='disabled'?'停用這一條？停用後登錄頁就不再照它算（系統算的數會變；已申報的數字不會變）。':'重新啟用這一條？啟用後登錄頁會照它算。')+'\n\n'+what))return;
+  let q; try{ q=await sb.from('ghg_esg_ruling').update({status:st}).eq('id',id).select('id'); }catch(e){ q={error:e}; }
+  if(q.error||!(q.data||[]).length){ alert('沒有改成功：'+(q.error?String(q.error.message||q.error):'資料庫沒有回傳（可能沒有權限，或登入逾時，請重新用密碼登入）')); }
+  await esgrAfterWrite(); }
+function esgrAdd(){ if(!esgrCan())return;
+  const sites=(typeof SITEM!=='undefined'?SITEM:[]).map(s=>'<option value="'+esgrE(s.site_id)+'">'+esgrE(s.site_id+' '+(s.site_name||''))+'</option>').join('');
+  const veh=(typeof CM_ORDER!=='undefined'?CM_ORDER:[]).map(x=>'<option>'+esgrE(x[1])+'</option>').join('');
+  const row=(lb,inner)=>'<div class="item" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span style="font-weight:700;min-width:92px">'+lb+'</span>'+inner+'</div>';
+  const ip='style="padding:3px 8px;font:inherit"';
+  const h=row('種類','<select id="esga_k" '+ip+' onchange="esgrAddKind()"><option value="cm_nc">員工通勤：某廠某年某種交通工具不計入</option><option value="trn_place_region">運輸：地點寫法算哪一區</option><option value="wst_ef_fix">營運廢棄物：收集表運輸係數更正</option></select>')
+    +'<div id="esga_cm">'+row('廠區 *','<select id="esga_site" '+ip+'>'+sites+'</select>')+row('年度 *','<input id="esga_year" type="number" '+ip+' style="width:90px;padding:3px 8px;font:inherit" placeholder="例 2026">')+row('交通工具 *','<select id="esga_veh" '+ip+'>'+veh+'</select>')+'</div>'
+    +'<div id="esga_trn" style="display:none">'+row('地點寫法 *','<input id="esga_place" '+ip+' style="width:220px;padding:3px 8px;font:inherit" placeholder="收集表上的寫法，例 HAO CHEN">')+row('算哪一區 *','<select id="esga_rg" '+ip+'><option value="CN">中國</option><option value="TW">台灣</option><option value="ALL">其他（全球表）</option></select>')+'</div>'
+    +'<div id="esga_wst" style="display:none">'+row('收集表上的值 *','<input id="esga_from" type="number" step="any" '+ip+' style="width:120px;padding:3px 8px;font:inherit" placeholder="例 1.31">')+row('正確的值 *','<input id="esga_to" type="number" step="any" '+ip+' style="width:120px;padding:3px 8px;font:inherit" placeholder="例 0.131">')+'</div>'
+    +row('出處 *','<input id="esga_src" '+ip+' style="width:340px;padding:3px 8px;font:inherit" placeholder="例 ESG 11/04 回覆網站題 C8">')
+    +row('原因 *','<textarea id="esga_why" rows="2" style="width:340px;padding:3px 8px;font:inherit" placeholder="ESG 怎麼說的，照原話寫"></textarea>')
+    +'<div class="fmini" style="white-space:normal">出處和原因會顯示在登錄頁的提示裡。匯率適用範圍的群組（例：蘇州系）這裡不能新增，要加請洽 DTO。</div><div id="esga_err" class="fmini" style="color:#a33;white-space:normal"></div>';
+  cmdlg('＋ 新增一條 ESG 個案決定',h,'<button onclick="fuelClose()">取消</button> <button class="pri" onclick="esgrAddGo()">新增</button>'); }
+function esgrAddKind(){ const k=(document.getElementById('esga_k')||{}).value; [['esga_cm','cm_nc'],['esga_trn','trn_place_region'],['esga_wst','wst_ef_fix']].forEach(([id,kk])=>{ const e=document.getElementById(id); if(e)e.style.display=(k===kk)?'':'none'; }); }
+async function esgrAddGo(){ if(!esgrCan())return; const g=id=>String((document.getElementById(id)||{}).value||'').trim(), err=m=>{ const e=document.getElementById('esga_err'); if(e)e.textContent=m; };
+  const k=g('esga_k'), src=g('esga_src'), why=g('esga_why'); let row=null;
+  if(!src||!why){ err('出處和原因都要填。'); return; }
+  if(k==='cm_nc'){ const y=+g('esga_year'); if(!g('esga_site')||!(y>=2000&&y<=2100)||!g('esga_veh')){ err('廠區、年度、交通工具都要填（年度是四位數）。'); return; } row={kind:k,site_id:g('esga_site'),data_year:y,subject:g('esga_veh'),action:'不計入',value:null}; }
+  else if(k==='trn_place_region'){ const pl=g('esga_place').toLowerCase(), rg=g('esga_rg'); if(!pl){ err('地點寫法要填。'); return; } row={kind:k,site_id:null,data_year:null,subject:pl,action:'算'+(ESGR_RGZH[rg]||rg),value:{region:rg}}; }
+  else if(k==='wst_ef_fix'){ const a=g('esga_from'), b=g('esga_to'); if(a===''||b===''||!isFinite(+a)||!isFinite(+b)){ err('兩個值都要填數字。'); return; } row={kind:k,site_id:null,data_year:null,subject:String(+a),action:'當成 '+(+b),value:{from:+a,to:+b}}; }
+  else { err('這個種類這裡不能新增。'); return; }
+  row.reason=why; row.esg_source=src;
+  let q; try{ q=await sb.from('ghg_esg_ruling').insert(row).select('id'); }catch(e){ q={error:e}; }
+  if(q.error||!(q.data||[]).length){ const m=q.error?String(q.error.message||q.error):'資料庫沒有回傳（可能沒有權限，或登入逾時）'; err('沒有新增成功：'+(/duplicate|unique/i.test(m)?'已經有一條一樣的（同種類、同廠區、同年度、同對象）在啟用中':m)); return; }
+  if(typeof fuelClose==='function')fuelClose(); ESGRV.f='active'; await esgrAfterWrite(); }
+window.esgRuleGo=async function(){ try{ FAC_TRACE=null; }catch(e){} window._facLoaded=true; const tb=document.querySelector('.tab[data-t="fac"]'); if(tb)tb.click(); FAC_CUR='ESGRULE'; await facMode('src'); };   /* 從登錄頁跳過來 */
 async function trnrShow(pane){
   pane.innerHTML='<div class="msg" style="background:var(--t)">載入運輸規則…</div>';
   await Promise.all([TRNR.ensure(true),TRNR.ensureAlias(true),TRNR.ensureContract(true),(async()=>{ try{ if(typeof loadOmsRoster==='function'&&!window._omsRoster)await loadOmsRoster(); }catch(e){} })()]);   /* 審核修正：OMS 帳號名冊（帳號 → 工號 → 姓名） */
@@ -5757,7 +5881,7 @@ window.ucOverview=async function(){   // V78：UC 石油產品容積與重量單
   box.innerHTML=h+'</tbody></table>';
 };
 async function fxOverview(){   // V41:匯率庫總覽(唯讀;年×幣別×用途)
-  FXR=null; await ensureFX();
+  FXR=null; await ensureFX(); await ESGR.ensure();   /* V129-107 */
   const box=document.getElementById('f_result'); if(!box)return;
   const rows=[];
   Object.keys(FXR).sort().forEach(y=>{const yo=FXR[y]; Object.keys(yo).sort().forEach(c=>{(yo[c].list||[yo[c]]).forEach(r=>rows.push(r));});});
@@ -5797,7 +5921,7 @@ function fxChrome(on){
   if(card)card.style.display=on?'none':'';
 }
 async function fxMatrix(){   // V68-3:匯率表——列=廠區(01-20)、欄=年度（使用者 260827 指示）；唯讀,ghg_fx_rates 即時
-  FXR=null; await ensureFX();
+  FXR=null; await ensureFX(); await ESGR.ensure();   /* V129-107 */
   const box=document.getElementById('f_result'); if(!box)return;
   box.innerHTML='載入中…';
   let SI={};
@@ -5818,7 +5942,7 @@ async function fxMatrix(){   // V68-3:匯率表——列=廠區(01-20)、欄=年
     if(st.site_name&&s.indexOf(st.site_name)>=0)return true;
     if(/全中國廠|中國廠/.test(s)&&st.country==='CN')return true;
     if(/台灣/.test(s)&&st.country==='TW')return true;
-    if(/蘇州系/.test(s)&&['SF','TC','KS','LS'].indexOf(sid)>=0)return true;
+    if(ESGR.fxSites(s).indexOf(sid)>=0)return true;   /* V129-107：原本寫死「蘇州系＝SF／TC／KS／LS」，改讀 ghg_esg_ruling（批400，kind＝fx_scope_group） */
     return false;
   };
   const disp=r=>String(r.rate_src_disp||parseFloat((1/r.to_usd).toPrecision(6)));
@@ -7491,11 +7615,12 @@ function fuelRowX(b,r,canEdit){ if(!canEdit)return '';
   if(!entryCanDel(F.site,F.year))return (multi&&r._new)?' <a href="javascript:void(0)" onclick="event.stopPropagation();fuelDropNew('+r.record_id+')" title="移除這筆尚未儲存的新列" style="color:#a33;text-decoration:none;font-size:11px">✕</a>':'';
   if(multi)return ' <a href="javascript:void(0)" onclick="event.stopPropagation();fuelRowDel('+r.record_id+')" title="'+(r._new?'刪除這一筆（還沒存，直接拿掉）':'刪除這一筆帳單：先標記，按「💾 儲存」才真的刪；儲存前可在上方「↩ 取消」')+'" style="color:#a33;text-decoration:none;font-size:11px;white-space:nowrap">✕ 刪除</a>';
   return ' <a href="javascript:void(0)" onclick="event.stopPropagation();fuelRowClr('+r.record_id+')" title="把這一列輸入的數字清掉（使用量、費用、帳單期間等），列保留；存檔後這一列＝0" style="color:#8a6400;text-decoration:none;font-size:11px;white-space:nowrap">⌫ 清空</a>'; }
-window.fuelRowDel=function(id){ if(!editable())return; const r=F.recs.find(x=>x.record_id===id); if(!r)return;
+function fuelEsLock(){ const b=document.getElementById('src_form'); if(b&&b.classList.contains('eslock')){ alert('這一頁已送出或已通過（或這個廠在查證中／已定稿），現在不能改。要改請 ESG 按「↩ 退回」。'); return true; } return false; }   /* V129-107：審核鎖（已送出／通過／本年沒有／查證中／定稿） */
+window.fuelRowDel=function(id){ if(!editable()||fuelEsLock())return; const r=F.recs.find(x=>x.record_id===id); if(!r)return;
   if(!entryCanDel(F.site,F.year)){ alert('這個年度已鎖定或已申報，不能刪除。'); return; }
   if(r._new){ F.recs=F.recs.filter(x=>x!==r); } else { F.retire[r.record_id]='手動刪除'; }
   fuelRender(); };
-window.fuelRowClr=function(id){ if(!editable()||!entryCanDel(F.site,F.year))return; const r=F.recs.find(x=>x.record_id===id); if(!r)return; const C=cfg(); r.extra=r.extra||{};
+window.fuelRowClr=function(id){ if(!editable()||!entryCanDel(F.site,F.year)||fuelEsLock())return; const r=F.recs.find(x=>x.record_id===id); if(!r)return; const C=cfg(); r.extra=r.extra||{};
   r.quantity=0; r._qset=false;
   ['原幣金額','期間原文','帳單度數','盤查區間','公升','換算記錄值','換算率','_月份推定'].forEach(k=>delete r.extra[k]);
   if(C.conv){ delete r.extra[C.conv.a]; delete r.extra[C.conv.b]; } if(C.info)delete r.extra[C.info.key]; if(C.split){ delete r.extra[C.split[0]]; delete r.extra[C.split[1]]; }
@@ -10272,9 +10397,9 @@ const TRN_PL=[   /* 地點文字 → 區域（TW／CN／ALL）；由清查用的
   ['ALL',/越南|vietnam|viet nam|ha nam|hanoi|河內|河内|海防|haiphong|hai phong|bac ninh|北寧|quang ninh|dong van|友谊口岸|友誼口岸|syncmold vn|越南信|同奈|dong ?nai|đồng ?nai|long ?thành|long ?thanh|隆城|cửu long|cuu long|hoa khoa|cuong anh|qisda +vn|yuke vn|vnt\(b\)|泰國|泰国|thailand|bangkok|曼谷|chachoengsao|bangpakong|laem chabang|林查班|samut ?prak|chon ?buri|rayong|prachin|nakhon|ฉะเชิงเทรา|หมู่|syncmold enterprise \(thailand\)|泰国信锦|thai|samut|ratchaburi|นนทบุรี|จังหวัด|馬來西亞|马来西亚|malaysia|penang|selangor|johor|bukit|新加坡|singapore|robinson road|美國|美国|united states|\busa\b|u\.s\.a|\bus\b|el paso|\btx\b|california|\bca \d|ontario, ca|georgia|\bga \d|\bmi ?\d|\bmo \d|\bnm \d|newark|hawthorne|santa teresa|lavonia|wixom|fenton|, ?wa,? \d|, ?il \d|ninth avenue|墨西哥|mexico|tijuana|juarez|chihuahua|日本|japan|kanagawa|shizuoka|aichi|ishikawa|yokohama|mie\b|yokkaichi|印度|india|tamil ?nadu|chennai|sriperumbudur|kanchip|波蘭|波兰|poland|lodz|荷蘭|荷兰|netherlands|venlo|意大利|義大利|italy|milano|slovak|斯洛伐克|加拿大|canada|vancouver|vacouver|colombia|哥倫比亞|哥伦比亚|bogota|德國|德国|germany|munich|慕尼黑|法國|法国|france|paris|巴黎|韓國|韩国|korea|菲律賓|菲律宾|philippines|捷克|czech|匈牙利|hungary|巴西|brazil|澳大利亞|澳大利亚|australia|悉尼|英國|英国|united kingdom|伦敦|倫敦|london/i],
   ['CN',/中國|中国|china|大陸|大陆|省|苏州|蘇州|上海|昆山|太仓|太倉|吳江|吴江|相城|東莞|东莞|深圳|广州|廣州|中山市|中山富|福州|福清|重庆|重慶|厦门|廈門|宁波|寧波|天津|北京|武汉|武漢|成都|合肥|南京|无锡|無錫|杭州|青岛|青島|威海|淄博|常熟|嘉兴|嘉興|莆田|宁德|寧德|闽侯|閩侯|鄂州|巢湖|临汾|臨汾|河源|樟木頭|樟木头|璧山|西永|巴南|弇山|张浦|張浦|xiamen|鴻嘉駿|鸿嘉骏|富鸿齐|富鴻齊|冠皇|富群|冠華|冠华|福清冠|kh\(b\)|fuqing|zs\(b\)|longsheng|rongshuo|xinchang|福建|fujian|广东|廣東|江苏|江蘇|浙江|江西|惠州|珠海|常州|镇江|鎮江|句容|张家港|張家港|泰興|泰兴|兴化|興化|南通|天门|天門|瑞安|鹤山|鶴山|火炬开发区|火炬開發區|南朗鎮|浦东|浦東|ningbo|suzhou|吳中|吴中|北海|博羅|博罗|陶朱|鹽田|盐田|shanghai|cnsha|yantian|shenzhen|虎门|虎門|深圳港|廈門港|厦门港|上海港|洋山|江阴|江陰|沙边路|沙邊路|珠江路|金枫路|金楓路|马运路|馬運路|聚峰路|宏路|阳下|陽下|洪宽|洪寬/i],
   ['TW',/new taipei|taichung|北市|鶯歌|台北|臺北|新北|桃園|桃园|新竹|hsinchu|苗栗|miao-?li|台中|臺中|彰化|南投|雲林|嘉義|台南|臺南|高雄|屏東|宜蘭|花蓮|台東|基隆|keelung|觀音區|观音区|龜山|龟山|林口|中壢|中坜|zhongli|汐止|汐止|土城|內湖|内湖|三重|中和|新莊|新庄|泰山區|樹林|楊梅|杨梅|湖口|竹南|chu-nan|豐原|丰原|大里|南屯|深坑|taoyuan|dayuan|luchu|syncmold tw|敬得\(觀音\)|陸合\(台中\)|信鋐/i]]
-const TRN_ALIAS={'yuke':'CN','yuke_b':'CN','dengsheng':'CN','hao chen':'CN'};   /* V129-103-5：HAO CHEN＝FUQING HAOCHEN（福清），ESG 回覆網站題 B9「從中國福清出發到港口再到越南」 */   /* YUKE＝2023 年「馭科」（路徑 馭科→鹽田港→海防港）；DENGSHENG＝2023 年「東莞登生」 */
+/* V129-107：原本寫死的 TRN_ALIAS（yuke／yuke_b／dengsheng／hao chen → CN）已搬到資料庫 ghg_esg_ruling（批400，kind＝trn_place_region），改用 ESGR.place() 讀 */
 const TRN_OWN=/^\s*(syncmold|敬得科技|敬得|越南信錦|越南信锦|信錦|信锦|commuwell|信錦同奈|信锦同奈|syncmold dong nai)\s*$/i;   /* V129-83：加 DN 信錦同奈 */
-function trnPlRg(s){ s=String(s==null?'':s).trim(); if(!s)return null; for(const [rg,re] of TRN_PL){ if(re.test(s))return rg; } const a=TRN_ALIAS[s.toLowerCase()]; return a||null; }
+function trnPlRg(s){ s=String(s==null?'':s).trim(); if(!s)return null; for(const [rg,re] of TRN_PL){ if(re.test(s))return rg; } return ESGR.place(s); }   /* V129-107 */
 function trnPathFr(p){ return String(p||'').split(/→|->|=>|-|－|：|:|\s{2,}/).map(x=>x.replace(/[（）()]/g,' ').trim()).filter(x=>x&&!/^(陸運|陆运|海運|海运|空運|空运|海运\d*|陆运\d*)\s*\d*$/.test(x)&&x.toLowerCase()!=='port'); }
 function trnLegRg(p,rt,sct){   /* 這一段在哪一區（TW／CN／ALL）＋說明 */
   const e=(p.r&&p.r.extra)||{}; const own=s=>TRN_OWN.test(String(s||''))?sct:null;
@@ -10417,6 +10542,7 @@ function trnEnter(i){
 async function trnBoot(){
   const box=document.getElementById('src_form');
   box.innerHTML='<div class="msg">載入中…（明細／運輸係數表／年度鎖）</div>';
+  await ESGR.ensure();   /* V129-107：ESG 個案決定（批400） */
   try{
     if(typeof ensureYLocks==='function')await ensureYLocks();
     await ensureESRC(); await ensureFacAll(); await ensureFacSites(); await ensureFGas();
@@ -11212,7 +11338,7 @@ function w5coefIt(et,ef){ try{   /* V129-103-3：已申報年度車種沒寫清�
   if(tw!=null&&wt!=null){ let h=L.filter(x=>eq(tw,x.ttw)&&eq(wt,x.wtt)); if(h.length===1)return {it:h[0],txt:'收集表 TTW '+w5g6(tw)+'＋WTT '+w5g6(wt)};
     if(!h.length){ h=L.filter(x=>eq(tw,x.wtt)&&eq(wt,x.ttw)); if(h.length===1)return {it:h[0],txt:'收集表 TTW '+w5g6(tw)+'＋WTT '+w5g6(wt)+'（兩欄對調）'}; } }
   let tot=(tw!=null&&wt!=null)?tw+wt:ef, esg='';
-  if(tot!=null&&Math.abs(tot-1.31)<1e-9){ tot=0.131; esg='收集表係數 1.31 多打一個 0，ESG 11/09 回覆網站題 C15：正確是 0.131'; }   /* V129-103-4：ESG 回覆 C15（使用者 261109「照這樣處理」） */
+  { const fxw=ESGR.wstFix(tot); if(fxw){ tot=fxw.to; esg=String(fxw.row.reason||('收集表係數 '+fxw.from+' 照 ESG 個案決定當成 '+fxw.to)); } }   /* V129-107：原本寫死 1.31→0.131，改讀 ghg_esg_ruling（批400，kind＝wst_ef_fix） */   /* V129-103-4：ESG 回覆 C15（使用者 261109「照這樣處理」） */
   if(tot!=null&&tot>0){ const h=L.filter(x=>eq(tot,x.ttw+x.wtt)); if(h.length===1)return esg?{it:h[0],txt:esg,esg:1}:{it:h[0],txt:'收集表合計 '+w5g6(tot)}; }
   return null; }catch(e){ return null; } }
 function w5trnSet(t,it){ const ef=+(it.ttw+it.wtt).toFixed(10); t.ef_value=ef; t.ef_unit='kgCO2e/tkm'; t.factor_id=it.f.factor_id; t.ef_source=it.f.factor_source||'C04／C09 共用運輸係數表';
@@ -11237,6 +11363,7 @@ function wstEnter(i){
 async function wstBoot(){
   const box=document.getElementById('src_form');
   box.innerHTML='<div class="msg">載入中…（明細／係數庫／年度鎖）</div>';
+  await ESGR.ensure();   /* V129-107：ESG 個案決定（批400） */
   try{
     if(typeof ensureYLocks==='function')await ensureYLocks();
     if(typeof ensureFacSites==='function')await ensureFacSites();
@@ -12262,6 +12389,14 @@ const CM_ORDER=[['C07-C01','自有汽車（汽油）'],['C07-C02','自有汽車�
   ['C07-R01','捷運／地鐵'],['C07-R02','高鐵'],['C07-T01','計程車（汽油）'],['C07-T02','計程車（電動）'],['C07-Z01','步行'],['C07-Z02','腳踏車／自行車']];
 const CM_NAME2CODE=Object.fromEntries(CM_ORDER.map(x=>[x[1],x[0]]));
 const CM_CODE2NAME=Object.fromEntries(CM_ORDER);
+/* ══ V129-107：公司大巴（使用者 261111 問「大巴是不是有必要多一個是不是租賃的選項」→ 示意 →「可以，一起做」；261112「可以，沿用 但要讓使用能看出」）
+   ・交通工具多「公司大巴（柴油）」「公司大巴（電動）」。係數沿用同動力的公車那一條（一物一號，不另編代號）；畫面彙總列要標「沿用公車係數」讓人看得出來。
+   ・「公司大巴的油（電）是誰加的」一廠一年答一次，存 ghg_esg_ruling（批400，kind＝cm_bus_fuel，value.fuel＝lease 含在租約｜self 廠內自己加）。
+     規則＝ESG 11/10 回覆網站題 C16：租金一律算上游租賃；油含在租約＝用車排放算員工通勤；廠內自己加＝算範疇一移動，員工通勤不計。
+   ・還沒選＝彙總列標黃、先不算、不能送出。2022～2025 已申報年度沒有公司大巴這個選項，畫面和數字都不受影響。 */
+const CM_BUS={'公司大巴（柴油）':'公車／公交車（柴油）','公司大巴（電動）':'公車／公交車（電動）'};   /* 公司大巴 → 沿用哪一種公車的係數 */
+(()=>{ const add=Object.keys(CM_BUS).map(k=>[CM_NAME2CODE[CM_BUS[k]],k]); const at=CM_ORDER.findIndex(x=>x[0]==='C07-B02'); CM_ORDER.splice(at+1,0,...add); add.forEach(x=>{ CM_NAME2CODE[x[1]]=x[0]; }); })();   /* CM_CODE2NAME 不動：代號 → 名稱仍是公車 */
+function cmIsBus(bk){ return !!CM_BUS[bk]; }
 const CM_ZERO={'C07-Z01':1,'C07-Z02':1};
 const CM_ALL={'C07-M02':1,'C07-M03':1};
 const CM_RG={'SY':'TW','SH':'TW','GT':'TW','LH':'TW','VN':'VN','LT':'TH','TH':'TH','MY':'MY','SG':'SG'};
@@ -12276,6 +12411,17 @@ const CM_RULES=[[/電動腳踏車|电动自行车|電動自行車/,'C07-M03'],[/
 function cmcode(label){ if(CM_NAME2CODE[label])return CM_NAME2CODE[label];
   const s=String(label==null?'':label).replace(/\s+/g,'').replace(/（/g,'(').replace(/）/g,')'); if(!s||s==='0')return null;
   for(const [re,c] of CM_RULES){ if(re.test(s))return c; } return null; }
+/* V129-107：匯入時認公司大巴 */
+CM_RULES.unshift([/大巴.*(電動|电动|純電|纯电)|(電動|电动|純電|纯电).*大巴/,'C07-B02'],[/大巴/,'C07-B01']);   /* 交通工具欄直接寫大巴 */
+const CM_BUSRE=/大巴|交通車|交通车|班車|班车/;   /* 備註寫這些字＝搭公司大巴；公司商務車／公務車不算（這次不處理） */
+function cmVeh(label,code,note){ if(!code)return '（未填交通工具）'; const base=CM_CODE2NAME[code]; if(code!=='C07-B01'&&code!=='C07-B02')return base;
+  if(/大巴/.test(String(label==null?'':label))||CM_BUSRE.test(String(note==null?'':note)))return code==='C07-B02'?'公司大巴（電動）':'公司大巴（柴油）'; return base; }
+function cmBusMark(a,bk,fv,coLease){ a.extra=a.extra||{}; a.extra['公司大巴']=1; a.extra['沿用係數']=CM_BUS[bk]; a.extra['油是誰加的']=fv==='lease'?'含在租約':(fv==='self'?'廠內自己加':'還沒選');   /* 存進資料庫的彙總列：碳排跟畫面系統算一致 */
+  if(fv==='lease'){ delete a.extra['不計入']; if(coLease!=null)a.co2e_draft=coLease; } else { a.co2e_draft=0; a.extra['不計入']=fv==='self'?'公司大巴的油（電）是廠內自己加的，用車的排放算在範疇一，員工通勤不計（ESG 11/10 回覆網站題 C16）':'還沒回答「公司大巴的油（電）是誰加的」，先記 0'; } }
+function cmBusRefix(){ const fv=cmBusFuel();   /* 「油是誰加的」變了：登錄頁新增的（自動彙總）和匯入進來的（匯入彙總）都重算 */
+  Object.keys(CM_BUS).forEach(bk=>{ if(W7.recs.some(r=>cmblk(r)===bk&&!cmIsAgg(r)&&!r._del))cmReagg(bk); });
+  W7.recs.forEach(a=>{ if(!cmIsAgg(a)||a._del||!cmIsBus(cmblk(a))||!cme(a)['匯入彙總'])return; const bk=cmblk(a), lib=cmlib(CM_NAME2CODE[bk],W7.site,W7.year);
+    cmBusMark(a,bk,fv,lib?+((+a.quantity||0)*lib.v/1000).toFixed(10):0); a._chg=true; }); }
 function cmesc(v){ return String(v==null?'':(typeof v==='object'?JSON.stringify(v):v)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function cmn(v){ return (v==null||v==='')?null:(isFinite(+v)?+v:null); }
 function cmf(v,d){ return v==null||v===''?'':Number(v).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:(d<4?4:d)}); }
@@ -12335,6 +12481,7 @@ function cmEnter(i){
   cmBoot();
 }
 async function cmBoot(){
+  await ESGR.ensure();   /* V129-107：ESG 個案決定（批400） */
   if(typeof window.ensureTHSR==='function')await window.ensureTHSR();   /* V129-87：台灣高鐵站間表 */
   const box=document.getElementById('src_form');
   box.innerHTML='<div class="msg">載入中…（明細／交通工具係數／年度鎖）</div>';
@@ -12424,7 +12571,7 @@ function cmflags(r){
   if(String(r.input_method||'')===CM_MANUAL&&!cmIsAgg(r))out.push(['新','#1B8A60','本列由登錄頁輸入']);
   return out;
 }
-function cmbadge(f){ return '<span title="'+cmesc(f[2])+'" style="display:inline-block;margin-left:3px;padding:0 4px;border:1px solid '+f[1]+'55;background:'+f[1]+'12;color:'+f[1]+';border-radius:999px;font-size:9.5px;line-height:14px;vertical-align:1px">'+cmesc(f[0])+'</span>'; }
+function cmbadge(f){ return '<span title="'+cmesc(f[2])+(f[3]?'（點一下看 ESG 個案決定表）':'')+'"'+(f[3]?' onclick="event.stopPropagation();esgRuleGo()"':'')+' style="'+(f[3]?'cursor:pointer;':'')+'display:inline-block;margin-left:3px;padding:0 4px;border:1px solid '+f[1]+'55;background:'+f[1]+'12;color:'+f[1]+';border-radius:999px;font-size:9.5px;line-height:14px;vertical-align:1px">'+cmesc(f[0])+'</span>'; }
 function cmcss(){ if(document.getElementById('cmcss'))return; const st=document.createElement('style'); st.id='cmcss';
   st.textContent='#s101wrap table.c7t td,#s101wrap table.c7t th{padding:3px 6px;white-space:normal;overflow-wrap:anywhere;vertical-align:top}'
    +'#s101wrap table.c7t td.nw{white-space:nowrap}'
@@ -12446,11 +12593,55 @@ function cmPiiChip(){
 }
 /* ── 已申報年度面板：①系統（照收集表算）／②申報／差異原因 ── */
 /* ── 彙總列：① 系統算＝延人公里 × 係數庫（C07 一物一號，區域×年度）；收集表當年的係數／碳排另存 X 欄只比對 ── */
-const CM_ESG_NC={   /* V129-103-5：ESG 回覆指定「不計入員工通勤」的交通工具（廠|年|交通工具 → 原因）；只改系統算，不動資料庫 */
-  'SF|2022|公車／公交車（柴油）':'ESG 11/04 回覆網站題 C8：2022～2024 蘇州富鴻齊租的大巴已算在上游租賃（承租大巴），加油也是租賃公司負擔，員工通勤不重複算',
-  'SF|2023|公車／公交車（柴油）':'ESG 11/04 回覆網站題 C8：2022～2024 蘇州富鴻齊租的大巴已算在上游租賃（承租大巴），加油也是租賃公司負擔，員工通勤不重複算',
-  'SF|2024|公車／公交車（電動）':'ESG 11/04 回覆網站題 C8：2022～2024 蘇州富鴻齊租的大巴已算在上游租賃（承租大巴），加油也是租賃公司負擔，員工通勤不重複算'
-};
+/* V129-107：原本寫死的 CM_ESG_NC（SF 2022／2023 柴油公車、2024 電動公車＝不計入）已搬到資料庫 ghg_esg_ruling（批400，kind＝cm_nc），這裡改用 ESGR.nc() 讀 */
+/* ── V129-107：公司大巴的油（電）是誰加的 ── */
+function cmBusFuel(){ const x=ESGR.ok()?ESGR.bus(W7.site,W7.year):null; return (x&&x.value&&x.value.fuel)||''; }
+function cmBusHas(){ return W7.recs.some(r=>cmIsBus(cmblk(r))&&!cmIsAgg(r)&&!r._del); }
+function cmBusCard(){ if(!cmBusHas()||!ESGR.ok())return '';   /* 個案決定讀不到時，上方已有紅字 */
+  const cur=ESGR.bus(W7.site,W7.year), fv=cmBusFuel(), ed=cmcanEdit(), k=W7.site+'|'+W7.year;
+  const who=cur?('已選（'+cmesc(String(cur.updated_by||cur.created_by||'').replace(/@.*$/,''))+' '+cmesc(String(cur.updated_at||cur.created_at||'').slice(0,10))+'）'):'還沒選';
+  const opt=(v,t,d)=>'<label style="display:inline-flex;align-items:baseline;gap:5px;white-space:nowrap;cursor:'+(ed?'pointer':'default')+'"><input type="radio" name="cm_busfuel" value="'+v+'"'+(fv===v?' checked':'')+(ed?'':' disabled')+' onchange="cmBusSet(this.value)"><b>'+t+'</b><span class="fmini">'+d+'</span></label>';
+  const C=(W7.busChk&&W7.busChk.k===k)?W7.busChk:null; if(!C)setTimeout(cmBusChk,0);
+  let rm='';
+  if(C&&C.err)rm='<div class="fmini" style="color:#a33;margin-top:4px">讀不到上游租賃／範疇一的資料，沒辦法提醒：'+cmesc(C.err)+'</div>';
+  else if(C&&!C.busy&&fv){ const L=[];
+    L.push(C.c08?('上游租賃有 '+C.c08+' 列看起來是大巴／巴士的租金。'):('<span style="color:#8a6400">⚠ 上游租賃還沒有看到大巴的租金。租金不管油是誰加的都要算在上游租賃，請確認有沒有填。</span>'));
+    if(fv==='self')L.push(C.a02?('範疇一的車用汽油／柴油（移動）有 '+C.a02+' 列資料；請確認大巴加的油有填在裡面。'):('<span style="color:#8a6400">⚠ 範疇一的車用汽油／柴油（移動）還沒有資料。廠內自己加的油要填在那裡。</span>'));
+    rm='<div class="fmini" style="margin-top:4px;white-space:normal">提醒（只提醒，不擋）：'+L.join('　')+'</div>'; }
+  const dirty=W7.recs.some(r=>cmIsBus(cmblk(r))&&cmIsAgg(r)&&r._chg&&!r._new&&!r._del);   /* 已經存過的彙總列被這個選擇改到 */
+  return '<div id="cm_buscard" style="margin:6px 12px;padding:8px 12px;border:1px solid '+(fv?'#cfdcd5':'#e3c770')+';background:'+(fv?'#fbfdfc':'#fffaf0')+';border-radius:8px;font-size:13px;white-space:normal">'
+    +'<b>公司大巴的油（電）是誰加的？</b><span class="fmini">　這個廠這個年度答一次・'+who+'</span>'
+    +'<div style="display:flex;gap:22px;flex-wrap:wrap;margin-top:4px">'+opt('lease','含在租約','　員工通勤照算')+opt('self','廠內自己加','　員工通勤不計，油耗算在範疇一')+'</div>'
+    +(fv?'':'<div class="fmini" style="color:#8a6400;margin-top:4px">還沒選：公司大巴那一列先不算，也不能送出審核。</div>')
+    +(dirty?'<div class="fmini" style="color:#8a6400;margin-top:4px">公司大巴的彙總已照這個選擇重算，還沒存：請按「💾 儲存」。</div>':'')
+    +rm+'</div>'; }
+async function cmBusChk(){ const k=W7.site+'|'+W7.year; if(!cmBusHas())return; if(W7.busChk&&W7.busChk.k===k)return; W7.busChk={k:k,busy:1};
+  try{ const a=await sb.from('ghg_activity_data').select('record_id,source_name,equipment_name,attr1,attr2').eq('site_id',W7.site).eq('data_year',+W7.year).eq('category_id','C08');
+    const b=await sb.from('ghg_activity_data').select('record_id',{count:'exact',head:true}).eq('site_id',W7.site).eq('data_year',+W7.year).in('category_id',['A02-01','A02-02']);
+    if(a.error||b.error)throw (a.error||b.error);
+    W7.busChk={k:k,c08:(a.data||[]).filter(r=>/大巴|巴士|客車|客车|bus/i.test([r.source_name,r.equipment_name,r.attr1,r.attr2].join(' '))).length,a02:b.count||0};
+  }catch(e){ W7.busChk={k:k,err:String((e&&e.message)||e)}; }
+  if(W7.site+'|'+W7.year===k){ const el=document.getElementById('cm_buscard'); if(el)el.outerHTML=cmBusCard(); } }
+async function cmBusSet(v){ if(!cmcanEdit()||(v!=='lease'&&v!=='self')){ cmRender(); return; }
+  const cur=ESGR.bus(W7.site,W7.year), old=cmBusFuel(), lab={lease:'含在租約（員工通勤照算）',self:'廠內自己加（員工通勤不計）'};
+  if(old===v)return;
+  if(old&&!confirm('把「公司大巴的油（電）是誰加的」從「'+lab[old]+'」改成「'+lab[v]+'」？\n\n'+W7.site+' '+W7.year+' 年公司大巴的碳排會跟著變。')){ cmRender(); return; }   /* 改既有設定先確認 */
+  const body={action:v==='lease'?'含在租約：員工通勤照算':'廠內自己加：員工通勤不計',value:{fuel:v},
+    reason:v==='lease'?'公司大巴的油（電）含在租約裡，用車的排放算在員工通勤':'公司大巴的油（電）是廠內自己加的，用車的排放算在範疇一（移動燃燒），員工通勤不重複算',
+    esg_source:'規則＝ESG 11/10 回覆網站題 C16；這一廠這一年由員工通勤登錄頁回答'};
+  let q; try{ q=cur?await sb.from('ghg_esg_ruling').update(body).eq('id',cur.id).select('id')
+                  :await sb.from('ghg_esg_ruling').insert(Object.assign({kind:'cm_bus_fuel',site_id:W7.site,data_year:+W7.year,subject:'公司大巴的油（電）是誰加的'},body)).select('id'); }catch(e){ q={error:e}; }
+  if(q.error||!(q.data||[]).length){ await ESGR.ensure(true); cmRender();
+    cmdlg('沒有存成功','<div class="msg err">「公司大巴的油（電）是誰加的」沒有存進去：'+cmesc(q.error?String(q.error.message||q.error):'資料庫沒有回傳（可能沒有權限，或登入逾時，請重新用密碼登入）')+'</div>'); return; }
+  await ESGR.ensure(true); cmBusRefix(); cmRender(); }
+/* 送出審核前檢查（esSubmit 呼叫）：有人選公司大巴、卻還沒回答油是誰加的 → 回傳要顯示的訊息；可以送出回傳空字串 */
+window.cmBusBlock=async function(site,year){
+  const q=await sb.from('ghg_activity_data').select('record_id',{count:'exact',head:true}).eq('site_id',site).eq('data_year',+year).eq('category_id','C07').in('equipment_name',Object.keys(CM_BUS)).neq('measurement_type','車種彙總');
+  if(q.error)return '讀不到員工通勤的資料，沒辦法檢查公司大巴，這次先不送出：'+String(q.error.message||q.error);
+  if(!q.count)return '';
+  await ESGR.ensure(true); if(!ESGR.ok())return ESGR.badMsg()+'。\n這個廠有人選「公司大巴」，要讀得到才知道算不算，這次先不送出。';
+  const x=ESGR.bus(site,+year); if(!(x&&x.value&&x.value.fuel))return '這個廠有 '+q.count+' 位員工選「公司大巴」，但還沒回答「公司大巴的油（電）是誰加的」。\n請到員工通勤頁上方選好再送出。';
+  return ''; };
 function cmSumRows(blocks,order,byRow){
   const out=[];
   order.forEach(bk=>{
@@ -12467,7 +12658,13 @@ function cmSumRows(blocks,order,byRow){
         o.noLib=km&&!zero&&!lib&&o.efX!=null; o.coS=zero?0:+(kmCo+o.st.co).toFixed(10); }
       else { o.noLib=!zero&&!lib&&o.efX!=null;
       o.coS=zero?0:((lib&&o.pk!=null)?+(o.pk*lib.v/1000).toFixed(10):o.coX); }   /* 係數庫沒有這一年條目→照收集表 */
-      { const nc=CM_ESG_NC[W7.site+'|'+W7.year+'|'+bk]; if(nc&&!zero){ o.esgNc=nc; o.coS=0; if(o.fl)o.fl.push(['ESG：不計入','#1f4e79',nc]); } }   /* V129-103-5 */
+      { const ncR=ESGR.nc(W7.site,W7.year,bk), nc=ncR?String(ncR.reason||ncR.esg_source||'ESG 指定不計入'):null; if(nc&&!zero){ o.esgNc=nc; o.coS=0; if(o.fl)o.fl.push(['ESG：不計入','#1f4e79',nc,1]); } if(!ESGR.ok()&&!zero&&o.fl)o.fl.push(['個案決定讀不到','#a33',ESGR.badMsg()+'；這一列有沒有被 ESG 指定不計入，系統現在不知道']); }   /* V129-103-5；V129-107：改讀 ghg_esg_ruling（批400），讀不到要標出來 */
+      if(cmIsBus(bk)){ const fv=cmBusFuel(); o.bus=true; o.busFuel=fv;   /* V129-107：公司大巴 */
+        if(o.fl)o.fl.push(['沿用公車係數','#1f4e79','公司大巴沒有另外編係數代號，用「'+CM_BUS[bk]+'」同一條（使用者 261112 定）']);
+        if(fv==='self'){ o.busNc=true; o.coS=0; if(o.fl)o.fl.push(['不計：廠內自己加油','#7a8f84','公司大巴的油（電）是廠內自己加的：用車的排放算在範疇一（移動燃燒），員工通勤不重複算（ESG 11/10 回覆網站題 C16）']); }
+        else if(fv==='lease'){ if(o.fl)o.fl.push(['油資含在租約：照算','#1f6b45','公司大巴的油（電）含在租約裡：用車的排放算在員工通勤（ESG 11/10 回覆網站題 C16）']); }
+        else if(ESGR.ok()){ o.busAsk=true; o.coS=0; if(o.fl)o.fl.push(['還沒選油是誰加的','#b8860b','請在上方回答「公司大巴的油（電）是誰加的」；選之前這一列先不算，也不能送出審核']); }
+        if(!lib&&!o.st&&(o.pk||0)>0&&o.efX==null&&o.fl)o.fl.push(['係數庫沒有這一年的係數','#a33','係數庫沒有「'+CM_BUS[bk]+'」在 '+cmrg(W7.site)+' '+facY(W7.year)+' 年的條目，這一列碳排先記 0；請 ESG 開帳時補係數']); }
       out.push(o); };
     if(ags.length){
       const mIx=ags.findIndex(x=>!cme(x)['推估']);
@@ -12534,7 +12731,7 @@ function cmRender(){
   const order=CM_ORDER.map(x=>x[1]).filter(k=>blocks[k]).concat(Object.keys(blocks).filter(k=>!CM_NAME2CODE[k]).sort());
   const byRow=(a,b)=>(+(cme(a)['收集表列']||9e9)-+(cme(b)['收集表列']||9e9))||((+a.record_id||9e12)-(+b.record_id||9e12));
   const S=cmSumRows(blocks,order,byRow);
-  h+='<div id="s101wrap">'+entryNoteHTML(W7.note)+cmdeclPanel(S);   /* V129-16 */
+  h+='<div id="s101wrap">'+entryNoteHTML(W7.note)+cmdeclPanel(S)+cmBusCard();   /* V129-16；V129-107：公司大巴的油是誰加的 */
   if(!W7.recs.length){ h+='<div class="msg" style="margin:10px 12px">此廠此年尚無資料。'+(ed?'可以按「📥 匯入收集表」直接上傳 ESG 的 C7 Excel，或「＋ 新增一人」逐筆登錄。':'')+'</div></div>'; box.innerHTML=h; cmBind(); return; }
   /* ══ 彙總區 ══ */
   let SN=0,SP=0,SC=0;
@@ -12688,6 +12885,7 @@ function cmReagg(bk){
   a.ef_value=lib?lib.v:null; a.ef_unit=lib?'kgCO2e/pkm':null; a.factor_id=lib?lib.fid:null; a.ef_source=lib?lib.src:null;
   a.co2e_draft=lib?+(pk*lib.v/1000).toFixed(10):0; a._chg=true;
   cmStAgg(a,pk,cmStSum(ppl),lib);   /* V111-2 */
+  if(cmIsBus(bk))cmBusMark(a,bk,cmBusFuel(),null);   /* V129-107：公司大巴——存的數跟畫面系統算一致（含在租約＝上面算好的數） */
 }
 /* ── 新增一人 ── */
 function cmAdd(bk){
@@ -12698,7 +12896,8 @@ function cmAdd(bk){
     setTimeout(()=>{ const f=()=>{ const b=document.getElementById('cm_a_bk').value, c=CM_NAME2CODE[b];
         const lib=cmlib(c,W7.site,W7.year);
         document.getElementById('cm_a_hint').innerHTML=c===CM_HSR?'高鐵照<b>站間碳足跡</b>：選起站、迄站，填一趟的公斤數（查台灣高鐵站間碳足跡表）；碳排＝每趟公斤數 × 工作天數 × 2 ÷ 1000。':CM_ZERO[c]?'零排放（步行／腳踏車）：只記人數與距離，碳排 0。':(lib?('彙總列會自動算：<b>'+cmf(lib.v,10)+' kgCO2e/pkm</b>（'+cmesc(facCodeYr(lib.fid))+'＝'+cmesc(lib.parts)+'）'):'<span style="color:#b8860b">係數庫沒有「'+cmesc(b)+'」在 '+cmesc(cmrg(W7.site))+' '+facY(W7.year)+' 年的條目，彙總碳排會先是 0（請 ESG 補係數）。</span>'); };
-      document.getElementById('cm_a_bk').onchange=f; f(); },30);
+      const f2=()=>{ f(); const b=document.getElementById('cm_a_bk').value; if(cmIsBus(b))document.getElementById('cm_a_hint').innerHTML+='<div style="margin-top:4px;color:#1f4e79">公司大巴沿用「'+cmesc(CM_BUS[b])+'」的係數（沒有另外編代號）。加了人之後，請在頁面上方回答「公司大巴的油（電）是誰加的」。</div>'; };   /* V129-107 */
+      document.getElementById('cm_a_bk').onchange=f2; f2(); },30);
     return;
   }
   const r={record_id:'new-p-'+(++W7.newseq),site_id:W7.site,data_year:W7.year,data_month:null,category_id:'C07',equipment_name:bk,source_name:'員工通勤',
@@ -12818,11 +13017,12 @@ function cmImportBuild(){
   const first=sc.anchors.length>1?sc.anchors[0][0]:null;
   const isEst=a=>first!=null&&a._r>first;
   const hsr1=sc.aggs.some(a=>!isEst(a)&&cmcode(a['交通工具'])===CM_HSR&&+a['下游係數']===1);   /* V111-2：收集表把高鐵站間碳足跡填在距離欄、係數 1 */
-  const persons=sc.ppl.map(d=>{ const c=cmcode(d['交通工具']); const p={d,code:c,veh:c?CM_CODE2NAME[c]:'（未填交通工具）'};
+  const persons=sc.ppl.map(d=>{ const c=cmcode(d['交通工具']); const p={d,code:c,veh:cmVeh(d['交通工具'],c,d['備註'])};   /* V129-107：公車＋備註寫大巴／交通車／班車 → 公司大巴 */
+    if(cmIsBus(p.veh))p.busBy=/大巴/.test(String(d['交通工具']||''))?'交通工具欄':'備註';
     if(c===CM_HSR&&!d._est&&(hsr1||(sc.single&&+d['下游係數']===1))&&cmN(d['單程'])!=null){ const dd=cmN(d['工作天數']); const tr=dd!=null?+(dd*2).toFixed(6):null; p.st={kg:+d['單程'],tr:tr,co:tr!=null?+(+d['單程']*tr/1000).toFixed(10):0}; }
     return p; });
   const xl={};   /* 收集表自己算的（比對用）：交通工具 → {co,pkm,n} */
-  sc.aggs.forEach(a=>{ if(isEst(a))return; const c=cmcode(a['交通工具']); const v=c?CM_CODE2NAME[c]:'（未填交通工具）';
+  sc.aggs.forEach(a=>{ if(isEst(a))return; const c=cmcode(a['交通工具']); const v=cmVeh(a['交通工具'],c,'');
     xl[v]=xl[v]||{co:0,pkm:0,n:0}; xl[v].co+=(+a._co||0); xl[v].pkm+=(+a['延人公里']||0); xl[v].n+=(+a['人數']||0); });
   if(sc.single)persons.forEach(p=>{ const v=p.veh; xl[v]=xl[v]||{co:0,pkm:0,n:0}; xl[v].co+=(+p.d._co||0); xl[v].pkm+=(+p.d.pkm||0); xl[v].n+=1; });
   const g={}; persons.forEach(p=>{ const x=(g[p.veh]=g[p.veh]||{code:p.code,veh:p.veh,n:0,pkm:0,st:null}); x.n++;
@@ -12830,6 +13030,7 @@ function cmImportBuild(){
   const aggs=Object.values(g).map(x=>{ const lib=cmlib(x.code,W7.site,W7.year); const pk=+x.pkm.toFixed(6);
     const st=x.st?{n:x.st.n,tr:+x.st.tr.toFixed(6),co:+x.st.co.toFixed(10),same:Object.keys(x.st.kgs).length<=1}:null; if(st)st.kg=st.same?+Object.keys(x.st.kgs)[0]:(st.tr?+(st.co*1000/st.tr).toFixed(6):null);
     return {veh:x.veh,code:x.code,n:x.n,pkm:pk,lib:lib,st:st,co:+((lib?pk*lib.v/1000:0)+(st?st.co:0)).toFixed(10),est:false,xl:xl[x.veh]||null}; });
+  aggs.forEach(a=>{ if(cmIsBus(a.veh)){ a.bus=cmBusFuel()||'none'; a.coLease=a.co; if(a.bus!=='lease')a.co=0; } });   /* V129-107 */
   sc.aggs.filter(isEst).forEach(a=>{ const c=cmcode(a['交通工具']); const lib=cmlib(c,W7.site,W7.year); const pk=+(a['延人公里']||0);
     aggs.push({veh:c?CM_CODE2NAME[c]:'（未填交通工具）',code:c,n:+(a['人數']||0),pkm:pk,lib:lib,co:lib?+(pk*lib.v/1000).toFixed(10):0,est:true,xl:{co:+(a._co||0),pkm:pk,n:+(a['人數']||0)},r:a._r}); });
   const ord=v=>{ const i=CM_ORDER.findIndex(x=>x[1]===v); return i<0?99:i; };
@@ -12842,6 +13043,10 @@ function cmImportPreview(){
   const I=window._cmImp; const B=cmImportBuild();
   const warn=[]; const unk=B.persons.filter(p=>!p.code&&String(p.d['交通工具']||'').trim()&&String(p.d['交通工具'])!=='0');
   if(unk.length)warn.push(unk.length+' 位員工的交通工具寫法認不出來（歸「未填交通工具」）：'+[...new Set(unk.map(p=>p.d['交通工具']))].slice(0,5).join('、'));
+  { const bp=B.persons.filter(p=>cmIsBus(p.veh)); if(bp.length){ const byN=bp.filter(p=>p.busBy==='備註');   /* V129-107 */
+      if(byN.length)warn.push(byN.length+' 位員工的交通工具寫公車、備註寫「'+[...new Set(byN.map(p=>String(p.d['備註']||'').trim()))].slice(0,4).join('」「')+'」→ 歸到「公司大巴」（不對的話請先改收集表的備註再匯入）');
+      const fv=cmBusFuel(); warn.push('公司大巴 '+bp.length+' 人：係數沿用公車那一條；'+(fv==='lease'?'這個廠這個年度選的是「油資含在租約」→ 照算':(fv==='self'?'這個廠這個年度選的是「廠內自己加」→ 員工通勤不計，碳排記 0':'還沒回答「油（電）是誰加的」→ 先記 0，匯入後請在頁面上方回答（回答前不能送出審核）')));
+      warn.push('收集表右表把公司大巴跟公車算在同一列，所以這兩列「收集表碳排放量」對不上是正常的'); } }
   B.aggs.forEach(x=>{ if(x.code&&!CM_ZERO[x.code]&&!x.lib&&!(x.st&&!x.pkm))warn.push('係數庫沒有「'+x.veh+'」在 '+cmrg(W7.site)+' '+facY(W7.year)+' 年的條目 → 這一列碳排先記 0（請 ESG 年度開帳補係數）'); });
   const nPii=B.persons.filter(p=>p.d['工號']||p.d['姓名']||p.d['居住地址']).length;
   const exist=W7.recs.filter(r=>[CM_IMPORT,CM_MANUAL].indexOf(String(r.input_method||''))>=0).length;
@@ -12851,7 +13056,7 @@ function cmImportPreview(){
     +'<span class="fmini">　（收集表自己算的是 '+cmf(B.xltot,4)+' t）</span></div>';
   h+='<table class="wtbl" style="width:100%;font-size:12px;margin:6px 0"><thead><tr><th class="tl">交通工具</th><th>人數</th><th>延人公里</th><th>係數 EF（代號）</th><th>系統算碳排放量<br><span class="fmini" style="font-weight:400">Emissions</span><br><span class="fmini" style="font-weight:400">tCO₂e</span></th><th>收集表碳排放量<br><span class="fmini" style="font-weight:400">tCO₂e</span></th><th>差</th></tr></thead><tbody>';
   B.aggs.forEach(x=>{ const d=x.xl?+(x.co-x.xl.co).toFixed(4):null;
-    h+='<tr><td class="tl">'+cmesc(x.veh)+(x.est?' <span class="fmini">推估</span>':'')+'</td><td class="R">'+cmf(x.n,0)+'</td><td class="R">'+(x.st&&!x.pkm?'—':cmf(x.pkm,1))+(x.st?'<div class="fmini" style="color:#1f4e79">站間 '+cmf(x.st.tr,0)+' 趟（每趟 '+cmf(x.st.kg,0)+' kg）</div>':'')+'</td>'
+    h+='<tr><td class="tl">'+cmesc(x.veh)+(x.est?' <span class="fmini">推估</span>':'')+(x.bus?' <span class="fmini" style="color:#1f4e79">沿用公車係數・'+(x.bus==='lease'?'油資含在租約：照算':(x.bus==='self'?'廠內自己加：不計':'還沒選油是誰加的：先記 0'))+'</span>':'')+'</td><td class="R">'+cmf(x.n,0)+'</td><td class="R">'+(x.st&&!x.pkm?'—':cmf(x.pkm,1))+(x.st?'<div class="fmini" style="color:#1f4e79">站間 '+cmf(x.st.tr,0)+' 趟（每趟 '+cmf(x.st.kg,0)+' kg）</div>':'')+'</td>'
       +'<td class="R">'+(x.st&&!x.pkm?'<span class="fmini">站間碳足跡</span>':x.lib?cmf(x.lib.v,10)+' <span class="fmini">'+cmesc(facCodeYr(x.lib.fid))+'</span>':(CM_ZERO[x.code]?'<span class="fmini">零排放</span>':'<span style="color:#b8860b">沒有係數</span>'))+'</td>'
       +'<td class="R">'+cmf(x.co,4)+'</td><td class="R">'+(x.xl?cmf(x.xl.co,4):'—')+'</td><td class="R"'+(d&&Math.abs(d)>0.0005?' style="color:#b8860b;font-weight:700"':'')+'>'+(d==null?'—':(d>0?'+':'')+cmf(d,4))+'</td></tr>'; });
   h+='</tbody></table>';
@@ -12906,6 +13111,7 @@ async function cmImportGo(){
     const ag=Object.assign({},base,{equipment_name:g.veh,attr2:g.veh,measurement_type:'車種彙總',quantity:g.pkm,quantity_unit:'延人公里',extra:x,co2e_draft:lib?+(g.pkm*lib.v/1000).toFixed(10):0,
       ef_value:lib?lib.v:null,ef_unit:lib?'kgCO2e/pkm':null,ef_source:lib?lib.src:null,factor_id:lib?lib.fid:null});
     if(g.st)cmStAgg(ag,g.pkm,g.st,lib);   /* V111-2 */
+    if(cmIsBus(g.veh))cmBusMark(ag,g.veh,cmBusFuel(),null);   /* V129-107：公司大巴——不是含在租約就記 0，並記原因 */
     main.push(ag); });
   const box=document.getElementById('s101list'); if(box)box.innerHTML='<div class="msg">匯入中…（成功後才刪原本的登錄頁／匯入列；寫入 '+main.length+' 列）</div>';
   try{
@@ -14432,7 +14638,7 @@ function rcCalc(r){
 }
 function rcSiteNm(s){ try{ const x=(typeof FAC_SITES!=='undefined'&&FAC_SITES)?FAC_SITES.find(z=>z.site_id===s):null; return x?(s+' '+(x.site_name||'')):s; }catch(e){ return s; } }
 function rcOpen(y){ return !!(typeof YLOCKS!=='undefined'&&YLOCKS&&YLOCKS[+y]&&YLOCKS[+y].status==='open'); }
-async function rcCheck(){
+async function rcCheck(){ await ESGR.ensure();   /* V129-107：先讀 ESG 個案決定（這個函式 V129-105 起沒有人呼叫，留著） */
   FRC={y:FREV.y,rows:null,res:null,busy:true,msg:'讀取 '+FREV.y+' 年明細…'}; frevRender();
   try{ let all=[],from=0;
     while(true){ const {data,error}=await sb.from('ghg_activity_data').select('record_id,site_id,data_year,category_id,quantity,quantity_unit,co2e_draft,co2e_location,factor_id,ef_value,gwp,extra').eq('data_year',FREV.y).order('record_id').range(from,from+999);
@@ -16704,7 +16910,7 @@ body.ghgfocus #src_form .ehead>.fxfocus{background:#1B8A60;border-color:#1B8A60;
       if(lock&&HIDE.test(t)&&!KEEP.test(t)){ if(x.style.display!=='none'){ x.dataset.eshid='1'; x.style.display='none'; } }
       else if(!lock&&x.dataset.eshid){ x.style.display=''; delete x.dataset.eshid; } });
     box.querySelectorAll('a,span,button').forEach(e=>{ if(e.children.length||e.closest('.ehead'))return; const t=(e.innerText||'').trim();   /* 各頁的逐列刪除（✕／🗑／取消刪除）：鎖住時收起 */
-      if(/^([✕×🗑]|↩ 取消刪除)$/.test(t)){ if(lock)e.classList.add('eshidx'); else e.classList.remove('eshidx'); } }); }
+      if(/^([✕×🗑]( 刪除)?|⌫ 清空|＋( .{1,14})?|↩ 取消刪除)$/.test(t)){ if(lock)e.classList.add('eshidx'); else e.classList.remove('eshidx'); } }); }   /* V129-107：V129-49 加的「⌫ 清空」「✕ 刪除」和加帳單的「＋」原本沒被收起來（ESG 261112：通過後按清空就填不回去）；各頁逐列的「＋ 這一塊再加一筆」這類連結也一起收 */
   let busy=false;
   async function esFill(){
     if(busy)return; const box=document.getElementById('src_form'); if(!box)return;
@@ -16739,6 +16945,7 @@ body.ghgfocus #src_form .ehead>.fxfocus{background:#1B8A60;border-color:#1B8A60;
   window.esNoDataOff=async function(c){ if(!confirm('取消「本年沒有」，改回要填資料？'))return; await esWrite(c,{no_data:false,no_data_reason:null}); };
   window.esSubmit=async function(c){
     const {site,year}=entryCurSY(); const r=esRow(site,year,c);
+    if(c==='C07'&&typeof window.cmBusBlock==='function'){ const bm=await window.cmBusBlock(site,year); if(bm){ alert(bm); return; } }   /* V129-107：有人選公司大巴、還沒回答油是誰加的 → 不能送出 */
     if(!(r&&r.no_data)){ const q=await sb.from('ghg_activity_data').select('record_id',{count:'exact',head:true}).eq('site_id',site).eq('data_year',+year).eq('category_id',c);
       if(!q.error&&!q.count){ alert('這一頁還沒有存任何資料。\n確定本年沒有，請先按「⊘ 本年沒有」寫原因；有資料請先填好按「💾 儲存」。'); return; } }
     if(!confirm('送出「'+nm(c)+'」'+site+' '+year+' 年給 ESG 確認？\n送出後這一頁會鎖住，要改請 ESG 退回。\n（還沒按「💾 儲存」的修改不會送出）'))return;
