@@ -307,7 +307,7 @@ function facChg(on){ return '<span class="fchg'+(on?'':' off')+'">🟡</span>'; 
 <div class="wrap">
   <header>
     <div class="t">GHG 溫室氣體盤查系統</div>
-    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-109</b> · 2026/11/12</div>
+    <div class="s" style="text-align:left"><span class="hdorg">信錦集團 ｜ 數位轉型辦公室（DTO）｜ </span><b>GHG系統V129-110</b> · 2026/11/13</div>
     <div id="lg_chip" style="display:none;margin-left:auto;background:#fff;border:1px solid #dcebe2;border-radius:16px;padding:3px 12px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);white-space:nowrap"></div>
   </header>
 
@@ -603,6 +603,10 @@ const ghgFetch=async(input,init)=>{
       ghgWriteWarn(msg); return new Response(JSON.stringify({code:'GHG401',message:msg,details:null,hint:null}),{status:401,headers:{'Content-Type':'application/json'}}); }
     init=Object.assign({},init||{}); const h=new Headers(init.headers||((input&&typeof input!=='string')?input.headers:undefined)||{}); h.set('Authorization','Bearer '+tk); init.headers=h; }
   const isR=!isW&&(m==='GET'||m==='HEAD')&&url.indexOf(SUPABASE_URL+'/rest/v1/')===0&&/^(ghg_|v_ghg_|rpc\/ghg_)/.test(url.slice((SUPABASE_URL+'/rest/v1/').length));   /* V129-54：讀 GHG 資料（表、檢視、資料庫函式）一律帶登入憑證（資料保護第二段；V129-41-2 起權限名單已經這樣） */
+  /* V129-110：人員名單的小函式（SQL 329 的 oms_my_access、SQL 704 的四支）用 POST 叫，也要帶登入憑證。登入流程中（還沒有 curGhgUser）就要叫 oms_my_access，所以用 ghgJwtAny。
+     拿不到憑證就照原樣送出：資料庫會擋下，呼叫的地方顯示讀取失敗 */
+  if(m==='POST'&&url.indexOf(SUPABASE_URL+'/rest/v1/rpc/')===0&&/^(oms_my_access|ghg_who_names|ghg_people_list|ghg_people_status|ghg_email_is_internal)(\?|$)/.test(url.slice((SUPABASE_URL+'/rest/v1/rpc/').length))){
+    const pTk=await ghgJwtAny(); if(pTk){ init=Object.assign({},init||{}); const h=new Headers(init.headers||((input&&typeof input!=='string')?input.headers:undefined)||{}); h.set('Authorization','Bearer '+pTk); init.headers=h; } }
   let rTk='';
   if(isR){ rTk=await ghgJwtAny(); if(rTk){ init=Object.assign({},init||{}); const h=new Headers(init.headers||((input&&typeof input!=='string')?input.headers:undefined)||{}); h.set('Authorization','Bearer '+rTk); init.headers=h; } }
   if(isW){ init=Object.assign({},init||{}); const h=new Headers(init.headers||((input&&typeof input!=='string')?input.headers:undefined)||{});
@@ -1799,8 +1803,10 @@ async function loadPerm(){
   if(window._permEsgOnly){box.innerHTML='<div class="msg" style="background:var(--t)">ESG 小組檢視：本頁僅提供「📅 資料年度管理」；人員角色指派由系統管理維護。</div>'; ylockRender(); return;}   // V51:esg分層
   if(!sb){box.innerHTML='<div class="msg err">尚未連線</div>';return;}
   box.innerHTML='查詢中…';
-  const {data:ppl,error}=await sb.from('identity_access').select('factory_code,emp_id,name,eng_name,dept,title,email,active').contains('systems','["GHG"]').eq('active',true).order('factory_code').order('emp_id');
-  if(error){box.innerHTML='<div class="msg err">讀取 system_access 失敗：'+facEsc(error.message)+'</div>';return;}
+  if(!curGhgUser||curGhgUser.role!=='admin'){box.innerHTML='<div class="msg" style="background:var(--t)">人員名單只有系統管理看得到。</div>';return;}   /* V129-110：名單改叫小函式，只有系統管理拿得到 */
+  const {data:ppl0,error}=await sb.rpc('ghg_people_list');   /* V129-110：原本直接讀授權名單（identity_access）；改叫 GHG 小函式（SQL 704），回勾 GHG 且啟用的人＋有沒有開通帳號 */
+  if(error){box.innerHTML='<div class="msg err">讀取 GHG 授權名單失敗：'+facEsc(error.message)+'</div>';return;}
+  const ppl=(ppl0||[]).map(p=>Object.assign({active:true},p));
   let roles={}, tblMissing=false, roleErr='';
   {const r2=await sb.from('ghg_user_roles').select('*');
    if(r2.error){tblMissing=true; roleErr=r2.error.message;} else (r2.data||[]).forEach(r=>roles[r.emp_id]=r);}
@@ -1833,13 +1839,12 @@ async function ghgAdmin(action,payload){
 window._acctStatus=null;   // {email:{exists,confirmed,must_change,last_sign_in}}
 async function permLoadAcctStatus(){   /* V124：登入欄只看 SyncHub 帳號名冊（公開可讀），不再問後端每個人的公司信箱帳號狀態 */
   const D=window._permData; if(!D||!curGhgUser||curGhgUser.role!=='admin')return;
-  await loadOmsRoster(); window._acctStatus={}; permRender();
+  window._acctStatus={}; permRender();   /* V129-110：開通狀態跟著名單一起回來（has_account），不再讀帳號名冊 */
 }
 function permAcctCell(p){   /* V124：帳號只從 SyncHub（OMS）授權頁開通與重設——這裡只顯示狀態 */
   if(!curGhgUser||curGhgUser.role!=='admin')return '';
-  const o=omsAcctOf(p.emp_id);
+  const o=(p.has_account===true)?{synthEmail:omsSynthOf(p.emp_id)}:null;   /* V129-110：has_account 來自 ghg_people_list */
   if(o) return '<span style="color:#2f855a;font-size:11.5px;white-space:nowrap" title="'+facEsc(o.synthEmail)+'（SyncHub 帳號：工號登入，密碼跟 OMS 同一組）。重設密碼請到 SyncHub「系統資料授權」頁。">✓ 已開通</span>';
-  if(window._omsRosterErr) return '<span style="color:#b7791f;font-size:11.5px" title="暫時讀不到 SyncHub 帳號名冊，重新整理再看">— 讀不到帳號名冊</span>';
   return '<span style="color:#b7791f;font-size:11.5px" title="這個人還沒有 SyncHub 帳號，不能登入 GHG。帳號只從 SyncHub「系統資料授權」頁開通（把人加入名單就會自動開帳號）。">尚未開通（到 SyncHub 授權頁）</span>';
 }
 async function permResetPwd(email,name){
@@ -1932,7 +1937,10 @@ async function extSave(){
   const scope=window._extScopeTmp||(isNew?(window._extNewScope||['*']):['*']);
   if(!email||!/@/.test(email)){alert('請填正確 Email');return;}
   if(!name){alert('請填姓名');return;}
-  if(isNew && (window._lgAll||[]).some(p=>String(p.email||'').toLowerCase()===email)){alert('此 Email 是集團內部人員（OMS 名單），請改由 OMS「系統資料授權」勾選 GHG，不需自建');return;}
+  if(isNew){ let inner=null;   /* V129-110：改叫小函式，只回是／不是；檢查失敗就不建，不當成「不是」 */
+    try{ const q=await sb.rpc('ghg_email_is_internal',{p_email:email}); if(q.error)throw q.error; inner=(q.data===true); }
+    catch(e){ alert('檢查這個 Email 是不是內部同仁時失敗（'+String((e&&e.message)||e)+'），沒有建立，請稍後再試'); return; }
+    if(inner){alert('此 Email 是集團內部人員（OMS 名單），請改由 OMS「系統資料授權」勾選 GHG，不需自建');return;} }
   if(isNew && !confirm('建立外部查核帳號「'+name+'（'+email+'）」？\n\n全新的 Email 會建帳號，密碼＝集團統一的初始密碼（由 DTO 另行告知，網頁上不顯示），首次登入須改。'))return;   /* V129-106：不再請管理員輸入初始密碼，後端自己帶 */
   const r=isNew?await ghgAdmin('createExt',{email,name,org,scope,expires_at:exp,note})
                :await ghgAdmin('updateExt',{email,name,org,scope,expires_at:exp,note});
@@ -1970,7 +1978,7 @@ function permSortVal(p,k,D){
     case 'dept': return p.dept||'';
     case 'title': return p.title||'';
     case 'email': return (p.email||'').toLowerCase();
-    case 'acct': { const o=(typeof omsAcctOf==='function')?omsAcctOf(p.emp_id):null; return o?'2已開通':'0尚未開通'; }   /* V124 */
+    case 'acct': { return (p.has_account===true)?'2已開通':'0尚未開通'; }   /* V124 */
     case 'role': return r?(({admin:'4',esg:'3',input:'2',view:'1'})[r.role]||'0'):'';
     case 'scope': return r?((r.scope&&r.scope[0]==='*')?'*':(r.scope||[]).join(',')):'';
     case 'upd': return r?String(r.updated_at||''):'';
@@ -2140,8 +2148,7 @@ function permRender(){
 /* V107-1：權限表記「登入 Email」（auth_email）——資料庫收緊後靠它認出登入的人是誰（只有公司信箱帳號的人特別需要）
    V124：內部同仁一律＝工號小寫@id.syncmold.com.tw（帳號只從 SyncHub 授權頁開，不會再有公司信箱帳號；名冊上有就用名冊的帳號名） */
 async function permAuthEmail(emp){
-  try{ await loadOmsRoster(); }catch(e){}
-  return omsSynthOf(emp)||undefined;   /* 沒有工號（不該發生）→ 不動這欄 */
+  return omsSynthOf(emp)||undefined;   /* V129-110：不讀帳號名冊，直接用工號組 */   /* 沒有工號（不該發生）→ 不動這欄 */
 }
 async function permUpsertRole(row){
   const ae=await permAuthEmail(row.emp_id);
@@ -2160,12 +2167,12 @@ async function permOrphanLoad(){
   D.orphans=orph.map(r=>({r:r,name:'',why:'OMS 已取消授權'}));
   if(!orph.length)return;
   try{ const ids=[...new Set(orph.flatMap(r=>[String(r.emp_id),String(r.emp_id).toUpperCase()]))];
-    const {data,error}=await sb.from('identity_access').select('emp_id,name,active').in('emp_id',ids);
-    if(error)return;
-    D.orphans.forEach(o=>{ const u=String(o.r.emp_id).toUpperCase(); const xs=(data||[]).filter(d=>String(d.emp_id||'').toUpperCase()===u);
-      if(!xs.length){o.why='OMS 名單已刪除';return;}
-      o.name=xs[0].name||''; o.why=xs.every(x=>x.active===false)?'OMS 已停用':'OMS 沒勾 GHG'; });
-  }catch(e){}
+    const {data,error}=await sb.rpc('ghg_people_status',{p_emp_ids:[...new Set(ids.map(x=>String(x).toUpperCase()))]});   /* V129-110：原本用工號查整份授權名單；改叫小函式，只回這幾個工號的姓名與狀態 */
+    if(error){ D.orphans.forEach(o=>{ o.why='OMS 已取消授權（原因讀取失敗）'; }); return; }
+    D.orphans.forEach(o=>{ const u=String(o.r.emp_id).toUpperCase(); const x=(data||[]).find(d=>String(d.emp_id||'').toUpperCase()===u);
+      if(!x)return;
+      o.name=x.name||''; o.why=(x.status==='deleted')?'OMS 名單已刪除':(x.status==='inactive')?'OMS 已停用':(x.status==='no_ghg')?'OMS 沒勾 GHG':'OMS 已取消授權'; });
+  }catch(e){ D.orphans.forEach(o=>{ o.why='OMS 已取消授權（原因讀取失敗）'; }); }
 }
 function permOrphList(){ return (((window._permData||{}).orphans)||[]).map(o=>({emp_id:o.r.emp_id,name:o.name})); }
 function permOrphHtml(){
@@ -2213,7 +2220,7 @@ async function permAlertCheck(){
   try{
     if(!sb)return;
     if(!curGhgUser||curGhgUser.role!=='admin'){permAlertRender([],[]);return;}   // V51:限系統管理；V129-48-5：還沒登入也不檢查（開頁時還沒登入→讀到空名單→誤報）
-    const {data:ppl,error:pe}=await sb.from('identity_access').select('emp_id,name,active').contains('systems','["GHG"]').eq('active',true);
+    const {data:ppl,error:pe}=await sb.rpc('ghg_people_list');   /* V129-110：改叫小函式（前一行已限系統管理） */
     const {data:rl,error:rle}=await sb.from('ghg_user_roles').select('emp_id');
     if(pe||rle||!ppl||!rl||(!rl.length&&ppl.length)){permAlertRender([],[]);return;}   // V129-48-5：名單讀不到或讀到空＝不判定（不可把讀不到印成全部沒指派）
     const has=new Set((rl||[]).map(r=>r.emp_id));
@@ -2462,24 +2469,10 @@ function _lgPanel(id){['lg_normal','lg_admin','lg_guest','lg_chg'].forEach(x=>{c
 function lgShowAdmin(){_lgPanel('lg_admin');const p=document.getElementById('lga_pwd');if(p)p.focus();}
 function lgShowGuest(){_lgPanel('lg_guest');const p=document.getElementById('lgg_email');if(p)p.focus();}
 function lgBackNormal(){_lgPanel('lg_normal');}
-// ★遷移鉤子②:工號/email → 身分解析集中一處(現讀 system_access;GHG獨立DB時只改這函式)
-// V55-2:OMS 帳號名冊(oms_roster,anon可讀):有OMS帳號者其Auth email=合成<工號小寫>@id.syncmold.com.tw(同一組SyncHub密碼)
-window._omsRoster=null;
-window._omsRosterErr=false;
-async function loadOmsRoster(){   /* V124：讀不到（錯誤或 0 筆）不當成「沒有人有帳號」——記成讀取失敗、不快取，下次再讀 */
-  if(window._omsRoster&&window._omsRoster.length)return window._omsRoster;
-  try{const {data,error}=await sb.from('oms_roster').select('username,emp_id,active');
-    if(error||!data||!data.length){window._omsRoster=null;window._omsRosterErr=true;return [];}
-    window._omsRoster=data;window._omsRosterErr=false;}catch(e){window._omsRoster=null;window._omsRosterErr=true;return [];}
-  return window._omsRoster;
-}
-function omsSynthOf(empId){   /* V124：內部同仁的登入帳號名一律＝工號小寫@id.syncmold.com.tw（不管開通了沒）；名冊上有就用名冊的帳號名 */
-  const o=omsAcctOf(empId); if(o)return o.synthEmail; const u=String(empId||'').trim().toLowerCase(); return u?(u+'@id.syncmold.com.tw'):''; }
-function omsAcctOf(empId){   // 回 {username,synthEmail} 或 null
-  const R=window._omsRoster||[]; const e=String(empId||'');
-  const eu=e.toUpperCase(); const r=R.find(x=>x.active!==false && (String(x.emp_id||'').toUpperCase()===eu || String(x.username||'').toUpperCase()===eu));   /* V103-15：工號不分大小寫 */
-  return r?{username:r.username,synthEmail:String(r.username).trim().toLowerCase()+'@id.syncmold.com.tw'}:null;
-}
+/* V129-110：不再讀 SyncHub 帳號名冊（oms_roster）。內部同仁的登入帳號一律＝工號小寫@id.syncmold.com.tw
+   （261113 SQL 704 驗證：GHG 授權者的帳號名都等於工號、GHG 角色表 72 筆登入 Email 全是這個寫法）；
+   「有沒有開通帳號」改由 ghg_people_list 的 has_account 帶回來。原本的 loadOmsRoster／omsAcctOf 拿掉。 */
+function omsSynthOf(empId){ const u=String(empId||'').trim().toLowerCase(); return u?(u+'@id.syncmold.com.tw'):''; }
 // V56:GHG 自建名單(外部查核):ghg_ext_users(active 且未到期)
 window._extUsers=null;
 async function loadExtUsers(){
@@ -2489,14 +2482,14 @@ async function loadExtUsers(){
 }
 function extValid(x){ if(!x||x.active===false)return false; if(x.expires_at && (''+x.expires_at)<new Date().toISOString().slice(0,10))return false; return true; }
 function lgSysHas(v,code){ try{ const a=Array.isArray(v)?v:(typeof v==='string'?JSON.parse(v):[]); return Array.isArray(a)&&a.indexOf(code)>=0; }catch(e){ return false; } }
-async function lgSelfRow(emp){   /* V129-108：登入後讀「自己那一筆」。回 {p} 有 GHG 授權且啟用／{none:true} 名單上沒有／{} 有這個人但沒 GHG 授權或停用／{err} 讀取失敗。暫時用授權名單加工號條件，synchub 小函式建好再換 */
+async function lgSelfRow(emp){   /* V129-110：登入後讀「自己那一筆」改叫 OMS 的 oms_my_access()（SQL 329；只回登入者自己：工號、姓名、廠區、啟用、授權系統）。回 {p} 有 GHG 授權且啟用／{none:true} 名單上沒有／{} 有這個人但沒 GHG 授權或停用／{err} 讀取失敗 */
   const e=String(emp==null?'':emp).trim(); if(!e)return {none:true}; if(!sb)return {err:window._sbErr||'連線未設定'};
-  let r; try{ r=await sb.from('identity_access').select('factory_code,emp_id,name,eng_name,dept,title,email,active,systems').in('emp_id',[...new Set([e,e.toUpperCase(),e.toLowerCase()])]); }catch(x){ r={error:x}; }
+  let r; try{ r=await sb.rpc('oms_my_access'); }catch(x){ r={error:x}; }
   if(r.error)return {err:String(r.error.message||r.error)};
-  const rows=(r.data||[]).filter(x=>String(x.emp_id||'').toUpperCase()===e.toUpperCase());   /* 自己比對，不用資料庫的模糊比對 */
+  const rows=(r.data||[]).filter(x=>String(x.emp_id||'').toUpperCase()===e.toUpperCase());   /* 回來的應該就是自己；工號對不上就當沒有 */
   if(!rows.length)return {none:true};
   const ok=rows.find(x=>x.active===true&&lgSysHas(x.systems,'GHG')); if(!ok)return {};
-  const o=Object.assign({},ok); delete o.systems; return {p:o}; }
+  return {p:{emp_id:ok.emp_id,name:ok.name,factory_code:ok.factory_code,active:true}}; }
 async function resolveIdentity(key){   /* V129-108：登入前不讀名單。工號＝直接組帳號；Email＝問 oms_login_resolve_email（只回在職工號，OMS 同一支），對不到＝當外部查核的 Email */
   key=String(key||'').trim(); if(!key)return null; const kl=key.toLowerCase();
   if(kl.indexOf('@')<0){ if(/\s/.test(kl))return null; return {emp_id:kl.toUpperCase(),authEmail:kl+'@id.syncmold.com.tw'}; }
@@ -2594,14 +2587,7 @@ async function lgGuestEnter(){   /* V129-55：原本讀 ghg_guest_auth（10/02 �
   return lgLoginCore(email,pwd);
 }
 const LG_NET_MSG='連線失敗，請重新整理頁面再試（一直這樣請洽 DTO）';
-function lgListOk(){ return !!(window._lgAll&&window._lgAll.length&&!window._lgLoadErr); }
-async function lgLoadList(){   /* V129-108：改成登入後才讀（lgApply 呼叫），而且只讀工號、姓名、Email 三欄——給「誰改的」把帳號換成姓名用（原本登入前讀 8 欄）。第二件再換成 synchub 的小函式 */
-  if(!sb){ window._lgLoadErr=window._sbErr||'連線未設定'; return false; }
-  let ppl=null, err=null;
-  for(let k=0;k<2;k++){ try{ const r=await sb.from('identity_access').select('emp_id,name,email').contains('systems','["GHG"]').eq('active',true).order('emp_id'); ppl=r.data; err=r.error; }catch(e){ ppl=null; err=e; }   // ★遷移鉤子:GHG授權名單來源(system_access)
-    if(!err&&ppl&&ppl.length)break; if(k<1)await new Promise(r=>setTimeout(r,800)); }
-  if(err||!ppl||!ppl.length){ window._lgLoadErr=err?String(err.message||err):'授權名單是空的'; window._lgAll=undefined; return false; }
-  window._lgLoadErr=''; window._lgAll=ppl; return true; }
+/* V129-110：原本這裡的 lgLoadList（登入後讀全部 GHG 授權者的工號、姓名、Email）拿掉——「誰改的」改成只查畫面上出現的帳號（whoFlush） */
 async function lgInit(){
   try{var _vb=document.querySelector('.s b');var _lv=document.getElementById('lgver');if(_vb&&_lv)_lv.textContent='系統版本 '+_vb.textContent.replace('GHG系統','');}catch(_e){}   /* V101-2：登入頁版號＝頁首版號單一出處 */
   try{
@@ -2610,7 +2596,8 @@ async function lgInit(){
     if(saved&&sessionStorage.getItem('ghg_jwt')&&(sessionStorage.getItem('ghg_jwt_emp')||'')===saved){
       if(/^EXT:/.test(saved)){ const em=saved.slice(4); await lgLogin({emp_id:saved,name:em,email:em,authEmail:em,ext:true,extPending:true,hasOms:false},true); if(curGhgUser)return; }   /* V129-55：還原外部查核登入（帶憑證重讀自己那一列） */
       else { const sr=await lgSelfRow(saved); if(sr.p){ await lgLogin(Object.assign({},sr.p,{hasOms:true}),true); if(curGhgUser)return; }
-        else if(sr.err){ lgErr('讀不到授權資料（連線問題），請重新整理頁面再試；一直這樣請重新登入'); }
+        else if(sr.err){ if(/jwt|permission denied|not authenticated|401/i.test(sr.err)){ lgClearTok(); sessionStorage.removeItem(LGKEY); }   /* V129-110：登入憑證過期或失效＝回登入畫面重新登入 */
+          else lgErr('讀不到授權資料（連線問題），請重新整理頁面再試；一直這樣請重新登入'); }
         else { lgClearTok(); sessionStorage.removeItem(LGKEY); } } }
     else if(saved){ sessionStorage.removeItem(LGKEY); }   /* 沒有登入憑證的舊狀態：清掉，請重新登入 */
   }catch(e){lgErr('初始化失敗:'+e);}
@@ -2643,7 +2630,7 @@ function lgFillBy(){const b=document.getElementById('e_by'); if(b&&curGhgUser){b
 function lgApply(){
   const u=curGhgUser; if(!u)return;
   try{ if(typeof ESGR!=='undefined')ESGR.ensure(); }catch(e){}   /* V129-107：ESG 個案決定（批400）登入後先讀 */
-  try{ lgLoadList(); }catch(e){}   /* V129-108：名單改成登入後才讀（工號、姓名、Email 三欄，「誰改的」換成姓名用） */
+  /* V129-110：登入後不再讀整份名單；「誰改的」要換姓名時才查畫面上出現的那幾個帳號（whoFlush） */
   const chip=document.getElementById('lg_chip');
   chip.style.display='';
   chip.innerHTML='👤 <b>'+facEsc(u.name)+'</b>（'+facEsc(u.roleName)+'·'+facEsc(lgScopeAll()?'全部廠區':(u.scope||[]).join(','))+'）　<a href="javascript:void(0)" onclick="lgLogout()" style="color:#c0392b;font-weight:700">登出</a>　<a href="https://ych1757.github.io/HUB/" style="color:var(--d);font-weight:700;text-decoration:none">回 SyncHub</a>';
@@ -4208,19 +4195,42 @@ function trnrSiteNm(c){ if(!c)return ''; const s=(typeof siteOf==='function')?si
 function trnrT(at){   /* 本機時間顯示（資料庫存 UTC；261109 正式站實測：原本直接截字串少 8 小時） */
   if(!at)return ''; const d=new Date(at); if(isNaN(d))return String(at).slice(0,16).replace('T',' ');
   const p=n=>String(n).padStart(2,'0'); return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes()); }
-function trnrWho(v){   /* 審核修正：「誰」＝登入帳號（工號@id…）對 OMS 主檔姓名；資料庫本身（SQL Editor 跑的）＝系統（資料庫）；中文說明原樣；對不到的不顯示帳號（帳號只放滑鼠提示） */
+/* V129-110：「誰改的」帳號 → 姓名，改叫資料庫小函式 ghg_who_names（SQL 704）。只查畫面上出現的那幾個帳號：
+   第一次遇到的帳號先放佔位記號 ⟦帳號⟧、排一次批次查詢，查到後把畫面上的佔位換成姓名；查過的直接回姓名。
+   不再讀整份授權名單與帳號名冊。查詢失敗顯示「姓名讀取失敗」（30 秒後再遇到會重查），不當成「名單上找不到」。 */
+window._whoNames={}; window._whoDone={}; window._whoFail={}; window._whoPend={}; window._whoTimer=null;
+function whoText(sl){
+  const nm=window._whoNames[sl]; if(nm)return nm;
+  const xu=(window._extUsers||[]).find(x=>String(x.email||'').toLowerCase()===sl); if(xu&&xu.name)return String(xu.name)+'（外部查核）';
+  if(window._whoFail[sl])return '姓名讀取失敗';
+  return '名單上找不到的帳號'; }
+function whoPatchDom(){
+  const re=/⟦(~?)([^⟧]+)⟧/g;
+  const rep=t=>t.replace(re,(m,sh,a)=>{ const sl=a.toLowerCase(); if(!(window._whoNames[sl]||window._whoDone[sl]||window._whoFail[sl]))return m; const w=whoText(sl); return sh?(w.replace(/（.*$/,'').trim()||w):w; });
+  const tw=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT,null); const hits=[]; let nd; while((nd=tw.nextNode())){ if(nd.nodeValue.indexOf('⟦')>=0)hits.push(nd); }
+  hits.forEach(x=>{ x.nodeValue=rep(x.nodeValue); });
+  document.querySelectorAll('[title*="⟦"]').forEach(el=>{ el.setAttribute('title',rep(el.getAttribute('title'))); }); }
+function whoFlush(){
+  window._whoTimer=null; const need=Object.keys(window._whoPend); window._whoPend={}; if(!need.length)return;
+  const bad=e=>{ const t=Date.now(); need.forEach(a=>{ window._whoFail[a]=t; }); try{ console.error('[誰改的] 姓名讀取失敗',e); }catch(_e){} };
+  const fin=()=>{ try{ whoPatchDom(); }catch(e){} };
+  const done=()=>{ fin(); setTimeout(fin,300); setTimeout(fin,1500); };   /* 畫面如果晚一點才插進來，再補換兩次 */
+  if(!sb){ bad('連線未設定'); done(); return; }
+  sb.rpc('ghg_who_names',{p_accounts:need}).then(r=>{
+    if(r.error){ bad(r.error); }
+    else { need.forEach(a=>{ window._whoDone[a]=1; delete window._whoFail[a]; }); (r.data||[]).forEach(x=>{ if(x&&x.account&&x.name)window._whoNames[String(x.account).toLowerCase()]=String(x.name); }); }
+    done(); }, e=>{ bad(e); done(); }); }
+function trnrWho(v,short){   /* 「誰」＝登入帳號對姓名；資料庫本身（SQL Editor 跑的）＝系統（資料庫）；中文說明原樣；對不到的不顯示帳號（帳號只放滑鼠提示）。short＝呼叫的地方要短姓名（佔位記號帶 ~，換成姓名時去掉括號說明） */
   const s=String(v==null?'':v).trim(); if(!s)return '';
   if(/^(postgres|supabase_admin|supabase_auth_admin|service_role|authenticator|authenticated|anon)$/i.test(s))return '系統（資料庫）';
   if(s.indexOf('@')<0)return s;
   const sl=s.toLowerCase(); if(typeof ADMIN_EMAIL!=='undefined'&&sl===String(ADMIN_EMAIL).toLowerCase())return '系統管理帳號';
-  const lp=sl.split('@')[0], dom=sl.split('@')[1]||''; let emp=null;
-  if(dom==='id.syncmold.com.tw'){ const ro=(window._omsRoster||[]).find(x=>String(x.username||'').trim().toLowerCase()===lp); emp=ro?String(ro.emp_id||''):lp; }
-  const L=window._lgAll||[]; const p=(emp?L.find(x=>String(x.emp_id||'').toUpperCase()===emp.toUpperCase()):null)||L.find(x=>String(x.email||'').toLowerCase()===sl);
-  if(p&&p.name)return String(p.name);
-  const xu=(window._extUsers||[]).find(x=>String(x.email||'').toLowerCase()===sl); if(xu&&xu.name)return String(xu.name)+'（外部查核）';
-  return '名單上找不到的帳號'; }
+  if(window._whoFail[sl]&&Date.now()-window._whoFail[sl]>30000)delete window._whoFail[sl];
+  if(window._whoNames[sl]||window._whoDone[sl]||window._whoFail[sl])return whoText(sl);
+  window._whoPend[sl]=1; if(!window._whoTimer)window._whoTimer=setTimeout(whoFlush,0);
+  return '⟦'+(short?'~':'')+sl+'⟧'; }
 function trnrWhoCell(v,at){   /* 表格「誰・何時」格：短姓名＋日期；完整原文（帳號、說明、時間）放滑鼠提示 */
-  const w=trnrWho(v); const sh=(w.replace(/（.*$/,'').trim()||w); const t=trnrT(at).slice(0,10);
+  const w=trnrWho(v,1); const sh=(w.replace(/（.*$/,'').trim()||w); const t=trnrT(at).slice(0,10);
   return {t:[sh,t].filter(Boolean).join('　'), tip:[String(v||''),trnrT(at)].filter(Boolean).join('　')}; }
 function trnrErrTxt(e){   /* 審核修正：資料庫錯誤 → 白話；英文原文放滑鼠提示（資料庫守門員本來就寫中文的照原句） */
   const m=String((e&&(e.message||e))||''); const c=String((e&&e.code)||'');
@@ -4241,7 +4251,7 @@ async function esgrLoadAll(){ ESGRV.all=null; ESGRV.err='';
   catch(e){ ESGRV.err=ESGR.isMissing(e)?'ESG 個案決定的資料表還沒建（請先跑 SQL 700，批400）':('讀取失敗：'+String((e&&e.message)||e)); } }
 async function esgrShow(pane){
   pane.innerHTML='<div class="msg" style="background:var(--t)">載入 ESG 個案決定…</div>';
-  await Promise.all([ESGR.ensure(true),esgrLoadAll(),(async()=>{ try{ if(typeof loadOmsRoster==='function'&&!window._omsRoster)await loadOmsRoster(); }catch(e){} })()]);
+  await Promise.all([ESGR.ensure(true),esgrLoadAll()]);
   try{ if(typeof siteMasterLoad==='function')await siteMasterLoad(); }catch(e){}
   if(FAC_CUR!=='ESGRULE')return; ESGRV.log=null; ESGRV.logErr=''; esgrPaint(); }
 function esgrPaint(){
@@ -4316,7 +4326,7 @@ async function esgrAddGo(){ if(!esgrCan())return; const g=id=>String((document.g
 window.esgRuleGo=async function(){ try{ FAC_TRACE=null; }catch(e){} window._facLoaded=true; const tb=document.querySelector('.tab[data-t="fac"]'); if(tb)tb.click(); FAC_CUR='ESGRULE'; await facMode('src'); };   /* 從登錄頁跳過來 */
 async function trnrShow(pane){
   pane.innerHTML='<div class="msg" style="background:var(--t)">載入運輸規則…</div>';
-  await Promise.all([TRNR.ensure(true),TRNR.ensureAlias(true),TRNR.ensureContract(true),(async()=>{ try{ if(typeof loadOmsRoster==='function'&&!window._omsRoster)await loadOmsRoster(); }catch(e){} })()]);   /* 審核修正：OMS 帳號名冊（帳號 → 工號 → 姓名） */
+  await Promise.all([TRNR.ensure(true),TRNR.ensureAlias(true),TRNR.ensureContract(true)]);   /* 審核修正：OMS 帳號名冊（帳號 → 工號 → 姓名） */
   try{ if(typeof ensureYLocks==='function')await ensureYLocks(); }catch(e){}
   try{ if(typeof siteMasterLoad==='function')await siteMasterLoad(); }catch(e){}
   if(FAC_CUR!=='TRNRULE')return;
@@ -4599,7 +4609,6 @@ window.trnrPendGo=async function(){ const d=document.getElementById('s101dlg'), 
   foot.style.display='flex'; foot.innerHTML='<button onclick="fuelClose()">關閉</button>'; };
 /* ── 版本與修改紀錄 ── */
 async function trnrLogLoad(){ TRNRV.logBusy=true;
-  try{ if(typeof loadOmsRoster==='function'&&!window._omsRoster)await loadOmsRoster(); }catch(e){}   /* 審核修正：「誰」對姓名用 */
   let r; try{ r=await sb.from('ghg_trn_rule_log').select('*').order('id',{ascending:false}).limit(100); }catch(e){ r={error:e}; }
   TRNRV.logBusy=false;
   if(r.error){ TRNRV.logErr=TRNR.isMissing(r.error,'ghg_trn_rule_log')?'修改紀錄表還沒建，請先跑 SQL 678。':('修改紀錄讀取失敗：'+trnrErrTxt(r.error).t); TRNRV.log=null; }
@@ -4648,7 +4657,7 @@ function trnrLogHtml(can){
       else{ const ds=trnrDiff(o.prev.rules,x.rules);
         what=ds.length?ds.map(d=>{ const zh=(TRNR.TERMS.find(z=>z[0]===d.t)||[])[1]||''; return '<span class="vchg'+(ds.length>1?' blk':'')+'"><b>'+d.t+(zh?' '+facEsc(zh):'')+'・'+TRNR.SEGS[d.i]+'</b>　'+trnrB(d.from,d.t,d.i)+zv(d.from)+' → '+trnrB(d.to,d.t,d.i)+zv(d.to)+'</span>'; }).join('')+'<span class="note">（跟第 '+o.prev.ver+' 版比，其他 '+(36-ds.length)+' 格不變）</span>'
           :'內容跟第 '+o.prev.ver+' 版相同'; }
-      const w0=trnrWho(x.applied_by), who=(w0.replace(/（.*$/,'').trim()||w0), wt=[who,trnrT(x.applied_at)].filter(Boolean).join('・');
+      const w0=trnrWho(x.applied_by,1), who=(w0.replace(/（.*$/,'').trim()||w0), wt=[who,trnrT(x.applied_at)].filter(Boolean).join('・');
       const rb=can&&!V.draft&&!cur;
       h+='<div class="vcard'+(cur?' cur':'')+'"><div class="vh"><b>第 '+x.ver+' 版</b>'+(cur?'<span class="tg ok">生效中</span>':'<span class="tg gr">已停用</span>')+'<span class="vp">'+facEsc(from||'—')+(cur?' 起':' ～ '+facEsc(to||'—'))+'</span><span style="flex:1"></span><button class="sec sm" onclick="TRNRV.rv='+(+x.ver)+';trnrView(&#39;rules&#39;)">看這一版的對應表</button>'+(rb?'<button class="sec sm" onclick="trnrAskRb('+(+x.ver)+')">↶ 用這版開草稿</button>':'')+'</div>'
         +'<div class="vr"><span class="vl">改了什麼</span><span class="vv">'+what+'</span></div>'
@@ -13060,9 +13069,8 @@ async function cmPiiPanel(){
   if(!t){ card.innerHTML=h+'<div class="msg err">系統管理帳號的登入憑證已過期或不存在，請重新用 🔑 管理員登入（密碼）後再設定。</div>'; return; }
   const r=await piiRest('ghg_pii_grants?select=*&order=auth_email');
   if(r.error){ card.innerHTML=h+'<div class="msg err">讀取授權表失敗：'+cmesc(r.error.message)+'</div>'; return; }
-  if(typeof loadOmsRoster==='function')await loadOmsRoster();
   const D=window._permData||{ppl:[]}; const ext=(window._extUsers||[]);
-  const people=(D.ppl||[]).map(p=>{ const o=(typeof omsAcctOf==='function')?omsAcctOf(p.emp_id):null; return {emp:p.emp_id,name:p.name||'',site:p.factory_code||'',email:(o?o.synthEmail:((typeof omsSynthOf==='function')?omsSynthOf(p.emp_id):'')).toLowerCase()};   /* V124：內部同仁一律工號帳號 */ })
+  const people=(D.ppl||[]).map(p=>{ return {emp:p.emp_id,name:p.name||'',site:p.factory_code||'',email:omsSynthOf(p.emp_id)};   /* V124：內部同仁一律工號帳號 */ })
      .concat(ext.map(x=>({emp:'EXT:'+String(x.email||'').toLowerCase(),name:(x.name||'')+'（外部）',site:x.org||'外部',email:String(x.email||'').toLowerCase()}))).filter(p=>p.email);
   const byEmail=Object.fromEntries(people.map(p=>[p.email,p]));
   h+='<table class="wtbl" style="font-size:12.5px;width:auto;min-width:640px"><thead><tr><th class="tl">人員</th><th class="tl">登入帳號</th><th class="tl">可看廠區</th><th class="tl">授權紀錄</th><th></th></tr></thead><tbody>';
